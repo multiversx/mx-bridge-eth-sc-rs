@@ -92,6 +92,52 @@ pub trait EsdtSafe {
         Ok(())
     }
 
+    #[payable("*")]
+    #[endpoint(createTransaction)]
+    fn create_transaction(
+        &self,
+        #[payment_token] payment_token: TokenIdentifier,
+        #[payment] payment: BigUint,
+        to: Address,
+    ) -> SCResult<()> {
+        require!(
+            self.token_whitelist().contains(&payment_token),
+            "Payment token is not on whitelist. Transaction rejected"
+        );
+        require!(payment > 0, "Must transfer more than 0");
+        require!(!to.is_zero(), "Can't transfer to address zero");
+
+        let caller = self.get_caller();
+        let caller_deposit = self.get_deposit(&caller);
+        let transaction_fee = self.get_transaction_fee();
+
+        require!(
+            caller_deposit >= transaction_fee,
+            "Must deposit transaction fee first"
+        );
+
+        let tx = Transaction {
+            from: caller.clone(),
+            to,
+            token: payment_token,
+            amount: payment,
+        };
+
+		self.transactions_by_nonce(&caller).push(&tx);
+
+		let sender_nonce = self.get_transactions_by_nonce_len(&caller);
+
+		self.set_transaction_status(&caller, sender_nonce, TransactionStatus::Pending);
+		self.pending_transaction_address_nonce_list()
+            .push_back((caller.clone(), sender_nonce));
+		
+		// deduct deposit fee
+		let deposit_remaining = caller_deposit - transaction_fee;
+		self.set_deposit(&caller, &deposit_remaining);
+		
+		Ok(())
+    }
+
     // storage
 
     // transaction fee, can only be set by owner
@@ -107,15 +153,6 @@ pub trait EsdtSafe {
 
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
-
-    // nonce for each address
-
-    #[view(getAccountNonce)]
-    #[storage_get("accountNonce")]
-    fn get_account_nonce(&self, address: &Address) -> usize;
-
-    #[storage_set("accountNonce")]
-    fn set_account_nonce(&self, address: &Address, nonce: usize);
 
     // eGLD amounts deposited by each address, for the sole purpose of paying for transaction fees
 
@@ -146,8 +183,10 @@ pub trait EsdtSafe {
         transaction_status: TransactionStatus,
     );
 
-	#[storage_mapper("pendingTransactionList")]
-	fn pending_transaction_list(&self) -> LinkedListMapper<Self::Storage, (Address, usize)>;
+    #[storage_mapper("pendingTransactionList")]
+    fn pending_transaction_address_nonce_list(
+        &self,
+    ) -> LinkedListMapper<Self::Storage, (Address, usize)>;
 
     // TODO: Remove in the next patch, VecMapper will have a len() method then
 
