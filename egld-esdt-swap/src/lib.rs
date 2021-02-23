@@ -52,12 +52,6 @@ pub trait EgldEsdtSwap {
             "Wrong payment, should pay exactly 5 eGLD for ESDT token issue"
         );
 
-        // save data for callback
-        self.set_temporary_storage_esdt_operation(
-            &self.get_tx_hash(),
-            &EsdtOperation::Issue,
-        );
-
         self.issue_esdt_token(
             &token_display_name,
             &token_ticker,
@@ -184,6 +178,12 @@ pub trait EgldEsdtSwap {
 
         serializer.push_argument_bytes(&b"canUpgrade"[..]);
         serializer.push_argument_bytes(&b"false"[..]);
+
+        // save data for callback
+        self.set_temporary_storage_esdt_operation(
+            &self.get_tx_hash(),
+            &EsdtOperation::Issue,
+        );
 
         self.send().async_call_raw(
             &Address::from(ESDT_SYSTEM_SC_ADDRESS_ARRAY),
