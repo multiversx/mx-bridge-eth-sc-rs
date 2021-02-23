@@ -102,16 +102,16 @@ pub trait EsdtSafe {
 
         match transaction_status {
             TransactionStatus::Executed => {
-				self.set_transaction_status(&sender, nonce, TransactionStatus::Executed);
+                self.set_transaction_status(&sender, nonce, TransactionStatus::Executed);
 
-				let tx = self.transactions_by_nonce(&sender).get(nonce);
-				self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                let tx = self.transactions_by_nonce(&sender).get(nonce);
+                self.burn_esdt_token(&tx.token_identifier, &tx.amount);
             }
             TransactionStatus::Rejected => {
                 self.set_transaction_status(&sender, nonce, TransactionStatus::Rejected);
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
-				self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+                self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
             }
             _ => return sc_error!("Transaction status may only be set to Executed or Rejected"),
         }
