@@ -5,7 +5,7 @@ elrond_wasm::derive_imports!();
 
 use elrond_wasm::api::StorageReadApi;
 
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
     from: Address,
     to: Address,
@@ -13,7 +13,7 @@ pub struct Transaction<BigUint: BigUintApi> {
     amount: BigUint,
 }
 
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, TypeAbi, PartialEq)]
 pub enum TransactionStatus {
     None,
     Pending,
@@ -34,6 +34,7 @@ pub trait EsdtSafe {
     }
 
     // endpoints - owner-only
+    // the owner will probably be a multisig SC
 
     #[endpoint(setTransactionFee)]
     fn set_transaction_fee_endpoint(&self, transaction_fee: BigUint) -> SCResult<()> {
@@ -58,6 +59,55 @@ pub trait EsdtSafe {
         only_owner!(self, "only owner may call this function");
 
         self.token_whitelist().remove(&token_identifier);
+
+        Ok(())
+    }
+
+    #[endpoint(getNextPendingTransaction)]
+    fn get_next_pending_transaction(&self) -> SCResult<OptionalResult<Transaction<BigUint>>> {
+        only_owner!(self, "only owner may call this function");
+
+        match self.pending_transaction_address_nonce_list().pop_front() {
+            Some((sender, nonce)) => {
+                self.set_transaction_status(&sender, nonce, TransactionStatus::InProgress);
+
+                Ok(OptionalResult::Some(
+                    self.transactions_by_nonce(&sender).get(nonce),
+                ))
+            }
+            None => Ok(OptionalResult::None),
+        }
+    }
+
+    #[endpoint(setTransactionStatus)]
+    fn set_transaction_status_endpoint(
+        &self,
+        sender: Address,
+        nonce: usize,
+        transaction_status: TransactionStatus,
+    ) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+
+        require!(
+            self.get_transaction_status(&sender, nonce) == TransactionStatus::InProgress,
+            "Transaction has to be executed first"
+        );
+
+		match transaction_status {
+			TransactionStatus::Executed => {
+				self.set_transaction_status(&sender, nonce, TransactionStatus::Executed);
+
+				// burn tokens
+			},
+			TransactionStatus::Rejected => {
+				self.set_transaction_status(&sender, nonce, TransactionStatus::Rejected);
+
+				// refund tokens
+			},
+			_ => return sc_error!("Transaction status may only be set to Executed or Rejected")
+		}
+
+        self.set_transaction_status(&sender, nonce, transaction_status);
 
         Ok(())
     }
@@ -123,19 +173,19 @@ pub trait EsdtSafe {
             amount: payment,
         };
 
-		self.transactions_by_nonce(&caller).push(&tx);
+        self.transactions_by_nonce(&caller).push(&tx);
 
-		let sender_nonce = self.get_transactions_by_nonce_len(&caller);
+        let sender_nonce = self.get_transactions_by_nonce_len(&caller);
 
-		self.set_transaction_status(&caller, sender_nonce, TransactionStatus::Pending);
-		self.pending_transaction_address_nonce_list()
+        self.set_transaction_status(&caller, sender_nonce, TransactionStatus::Pending);
+        self.pending_transaction_address_nonce_list()
             .push_back((caller.clone(), sender_nonce));
-		
-		// deduct deposit fee
-		let deposit_remaining = caller_deposit - transaction_fee;
-		self.set_deposit(&caller, &deposit_remaining);
-		
-		Ok(())
+
+        // deduct deposit fee
+        let deposit_remaining = caller_deposit - transaction_fee;
+        self.set_deposit(&caller, &deposit_remaining);
+
+        Ok(())
     }
 
     // storage
