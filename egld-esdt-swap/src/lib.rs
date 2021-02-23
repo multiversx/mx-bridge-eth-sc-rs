@@ -62,6 +62,19 @@ pub trait EgldEsdtSwap {
         Ok(())
     }
 
+    fn mint_wrapped_egld(&self, amount: BigUint) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+
+        require!(
+            !self.is_empty_wrapped_egld_token_identifier(),
+            "Wrapped eGLD was not issued yet"
+        );
+
+        self.mint_esdt_token(&self.get_wrapped_egld_token_identifier(), &amount);
+
+        Ok(())
+    }
+
     // endpoints
 
     #[payable("EGLD")]
