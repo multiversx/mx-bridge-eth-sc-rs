@@ -62,6 +62,7 @@ pub trait EgldEsdtSwap {
         Ok(())
     }
 
+    #[endpoint(mintWrappedEgld)]
     fn mint_wrapped_egld(&self, amount: BigUint) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
