@@ -80,7 +80,7 @@ pub trait EgldEsdtSwap {
         );
 
         self.substract_total_wrapped_egld(&payment);
-        
+
         self.send().direct_esdt(
             &self.get_caller(),
             self.get_wrapped_egld_token_identifier().as_slice(),
@@ -182,10 +182,7 @@ pub trait EgldEsdtSwap {
         serializer.push_argument_bytes(&b"false"[..]);
 
         // save data for callback
-        self.set_temporary_storage_esdt_operation(
-            &self.get_tx_hash(),
-            &EsdtOperation::Issue,
-        );
+        self.set_temporary_storage_esdt_operation(&self.get_tx_hash(), &EsdtOperation::Issue);
 
         self.send().async_call_raw(
             &Address::from(ESDT_SYSTEM_SC_ADDRESS_ARRAY),
@@ -223,9 +220,7 @@ pub trait EgldEsdtSwap {
         let esdt_operation = self.get_temporary_storage_esdt_operation(&original_tx_hash);
         match esdt_operation {
             EsdtOperation::None => return,
-            EsdtOperation::Issue => {
-                self.perform_esdt_issue_callback(success)
-            }
+            EsdtOperation::Issue => self.perform_esdt_issue_callback(success),
             EsdtOperation::Mint(amount) => self.perform_esdt_mint_callback(success, &amount),
         };
 
@@ -236,7 +231,7 @@ pub trait EgldEsdtSwap {
         // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
         // so we can get the token identifier and amount from the call data
         let token_identifier = self.call_value().token();
-		let initial_supply = self.call_value().esdt_value();
+        let initial_supply = self.call_value().esdt_value();
 
         if success {
             self.set_wrapped_egld_remaining(&initial_supply);
