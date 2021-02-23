@@ -12,7 +12,7 @@ fn contract_map() -> ContractMap<TxContext> {
 	contract_map
 }
 
-/*#[test]
+#[test]
 fn test_mandos() {
-	parse_execute_mandos("mandos/adder.scen.json", &contract_map());
-}*/
+	parse_execute_mandos("mandos/wrap_egld.scen.json", &contract_map());
+}

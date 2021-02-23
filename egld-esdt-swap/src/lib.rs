@@ -79,6 +79,8 @@ pub trait EgldEsdtSwap {
             "Contract does not have enough wrapped eGLD. Please try again once more is minted."
         );
 
+        self.substract_total_wrapped_egld(&payment);
+        
         self.send().direct_esdt(
             &self.get_caller(),
             self.get_wrapped_egld_token_identifier().as_slice(),
