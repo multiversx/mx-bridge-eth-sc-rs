@@ -3,13 +3,20 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-use elrond_wasm::api::StorageReadApi;
+use elrond_wasm::{api::StorageReadApi, HexCallDataSerializer};
+
+const ESDT_SYSTEM_SC_ADDRESS_ARRAY: [u8; 32] = [
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xff,
+];
+
+const ESDT_BURN_STRING: &[u8] = b"ESDTBurn";
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
     from: Address,
     to: Address,
-    token: TokenIdentifier,
+    token_identifier: TokenIdentifier,
     amount: BigUint,
 }
 
@@ -93,19 +100,21 @@ pub trait EsdtSafe {
             "Transaction has to be executed first"
         );
 
-		match transaction_status {
-			TransactionStatus::Executed => {
+        match transaction_status {
+            TransactionStatus::Executed => {
 				self.set_transaction_status(&sender, nonce, TransactionStatus::Executed);
 
-				// burn tokens
-			},
-			TransactionStatus::Rejected => {
-				self.set_transaction_status(&sender, nonce, TransactionStatus::Rejected);
+				let tx = self.transactions_by_nonce(&sender).get(nonce);
+				self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+            }
+            TransactionStatus::Rejected => {
+                self.set_transaction_status(&sender, nonce, TransactionStatus::Rejected);
 
-				// refund tokens
-			},
-			_ => return sc_error!("Transaction status may only be set to Executed or Rejected")
-		}
+                let tx = self.transactions_by_nonce(&sender).get(nonce);
+				self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+            }
+            _ => return sc_error!("Transaction status may only be set to Executed or Rejected"),
+        }
 
         self.set_transaction_status(&sender, nonce, transaction_status);
 
@@ -169,7 +178,7 @@ pub trait EsdtSafe {
         let tx = Transaction {
             from: caller.clone(),
             to,
-            token: payment_token,
+            token_identifier: payment_token,
             amount: payment,
         };
 
@@ -186,6 +195,30 @@ pub trait EsdtSafe {
         self.set_deposit(&caller, &deposit_remaining);
 
         Ok(())
+    }
+
+    // private
+
+    fn burn_esdt_token(&self, token_identifier: &TokenIdentifier, amount: &BigUint) {
+        let mut serializer = HexCallDataSerializer::new(ESDT_BURN_STRING);
+        serializer.push_argument_bytes(token_identifier.as_slice());
+        serializer.push_argument_bytes(&amount.to_bytes_be());
+
+        self.send().async_call_raw(
+            &Address::from(ESDT_SYSTEM_SC_ADDRESS_ARRAY),
+            &BigUint::zero(),
+            serializer.as_slice(),
+        );
+    }
+
+    fn refund_esdt_token(
+        &self,
+        to: &Address,
+        token_identifier: &TokenIdentifier,
+        amount: &BigUint,
+    ) {
+        self.send()
+            .direct_esdt(to, token_identifier.as_slice(), amount, b"refund");
     }
 
     // storage
