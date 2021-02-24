@@ -193,7 +193,7 @@ pub trait EgldEsdtSwap {
         serializer.push_argument_bytes(&b"false"[..]);
 
         serializer.push_argument_bytes(&b"canUpgrade"[..]);
-        serializer.push_argument_bytes(&b"false"[..]);
+        serializer.push_argument_bytes(&b"true"[..]);
 
         // save data for callback
         self.set_temporary_storage_esdt_operation(&self.get_tx_hash(), &EsdtOperation::Issue);
