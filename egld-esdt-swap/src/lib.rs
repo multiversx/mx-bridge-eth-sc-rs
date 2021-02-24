@@ -95,7 +95,7 @@ pub trait EgldEsdtSwap {
 
         self.substract_total_wrapped_egld(&payment);
 
-        self.send().direct_esdt(
+        self.send().direct_esdt_via_transf_exec(
             &self.get_caller(),
             self.get_wrapped_egld_token_identifier().as_slice(),
             &payment,
