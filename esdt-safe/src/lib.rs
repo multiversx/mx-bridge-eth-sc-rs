@@ -131,6 +131,8 @@ pub trait EsdtSafe {
             b"claim",
         );
 
+        self.set_claimable_transaction_fee(&BigUint::zero());
+
         Ok(())
     }
 
