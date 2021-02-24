@@ -121,6 +121,19 @@ pub trait EsdtSafe {
         Ok(())
     }
 
+    #[endpoint]
+    fn claim(&self) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+
+        self.send().direct_egld(
+            &self.get_caller(),
+            &self.get_claimable_transaction_fee(),
+            b"claim",
+        );
+
+        Ok(())
+    }
+
     // endpoints
 
     #[payable("EGLD")]
@@ -190,9 +203,13 @@ pub trait EsdtSafe {
         self.pending_transaction_address_nonce_list()
             .push_back((caller.clone(), sender_nonce));
 
-        // deduct deposit fee
-        let deposit_remaining = caller_deposit - transaction_fee;
+        // deduct fee from deposit and add to claimable fees pool
+        let deposit_remaining = &caller_deposit - &transaction_fee;
         self.set_deposit(&caller, &deposit_remaining);
+
+        let mut claimable_transaction_fee = self.get_claimable_transaction_fee();
+        claimable_transaction_fee += transaction_fee;
+        self.set_claimable_transaction_fee(&claimable_transaction_fee);
 
         Ok(())
     }
@@ -231,6 +248,15 @@ pub trait EsdtSafe {
 
     #[storage_set("transactionFee")]
     fn set_transaction_fee(&self, transaction_fee: &BigUint);
+
+    // transaction fees available for claiming, only added to this pool after the transaction was added in Pending status
+
+    #[view(getClaimableTransactionFee)]
+    #[storage_get("claimableTransactionFee")]
+    fn get_claimable_transaction_fee(&self) -> BigUint;
+
+    #[storage_set("claimableTransactionFee")]
+    fn set_claimable_transaction_fee(&self, claimable_transaction_fee: &BigUint);
 
     // token whitelist
 
