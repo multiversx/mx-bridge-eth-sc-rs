@@ -237,7 +237,7 @@ pub trait EsdtSafe {
         amount: &BigUint,
     ) {
         self.send()
-            .direct_esdt(to, token_identifier.as_slice(), amount, b"refund");
+            .direct_esdt_via_transf_exec(to, token_identifier.as_slice(), amount, b"refund");
     }
 
     // storage
