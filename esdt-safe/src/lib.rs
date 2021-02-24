@@ -3,7 +3,7 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-use elrond_wasm::{api::StorageReadApi, HexCallDataSerializer};
+use elrond_wasm::HexCallDataSerializer;
 
 const ESDT_SYSTEM_SC_ADDRESS_ARRAY: [u8; 32] = [
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -199,7 +199,7 @@ pub trait EsdtSafe {
 
         self.transactions_by_nonce(&caller).push(&tx);
 
-        let sender_nonce = self.get_transactions_by_nonce_len(&caller);
+        let sender_nonce = self.transactions_by_nonce(&caller).len();
 
         self.set_transaction_status(&caller, sender_nonce, TransactionStatus::Pending);
         self.pending_transaction_address_nonce_list()
@@ -298,12 +298,4 @@ pub trait EsdtSafe {
     fn pending_transaction_address_nonce_list(
         &self,
     ) -> LinkedListMapper<Self::Storage, (Address, usize)>;
-
-    // TODO: Remove in the next patch, VecMapper will have a len() method then
-
-    fn get_transactions_by_nonce_len(&self, address: &Address) -> usize {
-        self.get_storage_raw()
-            .storage_load_u64(&[b"transactionsByNonce", address.as_bytes()].concat())
-            as usize
-    }
 }
