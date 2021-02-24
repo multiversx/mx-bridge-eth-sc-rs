@@ -13,6 +13,11 @@ fn contract_map() -> ContractMap<TxContext> {
 }
 
 #[test]
-fn test_mandos() {
-	//parse_execute_mandos("mandos/adder.scen.json", &contract_map());
+fn deposit_test() {
+	parse_execute_mandos("mandos/deposit_egld.scen.json", &contract_map());
+}
+
+#[test]
+fn whithdraw_test() {
+	parse_execute_mandos("mandos/withdraw.scen.json", &contract_map());
 }
