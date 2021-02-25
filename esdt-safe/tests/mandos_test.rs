@@ -21,3 +21,13 @@ fn deposit_test() {
 fn whithdraw_test() {
 	parse_execute_mandos("mandos/withdraw.scen.json", &contract_map());
 }
+
+#[test]
+fn create_transaction_ok_test() {
+	parse_execute_mandos("mandos/create_transaction_ok.scen.json", &contract_map());
+}
+
+#[test]
+fn create_transaction_not_enough_deposit_test() {
+	parse_execute_mandos("mandos/create_transaction_not_enough_deposit.scen.json", &contract_map());
+}

@@ -1,0 +1,67 @@
+{
+    "name": "create transaction not enough deposit",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "withdraw.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "create-transaction-not-enough-deposit",
+            "tx": {
+                "from": "address:user1",
+                "to": "address:contract",
+                "value": "0",
+                "esdtTokenName": "str:BridgeToken",
+                "esdtValue": "400",
+                "function": "createTransaction",
+                "arguments": [
+                    "address:other_chain_address"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Must deposit transaction fee first",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:user1": {
+                    "nonce": "3",
+                    "balance": "950",
+                    "esdt": {
+                        "str:BridgeToken": "1000"
+                    },
+                    "storage": {}
+                },
+                "address:user2": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "esdt": {
+                        "str:BridgeToken": "1000"
+                    },
+                    "storage": {}
+                },
+                "address:contract": {
+                    "nonce": "0",
+                    "balance": "50",
+                    "storage": {
+                        "str:transactionFee": "100",
+                        "str:tokenWhitelist.value|u32:1": "str:BridgeToken",
+                        "str:deposit|address:user1": "50",
+
+                        "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:0",
+                        "str:tokenWhitelist.node_id|str:BridgeToken": "1",
+                        "str:tokenWhitelist.info": "u32:1|u32:1|u32:1|u32:1"
+                    },
+                    "code": "file:../output/esdt-safe.wasm"
+                }
+            }
+        }
+    ]
+}
