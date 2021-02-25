@@ -1,39 +1,35 @@
 {
-    "name": "execute transaction success",
+    "name": "get next pending tx",
     "steps": [
         {
             "step": "externalSteps",
-            "path": "get_next_pending_tx.scen.json"
+            "path": "create_transaction_ok.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "set-tx-status-executed",
+            "txId": "get-next-pending-tx",
             "tx": {
                 "from": "address:owner",
                 "to": "address:contract",
                 "value": "0",
-                "function": "setTransactionStatus",
-                "arguments": [
-                    "address:user1",
-                    "1",
-                    "3"
-                ],
+                "function": "getNextPendingTransaction",
+                "arguments": [],
                 "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
+                "out": ["address:user1|address:other_chain_address|u32:11|str:BridgeToken|u32:2|u16:400"],
                 "gas": "*",
                 "refund": "*"
             }
         },
         {
             "step": "checkState",
-            "comment": "TODO: Once ESDT operations are added to mandos, update test to remove the tokens from the address:contract",
             "accounts": {
                 "address:owner": {
-                    "nonce": "3",
+                    "nonce": "2",
                     "balance": "0",
                     "storage": {}
                 },
@@ -57,7 +53,7 @@
                         "str:deposit|address:user1": "400",
                         "str:claimableTransactionFee": "100",
 
-                        "str:transactionStatus|address:user1|u32:1": "3",
+                        "str:transactionStatus|address:user1|u32:1": "2",
 
                         "str:transactionsByNonce|address:user1|u32:0": "1",
                         "str:transactionsByNonce|address:user1|u32:1": "address:user1|address:other_chain_address|u32:11|str:BridgeToken|u32:2|u16:400",

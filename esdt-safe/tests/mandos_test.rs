@@ -33,6 +33,16 @@ fn create_transaction_not_enough_deposit_test() {
 }
 
 #[test]
+fn get_next_pending_tx_test() {
+	parse_execute_mandos("mandos/get_next_pending_tx.scen.json", &contract_map());
+}
+
+#[test]
 fn execute_transaction_success_test() {
 	parse_execute_mandos("mandos/execute_transaction_success.scen.json", &contract_map());
+}
+
+#[test]
+fn execute_transaction_reject_test() {
+	parse_execute_mandos("mandos/execute_transaction_rejected.scen.json", &contract_map());
 }

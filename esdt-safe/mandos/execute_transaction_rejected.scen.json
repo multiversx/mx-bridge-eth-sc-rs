@@ -1,5 +1,5 @@
 {
-    "name": "execute transaction success",
+    "name": "execute transaction rejected",
     "steps": [
         {
             "step": "externalSteps",
@@ -7,7 +7,7 @@
         },
         {
             "step": "scCall",
-            "txId": "set-tx-status-executed",
+            "txId": "set-tx-status-rejected",
             "tx": {
                 "from": "address:owner",
                 "to": "address:contract",
@@ -16,7 +16,7 @@
                 "arguments": [
                     "address:user1",
                     "1",
-                    "3"
+                    "4"
                 ],
                 "gasLimit": "100,000,000",
                 "gasPrice": "0"
@@ -41,7 +41,7 @@
                     "nonce": "2",
                     "balance": "500",
                     "esdt": {
-                        "str:BridgeToken": "600"
+                        "str:BridgeToken": "1000"
                     },
                     "storage": {}
                 },
@@ -49,7 +49,7 @@
                     "nonce": "0",
                     "balance": "500",
                     "esdt": {
-                        "str:BridgeToken": "400"
+                        "str:BridgeToken": "0"
                     },
                     "storage": {
                         "str:transactionFee": "100",
@@ -57,7 +57,7 @@
                         "str:deposit|address:user1": "400",
                         "str:claimableTransactionFee": "100",
 
-                        "str:transactionStatus|address:user1|u32:1": "3",
+                        "str:transactionStatus|address:user1|u32:1": "4",
 
                         "str:transactionsByNonce|address:user1|u32:0": "1",
                         "str:transactionsByNonce|address:user1|u32:1": "address:user1|address:other_chain_address|u32:11|str:BridgeToken|u32:2|u16:400",
