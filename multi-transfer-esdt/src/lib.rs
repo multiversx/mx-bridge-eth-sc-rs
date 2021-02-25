@@ -85,6 +85,7 @@ pub trait MultiTransferEsdt {
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
+        require!(!to.is_zero(), "Can't transfer to address zero");
         require!(
             self.get_esdt_token_balance(&token_identifier) >= amount,
             "Not enough ESDT balance"
@@ -105,6 +106,7 @@ pub trait MultiTransferEsdt {
         for multi_arg in args.into_vec().into_iter() {
             let (from, to, token_identifier, amount) = multi_arg.into_tuple();
 
+            require!(!to.is_zero(), "Can't transfer to address zero");
             require!(
                 self.get_esdt_token_balance(&token_identifier) >= amount,
                 "Not enough ESDT balance"
