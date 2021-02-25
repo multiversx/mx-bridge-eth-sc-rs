@@ -31,19 +31,16 @@
         {
             "step": "checkState",
             "accounts": {
+                "address:owner": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
                 "address:user1": {
                     "nonce": "2",
                     "balance": "500",
                     "esdt": {
                         "str:BridgeToken": "600"
-                    },
-                    "storage": {}
-                },
-                "address:user2": {
-                    "nonce": "0",
-                    "balance": "1000",
-                    "esdt": {
-                        "str:BridgeToken": "1000"
                     },
                     "storage": {}
                 },

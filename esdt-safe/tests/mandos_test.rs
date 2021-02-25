@@ -31,3 +31,8 @@ fn create_transaction_ok_test() {
 fn create_transaction_not_enough_deposit_test() {
 	parse_execute_mandos("mandos/create_transaction_not_enough_deposit.scen.json", &contract_map());
 }
+
+#[test]
+fn execute_transaction_success_test() {
+	parse_execute_mandos("mandos/execute_transaction_success.scen.json", &contract_map());
+}

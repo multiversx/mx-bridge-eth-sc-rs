@@ -4,6 +4,11 @@
         {
             "step": "setState",
             "accounts": {
+                "address:owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
                 "address:user1": {
                     "nonce": "0",
                     "balance": "1000",
@@ -11,28 +16,34 @@
                         "str:BridgeToken": "1000"
                     },
                     "storage": {}
-                },
-                "address:user2": {
-                    "nonce": "0",
-                    "balance": "1000",
-                    "esdt": {
-                        "str:BridgeToken": "1000"
-                    },
-                    "storage": {}
-                },
-                "address:contract": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {
-                        "str:transactionFee": "100",
-                        "str:tokenWhitelist.value|u32:1": "str:BridgeToken",
-
-                        "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:0",
-                        "str:tokenWhitelist.node_id|str:BridgeToken": "1",
-                        "str:tokenWhitelist.info": "u32:1|u32:1|u32:1|u32:1"
-                    },
-                    "code": "file:../output/esdt-safe.wasm"
                 }
+            },
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "0",
+                    "newAddress": "address:contract"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "txId": "deploy",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "file:../output/esdt-safe.wasm",
+                "value": "0",
+                "arguments": [
+                    "100",
+                    "u32:11|str:BridgeToken"
+                ],
+                "gasLimit": "1,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "gas": "*",
+                "refund": "*"
             }
         }
     ]
