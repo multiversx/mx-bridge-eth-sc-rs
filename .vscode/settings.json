@@ -1,0 +1,21 @@
+{
+    "terminal.integrated.env.linux": {
+        "PATH": "${env:HOME}/elrondsdk/vendor-rust/bin:${env:HOME}/elrondsdk/erdpy-venv/bin:${env:HOME}/elrondsdk/arwentools:${env:HOME}/elrondsdk/nodejs/latest/bin:${env:PATH}",
+        "VIRTUAL_ENV": "${env:HOME}/elrondsdk/erdpy-venv",
+        "RUSTUP_HOME": "${env:HOME}/elrondsdk/vendor-rust",
+        "CARGO_HOME": "${env:HOME}/elrondsdk/vendor-rust"
+    },
+    "terminal.integrated.env.osx": {
+        "PATH": "${env:HOME}/elrondsdk/vendor-rust/bin:${env:HOME}/elrondsdk/erdpy-venv/bin:${env:HOME}/elrondsdk/arwentools:${env:HOME}/elrondsdk/nodejs/latest/bin:${env:PATH}",
+        "VIRTUAL_ENV": "${env:HOME}/elrondsdk/erdpy-venv",
+        "RUSTUP_HOME": "${env:HOME}/elrondsdk/vendor-rust",
+        "CARGO_HOME": "${env:HOME}/elrondsdk/vendor-rust"
+    },
+    "terminal.integrated.environmentChangesIndicator": "on",
+    "terminal.integrated.inheritEnv": true,
+    "workbench.dialogs.customEnabled": true,
+    "rust-client.rustupPath": "${env:HOME}/elrondsdk/vendor-rust/bin/rustup",
+    "rust-client.rlsPath": "${env:HOME}/elrondsdk/vendor-rust/bin/rls",
+    "rust-client.disableRustup": true,
+    "rust-client.autoStartRls": false
+}
