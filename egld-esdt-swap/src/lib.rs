@@ -226,9 +226,12 @@ pub trait EgldEsdtSwap {
     // callbacks
 
     #[callback_raw]
-    fn callback_raw(&self, result: Vec<Vec<u8>>) {
-        // "0" is serialized as "nothing", so len == 0 for the first item is error code of 0, which means success
-        let success = result[0].len() == 0;
+
+    fn callback_raw(&self, #[var_args] result: AsyncCallResult<VarArgs<BoxedBytes>>) {
+        let success = match result {
+            AsyncCallResult::Ok(_) => true,
+            AsyncCallResult::Err(_) => false,
+        };
         let original_tx_hash = self.get_tx_hash();
 
         let esdt_operation = self.get_temporary_storage_esdt_operation(&original_tx_hash);
@@ -244,14 +247,13 @@ pub trait EgldEsdtSwap {
     fn perform_esdt_issue_callback(&self, success: bool) {
         // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
         // so we can get the token identifier and amount from the call data
-        let token_identifier = self.call_value().token();
-        let initial_supply = self.call_value().esdt_value();
-
         if success {
+            let token_identifier = self.call_value().token();
+            let initial_supply = self.call_value().esdt_value();
+            
             self.set_wrapped_egld_remaining(&initial_supply);
             self.set_wrapped_egld_token_identifier(&token_identifier);
         }
-
         // nothing to do in case of error
     }
 
@@ -259,7 +261,6 @@ pub trait EgldEsdtSwap {
         if success {
             self.add_total_wrapped_egld(amount);
         }
-
         // nothing to do in case of error
     }
 
