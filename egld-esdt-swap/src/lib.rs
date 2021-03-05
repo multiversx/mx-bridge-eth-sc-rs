@@ -226,7 +226,6 @@ pub trait EgldEsdtSwap {
     // callbacks
 
     #[callback_raw]
-
     fn callback_raw(&self, #[var_args] result: AsyncCallResult<VarArgs<BoxedBytes>>) {
         let success = match result {
             AsyncCallResult::Ok(_) => true,
