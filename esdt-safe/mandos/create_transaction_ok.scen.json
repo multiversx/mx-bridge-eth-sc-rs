@@ -1,0 +1,77 @@
+{
+    "name": "create transaction ok",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "deposit_egld.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "create-transaction-ok",
+            "tx": {
+                "from": "address:user1",
+                "to": "address:contract",
+                "value": "0",
+                "esdtTokenName": "str:BridgeToken",
+                "esdtValue": "400",
+                "function": "createTransaction",
+                "arguments": [
+                    "address:other_chain_address"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user1": {
+                    "nonce": "2",
+                    "balance": "500",
+                    "esdt": {
+                        "str:BridgeToken": "600"
+                    },
+                    "storage": {}
+                },
+                "address:contract": {
+                    "nonce": "0",
+                    "balance": "500",
+                    "esdt": {
+                        "str:BridgeToken": "400"
+                    },
+                    "storage": {
+                        "str:transactionFee": "100",
+                        "str:tokenWhitelist.value|u32:1": "str:BridgeToken",
+                        "str:deposit|address:user1": "400",
+                        "str:claimableTransactionFee": "100",
+
+                        "str:transactionStatus|address:user1|u32:1": "1",
+
+                        "str:transactionsByNonce|address:user1|u32:0": "1",
+                        "str:transactionsByNonce|address:user1|u32:1": "address:user1|address:other_chain_address|u32:11|str:BridgeToken|u32:2|u16:400",
+
+                        "str:pendingTransactionList.node_links|u32:1": "u32:0|u32:0",
+                        "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
+                        "str:pendingTransactionList.info": "u32:1|u32:1|u32:1|u32:1",
+
+                        "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:0",
+                        "str:tokenWhitelist.node_id|str:BridgeToken": "1",
+                        "str:tokenWhitelist.info": "u32:1|u32:1|u32:1|u32:1"
+                    },
+                    "code": "file:../output/esdt-safe.wasm"
+                }
+            }
+        }
+    ]
+}
