@@ -3,14 +3,7 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-use elrond_wasm::HexCallDataSerializer;
-
-const ESDT_SYSTEM_SC_ADDRESS_ARRAY: [u8; 32] = [
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xff,
-];
-
-const ESDT_BURN_STRING: &[u8] = b"ESDTBurn";
+type Nonce = usize;
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
@@ -32,10 +25,14 @@ pub enum TransactionStatus {
 #[elrond_wasm_derive::contract(EsdtSafeImpl)]
 pub trait EsdtSafe {
     #[init]
-    fn init(&self, transaction_fee: BigUint, token_whitelist: &[TokenIdentifier]) {
-        self.set_transaction_fee(&transaction_fee);
+    fn init(
+        &self,
+        transaction_fee: BigUint,
+        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
+    ) {
+        self.transaction_fee().set(&transaction_fee);
 
-        for token in token_whitelist {
+        for token in token_whitelist.into_vec() {
             self.token_whitelist().insert(token.clone());
         }
     }
@@ -47,7 +44,7 @@ pub trait EsdtSafe {
     fn set_transaction_fee_endpoint(&self, transaction_fee: BigUint) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
-        self.set_transaction_fee(&transaction_fee);
+        self.transaction_fee().set(&transaction_fee);
 
         Ok(())
     }
@@ -76,7 +73,8 @@ pub trait EsdtSafe {
 
         match self.pending_transaction_address_nonce_list().pop_front() {
             Some((sender, nonce)) => {
-                self.set_transaction_status(&sender, nonce, TransactionStatus::InProgress);
+                self.transaction_status(&sender, nonce)
+                    .set(&TransactionStatus::InProgress);
 
                 Ok(OptionalResult::Some(
                     self.transactions_by_nonce(&sender).get(nonce),
@@ -92,46 +90,47 @@ pub trait EsdtSafe {
         sender: Address,
         nonce: usize,
         transaction_status: TransactionStatus,
-    ) -> SCResult<()> {
+    ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
 
         require!(
-            self.get_transaction_status(&sender, nonce) == TransactionStatus::InProgress,
+            self.transaction_status(&sender, nonce).get() == TransactionStatus::InProgress,
             "Transaction has to be executed first"
         );
 
         match transaction_status {
             TransactionStatus::Executed => {
-                self.set_transaction_status(&sender, nonce, TransactionStatus::Executed);
+                self.transaction_status(&sender, nonce)
+                    .set(&TransactionStatus::Executed);
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
-                self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+
+                Ok(self.burn_esdt_token(&tx.token_identifier, &tx.amount))
             }
             TransactionStatus::Rejected => {
-                self.set_transaction_status(&sender, nonce, TransactionStatus::Rejected);
+                self.transaction_status(&sender, nonce)
+                    .set(&TransactionStatus::Rejected);
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
-                self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+
+                Ok(self.refund_esdt_token(tx.from, tx.token_identifier, tx.amount))
             }
-            _ => return sc_error!("Transaction status may only be set to Executed or Rejected"),
+            _ => sc_error!("Transaction status may only be set to Executed or Rejected"),
         }
-
-        self.set_transaction_status(&sender, nonce, transaction_status);
-
-        Ok(())
     }
 
     #[endpoint]
     fn claim(&self) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
+        let caller = self.get_caller();
         self.send().direct_egld(
-            &self.get_caller(),
-            &self.get_claimable_transaction_fee(),
-            b"claim",
+            &caller,
+            &self.claimable_transaction_fee().get(),
+            self.data_or_empty(&caller, b"claim"),
         );
 
-        self.set_claimable_transaction_fee(&BigUint::zero());
+        self.claimable_transaction_fee().clear();
 
         Ok(())
     }
@@ -142,16 +141,16 @@ pub trait EsdtSafe {
     #[endpoint(depositEgldForTransactionFee)]
     fn deposit_egld_for_transaction_fee(&self, #[payment] payment: BigUint) {
         let caller = self.get_caller();
-        let mut caller_deposit = self.get_deposit(&caller);
+        let mut caller_deposit = self.deposit(&caller).get();
         caller_deposit += payment;
-        self.set_deposit(&caller, &caller_deposit);
+        self.deposit(&caller).set(&caller_deposit);
     }
 
     /// amount argument is optional, defaults to max possible if not provided
     #[endpoint(whithdrawDeposit)]
     fn whithdraw_deposit(&self, #[var_args] opt_amount: OptionalArg<BigUint>) -> SCResult<()> {
         let caller = self.get_caller();
-        let caller_deposit = self.get_deposit(&caller);
+        let caller_deposit = self.deposit(&caller).get();
         let amount = match opt_amount {
             OptionalArg::Some(value) => value,
             OptionalArg::None => caller_deposit.clone(),
@@ -160,8 +159,9 @@ pub trait EsdtSafe {
         require!(amount <= caller_deposit, "Trying to whithdraw too much");
 
         let deposit_remaining = &caller_deposit - &amount;
-        self.send().direct_egld(&caller, &amount, b"whitdrawal");
-        self.set_deposit(&caller, &deposit_remaining);
+        self.send()
+            .direct_egld(&caller, &amount, self.data_or_empty(&caller, b"whitdrawal"));
+        self.deposit(&caller).set(&deposit_remaining);
 
         Ok(())
     }
@@ -182,8 +182,8 @@ pub trait EsdtSafe {
         require!(!to.is_zero(), "Can't transfer to address zero");
 
         let caller = self.get_caller();
-        let caller_deposit = self.get_deposit(&caller);
-        let transaction_fee = self.get_transaction_fee();
+        let caller_deposit = self.deposit(&caller).get();
+        let transaction_fee = self.transaction_fee().get();
 
         require!(
             caller_deposit >= transaction_fee,
@@ -201,43 +201,56 @@ pub trait EsdtSafe {
 
         let sender_nonce = self.transactions_by_nonce(&caller).len();
 
-        self.set_transaction_status(&caller, sender_nonce, TransactionStatus::Pending);
+        self.transaction_status(&caller, sender_nonce)
+            .set(&TransactionStatus::Pending);
         self.pending_transaction_address_nonce_list()
             .push_back((caller.clone(), sender_nonce));
 
         // deduct fee from deposit and add to claimable fees pool
         let deposit_remaining = &caller_deposit - &transaction_fee;
-        self.set_deposit(&caller, &deposit_remaining);
+        self.deposit(&caller).set(&deposit_remaining);
 
-        let mut claimable_transaction_fee = self.get_claimable_transaction_fee();
+        let mut claimable_transaction_fee = self.claimable_transaction_fee().get();
         claimable_transaction_fee += transaction_fee;
-        self.set_claimable_transaction_fee(&claimable_transaction_fee);
+        self.claimable_transaction_fee()
+            .set(&claimable_transaction_fee);
 
         Ok(())
     }
 
     // private
 
-    fn burn_esdt_token(&self, token_identifier: &TokenIdentifier, amount: &BigUint) {
-        let mut serializer = HexCallDataSerializer::new(ESDT_BURN_STRING);
-        serializer.push_argument_bytes(token_identifier.as_slice());
-        serializer.push_argument_bytes(&amount.to_bytes_be());
-
-        self.send().async_call_raw(
-            &Address::from(ESDT_SYSTEM_SC_ADDRESS_ARRAY),
-            &BigUint::zero(),
-            serializer.as_slice(),
-        );
+    fn burn_esdt_token(
+        &self,
+        token_identifier: &TokenIdentifier,
+        amount: &BigUint,
+    ) -> AsyncCall<BigUint> {
+        ESDTSystemSmartContractProxy::new()
+            .burn(token_identifier.as_esdt_identifier(), amount)
+            .async_call()
     }
 
     fn refund_esdt_token(
         &self,
-        to: &Address,
-        token_identifier: &TokenIdentifier,
-        amount: &BigUint,
-    ) {
-        self.send()
-            .direct_esdt_via_transf_exec(to, token_identifier.as_slice(), amount, b"refund");
+        to: Address,
+        token_id: TokenIdentifier,
+        amount: BigUint,
+    ) -> AsyncCall<BigUint> {
+        ContractCall::<BigUint, ()>::new(
+            to.clone(),
+            token_id,
+            amount,
+            BoxedBytes::from(self.data_or_empty(&to, b"refund")),
+        )
+        .async_call()
+    }
+
+    fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
+        if self.is_smart_contract(to) {
+            &[]
+        } else {
+            data
+        }
     }
 
     // storage
@@ -245,20 +258,14 @@ pub trait EsdtSafe {
     // transaction fee, can only be set by owner
 
     #[view(getTransactionFee)]
-    #[storage_get("transactionFee")]
-    fn get_transaction_fee(&self) -> BigUint;
-
-    #[storage_set("transactionFee")]
-    fn set_transaction_fee(&self, transaction_fee: &BigUint);
+    #[storage_mapper("transactionFee")]
+    fn transaction_fee(&self) -> SingleValueMapper<Self::Storage, BigUint>;
 
     // transaction fees available for claiming, only added to this pool after the transaction was added in Pending status
 
     #[view(getClaimableTransactionFee)]
-    #[storage_get("claimableTransactionFee")]
-    fn get_claimable_transaction_fee(&self) -> BigUint;
-
-    #[storage_set("claimableTransactionFee")]
-    fn set_claimable_transaction_fee(&self, claimable_transaction_fee: &BigUint);
+    #[storage_mapper("claimableTransactionFee")]
+    fn claimable_transaction_fee(&self) -> SingleValueMapper<Self::Storage, BigUint>;
 
     // token whitelist
 
@@ -268,11 +275,8 @@ pub trait EsdtSafe {
     // eGLD amounts deposited by each address, for the sole purpose of paying for transaction fees
 
     #[view(getDeposit)]
-    #[storage_get("deposit")]
-    fn get_deposit(&self, address: &Address) -> BigUint;
-
-    #[storage_set("deposit")]
-    fn set_deposit(&self, address: &Address, deposit: &BigUint);
+    #[storage_mapper("deposit")]
+    fn deposit(&self, address: &Address) -> SingleValueMapper<Self::Storage, BigUint>;
 
     // transactions for each address, sorted by nonce
     // due to how VecMapper works internally, nonces will start at 1
@@ -283,19 +287,15 @@ pub trait EsdtSafe {
         address: &Address,
     ) -> VecMapper<Self::Storage, Transaction<BigUint>>;
 
-    #[storage_get("transactionStatus")]
-    fn get_transaction_status(&self, sender: &Address, nonce: usize) -> TransactionStatus;
-
-    #[storage_set("transactionStatus")]
-    fn set_transaction_status(
+    #[storage_mapper("transactionStatus")]
+    fn transaction_status(
         &self,
         sender: &Address,
-        nonce: usize,
-        transaction_status: TransactionStatus,
-    );
+        nonce: Nonce,
+    ) -> SingleValueMapper<Self::Storage, TransactionStatus>;
 
     #[storage_mapper("pendingTransactionList")]
     fn pending_transaction_address_nonce_list(
         &self,
-    ) -> LinkedListMapper<Self::Storage, (Address, usize)>;
+    ) -> LinkedListMapper<Self::Storage, (Address, Nonce)>;
 }

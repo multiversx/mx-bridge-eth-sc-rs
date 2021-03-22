@@ -1,27 +1,6 @@
 #![no_std]
 
-use elrond_wasm::HexCallDataSerializer;
-
 elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
-
-// erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
-const ESDT_SYSTEM_SC_ADDRESS_ARRAY: [u8; 32] = [
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xff,
-];
-
-const ESDT_ISSUE_COST: u64 = 5000000000000000000; // 5 eGLD
-
-const ESDT_ISSUE_STRING: &[u8] = b"issue";
-const ESDT_MINT_STRING: &[u8] = b"mint";
-
-#[derive(TopEncode, TopDecode)]
-pub enum EsdtOperation<BigUint: BigUintApi> {
-    None,
-    Issue,
-    Mint(TokenIdentifier, BigUint), // token and amount minted
-}
 
 #[elrond_wasm_derive::contract(MultiTransferEsdtImpl)]
 pub trait MultiTransferEsdt {
@@ -37,61 +16,87 @@ pub trait MultiTransferEsdt {
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
         initial_supply: BigUint,
-        num_decimals: u8,
-        #[payment] payment: BigUint,
-    ) -> SCResult<()> {
+        num_decimals: usize,
+        #[payment] issue_cost: BigUint,
+    ) -> SCResult<AsyncCall<BigUint>> {
+        only_owner!(self, "only owner may call this function");
+
+        Ok(ESDTSystemSmartContractProxy::new()
+            .issue_fungible(
+                issue_cost,
+                &token_display_name,
+                &token_ticker,
+                &initial_supply,
+                FungibleTokenProperties {
+                    num_decimals,
+                    can_freeze: false,
+                    can_wipe: false,
+                    can_pause: false,
+                    can_mint: true,
+                    can_burn: false,
+                    can_change_owner: false,
+                    can_upgrade: true,
+                    can_add_special_roles: true
+                }
+            )
+            .async_call()
+            .with_callback(self.callbacks().esdt_issue_callback()))
+    }
+
+    #[endpoint(setLocalMintRole)]
+    fn set_local_mint_role(&self, token_id: TokenIdentifier) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
 
         require!(
-            payment == BigUint::from(ESDT_ISSUE_COST),
-            "Wrong payment, should pay exactly 5 eGLD for ESDT token issue"
+            self.esdt_token_balance().contains_key(&token_id),
+            "Token was not issued yet"
+        );
+        require!(
+            !self.are_local_roles_set(&token_id).get(),
+            "Local roles were already set"
         );
 
-        self.issue_esdt_token(
-            &token_display_name,
-            &token_ticker,
-            &initial_supply,
-            num_decimals,
-        );
-
-        Ok(())
+        Ok(ESDTSystemSmartContractProxy::new()
+            .set_special_roles(
+                &self.get_sc_address(),
+                token_id.as_esdt_identifier(),
+                &[EsdtLocalRole::Mint],
+            )
+            .async_call()
+            .with_callback(self.callbacks().set_roles_callback(token_id)))
     }
 
     #[endpoint(mintEsdtToken)]
-    fn mint_esdt_token_endpoint(
-        &self,
-        token_identifier: TokenIdentifier,
-        amount: BigUint,
-    ) -> SCResult<()> {
+    fn mint_esdt_token(&self, token_id: TokenIdentifier, amount: BigUint) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
         require!(
-            self.esdt_token_balance().contains_key(&token_identifier),
+            self.esdt_token_balance().contains_key(&token_id),
             "Token has to be issued first"
         );
 
-        self.mint_esdt_token(&token_identifier, &amount);
-
-        Ok(())
+        self.try_mint(&token_id, &amount)
     }
 
     #[endpoint(transferEsdtToken)]
     fn transfer_esdt_token_endpoint(
         &self,
-        from: Address,
         to: Address,
-        token_identifier: TokenIdentifier,
+        token_id: TokenIdentifier,
         amount: BigUint,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
         require!(!to.is_zero(), "Can't transfer to address zero");
-        require!(
-            self.get_esdt_token_balance(&token_identifier) >= amount,
-            "Not enough ESDT balance"
-        );
 
-        self.transfer_esdt_token(&from, &to, &token_identifier, &amount);
+        let esdt_balance = self.get_esdt_token_balance(&token_id);
+        if esdt_balance < amount {
+            let extra_needed = &amount - &esdt_balance;
+
+            sc_try!(self.try_mint(&token_id, &extra_needed));
+        }
+
+        self.transfer_esdt_token(&to, &token_id, &amount);
 
         Ok(())
     }
@@ -99,20 +104,20 @@ pub trait MultiTransferEsdt {
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
-        #[var_args] args: VarArgs<MultiArg4<Address, Address, TokenIdentifier, BigUint>>,
+        #[var_args] args: VarArgs<MultiArg3<Address, TokenIdentifier, BigUint>>,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
         for multi_arg in args.into_vec().into_iter() {
-            let (from, to, token_identifier, amount) = multi_arg.into_tuple();
+            let (to, token_id, amount) = multi_arg.into_tuple();
 
             require!(!to.is_zero(), "Can't transfer to address zero");
             require!(
-                self.get_esdt_token_balance(&token_identifier) >= amount,
+                self.get_esdt_token_balance(&token_id) >= amount,
                 "Not enough ESDT balance"
             );
 
-            self.transfer_esdt_token(&from, &to, &token_identifier, &amount);
+            self.transfer_esdt_token(&to, &token_id, &amount);
         }
 
         Ok(())
@@ -121,9 +126,9 @@ pub trait MultiTransferEsdt {
     // views
 
     #[view(getEsdtTokenBalance)]
-    fn get_esdt_token_balance(&self, token_identifier: &TokenIdentifier) -> BigUint {
+    fn get_esdt_token_balance(&self, token_id: &TokenIdentifier) -> BigUint {
         self.esdt_token_balance()
-            .get(token_identifier)
+            .get(token_id)
             .unwrap_or_else(|| BigUint::zero())
     }
 
@@ -132,8 +137,8 @@ pub trait MultiTransferEsdt {
     fn get_available_tokens_list(&self) -> MultiResultVec<MultiResult2<TokenIdentifier, BigUint>> {
         let mut result = Vec::new();
 
-        for (token_identifier, amount) in self.esdt_token_balance().iter() {
-            result.push((token_identifier, amount).into());
+        for (token_id, amount) in self.esdt_token_balance().iter() {
+            result.push((token_id, amount).into());
         }
 
         result.into()
@@ -141,144 +146,98 @@ pub trait MultiTransferEsdt {
 
     // private
 
-    fn issue_esdt_token(
-        &self,
-        token_display_name: &BoxedBytes,
-        token_ticker: &BoxedBytes,
-        initial_supply: &BigUint,
-        num_decimals: u8,
-    ) {
-        let mut serializer = HexCallDataSerializer::new(ESDT_ISSUE_STRING);
-
-        serializer.push_argument_bytes(token_display_name.as_slice());
-        serializer.push_argument_bytes(token_ticker.as_slice());
-        serializer.push_argument_bytes(&initial_supply.to_bytes_be());
-        serializer.push_argument_bytes(&[num_decimals]);
-
-        serializer.push_argument_bytes(&b"canFreeze"[..]);
-        serializer.push_argument_bytes(&b"false"[..]);
-
-        serializer.push_argument_bytes(&b"canWipe"[..]);
-        serializer.push_argument_bytes(&b"false"[..]);
-
-        serializer.push_argument_bytes(&b"canPause"[..]);
-        serializer.push_argument_bytes(&b"false"[..]);
-
-        serializer.push_argument_bytes(&b"canMint"[..]);
-        serializer.push_argument_bytes(&b"true"[..]);
-
-        serializer.push_argument_bytes(&b"canBurn"[..]);
-        serializer.push_argument_bytes(&b"true"[..]);
-
-        serializer.push_argument_bytes(&b"canChangeOwner"[..]);
-        serializer.push_argument_bytes(&b"false"[..]);
-
-        serializer.push_argument_bytes(&b"canUpgrade"[..]);
-        serializer.push_argument_bytes(&b"true"[..]);
-
-        // save data for callback
-        self.set_temporary_storage_esdt_operation(&self.get_tx_hash(), &EsdtOperation::Issue);
-
-        self.send().async_call_raw(
-            &Address::from(ESDT_SYSTEM_SC_ADDRESS_ARRAY),
-            &BigUint::from(ESDT_ISSUE_COST),
-            serializer.as_slice(),
-        );
-    }
-
-    fn mint_esdt_token(&self, token_identifier: &TokenIdentifier, amount: &BigUint) {
-        let mut serializer = HexCallDataSerializer::new(ESDT_MINT_STRING);
-        serializer.push_argument_bytes(token_identifier.as_slice());
-        serializer.push_argument_bytes(&amount.to_bytes_be());
-
-        // save data for callback
-        self.set_temporary_storage_esdt_operation(
-            &self.get_tx_hash(),
-            &EsdtOperation::Mint(token_identifier.clone(), amount.clone()),
-        );
-
-        self.send().async_call_raw(
-            &Address::from(ESDT_SYSTEM_SC_ADDRESS_ARRAY),
-            &BigUint::zero(),
-            serializer.as_slice(),
-        );
-    }
-
     fn transfer_esdt_token(
         &self,
-        from: &Address,
         to: &Address,
-        token_identifier: &TokenIdentifier,
+        token_id: &TokenIdentifier,
         amount: &BigUint,
     ) {
-        self.decrease_esdt_token_balance(&token_identifier, &amount);
+        self.decrease_esdt_token_balance(&token_id, &amount);
 
-        let data = [b"transfer from ", from.as_bytes()].concat();
-        self.send()
-            .direct_esdt_via_transf_exec(&to, token_identifier.as_slice(), &amount, &data);
+        self.send().direct_esdt_via_transf_exec(
+            &to,
+            token_id.as_esdt_identifier(),
+            &amount,
+            self.data_or_empty(&to, b"offchain transfer"),
+        );
     }
 
-    fn increase_esdt_token_balance(&self, token_identifier: &TokenIdentifier, amount: &BigUint) {
-        let mut total_balance = self.get_esdt_token_balance(token_identifier);
+    fn increase_esdt_token_balance(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        let mut total_balance = self.get_esdt_token_balance(token_id);
         total_balance += amount;
-        self.set_esdt_token_balance(token_identifier, amount);
+        self.set_esdt_token_balance(token_id, amount);
     }
 
-    fn decrease_esdt_token_balance(&self, token_identifier: &TokenIdentifier, amount: &BigUint) {
-        let mut total_balance = self.get_esdt_token_balance(token_identifier);
+    fn decrease_esdt_token_balance(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        let mut total_balance = self.get_esdt_token_balance(token_id);
         total_balance -= amount;
-        self.set_esdt_token_balance(token_identifier, amount);
+        self.set_esdt_token_balance(token_id, amount);
     }
 
-    fn set_esdt_token_balance(&self, token_identifier: &TokenIdentifier, amount: &BigUint) {
+    fn set_esdt_token_balance(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         self.esdt_token_balance()
-            .insert(token_identifier.clone(), amount.clone());
+            .insert(token_id.clone(), amount.clone());
+    }
+
+    fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
+        if self.is_smart_contract(to) {
+            &[]
+        } else {
+            data
+        }
+    }
+
+    fn try_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> SCResult<()> {
+        require!(
+            self.are_local_roles_set(token_id).get(),
+            "LocalMint role not set"
+        );
+
+        self.send()
+            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
+        self.increase_esdt_token_balance(token_id, amount);
+
+        Ok(())
     }
 
     // callbacks
 
-    #[callback_raw]
-    fn callback_raw(&self, #[var_args] result: AsyncCallResult<VarArgs<BoxedBytes>>) {
-        let success = matches!(result, AsyncCallResult::Ok(_));
-        let original_tx_hash = self.get_tx_hash();
-
-        let esdt_operation = self.get_temporary_storage_esdt_operation(&original_tx_hash);
-        match esdt_operation {
-            EsdtOperation::None => return,
-            EsdtOperation::Issue => self.perform_esdt_issue_callback(success),
-            EsdtOperation::Mint(token_identifier, amount) => {
-                self.perform_esdt_mint_callback(success, &token_identifier, &amount)
-            }
-        };
-
-        self.clear_temporary_storage_esdt_operation(&original_tx_hash);
-    }
-
-    fn perform_esdt_issue_callback(&self, success: bool) {
+    #[callback]
+    fn esdt_issue_callback(
+        &self,
+        #[payment_token] token_identifier: TokenIdentifier,
+        #[payment] returned_tokens: BigUint,
+        #[call_result] result: AsyncCallResult<()>,
+    ) {
         // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
         // so we can get the token identifier and amount from the call data
-        let token_identifier = self.call_value().token();
-        let initial_supply = self.call_value().esdt_value();
-
-        if success {
-            self.esdt_token_balance()
-                .insert(token_identifier, initial_supply);
+        match result {
+            AsyncCallResult::Ok(()) => {
+                self.esdt_token_balance()
+                    .insert(token_identifier, returned_tokens);
+            }
+            AsyncCallResult::Err(_) => {
+                // refund payment to caller, which is the sc owner
+                if token_identifier.is_egld() && returned_tokens > 0 {
+                    self.send()
+                        .direct_egld(&self.get_owner_address(), &returned_tokens, &[]);
+                }
+            }
         }
-
-        // nothing to do in case of error
     }
 
-    fn perform_esdt_mint_callback(
+    #[callback]
+    fn set_roles_callback(
         &self,
-        success: bool,
-        token_identifier: &TokenIdentifier,
-        amount: &BigUint,
+        token_id: TokenIdentifier,
+        #[call_result] result: AsyncCallResult<()>,
     ) {
-        if success {
-            self.increase_esdt_token_balance(token_identifier, amount);
+        match result {
+            AsyncCallResult::Ok(()) => {
+                self.are_local_roles_set(&token_id).set(&true);
+            }
+            AsyncCallResult::Err(_) => {}
         }
-
-        // nothing to do in case of error
     }
 
     // storage
@@ -288,21 +247,10 @@ pub trait MultiTransferEsdt {
     #[storage_mapper("esdtTokenBalance")]
     fn esdt_token_balance(&self) -> MapMapper<Self::Storage, TokenIdentifier, BigUint>;
 
-    // temporary storage for ESDT operations. Used in callback.
-
-    #[storage_get("temporaryStorageEsdtOperation")]
-    fn get_temporary_storage_esdt_operation(
+    #[view(areLocalRolesSet)]
+    #[storage_mapper("areLocalRolesSet")]
+    fn are_local_roles_set(
         &self,
-        original_tx_hash: &H256,
-    ) -> EsdtOperation<BigUint>;
-
-    #[storage_set("temporaryStorageEsdtOperation")]
-    fn set_temporary_storage_esdt_operation(
-        &self,
-        original_tx_hash: &H256,
-        esdt_operation: &EsdtOperation<BigUint>,
-    );
-
-    #[storage_clear("temporaryStorageEsdtOperation")]
-    fn clear_temporary_storage_esdt_operation(&self, original_tx_hash: &H256);
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<Self::Storage, bool>;
 }

@@ -3,5 +3,7 @@ members = [
   "egld-esdt-swap",
   "egld-esdt-swap/abi",
   "esdt-safe",
-  "esdt-safe/abi"
+  "esdt-safe/abi",
+  "multi-transfer-esdt",
+  "multi-transfer-esdt/abi",
 ]
