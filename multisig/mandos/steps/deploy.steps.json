@@ -1,0 +1,99 @@
+{
+    "name": "adder",
+    "comment": "add then check",
+    "steps": [
+        {
+            "step": "scDeploy",
+            "txId": "multisig-deploy",
+            "tx": {
+                "from": "address:owner",
+                "value": "0",
+                "contractCode": "file:../../output/multisig.wasm",
+                "arguments": [
+                    "2",
+                    "address:alice",
+                    "address:bob",
+                    "address:charlie"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [],
+                "status": "",
+                "logs": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "getQuorum",
+            "tx": {
+                "from": "address:owner",
+                "to": "address:multisig",
+                "value": "0",
+                "function": "getQuorum",
+                "arguments": [],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [
+                    "2"
+                ],
+                "status": "",
+                "logs": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "getNumBoardMembers",
+            "tx": {
+                "from": "address:owner",
+                "to": "address:multisig",
+                "value": "0",
+                "function": "getNumBoardMembers",
+                "arguments": [],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "out": [
+                    "3"
+                ],
+                "status": "",
+                "logs": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:multisig": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "``user_count": "3",
+                        "``user_address_to_id|address:alice": "1",
+                        "``user_address_to_id|address:bob": "2",
+                        "``user_address_to_id|address:charlie": "3",
+                        "``user_id_to_address|u32:1": "address:alice",
+                        "``user_id_to_address|u32:2": "address:bob",
+                        "``user_id_to_address|u32:3": "address:charlie",
+                        "``user_role|u32:1": "2",
+                        "``user_role|u32:2": "2",
+                        "``user_role|u32:3": "2",
+                        "``num_board_members": "3",
+                        "``quorum": "2"
+                    },
+                    "code": "file:../../output/multisig.wasm"
+                },
+                "+": ""
+            }
+        }
+    ]
+}
