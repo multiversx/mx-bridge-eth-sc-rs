@@ -42,8 +42,8 @@ pub trait EgldEsdtSwap {
                     can_burn: false,
                     can_change_owner: false,
                     can_upgrade: true,
-                    can_add_special_roles: true
-                }
+                    can_add_special_roles: true,
+                },
             )
             .async_call()
             .with_callback(self.callbacks().esdt_issue_callback()))
@@ -97,14 +97,12 @@ pub trait EgldEsdtSwap {
         );
 
         let wrapped_egld_token_id = self.wrapped_egld_token_identifier().get();
-        let wrapped_egld_left = self.wrapped_egld_remaining().get();
+        let wrapped_egld_left = self.get_wrapped_egld_remaining();
         if wrapped_egld_left < payment {
             let extra_needed = &payment - &wrapped_egld_left;
 
             sc_try!(self.try_mint(&wrapped_egld_token_id, &extra_needed));
         }
-
-        self.subtract_total_wrapped_egld(&payment);
 
         let caller = self.get_caller();
         self.send().direct_esdt_via_transf_exec(
@@ -140,8 +138,6 @@ pub trait EgldEsdtSwap {
             "Contract does not have enough funds"
         );
 
-        self.add_total_wrapped_egld(&payment);
-
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
         let caller = self.get_caller();
         self.send().direct_egld(
@@ -153,24 +149,25 @@ pub trait EgldEsdtSwap {
         Ok(())
     }
 
+    // views
+
     #[view(getLockedEgldBalance)]
     fn get_locked_egld_balance(&self) -> BigUint {
         self.get_sc_balance()
     }
 
+    #[view(getWrappedEgldRemaining)]
+    fn get_wrapped_egld_remaining(&self) -> BigUint {
+        self.get_esdt_balance(
+            &self.get_sc_address(),
+            self.wrapped_egld_token_identifier()
+                .get()
+                .as_esdt_identifier(),
+            0,
+        )
+    }
+
     // private
-
-    fn add_total_wrapped_egld(&self, amount: &BigUint) {
-        let mut total_wrapped = self.wrapped_egld_remaining().get();
-        total_wrapped += amount;
-        self.wrapped_egld_remaining().set(&total_wrapped);
-    }
-
-    fn subtract_total_wrapped_egld(&self, amount: &BigUint) {
-        let mut total_wrapped = self.wrapped_egld_remaining().get();
-        total_wrapped -= amount;
-        self.wrapped_egld_remaining().set(&total_wrapped);
-    }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
         if self.is_smart_contract(to) {
@@ -185,7 +182,6 @@ pub trait EgldEsdtSwap {
 
         self.send()
             .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
-        self.add_total_wrapped_egld(&amount);
 
         Ok(())
     }
@@ -204,7 +200,6 @@ pub trait EgldEsdtSwap {
         match result {
             AsyncCallResult::Ok(()) => {
                 self.wrapped_egld_token_identifier().set(&token_identifier);
-                self.wrapped_egld_remaining().set(&returned_tokens);
             }
             AsyncCallResult::Err(_) => {
                 // refund payment to caller, which is the sc owner
@@ -233,10 +228,6 @@ pub trait EgldEsdtSwap {
     #[view(getWrappedEgldTokenIdentifier)]
     #[storage_mapper("wrappedEgldTokenIdentifier")]
     fn wrapped_egld_token_identifier(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
-
-    #[view(getWrappedEgldRemaining)]
-    #[storage_mapper("wrappedEgldRemaining")]
-    fn wrapped_egld_remaining(&self) -> SingleValueMapper<Self::Storage, BigUint>;
 
     #[view(areLocalRolesSet)]
     #[storage_mapper("areLocalRolesSet")]

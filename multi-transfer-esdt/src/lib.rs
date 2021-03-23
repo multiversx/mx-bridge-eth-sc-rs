@@ -36,8 +36,8 @@ pub trait MultiTransferEsdt {
                     can_burn: false,
                     can_change_owner: false,
                     can_upgrade: true,
-                    can_add_special_roles: true
-                }
+                    can_add_special_roles: true,
+                },
             )
             .async_call()
             .with_callback(self.callbacks().esdt_issue_callback()))
@@ -48,7 +48,7 @@ pub trait MultiTransferEsdt {
         only_owner!(self, "only owner may call this function");
 
         require!(
-            self.esdt_token_balance().contains_key(&token_id),
+            self.issued_tokens().contains(&token_id),
             "Token was not issued yet"
         );
         require!(
@@ -71,7 +71,7 @@ pub trait MultiTransferEsdt {
         only_owner!(self, "only owner may call this function");
 
         require!(
-            self.esdt_token_balance().contains_key(&token_id),
+            self.issued_tokens().contains(&token_id),
             "Token has to be issued first"
         );
 
@@ -89,7 +89,7 @@ pub trait MultiTransferEsdt {
 
         require!(!to.is_zero(), "Can't transfer to address zero");
 
-        let esdt_balance = self.get_esdt_token_balance(&token_id);
+        let esdt_balance = self.get_sc_esdt_balance(&token_id);
         if esdt_balance < amount {
             let extra_needed = &amount - &esdt_balance;
 
@@ -112,10 +112,13 @@ pub trait MultiTransferEsdt {
             let (to, token_id, amount) = multi_arg.into_tuple();
 
             require!(!to.is_zero(), "Can't transfer to address zero");
-            require!(
-                self.get_esdt_token_balance(&token_id) >= amount,
-                "Not enough ESDT balance"
-            );
+
+            let esdt_balance = self.get_sc_esdt_balance(&token_id);
+            if esdt_balance < amount {
+                let extra_needed = &amount - &esdt_balance;
+
+                sc_try!(self.try_mint(&token_id, &extra_needed));
+            }
 
             self.transfer_esdt_token(&to, &token_id, &amount);
         }
@@ -125,58 +128,20 @@ pub trait MultiTransferEsdt {
 
     // views
 
-    #[view(getEsdtTokenBalance)]
-    fn get_esdt_token_balance(&self, token_id: &TokenIdentifier) -> BigUint {
-        self.esdt_token_balance()
-            .get(token_id)
-            .unwrap_or_else(|| BigUint::zero())
-    }
-
-    /// returns list of all the available tokens and their balance
-    #[view(getAvailableTokensList)]
-    fn get_available_tokens_list(&self) -> MultiResultVec<MultiResult2<TokenIdentifier, BigUint>> {
-        let mut result = Vec::new();
-
-        for (token_id, amount) in self.esdt_token_balance().iter() {
-            result.push((token_id, amount).into());
-        }
-
-        result.into()
+    #[view(getScEsdtBalance)]
+    fn get_sc_esdt_balance(&self, token_id: &TokenIdentifier) -> BigUint {
+        self.get_esdt_balance(&self.get_sc_address(), token_id.as_esdt_identifier(), 0)
     }
 
     // private
 
-    fn transfer_esdt_token(
-        &self,
-        to: &Address,
-        token_id: &TokenIdentifier,
-        amount: &BigUint,
-    ) {
-        self.decrease_esdt_token_balance(&token_id, &amount);
-
+    fn transfer_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &BigUint) {
         self.send().direct_esdt_via_transf_exec(
             &to,
             token_id.as_esdt_identifier(),
             &amount,
             self.data_or_empty(&to, b"offchain transfer"),
         );
-    }
-
-    fn increase_esdt_token_balance(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        let mut total_balance = self.get_esdt_token_balance(token_id);
-        total_balance += amount;
-        self.set_esdt_token_balance(token_id, amount);
-    }
-
-    fn decrease_esdt_token_balance(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        let mut total_balance = self.get_esdt_token_balance(token_id);
-        total_balance -= amount;
-        self.set_esdt_token_balance(token_id, amount);
-    }
-
-    fn set_esdt_token_balance(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.esdt_token_balance()
-            .insert(token_id.clone(), amount.clone());
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -195,7 +160,6 @@ pub trait MultiTransferEsdt {
 
         self.send()
             .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
-        self.increase_esdt_token_balance(token_id, amount);
 
         Ok(())
     }
@@ -213,8 +177,7 @@ pub trait MultiTransferEsdt {
         // so we can get the token identifier and amount from the call data
         match result {
             AsyncCallResult::Ok(()) => {
-                self.esdt_token_balance()
-                    .insert(token_identifier, returned_tokens);
+                self.issued_tokens().insert(token_identifier);
             }
             AsyncCallResult::Err(_) => {
                 // refund payment to caller, which is the sc owner
@@ -242,10 +205,8 @@ pub trait MultiTransferEsdt {
 
     // storage
 
-    // list of available tokens
-
-    #[storage_mapper("esdtTokenBalance")]
-    fn esdt_token_balance(&self) -> MapMapper<Self::Storage, TokenIdentifier, BigUint>;
+    #[storage_mapper("issuedTokens")]
+    fn issued_tokens(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 
     #[view(areLocalRolesSet)]
     #[storage_mapper("areLocalRolesSet")]
