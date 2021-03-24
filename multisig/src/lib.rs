@@ -7,6 +7,7 @@ mod smart_contract_call;
 mod user_role;
 
 use action::{Action, ActionFullInfo};
+use elrond_wasm::contract_call;
 use proxy::*;
 use smart_contract_call::*;
 use transaction::*;
@@ -670,10 +671,9 @@ pub trait Multisig {
         self.clear_action(action_id);
 
         match action {
-            Action::Nothing => Ok(()),
+            Action::Nothing => {}
             Action::AddBoardMember(board_member_address) => {
                 self.change_user_role(board_member_address, UserRole::BoardMember);
-                Ok(())
             }
             Action::AddProposer(proposer_address) => {
                 self.change_user_role(proposer_address, UserRole::Proposer);
@@ -683,8 +683,6 @@ pub trait Multisig {
                     self.quorum().get() <= self.num_board_members().get(),
                     "quorum cannot exceed board size"
                 );
-
-                Ok(())
             }
             Action::RemoveUser(user_address) => {
                 self.change_user_role(user_address, UserRole::None);
@@ -698,8 +696,6 @@ pub trait Multisig {
                     self.quorum().get() <= num_board_members,
                     "quorum cannot exceed board size"
                 );
-
-                Ok(())
             }
             Action::SlashUser(user_address) => {
                 self.change_user_role(user_address.clone(), UserRole::None);
@@ -726,8 +722,6 @@ pub trait Multisig {
                 let mut total_slashed_amount = self.slashed_tokens_amount().get();
                 total_slashed_amount += &slash_amount;
                 self.slashed_tokens_amount().set(&total_slashed_amount);
-
-                Ok(())
             }
             Action::ChangeQuorum(new_quorum) => {
                 require!(
@@ -735,29 +729,184 @@ pub trait Multisig {
                     "quorum cannot exceed board size"
                 );
                 self.quorum().set(&new_quorum);
-                
-                Ok(())
             }
-            Action::SCDeploy {
-                amount,
-                code,
-                code_metadata,
-                arguments,
-            } => {
-                let gas_left = self.get_gas_left();
-                let mut arg_buffer = ArgBuffer::new();
-                for arg in arguments {
-                    arg_buffer.push_argument_bytes(arg.as_slice());
-                }
-                let new_address = self.send().deploy_contract(
-                    gas_left,
-                    &amount,
+            Action::EgldEsdtSwapCall(call) => self.execute_egld_esdt_swap_call(call),
+            Action::EsdtSafeCall(call) => self.execute_esdt_safe_call(call),
+            Action::MultiTransferEsdtCall(call) => self.execute_multi_transfer_esdt_call(call),
+        }
+
+        Ok(())
+    }
+
+    fn execute_egld_esdt_swap_call(&self, call: EgldEsdtSwapCall<BigUint>) {
+        let contract_address = if !self.egld_esdt_swap_address().is_empty() {
+            self.egld_esdt_swap_address().get()
+        } else {
+            Address::zero()
+        };
+        let contract_call = contract_call!(self, contract_address, EgldEsdtSwapProxy);
+        let gas = self.get_gas_left();
+        let api = self.send();
+
+        match call {
+            EgldEsdtSwapCall::Deploy { code } => {
+                let deployed_contract_address = self.send().deploy_contract(
+                    gas,
+                    &BigUint::zero(),
                     &code,
-                    code_metadata,
+                    CodeMetadata::DEFAULT,
+                    &ArgBuffer::new(),
+                );
+
+                self.egld_esdt_swap_address()
+                    .set(&deployed_contract_address);
+            }
+            EgldEsdtSwapCall::IssueWrappedEgld {
+                token_display_name,
+                token_ticker,
+                initial_supply,
+                issue_cost,
+            } => {
+                contract_call
+                    .with_token_transfer(TokenIdentifier::egld(), issue_cost)
+                    .issueWrappedEgld(token_display_name, token_ticker, initial_supply)
+                    .execute_on_dest_context(gas, api);
+            }
+            EgldEsdtSwapCall::SetLocalMintRole => {
+                contract_call
+                    .setLocalMintRole()
+                    .execute_on_dest_context(gas, api);
+            }
+            EgldEsdtSwapCall::MintWrappedEgld { amount } => {
+                contract_call
+                    .mintWrappedEgld(amount)
+                    .execute_on_dest_context(gas, api);
+            }
+        }
+    }
+
+    fn execute_esdt_safe_call(&self, call: EsdtSafeCall<BigUint>) {
+        let contract_address = if !self.esdt_safe_address().is_empty() {
+            self.esdt_safe_address().get()
+        } else {
+            Address::zero()
+        };
+        let contract_call = contract_call!(self, contract_address, EsdtSafeProxy);
+        let gas = self.get_gas_left();
+        let api = self.send();
+
+        match call {
+            EsdtSafeCall::Deploy {
+                code,
+                transaction_fee,
+                token_whitelist,
+            } => {
+                let mut arg_buffer = ArgBuffer::new();
+                arg_buffer.push_argument_bytes(transaction_fee.to_bytes_be().as_slice());
+
+                for token_id in token_whitelist {
+                    arg_buffer.push_argument_bytes(token_id.as_esdt_identifier());
+                }
+
+                let deployed_contract_address = self.send().deploy_contract(
+                    gas,
+                    &BigUint::zero(),
+                    &code,
+                    CodeMetadata::DEFAULT,
                     &arg_buffer,
                 );
-                
-                Ok(())
+
+                self.esdt_safe_address().set(&deployed_contract_address);
+            }
+            EsdtSafeCall::SetTransactionFee { transaction_fee } => {
+                contract_call
+                    .setTransactionFee(transaction_fee)
+                    .execute_on_dest_context(gas, api);
+            }
+            EsdtSafeCall::AddTokenToWhitelist { token_id } => {
+                contract_call
+                    .addTokenToWhitelist(token_id)
+                    .execute_on_dest_context(gas, api);
+            }
+            EsdtSafeCall::RemoveTokenFromWhitelist { token_id } => {
+                contract_call
+                    .removeTokenFromWhitelist(token_id)
+                    .execute_on_dest_context(gas, api);
+            }
+            EsdtSafeCall::GetNextPendingTransaction => {
+                let tx = contract_call
+                    .getNextPendingTransaction()
+                    .execute_on_dest_context(gas, api);
+
+                // TODO: Decide what to do with the tx
+            }
+            EsdtSafeCall::SetTransactionStatus {
+                sender,
+                nonce,
+                transaction_status,
+            } => {
+                contract_call
+                    .setTransactionStatus(sender, nonce, transaction_status)
+                    .execute_on_dest_context(gas, api);
+            }
+            EsdtSafeCall::Claim => {
+                contract_call.claim().execute_on_dest_context(gas, api);
+            }
+        }
+    }
+
+    fn execute_multi_transfer_esdt_call(&self, call: MultiTransferEsdtCall<BigUint>) {
+        let contract_address = if !self.multi_transfer_esdt_address().is_empty() {
+            self.multi_transfer_esdt_address().get()
+        } else {
+            Address::zero()
+        };
+        let contract_call = contract_call!(self, contract_address, MultiTransferEsdtProxy);
+        let gas = self.get_gas_left();
+        let api = self.send();
+
+        match call {
+            MultiTransferEsdtCall::Deploy { code } => {
+                let deployed_contract_address = self.send().deploy_contract(
+                    gas,
+                    &BigUint::zero(),
+                    &code,
+                    CodeMetadata::DEFAULT,
+                    &ArgBuffer::new(),
+                );
+
+                self.multi_transfer_esdt_address()
+                    .set(&deployed_contract_address);
+            }
+            MultiTransferEsdtCall::IssueEsdtToken {
+                token_display_name,
+                token_ticker,
+                initial_supply,
+                issue_cost,
+            } => {
+                contract_call
+                    .with_token_transfer(TokenIdentifier::egld(), issue_cost)
+                    .issueEsdtToken(token_display_name, token_ticker, initial_supply)
+                    .execute_on_dest_context(gas, api);
+            }
+            MultiTransferEsdtCall::SetLocalMintRole { token_id } => {
+                contract_call
+                    .setLocalMintRole(token_id)
+                    .execute_on_dest_context(gas, api);
+            }
+            MultiTransferEsdtCall::MintEsdtToken { token_id, amount } => {
+                contract_call
+                    .mintEsdtToken(token_id, amount)
+                    .execute_on_dest_context(gas, api);
+            }
+            MultiTransferEsdtCall::TransferEsdtToken {
+                to,
+                token_id,
+                amount,
+            } => {
+                contract_call
+                    .transferEsdtToken(to, token_id, amount)
+                    .execute_on_dest_context(gas, api);
             }
         }
     }
