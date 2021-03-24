@@ -1,6 +1,5 @@
-use elrond_wasm::api::{BigUintApi, EndpointFinishApi, ErrorApi, SendApi};
-use elrond_wasm::io::EndpointResult;
-use elrond_wasm::types::{Address, AsyncCall, BoxedBytes, CodeMetadata, SendEgld, Vec};
+use elrond_wasm::api::BigUintApi;
+use elrond_wasm::types::{Address, Vec};
 
 use crate::smart_contract_call::{EgldEsdtSwapCall, EsdtSafeCall, MultiTransferEsdtCall};
 
@@ -14,9 +13,9 @@ pub enum Action<BigUint: BigUintApi> {
     RemoveUser(Address),
     SlashUser(Address),
     ChangeQuorum(usize),
-	EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
-	EsdtSafeCall(EsdtSafeCall<BigUint>),
-	MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>)
+    EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
+    EsdtSafeCall(EsdtSafeCall<BigUint>),
+    MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>),
 }
 
 impl<BigUint: BigUintApi> Action<BigUint> {
@@ -38,29 +37,6 @@ pub struct ActionFullInfo<BigUint: BigUintApi> {
     pub action_id: usize,
     pub action_data: Action<BigUint>,
     pub signers: Vec<Address>,
-}
-
-#[derive(TypeAbi)]
-pub enum PerformActionResult<BigUint: BigUintApi> {
-    Nothing,
-    SendEgld(SendEgld<BigUint>),
-    DeployResult(Address),
-    AsyncCall(AsyncCall<BigUint>),
-}
-
-impl<FA, BigUint> EndpointResult<FA> for PerformActionResult<BigUint>
-where
-    BigUint: BigUintApi + 'static,
-    FA: EndpointFinishApi + ErrorApi + SendApi<BigUint> + Clone + 'static,
-{
-    fn finish(&self, api: FA) {
-        match self {
-            PerformActionResult::Nothing => (),
-            PerformActionResult::SendEgld(send_egld) => send_egld.finish(api),
-            PerformActionResult::DeployResult(address) => address.finish(api),
-            PerformActionResult::AsyncCall(async_call) => async_call.finish(api),
-        }
-    }
 }
 
 #[cfg(test)]

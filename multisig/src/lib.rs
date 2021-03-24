@@ -6,7 +6,7 @@ mod proxy;
 mod smart_contract_call;
 mod user_role;
 
-use action::{Action, ActionFullInfo, PerformActionResult};
+use action::{Action, ActionFullInfo};
 use proxy::*;
 use smart_contract_call::*;
 use transaction::*;
@@ -422,7 +422,7 @@ pub trait Multisig {
 
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
-    fn perform_action_endpoint(&self, action_id: usize) -> SCResult<PerformActionResult<BigUint>> {
+    fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
         let caller_address = self.get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
@@ -654,7 +654,7 @@ pub trait Multisig {
         }
     }
 
-    fn perform_action(&self, action_id: usize) -> SCResult<PerformActionResult<BigUint>> {
+    fn perform_action(&self, action_id: usize) -> SCResult<()> {
         let action = self.action_mapper().get(action_id);
 
         if self.pause_status().get() {
@@ -670,10 +670,10 @@ pub trait Multisig {
         self.clear_action(action_id);
 
         match action {
-            Action::Nothing => Ok(PerformActionResult::Nothing),
+            Action::Nothing => Ok(()),
             Action::AddBoardMember(board_member_address) => {
                 self.change_user_role(board_member_address, UserRole::BoardMember);
-                Ok(PerformActionResult::Nothing)
+                Ok(())
             }
             Action::AddProposer(proposer_address) => {
                 self.change_user_role(proposer_address, UserRole::Proposer);
@@ -684,7 +684,7 @@ pub trait Multisig {
                     "quorum cannot exceed board size"
                 );
 
-                Ok(PerformActionResult::Nothing)
+                Ok(())
             }
             Action::RemoveUser(user_address) => {
                 self.change_user_role(user_address, UserRole::None);
@@ -698,7 +698,8 @@ pub trait Multisig {
                     self.quorum().get() <= num_board_members,
                     "quorum cannot exceed board size"
                 );
-                Ok(PerformActionResult::Nothing)
+
+                Ok(())
             }
             Action::SlashUser(user_address) => {
                 self.change_user_role(user_address.clone(), UserRole::None);
@@ -726,7 +727,7 @@ pub trait Multisig {
                 total_slashed_amount += &slash_amount;
                 self.slashed_tokens_amount().set(&total_slashed_amount);
 
-                Ok(PerformActionResult::Nothing)
+                Ok(())
             }
             Action::ChangeQuorum(new_quorum) => {
                 require!(
@@ -734,7 +735,8 @@ pub trait Multisig {
                     "quorum cannot exceed board size"
                 );
                 self.quorum().set(&new_quorum);
-                Ok(PerformActionResult::Nothing)
+                
+                Ok(())
             }
             Action::SCDeploy {
                 amount,
@@ -754,7 +756,8 @@ pub trait Multisig {
                     code_metadata,
                     &arg_buffer,
                 );
-                Ok(PerformActionResult::DeployResult(new_address))
+                
+                Ok(())
             }
         }
     }
