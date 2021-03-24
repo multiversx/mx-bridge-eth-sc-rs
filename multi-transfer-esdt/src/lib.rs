@@ -147,6 +147,7 @@ pub trait MultiTransferEsdt {
         // so we can get the token identifier and amount from the call data
         match result {
             AsyncCallResult::Ok(()) => {
+                self.last_issued_token().set(&token_identifier);
                 self.issued_tokens().insert(token_identifier);
             }
             AsyncCallResult::Err(_) => {
@@ -177,6 +178,10 @@ pub trait MultiTransferEsdt {
 
     #[storage_mapper("issuedTokens")]
     fn issued_tokens(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
+
+    #[view(getLastIssuedToken)]
+    #[storage_mapper("lastIssuedToken")]
+    fn last_issued_token(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
 
     #[view(areLocalRolesSet)]
     #[storage_mapper("areLocalRolesSet")]

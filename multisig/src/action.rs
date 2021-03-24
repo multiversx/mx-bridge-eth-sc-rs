@@ -2,6 +2,8 @@ use elrond_wasm::api::{BigUintApi, EndpointFinishApi, ErrorApi, SendApi};
 use elrond_wasm::io::EndpointResult;
 use elrond_wasm::types::{Address, AsyncCall, BoxedBytes, CodeMetadata, SendEgld, Vec};
 
+use crate::smart_contract_call::{EgldEsdtSwapCall, EsdtSafeCall, MultiTransferEsdtCall};
+
 elrond_wasm::derive_imports!();
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
@@ -12,23 +14,9 @@ pub enum Action<BigUint: BigUintApi> {
     RemoveUser(Address),
     SlashUser(Address),
     ChangeQuorum(usize),
-    SendEgld {
-        to: Address,
-        amount: BigUint,
-        data: BoxedBytes,
-    },
-    SCDeploy {
-        amount: BigUint,
-        code: BoxedBytes,
-        code_metadata: CodeMetadata,
-        arguments: Vec<BoxedBytes>,
-    },
-    SCCall {
-        to: Address,
-        egld_payment: BigUint,
-        endpoint_name: BoxedBytes,
-        arguments: Vec<BoxedBytes>,
-    },
+	EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
+	EsdtSafeCall(EsdtSafeCall<BigUint>),
+	MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>)
 }
 
 impl<BigUint: BigUintApi> Action<BigUint> {

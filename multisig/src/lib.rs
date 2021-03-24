@@ -2,14 +2,14 @@
 #![allow(non_snake_case)]
 
 mod action;
-mod smart_contract_call;
 mod proxy;
+mod smart_contract_call;
 mod user_role;
 
 use action::{Action, ActionFullInfo, PerformActionResult};
+use proxy::*;
 use smart_contract_call::*;
 use transaction::*;
-use proxy::*;
 use user_role::UserRole;
 
 elrond_wasm::imports!();
@@ -209,64 +209,215 @@ pub trait Multisig {
         self.propose_action(Action::ChangeQuorum(new_quorum))
     }
 
-    #[endpoint(proposeSendEgld)]
-    fn propose_send_egld(
-        &self,
-        to: Address,
-        amount: BigUint,
-        #[var_args] opt_data: OptionalArg<BoxedBytes>,
-    ) -> SCResult<usize> {
-        let data = match opt_data {
-            OptionalArg::Some(data) => data,
-            OptionalArg::None => BoxedBytes::empty(),
-        };
-        self.propose_action(Action::SendEgld { to, amount, data })
+    // EGLD-ESDT Swap SC calls
+
+    #[endpoint(proposeEgldEsdtSwapSCDeploy)]
+    fn propose_egld_esdt_swap_sc_deploy(&self, code: BoxedBytes) -> SCResult<usize> {
+        require!(
+            self.egld_esdt_swap_address().is_empty(),
+            "EGLD-ESDT Swap SC was already deployed"
+        );
+
+        self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::Deploy { code }))
     }
 
-    #[endpoint(proposeSCDeploy)]
-    fn propose_sc_deploy(
+    #[endpoint(proposeEgldEsdtSwapWrappedEgldIssue)]
+    fn propose_egld_esdt_swap_wrapped_egld_issue(
         &self,
-        amount: BigUint,
+        token_display_name: BoxedBytes,
+        token_ticker: BoxedBytes,
+        initial_supply: BigUint,
+        issue_cost: BigUint,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_egld_esdt_swap_deployed());
+
+        self.propose_action(Action::EgldEsdtSwapCall(
+            EgldEsdtSwapCall::IssueWrappedEgld {
+                token_display_name,
+                token_ticker,
+                initial_supply,
+                issue_cost,
+            },
+        ))
+    }
+
+    #[endpoint(proposeEgldEsdtSwapSetLocalMintRole)]
+    fn propose_egld_esdt_swap_set_local_mint_role(&self) -> SCResult<usize> {
+        sc_try!(self.require_egld_esdt_swap_deployed());
+
+        self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::SetLocalMintRole))
+    }
+
+    #[endpoint(proposeEgldEsdtSwapMintWrappedEgld)]
+    fn propose_egld_esdt_swap_mint_wrapped_egld(&self, amount: BigUint) -> SCResult<usize> {
+        sc_try!(self.require_egld_esdt_swap_deployed());
+
+        self.propose_action(Action::EgldEsdtSwapCall(
+            EgldEsdtSwapCall::MintWrappedEgld { amount },
+        ))
+    }
+
+    // ESDT Safe SC calls
+
+    #[endpoint(proposeEsdtSafeScDeploy)]
+    fn propose_esdt_safe_sc_deploy(
+        &self,
         code: BoxedBytes,
-        upgradeable: bool,
-        payable: bool,
-        readable: bool,
-        #[var_args] arguments: VarArgs<BoxedBytes>,
+        transaction_fee: BigUint,
+        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<usize> {
-        let mut code_metadata = CodeMetadata::DEFAULT;
-        if upgradeable {
-            code_metadata |= CodeMetadata::UPGRADEABLE;
-        }
-        if payable {
-            code_metadata |= CodeMetadata::PAYABLE;
-        }
-        if readable {
-            code_metadata |= CodeMetadata::READABLE;
-        }
-        self.propose_action(Action::SCDeploy {
-            amount,
+        require!(
+            self.esdt_safe_address().is_empty(),
+            "ESDT Safe SC was already deployed"
+        );
+
+        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::Deploy {
             code,
-            code_metadata,
-            arguments: arguments.into_vec(),
-        })
+            transaction_fee,
+            token_whitelist: token_whitelist.into_vec(),
+        }))
     }
 
-    /// To be used not only for smart contract calls,
-    /// but also for ESDT calls or any protocol built-in function.
-    #[endpoint(proposeSCCall)]
-    fn propose_sc_call(
+    #[endpoint(proposeEsdtSafeSetTransactionFee)]
+    fn propose_esdt_safe_set_transaction_fee(&self, transaction_fee: BigUint) -> SCResult<usize> {
+        sc_try!(self.require_esdt_safe_deployed());
+
+        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::SetTransactionFee {
+            transaction_fee,
+        }))
+    }
+
+    #[endpoint(proposeEsdtSafeAddTokenToWhitelist)]
+    fn propose_esdt_safe_add_token_to_whitelist(
+        &self,
+        token_id: TokenIdentifier,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_esdt_safe_deployed());
+
+        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::AddTokenToWhitelist {
+            token_id,
+        }))
+    }
+
+    #[endpoint(proposeEsdtSafeRemoveTokenFromWhitelist)]
+    fn propose_esdt_safe_remove_token_from_whitelist(
+        &self,
+        token_id: TokenIdentifier,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_esdt_safe_deployed());
+
+        self.propose_action(Action::EsdtSafeCall(
+            EsdtSafeCall::RemoveTokenFromWhitelist { token_id },
+        ))
+    }
+
+    #[endpoint(proposeEsdtSafeGetNextPendingTransaction)]
+    fn propose_esdt_safe_get_next_pending_transaction(&self) -> SCResult<usize> {
+        sc_try!(self.require_esdt_safe_deployed());
+
+        self.propose_action(Action::EsdtSafeCall(
+            EsdtSafeCall::GetNextPendingTransaction,
+        ))
+    }
+
+    #[endpoint(proposeEsdtSafeSetTransactionStatus)]
+    fn propose_esdt_safe_set_transaction_status(
+        &self,
+        sender: Address,
+        nonce: Nonce,
+        transaction_status: TransactionStatus,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_esdt_safe_deployed());
+
+        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::SetTransactionStatus {
+            sender,
+            nonce,
+            transaction_status,
+        }))
+    }
+
+    #[endpoint(proposeEsdtSafeClaim)]
+    fn propose_esdt_safe_claim(&self) -> SCResult<usize> {
+        sc_try!(self.require_esdt_safe_deployed());
+
+        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::Claim))
+    }
+
+    // Multi-transfer ESDT SC calls
+
+    #[endpoint(proposeMultiTransferEsdtSCDeploy)]
+    fn propose_multi_transfer_esdt_sc_deploy(&self, code: BoxedBytes) -> SCResult<usize> {
+        require!(
+            self.multi_transfer_esdt_address().is_empty(),
+            "Multi-transfer ESDT SC was already deployed"
+        );
+
+        self.propose_action(Action::MultiTransferEsdtCall(
+            MultiTransferEsdtCall::Deploy { code },
+        ))
+    }
+
+    #[endpoint(proposeMultiTransferEsdtIssueEsdtToken)]
+    fn propose_multi_transfer_esdt_issue_esdt_token(
+        &self,
+        token_display_name: BoxedBytes,
+        token_ticker: BoxedBytes,
+        initial_supply: BigUint,
+        issue_cost: BigUint,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_multi_transfer_esdt_deployed());
+
+        self.propose_action(Action::MultiTransferEsdtCall(
+            MultiTransferEsdtCall::IssueEsdtToken {
+                token_display_name,
+                token_ticker,
+                initial_supply,
+                issue_cost,
+            },
+        ))
+    }
+
+    #[endpoint(proposeMultiTransferEsdtSetLocalMintRole)]
+    fn propose_multi_transfer_esdt_set_local_mint_role(
+        &self,
+        token_id: TokenIdentifier,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_multi_transfer_esdt_deployed());
+
+        self.propose_action(Action::MultiTransferEsdtCall(
+            MultiTransferEsdtCall::SetLocalMintRole { token_id },
+        ))
+    }
+
+    #[endpoint(proposeMultiTransferEsdtMintEsdtToken)]
+    fn propose_multi_transfer_esdt_mint_esdt_token(
+        &self,
+        token_id: TokenIdentifier,
+        amount: BigUint,
+    ) -> SCResult<usize> {
+        sc_try!(self.require_multi_transfer_esdt_deployed());
+
+        self.propose_action(Action::MultiTransferEsdtCall(
+            MultiTransferEsdtCall::MintEsdtToken { token_id, amount },
+        ))
+    }
+
+    #[endpoint(proposeMultiTransferEsdtTransferEsdtToken)]
+    fn propose_multi_transfer_esdt_transfer_esdt_token(
         &self,
         to: Address,
-        egld_payment: BigUint,
-        endpoint_name: BoxedBytes,
-        #[var_args] arguments: VarArgs<BoxedBytes>,
+        token_id: TokenIdentifier,
+        amount: BigUint,
     ) -> SCResult<usize> {
-        self.propose_action(Action::SCCall {
-            to,
-            egld_payment,
-            endpoint_name,
-            arguments: arguments.into_vec(),
-        })
+        sc_try!(self.require_multi_transfer_esdt_deployed());
+
+        self.propose_action(Action::MultiTransferEsdtCall(
+            MultiTransferEsdtCall::TransferEsdtToken {
+                to,
+                token_id,
+                amount,
+            },
+        ))
     }
 
     /// Proposers and board members use this to launch signed actions.
@@ -585,9 +736,6 @@ pub trait Multisig {
                 self.quorum().set(&new_quorum);
                 Ok(PerformActionResult::Nothing)
             }
-            Action::SendEgld { to, amount, data } => {
-                Ok(PerformActionResult::SendEgld(SendEgld { to, amount, data }))
-            }
             Action::SCDeploy {
                 amount,
                 code,
@@ -608,25 +756,6 @@ pub trait Multisig {
                 );
                 Ok(PerformActionResult::DeployResult(new_address))
             }
-            Action::SCCall {
-                to,
-                egld_payment,
-                endpoint_name,
-                arguments,
-            } => {
-                let mut contract_call_raw = ContractCall::<BigUint, ()>::new(
-                    to,
-                    TokenIdentifier::egld(),
-                    egld_payment,
-                    endpoint_name,
-                );
-                for arg in arguments {
-                    contract_call_raw.push_argument_raw_bytes(arg.as_slice());
-                }
-                Ok(PerformActionResult::AsyncCall(
-                    contract_call_raw.async_call(),
-                ))
-            }
         }
     }
 
@@ -640,6 +769,30 @@ pub trait Multisig {
         let amount_staked = self.amount_staked(board_member_address).get();
 
         amount_staked >= required_stake
+    }
+
+    fn require_egld_esdt_swap_deployed(&self) -> SCResult<()> {
+        require!(
+            !self.egld_esdt_swap_address().is_empty(),
+            "EGLD-ESDT Swap SC has to be deployed first"
+        );
+        Ok(())
+    }
+
+    fn require_esdt_safe_deployed(&self) -> SCResult<()> {
+        require!(
+            !self.esdt_safe_address().is_empty(),
+            "ESDT Safe SC has to be deployed first"
+        );
+        Ok(())
+    }
+
+    fn require_multi_transfer_esdt_deployed(&self) -> SCResult<()> {
+        require!(
+            !self.multi_transfer_esdt_address().is_empty(),
+            "Multi-transfer ESDT SC has to be deployed first"
+        );
+        Ok(())
     }
 
     // storage
@@ -702,4 +855,18 @@ pub trait Multisig {
     #[view(isPaused)]
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
+
+    // SC addresses
+
+    #[view(getEgldEsdtSwapAddress)]
+    #[storage_mapper("egldEsdtSwapAddress")]
+    fn egld_esdt_swap_address(&self) -> SingleValueMapper<Self::Storage, Address>;
+
+    #[view(getEsdtSafeAddress)]
+    #[storage_mapper("esdtSafeAddress")]
+    fn esdt_safe_address(&self) -> SingleValueMapper<Self::Storage, Address>;
+
+    #[view(getMultiTransferEsdtAddress)]
+    #[storage_mapper("multiTransferEsdtAddress")]
+    fn multi_transfer_esdt_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 }
