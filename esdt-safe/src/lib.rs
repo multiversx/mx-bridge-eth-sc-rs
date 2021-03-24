@@ -1,26 +1,8 @@
 #![no_std]
 
+use transaction::*;
+
 elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
-
-type Nonce = usize;
-
-#[derive(TopEncode, TopDecode, TypeAbi)]
-pub struct Transaction<BigUint: BigUintApi> {
-    from: Address,
-    to: Address,
-    token_identifier: TokenIdentifier,
-    amount: BigUint,
-}
-
-#[derive(TopEncode, TopDecode, TypeAbi, PartialEq)]
-pub enum TransactionStatus {
-    None,
-    Pending,
-    InProgress,
-    Executed,
-    Rejected,
-}
 
 #[elrond_wasm_derive::contract(EsdtSafeImpl)]
 pub trait EsdtSafe {
@@ -50,25 +32,25 @@ pub trait EsdtSafe {
     }
 
     #[endpoint(addTokenToWhitelist)]
-    fn add_token_to_whitelist(&self, token_identifier: TokenIdentifier) -> SCResult<()> {
+    fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
-        self.token_whitelist().insert(token_identifier);
+        self.token_whitelist().insert(token_id);
 
         Ok(())
     }
 
     #[endpoint(removeTokenFromWhitelist)]
-    fn remove_token_from_whitelist(&self, token_identifier: TokenIdentifier) -> SCResult<()> {
+    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
-        self.token_whitelist().remove(&token_identifier);
+        self.token_whitelist().remove(&token_id);
 
         Ok(())
     }
 
     #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(&self) -> SCResult<OptionalResult<Transaction<BigUint>>> {
+    fn get_next_pending_transaction(&self) -> SCResult<Option<Transaction<BigUint>>> {
         only_owner!(self, "only owner may call this function");
 
         match self.pending_transaction_address_nonce_list().pop_front() {
@@ -76,11 +58,9 @@ pub trait EsdtSafe {
                 self.transaction_status(&sender, nonce)
                     .set(&TransactionStatus::InProgress);
 
-                Ok(OptionalResult::Some(
-                    self.transactions_by_nonce(&sender).get(nonce),
-                ))
+                Ok(Some(self.transactions_by_nonce(&sender).get(nonce)))
             }
-            None => Ok(OptionalResult::None),
+            None => Ok(None),
         }
     }
 
@@ -88,7 +68,7 @@ pub trait EsdtSafe {
     fn set_transaction_status_endpoint(
         &self,
         sender: Address,
-        nonce: usize,
+        nonce: Nonce,
         transaction_status: TransactionStatus,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");

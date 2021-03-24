@@ -16,7 +16,6 @@ pub trait MultiTransferEsdt {
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
         initial_supply: BigUint,
-        num_decimals: usize,
         #[payment] issue_cost: BigUint,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
@@ -28,7 +27,7 @@ pub trait MultiTransferEsdt {
                 &token_ticker,
                 &initial_supply,
                 FungibleTokenProperties {
-                    num_decimals,
+                    num_decimals: 0,
                     can_freeze: false,
                     can_wipe: false,
                     can_pause: false,
@@ -79,7 +78,7 @@ pub trait MultiTransferEsdt {
     }
 
     #[endpoint(transferEsdtToken)]
-    fn transfer_esdt_token_endpoint(
+    fn transfer_esdt_token(
         &self,
         to: Address,
         token_id: TokenIdentifier,
@@ -96,32 +95,12 @@ pub trait MultiTransferEsdt {
             sc_try!(self.try_mint(&token_id, &extra_needed));
         }
 
-        self.transfer_esdt_token(&to, &token_id, &amount);
-
-        Ok(())
-    }
-
-    #[endpoint(batchTransferEsdtToken)]
-    fn batch_transfer_esdt_token(
-        &self,
-        #[var_args] args: VarArgs<MultiArg3<Address, TokenIdentifier, BigUint>>,
-    ) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
-        for multi_arg in args.into_vec().into_iter() {
-            let (to, token_id, amount) = multi_arg.into_tuple();
-
-            require!(!to.is_zero(), "Can't transfer to address zero");
-
-            let esdt_balance = self.get_sc_esdt_balance(&token_id);
-            if esdt_balance < amount {
-                let extra_needed = &amount - &esdt_balance;
-
-                sc_try!(self.try_mint(&token_id, &extra_needed));
-            }
-
-            self.transfer_esdt_token(&to, &token_id, &amount);
-        }
+        self.send().direct_esdt_via_transf_exec(
+            &to,
+            token_id.as_esdt_identifier(),
+            &amount,
+            self.data_or_empty(&to, b"offchain transfer"),
+        );
 
         Ok(())
     }
@@ -134,15 +113,6 @@ pub trait MultiTransferEsdt {
     }
 
     // private
-
-    fn transfer_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.send().direct_esdt_via_transf_exec(
-            &to,
-            token_id.as_esdt_identifier(),
-            &amount,
-            self.data_or_empty(&to, b"offchain transfer"),
-        );
-    }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
         if self.is_smart_contract(to) {

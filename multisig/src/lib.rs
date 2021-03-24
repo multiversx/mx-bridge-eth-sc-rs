@@ -1,9 +1,15 @@
 #![no_std]
+#![allow(non_snake_case)]
 
 mod action;
+mod smart_contract_call;
+mod proxy;
 mod user_role;
 
 use action::{Action, ActionFullInfo, PerformActionResult};
+use smart_contract_call::*;
+use transaction::*;
+use proxy::*;
 use user_role::UserRole;
 
 elrond_wasm::imports!();
@@ -563,7 +569,7 @@ pub trait Multisig {
                 let mut user_stake = self.amount_staked(&user_address).get();
                 user_stake -= &slash_amount;
                 self.amount_staked(&user_address).set(&user_stake);
-                
+
                 // add it to total slashed amount pool
                 let mut total_slashed_amount = self.slashed_tokens_amount().get();
                 total_slashed_amount += &slash_amount;
