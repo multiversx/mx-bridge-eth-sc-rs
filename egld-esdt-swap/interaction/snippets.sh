@@ -1,4 +1,5 @@
 ALICE="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/alice.pem"
+BOB="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/bob.pem"
 ADDRESS=$(erdpy data load --key=address-testnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
 PROXY=http://localhost:7950
@@ -43,12 +44,16 @@ wrapEgld() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --value=10 --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+wrapEgldBob() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=10000000 --value=1000 --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 wrapMoreThanBalance() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --value=2000 --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 unwrapEgld() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=1000000000 --function="ESDTTransfer" --arguments ${TOKEN_IDENTIFIER} 0x05 ${UNWRAP_EGLD_ENDPOINT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --function="ESDTTransfer" --arguments ${TOKEN_IDENTIFIER} 0x05 ${UNWRAP_EGLD_ENDPOINT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # views

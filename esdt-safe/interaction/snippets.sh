@@ -12,6 +12,8 @@ TRANSACTION_FEE=1000
 WRAPPED_EGLD_TOKEN_IDENTIFIER=0x5745474c442d633764373566 # issue from egld-esdt-swap first
 
 CREATE_TRANSACTION_ENDPOINT=0x6372656174655472616e73616374696f6e
+TX_STATUS_EXECUTED=0x03
+TX_STATUS_REJECTED=0x04
 
 deploy() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --arguments ${TRANSACTION_FEE} ${WRAPPED_EGLD_TOKEN_IDENTIFIER} --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -31,33 +33,33 @@ upgrade() {
 }
 
 getNextPendingTransaction() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=5000000 --function="getNextPendingTransaction" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=25000000 --function="getNextPendingTransaction" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setTransactionExecuted() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setTransactionStatus" --arguments ${ALICE_ADDRESS} 0x01 0x03 --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setTransactionStatus" --arguments ${BOB_ADDRESS} 0x01 ${TX_STATUS_EXECUTED} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setTransactionRejected() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setTransactionStatus" --arguments ${ALICE_ADDRESS} 0x01 0x04 --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setTransactionStatus" --arguments ${BOB_ADDRESS} 0x02 ${TX_STATUS_REJECTED} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 claim() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=5000000 --function="claim" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=25000000 --function="claim" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 depositEgldForTransactionFee() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=5000000 --value=${TRANSACTION_FEE} --function="depositEgldForTransactionFee" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --value=${TRANSACTION_FEE} --function="depositEgldForTransactionFee" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 whithdrawDeposit() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=5000000 --function="whithdrawDeposit" --arguments 500 --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="whithdrawDeposit" --arguments 500 --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # We're assuming Alice has the exact same address on another chain
 # This is never the case, but we'll keep it like this for simplicity
 createTransaction() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=20000000 --function="ESDTTransfer" --arguments ${WRAPPED_EGLD_TOKEN_IDENTIFIER} 0x64 ${CREATE_TRANSACTION_ENDPOINT} ${ALICE_ADDRESS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=50000000 --function="ESDTTransfer" --arguments ${WRAPPED_EGLD_TOKEN_IDENTIFIER} 0x64 ${CREATE_TRANSACTION_ENDPOINT} ${ALICE_ADDRESS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # views
