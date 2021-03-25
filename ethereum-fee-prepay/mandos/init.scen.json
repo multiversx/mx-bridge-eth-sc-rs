@@ -1,0 +1,276 @@
+{
+    "name": "initialization - deploy and setup for the chainlink aggregator and for the ethereum fee prepay smart contract",
+    "steps": [
+        {
+            "step": "setState",
+            "accounts": {
+                "address:oracle1_owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:oracle2_owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:aggregator_owner": {
+                    "nonce": "0",
+                    "balance": "1,000,000,000,000",
+                    "storage": {}
+                },
+                "address:prepay_owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:authorized_oracle_node": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:round_requester": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:whitelisted_address": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:prepay_user": {
+                    "nonce": "0",
+                    "balance": "1,000,000,000",
+                    "storage": {}
+                },
+                "address:relayer": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                }
+            },
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:oracle1_owner",
+                    "creatorNonce": "0",
+                    "newAddress": "address:oracle1_smart_contract"
+                },
+                {
+                    "creatorAddress": "address:oracle2_owner",
+                    "creatorNonce": "0",
+                    "newAddress": "address:oracle2_smart_contract"
+                },
+                {
+                    "creatorAddress": "address:oracle3_owner",
+                    "creatorNonce": "0",
+                    "newAddress": "address:oracle3_smart_contract"
+                },
+                {
+                    "creatorAddress": "address:aggregator_owner",
+                    "creatorNonce": "0",
+                    "newAddress": "address:aggregator_smart_contract"
+                },
+                {
+                    "creatorAddress": "address:prepay_owner",
+                    "creatorNonce": "0",
+                    "newAddress": "address:prepay_smart_contract"
+                }
+            ],
+            "currentBlockInfo": {
+                "blockTimestamp": "400"
+            }
+        },
+        {
+            "step": "scDeploy",
+            "tx": {
+                "from": "address:oracle1_owner",
+                "contractCode": "file:../../../sc-chainlink-rs/oracle/output/oracle.wasm",
+                "value": "0",
+                "arguments": [],
+                "gasLimit": "1,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scDeploy",
+            "tx": {
+                "from": "address:oracle2_owner",
+                "contractCode": "file:../../../sc-chainlink-rs/oracle/output/oracle.wasm",
+                "value": "0",
+                "arguments": [],
+                "gasLimit": "1,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "tx": {
+                "from": "address:oracle1_owner",
+                "to": "address:oracle1_smart_contract",
+                "value": "0",
+                "function": "addAuthorization",
+                "arguments": [
+                    "address:authorized_oracle_node"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scDeploy",
+            "tx": {
+                "from": "address:aggregator_owner",
+                "contractCode": "file:../../../sc-chainlink-rs/aggregator/output/aggregator.wasm",
+                "value": "0",
+                "arguments": [
+                    "str:EGLD",
+                    "1,000,000",
+                    "1000",
+                    "1",
+                    "1,000,000,000,000",
+                    "1",
+                    "str:ethereum fee prepay",
+                    "8"
+                ],
+                "gasLimit": "1,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scDeploy",
+            "tx": {
+                "from": "address:prepay_owner",
+                "contractCode": "file:../output/ethereum-fee-prepay.wasm",
+                "value": "0",
+                "arguments": [
+                    "address:aggregator_smart_contract"
+                ],
+                "gasLimit": "1,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "1-addFunds - enough for 2 rounds of oracle payments--",
+            "tx": {
+                "from": "address:aggregator_owner",
+                "to": "address:aggregator_smart_contract",
+                "value": "6,000,000",
+                "function": "addFunds",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "2-changeOracles - add 3 oracles and their admins--",
+            "tx": {
+                "from": "address:aggregator_owner",
+                "to": "address:aggregator_smart_contract",
+                "value": "0",
+                "function": "changeOracles",
+                "arguments": [
+                    "",
+                    "address:oracle1_smart_contract|address:oracle2_smart_contract|address:oracle3_smart_contract",
+                    "address:oracle1_owner|address:oracle2_owner|address:oracle3_owner",
+                    "2",
+                    "3",
+                    "0"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "3-setRequesterPermissions - set the permissions for the requester, for starting a new round--",
+            "tx": {
+                "from": "address:aggregator_owner",
+                "to": "address:aggregator_smart_contract",
+                "value": "0",
+                "function": "setRequesterPermissions",
+                "arguments": [
+                    "address:round_requester",
+                    "1",
+                    "0"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "4-addWhitelist - set the permissions for the requester, for starting a new round--",
+            "tx": {
+                "from": "address:prepay_owner",
+                "to": "address:prepay_smart_contract",
+                "value": "0",
+                "function": "addWhitelist",
+                "arguments": [
+                    "address:whitelisted_address"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

@@ -6,4 +6,5 @@ members = [
   "esdt-safe/abi",
   "multi-transfer-esdt",
   "multi-transfer-esdt/abi",
+  "ethereum-fee-prepay",
 ]

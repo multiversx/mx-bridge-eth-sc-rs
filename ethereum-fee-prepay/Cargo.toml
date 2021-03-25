@@ -1,0 +1,37 @@
+[package]
+name = "ethereum-fee-prepay"
+version = "0.0.0"
+authors = [ "Claudiu-Marcel Bruda <claudiu.bruda@elrond.com>",]
+edition = "2018"
+publish = false
+
+[lib]
+path = "src/lib.rs"
+
+[features]
+wasm-output-mode = [ "elrond-wasm-node",]
+
+[dependencies.oracle]
+version = "*"
+path="../../sc-chainlink-rs/oracle"
+
+[dependencies.aggregator]
+version = "*"
+path="../../sc-chainlink-rs/aggregator"
+
+[dependencies.elrond-wasm]
+version = "0.14.0"
+path="../../elrond-wasm-rs/elrond-wasm"
+
+[dependencies.elrond-wasm-derive]
+version = "0.14.0"
+path="../../elrond-wasm-rs/elrond-wasm-derive"
+
+[dependencies.elrond-wasm-node]
+version = "0.14.0"
+optional = true
+path="../../elrond-wasm-rs/elrond-wasm-node"
+
+[dev-dependencies.elrond-wasm-debug]
+version = "0.14.0"
+path="../../elrond-wasm-rs/elrond-wasm-debug"

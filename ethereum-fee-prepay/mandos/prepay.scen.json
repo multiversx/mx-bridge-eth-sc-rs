@@ -1,0 +1,133 @@
+{
+    "name": "prepay scenario",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "prepare-aggregator.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "1-deposit--",
+            "tx": {
+                "from": "address:prepay_user",
+                "to": "address:prepay_smart_contract",
+                "value": "1,000,000,000",
+                "function": "deposit",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "2-the balance of the prepay user should be the sum that was just deposited--",
+            "tx": {
+                "from": "address:prepay_user",
+                "to": "address:prepay_smart_contract",
+                "value": "0",
+                "function": "getDepositBalance",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "1,000,000,000"
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "3-payFee--",
+            "tx": {
+                "from": "address:whitelisted_address",
+                "to": "address:prepay_smart_contract",
+                "value": "0",
+                "function": "payFee",
+                "arguments": [
+                    "address:prepay_user",
+                    "address:relayer",
+                    "0",
+                    "2"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "4-check the balance of the prepay user--",
+            "tx": {
+                "from": "address:prepay_user",
+                "to": "address:prepay_smart_contract",
+                "value": "0",
+                "function": "getDepositBalance",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "1,000,000,000"
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:oracle1_owner": {
+                    "nonce": "*",
+                    "balance": "1,000,000",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:prepay_smart_contract": {
+                    "nonce": "*",
+                    "balance": "1,000,000,000",
+                    "storage": {
+                        "``aggregator": "address:aggregator_smart_contract",
+                        "``whitelist.info": "u32:1|u32:1|u32:1|u32:1",
+                        "``whitelist.node_links|u32:1": "u32:0|u32:0",
+                        "``whitelist.value|u32:1": "address:whitelisted_address",
+                        "``whitelist.node_id|address:whitelisted_address": "1",
+                        "``deposits.info": "u32:1|u32:1|u32:1|u32:1",
+                        "``deposits.node_links|u32:1": "u32:0|u32:0",
+                        "``deposits.value|u32:1": "address:prepay_user",
+                        "``deposits.node_id|address:prepay_user": "1",
+                        "``deposits.mapped|address:prepay_user": "1,000,000,000",
+                        "``3-payFee--......................": "``pay_fee_callback@7072657061795f757365725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f@72656c617965725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f@@02"
+                    },
+                    "code": ""
+                }
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockTimestamp": "2,000"
+            }
+        }
+    ]
+}
