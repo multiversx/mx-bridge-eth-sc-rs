@@ -6,7 +6,7 @@ CHAIN_ID=local-testnet
 
 TOKEN_DISPLAY_NAME=0x5772617070656445676c64  # "WrappedEgld"
 TOKEN_TICKER=0x5745474c44  # "WEGLD"
-TOKEN_IDENTIFIER=0x5745474c442d383864366361 # Manually update after issue
+TOKEN_IDENTIFIER=0x5745474c442d323564343066 # Manually update after issue
 
 UNWRAP_EGLD_ENDPOINT=0x756e7772617045676c64
 
@@ -28,11 +28,11 @@ upgrade() {
 }
 
 issueWrappedEgld() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} 0x03E8 --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} 0x03E8 --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setLocalMintRole() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 localMint() {
@@ -41,6 +41,10 @@ localMint() {
 
 wrapEgld() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --value=10 --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+wrapMoreThanBalance() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --value=2000 --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 unwrapEgld() {
