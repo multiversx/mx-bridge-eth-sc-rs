@@ -42,17 +42,27 @@ pub trait MultiTransferEsdt {
             .with_callback(self.callbacks().esdt_issue_callback()))
     }
 
+    /// Address to set role for. Defaults to own address
     #[endpoint(setLocalMintRole)]
-    fn set_local_mint_role(&self, token_id: TokenIdentifier) -> SCResult<AsyncCall<BigUint>> {
+    fn set_local_mint_role(
+        &self,
+        token_id: TokenIdentifier,
+        #[var_args] opt_address: OptionalArg<Address>,
+    ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
         require!(
             self.issued_tokens().contains(&token_id),
             "Token was not issued yet"
         );
 
+        let address = match opt_address {
+            OptionalArg::Some(addr) => addr,
+            OptionalArg::None => self.get_sc_address(),
+        };
+
         Ok(ESDTSystemSmartContractProxy::new()
             .set_special_roles(
-                &self.get_sc_address(),
+                &address,
                 token_id.as_esdt_identifier(),
                 &[EsdtLocalRole::Mint],
             )
