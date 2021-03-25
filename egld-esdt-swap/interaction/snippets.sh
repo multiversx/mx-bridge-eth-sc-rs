@@ -40,7 +40,7 @@ localMint() {
 }
 
 wrapEgld() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --value=0x0A --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --value=10 --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 unwrapEgld() {
