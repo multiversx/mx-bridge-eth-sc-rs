@@ -278,6 +278,7 @@ pub trait EsdtSafe {
         address: &Address,
     ) -> VecMapper<Self::Storage, Transaction<BigUint>>;
 
+    #[view(getTransactionStatus)]
     #[storage_mapper("transactionStatus")]
     fn transaction_status(
         &self,
