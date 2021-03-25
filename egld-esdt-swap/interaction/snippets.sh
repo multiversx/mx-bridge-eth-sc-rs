@@ -11,6 +11,8 @@ TOKEN_IDENTIFIER=0x5745474c442d633764373566 # Manually update after issue
 
 UNWRAP_EGLD_ENDPOINT=0x756e7772617045676c64
 
+# TODO: Set localmint role for MultiTransferEsdt SC
+
 deploy() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 

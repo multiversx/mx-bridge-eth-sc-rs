@@ -45,14 +45,9 @@ pub trait MultiTransferEsdt {
     #[endpoint(setLocalMintRole)]
     fn set_local_mint_role(&self, token_id: TokenIdentifier) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             self.issued_tokens().contains(&token_id),
             "Token was not issued yet"
-        );
-        require!(
-            !self.are_local_roles_set(&token_id).get(),
-            "Local roles were already set"
         );
 
         Ok(ESDTSystemSmartContractProxy::new()
@@ -61,20 +56,21 @@ pub trait MultiTransferEsdt {
                 token_id.as_esdt_identifier(),
                 &[EsdtLocalRole::Mint],
             )
-            .async_call()
-            .with_callback(self.callbacks().set_roles_callback(token_id)))
+            .async_call())
     }
 
     #[endpoint(mintEsdtToken)]
     fn mint_esdt_token(&self, token_id: TokenIdentifier, amount: BigUint) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             self.issued_tokens().contains(&token_id),
             "Token has to be issued first"
         );
 
-        self.try_mint(&token_id, &amount)
+        self.send()
+            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
+
+        Ok(())
     }
 
     #[endpoint(transferEsdtToken)]
@@ -85,14 +81,17 @@ pub trait MultiTransferEsdt {
         amount: BigUint,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-
         require!(!to.is_zero(), "Can't transfer to address zero");
 
         let esdt_balance = self.get_sc_esdt_balance(&token_id);
         if esdt_balance < amount {
             let extra_needed = &amount - &esdt_balance;
 
-            sc_try!(self.try_mint(&token_id, &extra_needed));
+            self.send().esdt_local_mint(
+                self.get_gas_left(),
+                token_id.as_esdt_identifier(),
+                &extra_needed,
+            );
         }
 
         self.send().direct_esdt_via_transf_exec(
@@ -122,18 +121,6 @@ pub trait MultiTransferEsdt {
         }
     }
 
-    fn try_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> SCResult<()> {
-        require!(
-            self.are_local_roles_set(token_id).get(),
-            "LocalMint role not set"
-        );
-
-        self.send()
-            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
-
-        Ok(())
-    }
-
     // callbacks
 
     #[callback]
@@ -160,20 +147,6 @@ pub trait MultiTransferEsdt {
         }
     }
 
-    #[callback]
-    fn set_roles_callback(
-        &self,
-        token_id: TokenIdentifier,
-        #[call_result] result: AsyncCallResult<()>,
-    ) {
-        match result {
-            AsyncCallResult::Ok(()) => {
-                self.are_local_roles_set(&token_id).set(&true);
-            }
-            AsyncCallResult::Err(_) => {}
-        }
-    }
-
     // storage
 
     #[storage_mapper("issuedTokens")]
@@ -182,11 +155,4 @@ pub trait MultiTransferEsdt {
     #[view(getLastIssuedToken)]
     #[storage_mapper("lastIssuedToken")]
     fn last_issued_token(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
-
-    #[view(areLocalRolesSet)]
-    #[storage_mapper("areLocalRolesSet")]
-    fn are_local_roles_set(
-        &self,
-        token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<Self::Storage, bool>;
 }
