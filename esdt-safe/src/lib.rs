@@ -50,7 +50,9 @@ pub trait EsdtSafe {
     }
 
     #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(&self) -> SCResult<Option<Transaction<BigUint>>> {
+    fn get_next_pending_transaction(
+        &self,
+    ) -> SCResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>> {
         only_owner!(self, "only owner may call this function");
 
         match self.pending_transaction_address_nonce_list().pop_front() {
@@ -58,9 +60,18 @@ pub trait EsdtSafe {
                 self.transaction_status(&sender, nonce)
                     .set(&TransactionStatus::InProgress);
 
-                Ok(Some(self.transactions_by_nonce(&sender).get(nonce)))
+                let tx = self.transactions_by_nonce(&sender).get(nonce);
+
+                Ok((nonce, tx.from, tx.to, tx.token_identifier, tx.amount).into())
             }
-            None => Ok(None),
+            None => Ok((
+                0,
+                Address::zero(),
+                Address::zero(),
+                TokenIdentifier::egld(),
+                BigUint::zero(),
+            )
+                .into()),
         }
     }
 

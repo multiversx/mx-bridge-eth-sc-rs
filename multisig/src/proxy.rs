@@ -18,11 +18,10 @@ pub trait EgldEsdtSwap {
 pub trait EsdtSafe {
     fn setTransactionFee(&self, transaction_fee: BigUint) -> ContractCall<BigUint, ()>;
     fn addTokenToWhitelist(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
-    fn removeTokenFromWhitelist(
+    fn removeTokenFromWhitelist(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
+    fn getNextPendingTransaction(
         &self,
-        token_id: TokenIdentifier,
-    ) -> ContractCall<BigUint, ()>;
-    fn getNextPendingTransaction(&self) -> ContractCall<BigUint, Option<Transaction<BigUint>>>;
+    ) -> ContractCall<BigUint, MultiArg5<Nonce, Address, Address, TokenIdentifier, BigUint>>;
     fn setTransactionStatus(
         &self,
         sender: Address,
