@@ -12,6 +12,8 @@ TOKEN_DISPLAY_NAME=0x57726170706564457468  # "WrappedEth"
 TOKEN_TICKER=0x57455448  # "WETH"
 TOKEN_IDENTIFIER=0x # Manually update after issue
 
+WRAPPED_EGLD_IDENTIFIER=0x # Manually update after issuing from Egld-Esdt-Swap SC
+
 deploy() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
@@ -39,6 +41,10 @@ setLocalMintRole() {
 
 localMint() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --function="mintEsdtToken" --arguments ${TOKEN_IDENTIFIER} 0x64 --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+addTokenToIssuedList() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --function="addTokenToIssuedList" --arguments ${WRAPPED_EGLD_IDENTIFIER} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 transferEsdtToken() {

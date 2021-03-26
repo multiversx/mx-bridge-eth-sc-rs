@@ -83,6 +83,17 @@ pub trait MultiTransferEsdt {
         Ok(())
     }
 
+    /// This is mostly used to ensure Wrapped EGLD is "known" by this SC
+    /// Only add after setting localMint role
+    #[endpoint(addTokenToIssuedList)]
+    fn add_token_to_issued_list(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+
+        self.issued_tokens().insert(token_id);
+
+        Ok(())
+    }
+
     #[endpoint(transferEsdtToken)]
     fn transfer_esdt_token(
         &self,

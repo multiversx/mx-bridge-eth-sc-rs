@@ -11,7 +11,7 @@ TOKEN_IDENTIFIER=0x5745474c442d633764373566 # Manually update after issue
 
 UNWRAP_EGLD_ENDPOINT=0x756e7772617045676c64
 
-# TODO: Set localmint role for MultiTransferEsdt SC
+MULTI_TRANSFER_ESDT_ADDRESS=0x # Manually update after deploying
 
 deploy() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -34,8 +34,12 @@ issueWrappedEgld() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} 0x03E8 --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-setLocalMintRole() {
+setLocalMintRoleSelf() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setLocalMintRoleMultiTransfer {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --arguments ${MULTI_TRANSFER_ESDT_ADDRESS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 localMint() {
