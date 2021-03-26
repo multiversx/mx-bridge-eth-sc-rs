@@ -11,10 +11,6 @@ path = "src/lib.rs"
 [features]
 wasm-output-mode = [ "elrond-wasm-node",]
 
-[dependencies.oracle]
-version = "*"
-path="../../sc-chainlink-rs/oracle"
-
 [dependencies.aggregator]
 version = "*"
 path="../../sc-chainlink-rs/aggregator"
