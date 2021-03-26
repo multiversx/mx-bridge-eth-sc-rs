@@ -12,9 +12,7 @@ use transaction_type::{TransactionGasLimits, TransactionType};
 mod aggregator_result;
 
 extern crate aggregator;
-use crate::aggregator::aggregator_interface::{
-    AggregatorInterface, AggregatorInterfaceProxy, Round,
-};
+use crate::aggregator::aggregator_interface::{AggregatorInterface, AggregatorInterfaceProxy};
 
 #[elrond_wasm_derive::contract(EthereumFeePrepayImpl)]
 pub trait EthereumFeePrepay {
@@ -55,29 +53,13 @@ pub trait EthereumFeePrepay {
         relayer: Address,
         action: TransactionType,
         priority: Priority,
-    ) -> Result<AsyncCall<BigUint>, SCError> {
-        self.only_whitelisted()?;
-        Result::Ok(
-            contract_call!(self, self.aggregator().get(), AggregatorInterfaceProxy)
-                .latest_round_data()
-                .async_call()
-                .with_callback(
-                    self.callbacks()
-                        .pay_fee_callback(address, relayer, action, priority),
-                ),
-        )
-    }
-
-    #[callback]
-    fn pay_fee_callback(
-        &self,
-        #[call_result] result: AsyncCallResult<OptionalArg<Round<BigUint>>>,
-        address: Address,
-        relayer: Address,
-        action: TransactionType,
-        priority: Priority,
     ) -> Result<(), SCError> {
-        let aggregator_result = aggregator_result::parse_aggregator_result(result)?;
+        self.only_whitelisted()?;
+        let optional_arg_round =
+            contract_call!(self, self.aggregator().get(), AggregatorInterfaceProxy)
+                .latestRoundData()
+                .execute_on_dest_context(self.get_gas_left(), self.send());
+        let aggregator_result = aggregator_result::parse_round(optional_arg_round)?;
         let estimate = self.compute_estimate(
             aggregator_result.egld_to_eth,
             aggregator_result.egld_to_eth_scaling,
@@ -86,7 +68,8 @@ pub trait EthereumFeePrepay {
             priority,
             aggregator_result.priority_gas_costs,
         );
-        self.transfer(&address, &relayer, &estimate)
+        self.transfer(&address, &relayer, &estimate)?;
+        Result::Ok(())
     }
 
     fn compute_estimate(

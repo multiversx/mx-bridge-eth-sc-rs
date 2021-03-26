@@ -13,23 +13,12 @@ pub struct AggregatorResult<BigUint: BigUintApi> {
     pub priority_gas_costs: PriorityGasCosts<BigUint>,
 }
 
-pub fn parse_aggregator_result<BigUint: BigUintApi>(
-    result: AsyncCallResult<OptionalArg<Round<BigUint>>>,
+pub fn parse_round<BigUint: BigUintApi>(
+    optional_arg_round: OptionalArg<Round<BigUint>>,
 ) -> Result<AggregatorResult<BigUint>, SCError> {
-    match result {
-        AsyncCallResult::Ok(optional_arg_round) => {
-            let round = optional_arg_round
-                .into_option()
-                .ok_or("no aggregator round")?;
-            parse_round(round)
-        }
-        AsyncCallResult::Err(error) => Result::Err(error.err_msg.into()),
-    }
-}
-
-fn parse_round<BigUint: BigUintApi>(
-    round: Round<BigUint>,
-) -> Result<AggregatorResult<BigUint>, SCError> {
+    let round = optional_arg_round
+        .into_option()
+        .ok_or("no aggregator round")?;
     let submission = round.answer.ok_or("no answer in round")?;
     match &submission.values[..] {
         [first, second, third, fourth, fifth, sixth, seventh, eighth] => {

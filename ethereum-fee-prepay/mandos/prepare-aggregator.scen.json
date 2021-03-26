@@ -103,7 +103,7 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "u64:1|u8:1|u32:8|biguint:1,205|biguint:21,005|biguint:50,005|biguint:60,005|biguint:70,005|biguint:235|biguint:195|biguint:125|u8:1|nested:str:ethereum fee prepay|u64:400|u64:400|u64:1"
+                    "u64:1|u8:1|u32:8|biguint:1,205|biguint:21,005|biguint:50,005|biguint:60,005|biguint:70,005|biguint:235|biguint:195|biguint:125|u8:3|nested:str:ethereum fee prepay|u64:400|u64:400|u64:1"
                 ],
                 "gas": "*",
                 "refund": "*"
@@ -234,6 +234,83 @@
                     "storage": {},
                     "code": ""
                 },
+                "address:oracle2_owner": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:oracle1_smart_contract": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {
+                        "``authorized_nodes.node_id|address:authorized_oracle_node": "1",
+                        "``authorized_nodes.info": "u32:1|u32:1|u32:1|u32:1",
+                        "``authorized_nodes.node_links|u32:1": "u32:0|u32:0",
+                        "``authorized_nodes.value|u32:1": "address:authorized_oracle_node"
+                    },
+                    "code": "*"
+                },
+                "address:oracle2_smart_contract": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": "*"
+                },
+                "address:aggregator_owner": {
+                    "nonce": "*",
+                    "balance": "999,994,000,000",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:authorized_oracle_node": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:round_requester": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:relayer": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:whitelisted_address": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:prepay_owner": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {},
+                    "code": ""
+                },
+                "address:prepay_smart_contract": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {
+                        "``whitelist.node_links|u32:1": "u32:0|u32:0",
+                        "``whitelist.value|u32:1": "address:whitelisted_address",
+                        "``whitelist.info": "u32:1|u32:1|u32:1|u32:1",
+                        "``whitelist.node_id|address:whitelisted_address": "1",
+                        "``aggregator": "address:aggregator_smart_contract"
+                    },
+                    "code": "*"
+                },
+                "address:prepay_user": {
+                    "nonce": "*",
+                    "balance": "1,000,000,000",
+                    "storage": {},
+                    "code": ""
+                },
                 "address:aggregator_smart_contract": {
                     "nonce": "*",
                     "balance": "5,000,000",
@@ -247,7 +324,7 @@
                         "``deposits.mapped|address:aggregator_owner": "4,000,000",
                         "``payment_amount": "1,000,000",
                         "``timeout": "1,000",
-                        "``decimals": "1",
+                        "``decimals": "3",
                         "``latest_round_id": "1",
                         "``min_submission_value": "1",
                         "``max_submission_value": "1,000,000,000,000",
@@ -260,8 +337,8 @@
                         "``rounds.value|u32:2": "1",
                         "``rounds.node_id|0": "1",
                         "``rounds.node_id|1": "2",
-                        "``rounds.mapped|0": "u64:0|u8:0|u8:1|nested:str:ethereum fee prepay|u64:400|u64:400|u64:0",
-                        "``rounds.mapped|1": "u64:1|u8:1|u32:8|biguint:1,205|biguint:21,005|biguint:50,005|biguint:60,005|biguint:70,005|biguint:235|biguint:195|biguint:125|u8:1|nested:str:ethereum fee prepay|u64:400|u64:400|u64:1",
+                        "``rounds.mapped|0": "u64:0|u8:0|u8:3|nested:str:ethereum fee prepay|u64:400|u64:400|u64:0",
+                        "``rounds.mapped|1": "u64:1|u8:1|u32:8|biguint:1,205|biguint:21,005|biguint:50,005|biguint:60,005|biguint:70,005|biguint:235|biguint:195|biguint:125|u8:3|nested:str:ethereum fee prepay|u64:400|u64:400|u64:1",
                         "``details.info": "u32:1|u32:1|u32:1|u32:1",
                         "``details.node_links|u32:1": "u32:0|u32:0",
                         "``details.value|u32:1": "1",
@@ -289,7 +366,7 @@
                         "``requesters.node_id|address:round_requester": "1",
                         "``requesters.mapped|address:round_requester": "1|u64:0|u64:1"
                     },
-                    "code": ""
+                    "code": "*"
                 }
             }
         },

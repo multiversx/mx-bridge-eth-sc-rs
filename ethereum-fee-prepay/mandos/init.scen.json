@@ -88,7 +88,7 @@
                 "contractCode": "file:../../../sc-chainlink-rs/oracle/output/oracle.wasm",
                 "value": "0",
                 "arguments": [],
-                "gasLimit": "1,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -105,7 +105,7 @@
                 "contractCode": "file:../../../sc-chainlink-rs/oracle/output/oracle.wasm",
                 "value": "0",
                 "arguments": [],
-                "gasLimit": "1,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -147,11 +147,11 @@
                     "1000",
                     "1",
                     "1,000,000,000,000",
-                    "1",
+                    "3",
                     "str:ethereum fee prepay",
                     "8"
                 ],
-                "gasLimit": "1,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -170,7 +170,7 @@
                 "arguments": [
                     "address:aggregator_smart_contract"
                 ],
-                "gasLimit": "1,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
