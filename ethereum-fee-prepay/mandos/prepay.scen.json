@@ -68,7 +68,7 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "0x000000000000000101000000080000000204b500000002520d00000002c35500000002ea650000000301117500000001eb00000001c3000000017d0300000013657468657265756d2066656520707265706179000000000000019000000000000001900000000000000001"
+                    "u64:1|u8:1|u32:8|biguint:1,205|biguint:21,005|biguint:50,005|biguint:60,005|biguint:70,005|biguint:235|biguint:195|biguint:125|u8:3|nested:str:ethereum fee prepay|u64:400|u64:400|u64:1"
                 ],
                 "gas": "*",
                 "refund": "*"
@@ -197,10 +197,13 @@
                     "balance": "1,000,000,000",
                     "storage": {
                         "``aggregator": "address:aggregator_smart_contract",
-                        "``whitelist.info": "u32:1|u32:1|u32:1|u32:1",
-                        "``whitelist.node_links|u32:1": "u32:0|u32:0",
-                        "``whitelist.value|u32:1": "address:whitelisted_address",
-                        "``whitelist.node_id|address:whitelisted_address": "1",
+                        "``whitelist.info": "u32:2|u32:1|u32:2|u32:2",
+                        "``whitelist.node_links|u32:1": "u32:0|u32:2",
+                        "``whitelist.node_id|address:prepay_owner": "1",
+                        "``whitelist.value|u32:1": "address:prepay_owner",
+                        "``whitelist.node_links|u32:2": "u32:1|u32:0",
+                        "``whitelist.node_id|address:whitelisted_address": "2",
+                        "``whitelist.value|u32:2": "address:whitelisted_address",
                         "``deposits.info": "u32:2|u32:1|u32:2|u32:2",
                         "``deposits.node_links|u32:1": "u32:0|u32:2",
                         "``deposits.value|u32:1": "address:prepay_user",

@@ -19,6 +19,7 @@ pub trait EthereumFeePrepay {
     #[init]
     fn init(&self, aggregator: Address) {
         self.aggregator().set(&aggregator);
+        self.whitelist().insert(self.get_caller());
     }
 
     // balance management endpoints

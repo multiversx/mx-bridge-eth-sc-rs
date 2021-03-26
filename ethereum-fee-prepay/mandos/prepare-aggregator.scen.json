@@ -297,10 +297,13 @@
                     "nonce": "*",
                     "balance": "0",
                     "storage": {
-                        "``whitelist.node_links|u32:1": "u32:0|u32:0",
-                        "``whitelist.value|u32:1": "address:whitelisted_address",
-                        "``whitelist.info": "u32:1|u32:1|u32:1|u32:1",
-                        "``whitelist.node_id|address:whitelisted_address": "1",
+                        "``whitelist.info": "u32:2|u32:1|u32:2|u32:2",
+                        "``whitelist.node_links|u32:1": "u32:0|u32:2",
+                        "``whitelist.node_id|address:prepay_owner": "1",
+                        "``whitelist.value|u32:1": "address:prepay_owner",
+                        "``whitelist.node_links|u32:2": "u32:1|u32:0",
+                        "``whitelist.node_id|address:whitelisted_address": "2",
+                        "``whitelist.value|u32:2": "address:whitelisted_address",
                         "``aggregator": "address:aggregator_smart_contract"
                     },
                     "code": "*"
