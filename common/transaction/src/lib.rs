@@ -7,7 +7,7 @@ elrond_wasm::derive_imports!();
 
 pub type Nonce = usize;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
     pub from: Address,
     pub to: Address,
