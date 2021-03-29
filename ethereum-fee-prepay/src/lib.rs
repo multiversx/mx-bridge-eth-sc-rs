@@ -32,17 +32,20 @@ pub trait EthereumFeePrepay {
     }
 
     #[endpoint(withdraw)]
-    fn withdraw(&self, amount: BigUint) -> Result<(), SCError> {
+    fn withdraw(&self, amount: BigUint) -> SCResult<()> {
         let caller = &self.get_caller();
-        self.decrease_balance(caller, &amount)?;
+        sc_try!(self.try_decrease_balance(caller, &amount));
         self.send().direct_egld(caller, &amount, &[]);
-        Result::Ok(())
+
+        Ok(())
     }
 
     #[view(getDepositBalance)]
     fn get_deposit_balance(&self) -> BigUint {
         let caller = &self.get_caller();
-        self.deposits().get(caller).unwrap_or_default()
+        self.deposits()
+            .get(caller)
+            .unwrap_or_else(|| BigUint::zero())
     }
 
     // estimate endpoints
@@ -54,13 +57,14 @@ pub trait EthereumFeePrepay {
         relayer: Address,
         action: TransactionType,
         priority: Priority,
-    ) -> Result<(), SCError> {
-        self.only_whitelisted()?;
+    ) -> SCResult<()> {
+        sc_try!(self.require_whitelisted());
+
         let optional_arg_round =
             contract_call!(self, self.aggregator().get(), AggregatorInterfaceProxy)
                 .latestRoundData()
                 .execute_on_dest_context(self.get_gas_left(), self.send());
-        let aggregator_result = aggregator_result::parse_round(optional_arg_round)?;
+        let aggregator_result = sc_try!(aggregator_result::try_parse_round(optional_arg_round));
         let estimate = self.compute_estimate(
             aggregator_result.egld_to_eth,
             aggregator_result.egld_to_eth_scaling,
@@ -69,8 +73,10 @@ pub trait EthereumFeePrepay {
             priority,
             aggregator_result.priority_gas_costs,
         );
-        self.transfer(&address, &relayer, &estimate)?;
-        Result::Ok(())
+
+        sc_try!(self.try_transfer(&address, &relayer, &estimate));
+
+        Ok(())
     }
 
     fn compute_estimate(
@@ -98,18 +104,22 @@ pub trait EthereumFeePrepay {
 
     // whitelist endpoints
 
-    #[endpoint(addWhitelist)]
-    fn add_whitelist(&self, address: Address) -> Result<(), SCError> {
+    #[endpoint(addToWhitelist)]
+    fn add_to_whitelist(&self, address: Address) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-        require!(self.whitelist().insert(address), "address exists");
-        Result::Ok(())
+
+        self.whitelist().insert(address);
+
+        Ok(())
     }
 
-    #[endpoint(removeWhitelist)]
-    fn remove_whitelist(&self, address: Address) -> Result<(), SCError> {
+    #[endpoint(removeFromWhitelist)]
+    fn remove_from_whitelist(&self, address: Address) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-        require!(self.whitelist().remove(&address), "address doesn't exist");
-        Result::Ok(())
+
+        self.whitelist().remove(&address);
+
+        Ok(())
     }
 
     #[view(isWhitelisted)]
@@ -122,40 +132,42 @@ pub trait EthereumFeePrepay {
         self.whitelist().iter().collect()
     }
 
-    fn only_whitelisted(&self) -> Result<(), SCError> {
+    fn require_whitelisted(&self) -> SCResult<()> {
         require!(
             self.is_whitelisted(&self.get_caller()),
             "only whitelisted callers allowed"
         );
-        Result::Ok(())
+        Ok(())
     }
-
-    //
 
     fn increase_balance(&self, address: &Address, amount: &BigUint) {
-        self.deposits()
-            .entry(address.clone())
-            .or_default()
-            .update(|deposit| {
-                *deposit += amount;
-            });
+        let mut deposit = self
+            .deposits()
+            .get(address)
+            .unwrap_or_else(|| BigUint::zero());
+        deposit += amount;
+        self.deposits().insert(address.clone(), deposit);
     }
 
-    fn decrease_balance(&self, address: &Address, amount: &BigUint) -> Result<(), SCError> {
-        self.deposits()
-            .entry(address.clone())
-            .or_default()
-            .update(|deposit| {
-                require!(*deposit >= *amount, "insufficient balance");
-                *deposit -= amount;
-                Result::Ok(())
-            })
+    fn try_decrease_balance(&self, address: &Address, amount: &BigUint) -> SCResult<()> {
+        let mut deposit = self
+            .deposits()
+            .get(address)
+            .unwrap_or_else(|| BigUint::zero());
+
+        require!(&deposit >= amount, "insufficient balance");
+
+        deposit -= amount;
+        self.deposits().insert(address.clone(), deposit);
+
+        Ok(())
     }
 
-    fn transfer(&self, from: &Address, to: &Address, amount: &BigUint) -> Result<(), SCError> {
-        self.decrease_balance(from, amount)?;
+    fn try_transfer(&self, from: &Address, to: &Address, amount: &BigUint) -> SCResult<()> {
+        sc_try!(self.try_decrease_balance(from, amount));
         self.increase_balance(to, amount);
-        Result::Ok(())
+        
+        Ok(())
     }
 
     #[storage_mapper("whitelist")]
