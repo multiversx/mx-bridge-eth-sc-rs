@@ -1,7 +1,7 @@
 [package]
-name = "multi-transfer-esdt"
+name = "multisig"
 version = "0.0.0"
-authors = [ "you",]
+authors = ["Andrei Marinica <andrei.marinica@elrond.com>, Dorin Iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
 publish = false
 
@@ -9,7 +9,12 @@ publish = false
 path = "src/lib.rs"
 
 [features]
-wasm-output-mode = [ "elrond-wasm-node",]
+wasm-output-mode = [
+    "elrond-wasm-node"
+]
+
+[dependencies.transaction]
+path = "../common/transaction"
 
 [dependencies.elrond-wasm]
 version = "0.14.1"

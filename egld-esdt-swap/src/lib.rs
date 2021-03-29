@@ -21,7 +21,6 @@ pub trait EgldEsdtSwap {
         #[payment] issue_cost: BigUint,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             self.wrapped_egld_token_identifier().is_empty(),
             "wrapped egld was already issued"
@@ -49,40 +48,50 @@ pub trait EgldEsdtSwap {
             .with_callback(self.callbacks().esdt_issue_callback()))
     }
 
+    /// Address to set role for. Defaults to own address
     #[endpoint(setLocalMintRole)]
-    fn set_local_mint_role(&self) -> SCResult<AsyncCall<BigUint>> {
+    fn set_local_mint_role_self(
+        &self,
+        #[var_args] opt_address: OptionalArg<Address>,
+    ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             !self.wrapped_egld_token_identifier().is_empty(),
             "Wrapped eGLD was not issued yet"
         );
-        require!(
-            !self.are_local_roles_set().get(),
-            "Local roles were already set"
-        );
 
         let token_id = self.wrapped_egld_token_identifier().get();
+        let address = match opt_address {
+            OptionalArg::Some(addr) => addr,
+            OptionalArg::None => self.get_sc_address(),
+        };
+
         Ok(ESDTSystemSmartContractProxy::new()
             .set_special_roles(
-                &self.get_sc_address(),
+                &address,
                 token_id.as_esdt_identifier(),
                 &[EsdtLocalRole::Mint],
             )
-            .async_call()
-            .with_callback(self.callbacks().set_roles_callback()))
+            .async_call())
     }
 
     #[endpoint(mintWrappedEgld)]
     fn mint_wrapped_egld(&self, amount: BigUint) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             !self.wrapped_egld_token_identifier().is_empty(),
             "Wrapped eGLD was not issued yet"
         );
 
-        self.try_mint(&self.wrapped_egld_token_identifier().get(), &amount)
+        self.send().esdt_local_mint(
+            self.get_gas_left(),
+            self.wrapped_egld_token_identifier()
+                .get()
+                .as_esdt_identifier(),
+            &amount,
+        );
+
+        Ok(())
     }
 
     // endpoints
@@ -101,7 +110,11 @@ pub trait EgldEsdtSwap {
         if wrapped_egld_left < payment {
             let extra_needed = &payment - &wrapped_egld_left;
 
-            sc_try!(self.try_mint(&wrapped_egld_token_id, &extra_needed));
+            self.send().esdt_local_mint(
+                self.get_gas_left(),
+                wrapped_egld_token_id.as_esdt_identifier(),
+                &extra_needed,
+            );
         }
 
         let caller = self.get_caller();
@@ -177,15 +190,6 @@ pub trait EgldEsdtSwap {
         }
     }
 
-    fn try_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> SCResult<()> {
-        require!(self.are_local_roles_set().get(), "LocalMint role not set");
-
-        self.send()
-            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
-
-        Ok(())
-    }
-
     // callbacks
 
     #[callback]
@@ -211,16 +215,6 @@ pub trait EgldEsdtSwap {
         }
     }
 
-    #[callback]
-    fn set_roles_callback(&self, #[call_result] result: AsyncCallResult<()>) {
-        match result {
-            AsyncCallResult::Ok(()) => {
-                self.are_local_roles_set().set(&true);
-            }
-            AsyncCallResult::Err(_) => {}
-        }
-    }
-
     // storage
 
     // 1 eGLD = 1 wrapped eGLD, and they are interchangeable through this contract
@@ -228,8 +222,4 @@ pub trait EgldEsdtSwap {
     #[view(getWrappedEgldTokenIdentifier)]
     #[storage_mapper("wrappedEgldTokenIdentifier")]
     fn wrapped_egld_token_identifier(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
-
-    #[view(areLocalRolesSet)]
-    #[storage_mapper("areLocalRolesSet")]
-    fn are_local_roles_set(&self) -> SingleValueMapper<Self::Storage, bool>;
 }
