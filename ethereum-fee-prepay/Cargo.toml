@@ -16,18 +16,18 @@ version = "*"
 path="../../sc-chainlink-rs/aggregator"
 
 [dependencies.elrond-wasm]
-version = "0.14.0"
+version = "0.14.1"
 path="../../elrond-wasm-rs/elrond-wasm"
 
 [dependencies.elrond-wasm-derive]
-version = "0.14.0"
+version = "0.14.1"
 path="../../elrond-wasm-rs/elrond-wasm-derive"
 
 [dependencies.elrond-wasm-node]
-version = "0.14.0"
+version = "0.14.1"
 optional = true
 path="../../elrond-wasm-rs/elrond-wasm-node"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.14.0"
+version = "0.14.1"
 path="../../elrond-wasm-rs/elrond-wasm-debug"
