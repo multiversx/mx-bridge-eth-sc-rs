@@ -1,13 +1,11 @@
 [package]
-name = "egld-esdt-swap-abi"
+name = "multisig-abi"
 version = "0.0.0"
-authors = [ "you",]
+authors = ["Andrei Marinica <andrei.marinica@elrond.com>, Dorin Iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
 publish = false
 
-[dev-dependencies]
-
-[dependencies.egld-esdt-swap]
+[dependencies.multisig]
 path = ".."
 
 [dependencies.elrond-wasm]

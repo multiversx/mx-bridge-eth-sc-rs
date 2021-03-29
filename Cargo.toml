@@ -6,4 +6,6 @@ members = [
   "esdt-safe/abi",
   "multi-transfer-esdt",
   "multi-transfer-esdt/abi",
+  "multisig",
+  "multisig/abi"
 ]

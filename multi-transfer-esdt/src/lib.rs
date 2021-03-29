@@ -16,7 +16,6 @@ pub trait MultiTransferEsdt {
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
         initial_supply: BigUint,
-        num_decimals: usize,
         #[payment] issue_cost: BigUint,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
@@ -28,7 +27,7 @@ pub trait MultiTransferEsdt {
                 &token_ticker,
                 &initial_supply,
                 FungibleTokenProperties {
-                    num_decimals,
+                    num_decimals: 0,
                     can_freeze: false,
                     can_wipe: false,
                     can_pause: false,
@@ -43,85 +42,85 @@ pub trait MultiTransferEsdt {
             .with_callback(self.callbacks().esdt_issue_callback()))
     }
 
+    /// Address to set role for. Defaults to own address
     #[endpoint(setLocalMintRole)]
-    fn set_local_mint_role(&self, token_id: TokenIdentifier) -> SCResult<AsyncCall<BigUint>> {
+    fn set_local_mint_role(
+        &self,
+        token_id: TokenIdentifier,
+        #[var_args] opt_address: OptionalArg<Address>,
+    ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             self.issued_tokens().contains(&token_id),
             "Token was not issued yet"
         );
-        require!(
-            !self.are_local_roles_set(&token_id).get(),
-            "Local roles were already set"
-        );
+
+        let address = match opt_address {
+            OptionalArg::Some(addr) => addr,
+            OptionalArg::None => self.get_sc_address(),
+        };
 
         Ok(ESDTSystemSmartContractProxy::new()
             .set_special_roles(
-                &self.get_sc_address(),
+                &address,
                 token_id.as_esdt_identifier(),
                 &[EsdtLocalRole::Mint],
             )
-            .async_call()
-            .with_callback(self.callbacks().set_roles_callback(token_id)))
+            .async_call())
     }
 
     #[endpoint(mintEsdtToken)]
     fn mint_esdt_token(&self, token_id: TokenIdentifier, amount: BigUint) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-
         require!(
             self.issued_tokens().contains(&token_id),
             "Token has to be issued first"
         );
 
-        self.try_mint(&token_id, &amount)
+        self.send()
+            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
+
+        Ok(())
+    }
+
+    /// This is mostly used to ensure Wrapped EGLD is "known" by this SC
+    /// Only add after setting localMint role
+    #[endpoint(addTokenToIssuedList)]
+    fn add_token_to_issued_list(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+
+        self.issued_tokens().insert(token_id);
+
+        Ok(())
     }
 
     #[endpoint(transferEsdtToken)]
-    fn transfer_esdt_token_endpoint(
+    fn transfer_esdt_token(
         &self,
         to: Address,
         token_id: TokenIdentifier,
         amount: BigUint,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-
         require!(!to.is_zero(), "Can't transfer to address zero");
 
         let esdt_balance = self.get_sc_esdt_balance(&token_id);
         if esdt_balance < amount {
             let extra_needed = &amount - &esdt_balance;
 
-            sc_try!(self.try_mint(&token_id, &extra_needed));
+            self.send().esdt_local_mint(
+                self.get_gas_left(),
+                token_id.as_esdt_identifier(),
+                &extra_needed,
+            );
         }
 
-        self.transfer_esdt_token(&to, &token_id, &amount);
-
-        Ok(())
-    }
-
-    #[endpoint(batchTransferEsdtToken)]
-    fn batch_transfer_esdt_token(
-        &self,
-        #[var_args] args: VarArgs<MultiArg3<Address, TokenIdentifier, BigUint>>,
-    ) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
-        for multi_arg in args.into_vec().into_iter() {
-            let (to, token_id, amount) = multi_arg.into_tuple();
-
-            require!(!to.is_zero(), "Can't transfer to address zero");
-
-            let esdt_balance = self.get_sc_esdt_balance(&token_id);
-            if esdt_balance < amount {
-                let extra_needed = &amount - &esdt_balance;
-
-                sc_try!(self.try_mint(&token_id, &extra_needed));
-            }
-
-            self.transfer_esdt_token(&to, &token_id, &amount);
-        }
+        self.send().direct_esdt_via_transf_exec(
+            &to,
+            token_id.as_esdt_identifier(),
+            &amount,
+            self.data_or_empty(&to, b"offchain transfer"),
+        );
 
         Ok(())
     }
@@ -135,33 +134,12 @@ pub trait MultiTransferEsdt {
 
     // private
 
-    fn transfer_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.send().direct_esdt_via_transf_exec(
-            &to,
-            token_id.as_esdt_identifier(),
-            &amount,
-            self.data_or_empty(&to, b"offchain transfer"),
-        );
-    }
-
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
         if self.is_smart_contract(to) {
             &[]
         } else {
             data
         }
-    }
-
-    fn try_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> SCResult<()> {
-        require!(
-            self.are_local_roles_set(token_id).get(),
-            "LocalMint role not set"
-        );
-
-        self.send()
-            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
-
-        Ok(())
     }
 
     // callbacks
@@ -177,6 +155,7 @@ pub trait MultiTransferEsdt {
         // so we can get the token identifier and amount from the call data
         match result {
             AsyncCallResult::Ok(()) => {
+                self.last_issued_token().set(&token_identifier);
                 self.issued_tokens().insert(token_identifier);
             }
             AsyncCallResult::Err(_) => {
@@ -189,29 +168,12 @@ pub trait MultiTransferEsdt {
         }
     }
 
-    #[callback]
-    fn set_roles_callback(
-        &self,
-        token_id: TokenIdentifier,
-        #[call_result] result: AsyncCallResult<()>,
-    ) {
-        match result {
-            AsyncCallResult::Ok(()) => {
-                self.are_local_roles_set(&token_id).set(&true);
-            }
-            AsyncCallResult::Err(_) => {}
-        }
-    }
-
     // storage
 
     #[storage_mapper("issuedTokens")]
     fn issued_tokens(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 
-    #[view(areLocalRolesSet)]
-    #[storage_mapper("areLocalRolesSet")]
-    fn are_local_roles_set(
-        &self,
-        token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<Self::Storage, bool>;
+    #[view(getLastIssuedToken)]
+    #[storage_mapper("lastIssuedToken")]
+    fn last_issued_token(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
 }
