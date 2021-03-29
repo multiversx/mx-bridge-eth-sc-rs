@@ -1,14 +1,11 @@
 use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{Address, BoxedBytes, TokenIdentifier, Vec};
+use elrond_wasm::types::{Address, BoxedBytes, TokenIdentifier};
 use transaction::*;
 
 elrond_wasm::derive_imports!();
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum EgldEsdtSwapCall<BigUint: BigUintApi> {
-    Deploy {
-        code: BoxedBytes,
-    },
     IssueWrappedEgld {
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
@@ -23,11 +20,6 @@ pub enum EgldEsdtSwapCall<BigUint: BigUintApi> {
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum EsdtSafeCall<BigUint: BigUintApi> {
-    Deploy {
-        code: BoxedBytes,
-        transaction_fee: BigUint,
-        token_whitelist: Vec<TokenIdentifier>, // VarArgs
-    },
     SetTransactionFee {
         transaction_fee: BigUint,
     },
@@ -48,9 +40,6 @@ pub enum EsdtSafeCall<BigUint: BigUintApi> {
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum MultiTransferEsdtCall<BigUint: BigUintApi> {
-    Deploy {
-        code: BoxedBytes,
-    },
     IssueEsdtToken {
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,

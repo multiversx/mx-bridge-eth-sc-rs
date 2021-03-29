@@ -7,7 +7,6 @@ mod smart_contract_call;
 mod user_role;
 
 use action::{Action, ActionFullInfo};
-use elrond_wasm::contract_call;
 use proxy::*;
 use smart_contract_call::*;
 use transaction::*;
@@ -56,6 +55,53 @@ pub trait Multisig {
     }
 
     // endpoints - owner-only
+
+    #[endpoint(deployChildContracts)]
+    fn deploy_child_contracts(
+        &self,
+        egld_esdt_swap_code: BoxedBytes,
+        multi_transfer_esdt_code: BoxedBytes,
+        esdt_safe_code: BoxedBytes,
+        esdt_safe_transaction_fee: BigUint,
+        #[var_args] esdt_safe_token_whitelist: VarArgs<TokenIdentifier>,
+    ) -> SCResult<()> {
+        let egld_esdt_swap_address = self.send().deploy_contract(
+            self.get_gas_left(),
+            &BigUint::zero(),
+            &egld_esdt_swap_code,
+            CodeMetadata::DEFAULT,
+            &ArgBuffer::new(),
+        );
+        self.egld_esdt_swap_address().set(&egld_esdt_swap_address);
+
+        let multi_transfer_esdt_address = self.send().deploy_contract(
+            self.get_gas_left(),
+            &BigUint::zero(),
+            &multi_transfer_esdt_code,
+            CodeMetadata::DEFAULT,
+            &ArgBuffer::new(),
+        );
+        self.multi_transfer_esdt_address()
+            .set(&multi_transfer_esdt_address);
+
+        let mut arg_buffer = ArgBuffer::new();
+        arg_buffer.push_argument_bytes(esdt_safe_transaction_fee.to_bytes_be().as_slice());
+
+        for token_id in esdt_safe_token_whitelist.into_vec() {
+            arg_buffer.push_argument_bytes(token_id.as_esdt_identifier());
+        }
+
+        let esdt_safe_address = self.send().deploy_contract(
+            self.get_gas_left(),
+            &BigUint::zero(),
+            &esdt_safe_code,
+            CodeMetadata::DEFAULT,
+            &arg_buffer,
+        );
+        self.esdt_safe_address().set(&esdt_safe_address);
+
+        Ok(())
+    }
 
     #[endpoint]
     fn pause(&self) -> SCResult<()> {
@@ -212,16 +258,6 @@ pub trait Multisig {
 
     // EGLD-ESDT Swap SC calls
 
-    #[endpoint(proposeEgldEsdtSwapSCDeploy)]
-    fn propose_egld_esdt_swap_sc_deploy(&self, code: BoxedBytes) -> SCResult<usize> {
-        require!(
-            self.egld_esdt_swap_address().is_empty(),
-            "EGLD-ESDT Swap SC was already deployed"
-        );
-
-        self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::Deploy { code }))
-    }
-
     #[endpoint(proposeEgldEsdtSwapWrappedEgldIssue)]
     fn propose_egld_esdt_swap_wrapped_egld_issue(
         &self,
@@ -259,25 +295,6 @@ pub trait Multisig {
     }
 
     // ESDT Safe SC calls
-
-    #[endpoint(proposeEsdtSafeScDeploy)]
-    fn propose_esdt_safe_sc_deploy(
-        &self,
-        code: BoxedBytes,
-        transaction_fee: BigUint,
-        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
-    ) -> SCResult<usize> {
-        require!(
-            self.esdt_safe_address().is_empty(),
-            "ESDT Safe SC was already deployed"
-        );
-
-        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::Deploy {
-            code,
-            transaction_fee,
-            token_whitelist: token_whitelist.into_vec(),
-        }))
-    }
 
     #[endpoint(proposeEsdtSafeSetTransactionFee)]
     fn propose_esdt_safe_set_transaction_fee(&self, transaction_fee: BigUint) -> SCResult<usize> {
@@ -345,18 +362,6 @@ pub trait Multisig {
     }
 
     // Multi-transfer ESDT SC calls
-
-    #[endpoint(proposeMultiTransferEsdtSCDeploy)]
-    fn propose_multi_transfer_esdt_sc_deploy(&self, code: BoxedBytes) -> SCResult<usize> {
-        require!(
-            self.multi_transfer_esdt_address().is_empty(),
-            "Multi-transfer ESDT SC was already deployed"
-        );
-
-        self.propose_action(Action::MultiTransferEsdtCall(
-            MultiTransferEsdtCall::Deploy { code },
-        ))
-    }
 
     #[endpoint(proposeMultiTransferEsdtIssueEsdtToken)]
     fn propose_multi_transfer_esdt_issue_esdt_token(
@@ -749,18 +754,6 @@ pub trait Multisig {
         let api = self.send();
 
         match call {
-            EgldEsdtSwapCall::Deploy { code } => {
-                let deployed_contract_address = self.send().deploy_contract(
-                    gas,
-                    &BigUint::zero(),
-                    &code,
-                    CodeMetadata::DEFAULT,
-                    &ArgBuffer::new(),
-                );
-
-                self.egld_esdt_swap_address()
-                    .set(&deployed_contract_address);
-            }
             EgldEsdtSwapCall::IssueWrappedEgld {
                 token_display_name,
                 token_ticker,
@@ -796,28 +789,6 @@ pub trait Multisig {
         let api = self.send();
 
         match call {
-            EsdtSafeCall::Deploy {
-                code,
-                transaction_fee,
-                token_whitelist,
-            } => {
-                let mut arg_buffer = ArgBuffer::new();
-                arg_buffer.push_argument_bytes(transaction_fee.to_bytes_be().as_slice());
-
-                for token_id in token_whitelist {
-                    arg_buffer.push_argument_bytes(token_id.as_esdt_identifier());
-                }
-
-                let deployed_contract_address = self.send().deploy_contract(
-                    gas,
-                    &BigUint::zero(),
-                    &code,
-                    CodeMetadata::DEFAULT,
-                    &arg_buffer,
-                );
-
-                self.esdt_safe_address().set(&deployed_contract_address);
-            }
             EsdtSafeCall::SetTransactionFee { transaction_fee } => {
                 contract_call
                     .setTransactionFee(transaction_fee)
@@ -866,18 +837,6 @@ pub trait Multisig {
         let api = self.send();
 
         match call {
-            MultiTransferEsdtCall::Deploy { code } => {
-                let deployed_contract_address = self.send().deploy_contract(
-                    gas,
-                    &BigUint::zero(),
-                    &code,
-                    CodeMetadata::DEFAULT,
-                    &ArgBuffer::new(),
-                );
-
-                self.multi_transfer_esdt_address()
-                    .set(&deployed_contract_address);
-            }
             MultiTransferEsdtCall::IssueEsdtToken {
                 token_display_name,
                 token_ticker,

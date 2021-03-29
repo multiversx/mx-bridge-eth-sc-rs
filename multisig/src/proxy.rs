@@ -21,7 +21,7 @@ pub trait EsdtSafe {
     fn removeTokenFromWhitelist(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
     fn getNextPendingTransaction(
         &self,
-    ) -> ContractCall<BigUint, MultiArg5<Nonce, Address, Address, TokenIdentifier, BigUint>>;
+    ) -> ContractCall<BigUint, OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>>;
     fn setTransactionStatus(
         &self,
         sender: Address,
