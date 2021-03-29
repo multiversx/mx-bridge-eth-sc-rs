@@ -2,7 +2,7 @@
 
 The bridge suite is comprised of multiple smart contracts. First and foremost, you'll need to setup an `Aggregator` smart contract, which will be used to get the approximate cost of transactions on Ethereum at a certain point in time. More details on this in the workflows description, but basically, fees are currently very high on the Ethereum blockchain, so we can't expect the relayers to handle the costs.  
 
-Next, we're going to setup the main "controller" contract, which will be a multisig-style SC. You can find more details about this type of smart contract here: https://github.com/ElrondNetwork/elrond-wasm-rs/blob/master/contracts/examples/multisig/README.md  
+Next, we're going to setup the main "controller" contract, which will be a multisig-style SC. You can find more details about this type of smart contract [here](https://github.com/ElrondNetwork/elrond-wasm-rs/blob/master/contracts/examples/multisig/README.md)  
 
 Basically, we will have a certain number of board members (in this case we will call them "relayers") which will validate transactions and take the appropriate actions. As this is a multisig contract, at least a certain number of members must agree to the action, otherwise it cannot be performed.  
 
@@ -79,4 +79,4 @@ The only additional setup this contract requires is adding `WrappedEgld` and `Wr
 
 Remember, `EgldEsdtSwap` and `MultiTransferEsdt` both have handy view functions to provide you with the relevant token identifiers.  
 
-Setup is now complete! Now let's discuss the use-cases, workflows and more, in the other document.
+Setup is now complete! Now let's discuss the use-cases, workflows and more, in the [readme](../README.md) document.
