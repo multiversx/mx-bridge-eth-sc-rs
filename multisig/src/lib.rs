@@ -14,6 +14,12 @@ use user_role::UserRole;
 
 elrond_wasm::imports!();
 
+
+//////
+// TODO: Automatically add/remove relayers from EthereumFeePrepay SC
+/////
+
+
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
 #[elrond_wasm_derive::contract(MultisigImpl)]

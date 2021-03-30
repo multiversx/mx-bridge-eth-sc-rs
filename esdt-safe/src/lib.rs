@@ -1,18 +1,33 @@
 #![no_std]
+#![allow(non_snake_case)]
 
 use transaction::*;
 
+extern crate ethereum_fee_prepay;
+use crate::ethereum_fee_prepay::{priority::Priority, transaction_type::TransactionType};
+
 elrond_wasm::imports!();
+
+#[elrond_wasm_derive::callable(EthereumFeePrepayProxy)]
+pub trait EthereumFeePrepay {
+    fn reserveFee(
+        &self,
+        address: &Address,
+        action: TransactionType,
+        priority: Priority,
+    ) -> ContractCall<BigUint, ()>;
+}
 
 #[elrond_wasm_derive::contract(EsdtSafeImpl)]
 pub trait EsdtSafe {
     #[init]
     fn init(
         &self,
-        transaction_fee: BigUint,
+        fee_estimator_contract_address: Address,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) {
-        self.transaction_fee().set(&transaction_fee);
+        self.fee_estimator_contract_address()
+            .set(&fee_estimator_contract_address);
 
         for token in token_whitelist.into_vec() {
             self.token_whitelist().insert(token.clone());
@@ -21,15 +36,6 @@ pub trait EsdtSafe {
 
     // endpoints - owner-only
     // the owner will probably be a multisig SC
-
-    #[endpoint(setTransactionFee)]
-    fn set_transaction_fee_endpoint(&self, transaction_fee: BigUint) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
-        self.transaction_fee().set(&transaction_fee);
-
-        Ok(())
-    }
 
     #[endpoint(addTokenToWhitelist)]
     fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
@@ -52,7 +58,8 @@ pub trait EsdtSafe {
     #[endpoint(getNextPendingTransaction)]
     fn get_next_pending_transaction(
         &self,
-    ) -> SCResult<OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>> {
+    ) -> SCResult<OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>>
+    {
         only_owner!(self, "only owner may call this function");
 
         match self.pending_transaction_address_nonce_list().pop_front() {
@@ -62,14 +69,16 @@ pub trait EsdtSafe {
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                Ok(OptionalResult::Some((nonce, tx.from, tx.to, tx.token_identifier, tx.amount).into()))
+                Ok(OptionalResult::Some(
+                    (nonce, tx.from, tx.to, tx.token_identifier, tx.amount).into(),
+                ))
             }
             None => Ok(OptionalResult::None),
         }
     }
 
     #[endpoint(setTransactionStatus)]
-    fn set_transaction_status_endpoint(
+    fn set_transaction_status(
         &self,
         sender: Address,
         nonce: Nonce,
@@ -103,52 +112,7 @@ pub trait EsdtSafe {
         }
     }
 
-    #[endpoint]
-    fn claim(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
-        let caller = self.get_caller();
-        self.send().direct_egld(
-            &caller,
-            &self.claimable_transaction_fee().get(),
-            self.data_or_empty(&caller, b"claim"),
-        );
-
-        self.claimable_transaction_fee().clear();
-
-        Ok(())
-    }
-
     // endpoints
-
-    #[payable("EGLD")]
-    #[endpoint(depositEgldForTransactionFee)]
-    fn deposit_egld_for_transaction_fee(&self, #[payment] payment: BigUint) {
-        let caller = self.get_caller();
-        let mut caller_deposit = self.deposit(&caller).get();
-        caller_deposit += payment;
-        self.deposit(&caller).set(&caller_deposit);
-    }
-
-    /// amount argument is optional, defaults to max possible if not provided
-    #[endpoint(whithdrawDeposit)]
-    fn whithdraw_deposit(&self, #[var_args] opt_amount: OptionalArg<BigUint>) -> SCResult<()> {
-        let caller = self.get_caller();
-        let caller_deposit = self.deposit(&caller).get();
-        let amount = match opt_amount {
-            OptionalArg::Some(value) => value,
-            OptionalArg::None => caller_deposit.clone(),
-        };
-
-        require!(amount <= caller_deposit, "Trying to whithdraw too much");
-
-        let deposit_remaining = &caller_deposit - &amount;
-        self.send()
-            .direct_egld(&caller, &amount, self.data_or_empty(&caller, b"whitdrawal"));
-        self.deposit(&caller).set(&deposit_remaining);
-
-        Ok(())
-    }
 
     #[payable("*")]
     #[endpoint(createTransaction)]
@@ -159,6 +123,10 @@ pub trait EsdtSafe {
         to: Address,
     ) -> SCResult<()> {
         require!(
+            self.call_value().esdt_token_nonce() == 0,
+            "Only fungible ESDT tokens accepted"
+        );
+        require!(
             self.token_whitelist().contains(&payment_token),
             "Payment token is not on whitelist. Transaction rejected"
         );
@@ -166,13 +134,10 @@ pub trait EsdtSafe {
         require!(!to.is_zero(), "Can't transfer to address zero");
 
         let caller = self.get_caller();
-        let caller_deposit = self.deposit(&caller).get();
-        let transaction_fee = self.transaction_fee().get();
 
-        require!(
-            caller_deposit >= transaction_fee,
-            "Must deposit transaction fee first"
-        );
+        // reserve transaction fee beforehand
+        // used prevent transaction spam
+        self.reserve_fee(&caller);
 
         let tx = Transaction {
             from: caller.clone(),
@@ -189,15 +154,6 @@ pub trait EsdtSafe {
             .set(&TransactionStatus::Pending);
         self.pending_transaction_address_nonce_list()
             .push_back((caller.clone(), sender_nonce));
-
-        // deduct fee from deposit and add to claimable fees pool
-        let deposit_remaining = &caller_deposit - &transaction_fee;
-        self.deposit(&caller).set(&deposit_remaining);
-
-        let mut claimable_transaction_fee = self.claimable_transaction_fee().get();
-        claimable_transaction_fee += transaction_fee;
-        self.claimable_transaction_fee()
-            .set(&claimable_transaction_fee);
 
         Ok(())
     }
@@ -237,30 +193,28 @@ pub trait EsdtSafe {
         }
     }
 
+    fn reserve_fee(&self, from: &Address) {
+        contract_call!(
+            self,
+            self.fee_estimator_contract_address().get(),
+            EthereumFeePrepayProxy
+        )
+        .reserveFee(from, TransactionType::Erc20, Priority::Low)
+        .execute_on_dest_context(self.get_gas_left(), self.send());
+    }
+
     // storage
 
     // transaction fee, can only be set by owner
 
-    #[view(getTransactionFee)]
-    #[storage_mapper("transactionFee")]
-    fn transaction_fee(&self) -> SingleValueMapper<Self::Storage, BigUint>;
-
-    // transaction fees available for claiming, only added to this pool after the transaction was added in Pending status
-
-    #[view(getClaimableTransactionFee)]
-    #[storage_mapper("claimableTransactionFee")]
-    fn claimable_transaction_fee(&self) -> SingleValueMapper<Self::Storage, BigUint>;
+    #[view(getFeeEstimatorContractAddress)]
+    #[storage_mapper("feeEstimatorContractAddress")]
+    fn fee_estimator_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 
     // token whitelist
 
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
-
-    // eGLD amounts deposited by each address, for the sole purpose of paying for transaction fees
-
-    #[view(getDeposit)]
-    #[storage_mapper("deposit")]
-    fn deposit(&self, address: &Address) -> SingleValueMapper<Self::Storage, BigUint>;
 
     // transactions for each address, sorted by nonce
     // due to how VecMapper works internally, nonces will start at 1
