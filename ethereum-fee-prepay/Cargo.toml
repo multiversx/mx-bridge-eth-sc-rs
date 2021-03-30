@@ -15,6 +15,9 @@ wasm-output-mode = [ "elrond-wasm-node",]
 git = "https://github.com/ElrondNetwork/sc-chainlink-rs"
 branch = "sc-bridge-stable"
 
+[dependencies.transaction]
+path = "../common/transaction"
+
 [dependencies.elrond-wasm]
 version = "0.14.1"
 

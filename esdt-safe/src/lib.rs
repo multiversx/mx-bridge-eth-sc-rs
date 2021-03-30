@@ -3,9 +3,6 @@
 
 use transaction::*;
 
-extern crate ethereum_fee_prepay;
-use crate::ethereum_fee_prepay::{priority::Priority, transaction_type::TransactionType};
-
 elrond_wasm::imports!();
 
 #[elrond_wasm_derive::callable(EthereumFeePrepayProxy)]

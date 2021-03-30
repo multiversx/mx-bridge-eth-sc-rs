@@ -2,6 +2,8 @@ use transaction::*;
 
 elrond_wasm::imports!();
 
+use transaction::{Priority, TransactionType};
+
 #[elrond_wasm_derive::callable(EgldEsdtSwapProxy)]
 pub trait EgldEsdtSwap {
     fn issueWrappedEgld(
@@ -50,5 +52,16 @@ pub trait MultiTransferEsdt {
         to: Address,
         token_id: TokenIdentifier,
         amount: BigUint,
+    ) -> ContractCall<BigUint, ()>;
+}
+
+#[elrond_wasm_derive::callable(EthereumFeePrepayProxy)]
+pub trait EthereumFeePrepay {
+    fn payFee(
+        &self,
+        address: &Address,
+        relayer: &Address,
+        action: TransactionType,
+        priority: Priority,
     ) -> ContractCall<BigUint, ()>;
 }

@@ -23,3 +23,33 @@ pub enum TransactionStatus {
     Executed,
     Rejected,
 }
+
+#[derive(TopEncode, TopDecode, TypeAbi)]
+pub enum TransactionType {
+    Ethereum, // 21000
+    Erc20,
+    Erc721,
+    Erc1155,
+}
+
+#[derive(TopEncode, TopDecode, TypeAbi)]
+pub struct TransactionGasLimits<BigUint: BigUintApi> {
+    pub ethereum: BigUint,
+    pub erc20: BigUint,
+    pub erc721: BigUint,
+    pub erc1155: BigUint,
+}
+
+#[derive(TopEncode, TopDecode, TypeAbi)]
+pub enum Priority {
+    Fast,
+    Average,
+    Low,
+}
+
+#[derive(TopEncode, TopDecode, TypeAbi)]
+pub struct PriorityGasCosts<BigUint: BigUintApi> {
+    pub fast: BigUint,
+    pub average: BigUint,
+    pub low: BigUint,
+}

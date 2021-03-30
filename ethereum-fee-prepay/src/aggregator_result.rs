@@ -1,8 +1,7 @@
 elrond_wasm::imports!();
 use elrond_wasm::sc_error;
 
-pub use crate::priority::PriorityGasCosts;
-pub use crate::transaction_type::TransactionGasLimits;
+use transaction::*;
 
 extern crate aggregator;
 pub use crate::aggregator::aggregator_interface::Round;

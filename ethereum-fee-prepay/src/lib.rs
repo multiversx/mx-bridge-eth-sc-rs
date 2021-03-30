@@ -3,11 +3,7 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-pub mod priority;
-use priority::Priority;
-
-pub mod transaction_type;
-use transaction_type::TransactionType;
+use transaction::*;
 
 pub mod aggregator_result;
 
@@ -64,6 +60,7 @@ pub trait EthereumFeePrepay {
         Ok(())
     }
 
+    // TODO: Remember to add EsdtSafe to whitelist
     #[endpoint(reserveFee)]
     fn reserve_fee(
         &self,
