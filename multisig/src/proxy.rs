@@ -18,7 +18,6 @@ pub trait EgldEsdtSwap {
 
 #[elrond_wasm_derive::callable(EsdtSafeProxy)]
 pub trait EsdtSafe {
-    fn setTransactionFee(&self, transaction_fee: BigUint) -> ContractCall<BigUint, ()>;
     fn addTokenToWhitelist(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
     fn removeTokenFromWhitelist(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
     fn getNextPendingTransaction(
@@ -33,7 +32,6 @@ pub trait EsdtSafe {
         nonce: Nonce,
         transaction_status: TransactionStatus,
     ) -> ContractCall<BigUint, ()>;
-    fn claim(&self) -> ContractCall<BigUint, ()>;
 }
 
 #[elrond_wasm_derive::callable(MultiTransferEsdtProxy)]

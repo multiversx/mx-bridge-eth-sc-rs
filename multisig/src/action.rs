@@ -16,7 +16,7 @@ pub enum Action<BigUint: BigUintApi> {
     SlashUser(Address),
     ChangeQuorum(usize),
     EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
-    EsdtSafeCall(EsdtSafeCall<BigUint>),
+    EsdtSafeCall(EsdtSafeCall),
     MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>),
     EthereumFeePrepayCall(EthereumFeePrepayCall),
 }
