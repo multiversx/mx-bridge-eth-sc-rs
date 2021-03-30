@@ -4,6 +4,7 @@ members = [
   "egld-esdt-swap/abi",
   "esdt-safe",
   "esdt-safe/abi",
+  "ethereum-fee-prepay",
   "multi-transfer-esdt",
   "multi-transfer-esdt/abi",
   "multisig",
