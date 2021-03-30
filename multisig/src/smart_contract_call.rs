@@ -19,10 +19,7 @@ pub enum EgldEsdtSwapCall<BigUint: BigUintApi> {
 }
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
-pub enum EsdtSafeCall<BigUint: BigUintApi> {
-    SetTransactionFee {
-        transaction_fee: BigUint,
-    },
+pub enum EsdtSafeCall {
     AddTokenToWhitelist {
         token_id: TokenIdentifier,
     },
@@ -31,11 +28,8 @@ pub enum EsdtSafeCall<BigUint: BigUintApi> {
     },
     GetNextPendingTransaction,
     SetTransactionStatus {
-        sender: Address,
-        nonce: Nonce,
         transaction_status: TransactionStatus,
     },
-    Claim,
 }
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
@@ -57,5 +51,15 @@ pub enum MultiTransferEsdtCall<BigUint: BigUintApi> {
         to: Address,
         token_id: TokenIdentifier,
         amount: BigUint,
+    },
+}
+
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
+pub enum EthereumFeePrepayCall {
+    PayFee {
+        address: Address,
+        relayer: Address,
+        transaction_type: TransactionType,
+        priority: Priority,
     },
 }
