@@ -10,7 +10,7 @@ pub trait EthereumFeePrepay {
     fn reserveFee(
         &self,
         address: &Address,
-        action: TransactionType,
+        transaction_type: TransactionType,
         priority: Priority,
     ) -> ContractCall<BigUint, ()>;
 }

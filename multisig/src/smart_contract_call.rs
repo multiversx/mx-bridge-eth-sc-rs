@@ -59,3 +59,13 @@ pub enum MultiTransferEsdtCall<BigUint: BigUintApi> {
         amount: BigUint,
     },
 }
+
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
+pub enum EthereumFeePrepayCall {
+    PayFee {
+        address: Address,
+        relayer: Address,
+        transaction_type: TransactionType,
+        priority: Priority,
+    }
+}

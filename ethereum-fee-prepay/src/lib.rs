@@ -49,28 +49,27 @@ pub trait EthereumFeePrepay {
         &self,
         address: Address,
         relayer: Address,
-        action: TransactionType,
+        transaction_type: TransactionType,
         priority: Priority,
     ) -> SCResult<()> {
         sc_try!(self.require_whitelisted());
 
-        let estimate = sc_try!(self.compute_estimate(action, priority));
-        sc_try!(self.try_transfer(&address, &relayer, &estimate));
+        let estimate = sc_try!(self.compute_estimate(transaction_type, priority));
+        self.transfer(&address, &relayer, &estimate);
 
         Ok(())
     }
 
-    // TODO: Remember to add EsdtSafe to whitelist
     #[endpoint(reserveFee)]
     fn reserve_fee(
         &self,
         address: Address,
-        action: TransactionType,
+        transaction_type: TransactionType,
         priority: Priority,
     ) -> SCResult<()> {
         sc_try!(self.require_whitelisted());
 
-        let estimate = sc_try!(self.compute_estimate(action, priority));
+        let estimate = sc_try!(self.compute_estimate(transaction_type, priority));
         sc_try!(self.try_reserve_from_balance(&address, &estimate));
 
         Ok(())
@@ -159,11 +158,20 @@ pub trait EthereumFeePrepay {
         Ok(())
     }
 
-    fn try_transfer(&self, from: &Address, to: &Address, amount: &BigUint) -> SCResult<()> {
-        sc_try!(self.try_decrease_reserve(from, amount));
-        self.increase_balance(to, amount);
+    fn transfer(&self, from: &Address, to: &Address, amount: &BigUint) {
+        let reserve = self.reserved_amount(from).get();
 
-        Ok(())
+        // This is done to prevent a potential bug
+        // If the fee increases even slightly between the "reserve" and "pay"
+        // The call would fail with not enough funds
+        let amount_to_send = if &reserve < amount {
+            reserve
+        } else {
+            amount.clone()
+        };
+
+        self.decrease_reserve(from, &amount_to_send);
+        self.increase_balance(to, &amount_to_send);
     }
 
     fn increase_reserve(&self, address: &Address, amount: &BigUint) {
@@ -172,21 +180,16 @@ pub trait EthereumFeePrepay {
         self.reserved_amount(address).set(&reserve);
     }
 
-    fn try_decrease_reserve(&self, address: &Address, amount: &BigUint) -> SCResult<()> {
+    fn decrease_reserve(&self, address: &Address, amount: &BigUint) {
         let mut reserve = self.reserved_amount(address).get();
-
-        require!(&reserve >= amount, "insufficient balance");
-
         reserve -= amount;
         self.reserved_amount(address).set(&reserve);
-
-        Ok(())
     }
 
     fn try_reserve_from_balance(&self, from: &Address, amount: &BigUint) -> SCResult<()> {
         sc_try!(self.try_decrease_balance(from, amount));
         self.increase_reserve(from, amount);
-        
+
         Ok(())
     }
 

@@ -23,7 +23,10 @@ pub trait EsdtSafe {
     fn removeTokenFromWhitelist(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
     fn getNextPendingTransaction(
         &self,
-    ) -> ContractCall<BigUint, OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>>;
+    ) -> ContractCall<
+        BigUint,
+        OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>,
+    >;
     fn setTransactionStatus(
         &self,
         sender: Address,
@@ -61,7 +64,8 @@ pub trait EthereumFeePrepay {
         &self,
         address: &Address,
         relayer: &Address,
-        action: TransactionType,
+        transaction_type: TransactionType,
         priority: Priority,
     ) -> ContractCall<BigUint, ()>;
+    fn addToWhitelist(&self, address: &Address) -> ContractCall<BigUint, ()>;
 }

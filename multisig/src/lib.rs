@@ -14,11 +14,9 @@ use user_role::UserRole;
 
 elrond_wasm::imports!();
 
-
 //////
 // TODO: Automatically add/remove relayers from EthereumFeePrepay SC
 /////
-
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
@@ -67,10 +65,13 @@ pub trait Multisig {
         &self,
         egld_esdt_swap_code: BoxedBytes,
         multi_transfer_esdt_code: BoxedBytes,
+        ethereum_fee_prepay_code: BoxedBytes,
         esdt_safe_code: BoxedBytes,
-        esdt_safe_transaction_fee: BigUint,
+        aggregator_address: Address,
         #[var_args] esdt_safe_token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
+        // eGLD ESDT swap deploy
+
         let egld_esdt_swap_address = self.send().deploy_contract(
             self.get_gas_left(),
             &BigUint::zero(),
@@ -79,6 +80,8 @@ pub trait Multisig {
             &ArgBuffer::new(),
         );
         self.egld_esdt_swap_address().set(&egld_esdt_swap_address);
+
+        // Multi-transfer ESDT deploy
 
         let multi_transfer_esdt_address = self.send().deploy_contract(
             self.get_gas_left(),
@@ -90,11 +93,28 @@ pub trait Multisig {
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_esdt_address);
 
-        let mut arg_buffer = ArgBuffer::new();
-        arg_buffer.push_argument_bytes(esdt_safe_transaction_fee.to_bytes_be().as_slice());
+        // Ethereum Fee Prepay deploy
+
+        let mut ethereum_fee_prepay_arg_buffer = ArgBuffer::new();
+        ethereum_fee_prepay_arg_buffer.push_argument_bytes(aggregator_address.as_bytes());
+
+        let ethereum_fee_prepay_address = self.send().deploy_contract(
+            self.get_gas_left(),
+            &BigUint::zero(),
+            &ethereum_fee_prepay_code,
+            CodeMetadata::DEFAULT,
+            &ethereum_fee_prepay_arg_buffer,
+        );
+        self.ethereum_fee_prepay_address()
+            .set(&ethereum_fee_prepay_address);
+
+        // ESDT Safe deploy
+
+        let mut esdt_safe_arg_buffer = ArgBuffer::new();
+        esdt_safe_arg_buffer.push_argument_bytes(ethereum_fee_prepay_address.as_bytes());
 
         for token_id in esdt_safe_token_whitelist.into_vec() {
-            arg_buffer.push_argument_bytes(token_id.as_esdt_identifier());
+            esdt_safe_arg_buffer.push_argument_bytes(token_id.as_esdt_identifier());
         }
 
         let esdt_safe_address = self.send().deploy_contract(
@@ -102,9 +122,15 @@ pub trait Multisig {
             &BigUint::zero(),
             &esdt_safe_code,
             CodeMetadata::DEFAULT,
-            &arg_buffer,
+            &esdt_safe_arg_buffer,
         );
         self.esdt_safe_address().set(&esdt_safe_address);
+
+        // Add ESDT Safe to Ethereum Fee Prepay whitelist
+
+        contract_call!(self, ethereum_fee_prepay_address, EthereumFeePrepayProxy)
+            .addToWhitelist(&esdt_safe_address)
+            .execute_on_dest_context(self.get_gas_left(), self.send());
 
         Ok(())
     }
@@ -432,6 +458,20 @@ pub trait Multisig {
         ))
     }
 
+    #[endpoint]
+    fn propose_ethereum_pay_fee(&self, tx_sender: Address, relayer: Address) -> SCResult<usize> {
+        sc_try!(self.require_ethereum_fee_prepay_deployed());
+
+        self.propose_action(Action::EthereumFeePrepayCall(
+            EthereumFeePrepayCall::PayFee {
+                address: tx_sender,
+                relayer,
+                transaction_type: TransactionType::Erc20,
+                priority: Priority::Low,
+            },
+        ))
+    }
+
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
@@ -744,17 +784,14 @@ pub trait Multisig {
             Action::EgldEsdtSwapCall(call) => self.execute_egld_esdt_swap_call(call),
             Action::EsdtSafeCall(call) => self.execute_esdt_safe_call(call),
             Action::MultiTransferEsdtCall(call) => self.execute_multi_transfer_esdt_call(call),
+            Action::EthereumFeePrepayCall(call) => self.execute_ethereum_fee_prepay_call(call),
         }
 
         Ok(())
     }
 
     fn execute_egld_esdt_swap_call(&self, call: EgldEsdtSwapCall<BigUint>) {
-        let contract_address = if !self.egld_esdt_swap_address().is_empty() {
-            self.egld_esdt_swap_address().get()
-        } else {
-            Address::zero()
-        };
+        let contract_address = self.egld_esdt_swap_address().get();
         let contract_call = contract_call!(self, contract_address, EgldEsdtSwapProxy);
         let gas = self.get_gas_left();
         let api = self.send();
@@ -785,11 +822,7 @@ pub trait Multisig {
     }
 
     fn execute_esdt_safe_call(&self, call: EsdtSafeCall<BigUint>) {
-        let contract_address = if !self.esdt_safe_address().is_empty() {
-            self.esdt_safe_address().get()
-        } else {
-            Address::zero()
-        };
+        let contract_address = self.esdt_safe_address().get();
         let contract_call = contract_call!(self, contract_address, EsdtSafeProxy);
         let gas = self.get_gas_left();
         let api = self.send();
@@ -833,11 +866,7 @@ pub trait Multisig {
     }
 
     fn execute_multi_transfer_esdt_call(&self, call: MultiTransferEsdtCall<BigUint>) {
-        let contract_address = if !self.multi_transfer_esdt_address().is_empty() {
-            self.multi_transfer_esdt_address().get()
-        } else {
-            Address::zero()
-        };
+        let contract_address = self.multi_transfer_esdt_address().get();
         let contract_call = contract_call!(self, contract_address, MultiTransferEsdtProxy);
         let gas = self.get_gas_left();
         let api = self.send();
@@ -876,6 +905,26 @@ pub trait Multisig {
         }
     }
 
+    fn execute_ethereum_fee_prepay_call(&self, call: EthereumFeePrepayCall) {
+        let contract_address = self.ethereum_fee_prepay_address().get();
+        let contract_call = contract_call!(self, contract_address, EthereumFeePrepayProxy);
+        let gas = self.get_gas_left();
+        let api = self.send();
+
+        match call {
+            EthereumFeePrepayCall::PayFee {
+                address,
+                relayer,
+                transaction_type,
+                priority,
+            } => {
+                contract_call
+                    .payFee(&address, &relayer, transaction_type, priority)
+                    .execute_on_dest_context(gas, api);
+            }
+        }
+    }
+
     fn clear_action(&self, action_id: usize) {
         self.action_mapper().clear_entry_unchecked(action_id);
         self.action_signer_ids(action_id).clear();
@@ -908,6 +957,14 @@ pub trait Multisig {
         require!(
             !self.multi_transfer_esdt_address().is_empty(),
             "Multi-transfer ESDT SC has to be deployed first"
+        );
+        Ok(())
+    }
+
+    fn require_ethereum_fee_prepay_deployed(&self) -> SCResult<()> {
+        require!(
+            !self.ethereum_fee_prepay_address().is_empty(),
+            "Ethereum Fee Prepay SC has to be deployed first"
         );
         Ok(())
     }
@@ -986,4 +1043,8 @@ pub trait Multisig {
     #[view(getMultiTransferEsdtAddress)]
     #[storage_mapper("multiTransferEsdtAddress")]
     fn multi_transfer_esdt_address(&self) -> SingleValueMapper<Self::Storage, Address>;
+
+    #[view(getEthereumFeePrepayAddress)]
+    #[storage_mapper("ethereumFeePrepayAddress")]
+    fn ethereum_fee_prepay_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 }

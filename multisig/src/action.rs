@@ -1,7 +1,9 @@
 use elrond_wasm::api::BigUintApi;
 use elrond_wasm::types::{Address, Vec};
 
-use crate::smart_contract_call::{EgldEsdtSwapCall, EsdtSafeCall, MultiTransferEsdtCall};
+use crate::smart_contract_call::{
+    EgldEsdtSwapCall, EsdtSafeCall, EthereumFeePrepayCall, MultiTransferEsdtCall,
+};
 
 elrond_wasm::derive_imports!();
 
@@ -16,6 +18,7 @@ pub enum Action<BigUint: BigUintApi> {
     EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
     EsdtSafeCall(EsdtSafeCall<BigUint>),
     MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>),
+    EthereumFeePrepayCall(EthereumFeePrepayCall),
 }
 
 impl<BigUint: BigUintApi> Action<BigUint> {

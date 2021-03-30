@@ -24,7 +24,7 @@ pub enum TransactionStatus {
     Rejected,
 }
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
 pub enum TransactionType {
     Ethereum, // 21000
     Erc20,
@@ -40,7 +40,7 @@ pub struct TransactionGasLimits<BigUint: BigUintApi> {
     pub erc1155: BigUint,
 }
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
 pub enum Priority {
     Fast,
     Average,
