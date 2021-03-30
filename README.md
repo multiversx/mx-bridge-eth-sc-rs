@@ -24,15 +24,14 @@ One important thing to note is you can never unwrap your WrappedETH while on the
 
 To be able to send eGLD to an Ethereum account, we first have to wrap the tokens through the `EgldEsdtSwap` contract. Then, we have to create a transaction through the `EsdtSafe` contract. This is a 2-step process.  
 
-First, you will have to deposit an appropriate sum of eGLD (NOT your wrapped eGLD) to pay for the transaction fees. Unfortunately, transactions on Ethereum are very expensive. We can't expect the relayers to cover the cost from their pockets, so you'll have to pay for the transaction fees yourself.  
+First, you will have to deposit an appropriate sum of eGLD (NOT your wrapped eGLD) to pay for the transaction fees. Unfortunately, transactions on Ethereum are very expensive. We can't expect the relayers to cover the cost from their pockets, so you'll have to pay for the transaction fees yourself. This is done through the `EthereumFeePrepay` smart contract.  
 
 After paying the fees, you can create a transaction by making a smart contract call to the `EsdtSafe` SC with the tokens you want to transfer and the receiver's address. The tokens will be locked in the contract until the transaction is processed. If the transaction is successful, the tokens on the Elrond side will be burned. If the transaction fails for whatever reason, you will get your tokens back.  
 
 ## Ethereum -> Elrond transaction
 
-To be able to transfer your tokens back, you will likely have to use an ERC20 contract on the Ethereum blockchain. Once your transaction has been processed on that side, our relayers will simply transfer the tokens back to your Elrond account, through the `MultiTransferEsdt` SC.  
+To be able to transfer your tokens back, you will likely have to use an ERC20 contract on the Ethereum blockchain. Once your transaction has been processed on that side, our relayers will simply transfer the tokens back to your Elrond account, through the `MultiTransferEsdt` SC. No additional fees have to be paid for this kind of transactions.  
 
 ## Conclusion
 
 And that sums up the Elrond-Ethereum bridge. It's open source, so if you're interested in the details, you can always check out the implementation. In the future, it will likely be implemented in Maiar, so it will be very straight forward to move your tokens around :)
-
