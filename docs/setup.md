@@ -6,9 +6,21 @@ Next, we're going to setup the main "controller" contract, which will be a multi
 
 Basically, we will have a certain number of board members (in this case we will call them "relayers") which will validate transactions and take the appropriate actions. As this is a multisig contract, at least a certain number of members must agree to the action, otherwise it cannot be performed.  
 
-Once the multisig contract is deployed and setup properly, the owner must call the `deployChildContracts` to deploy `EgldEsdtSwap`, `EsdtSafe`, `MultiTransferEsdt` and `EthereumFeePrepay` contracts.  
+Once the multisig contract is deployed and setup properly, the owner must call the `deployChildContracts` to deploy `EgldEsdtSwap`, `EsdtSafe`, `MultiTransferEsdt` and `EthereumFeePrepay` contracts.  The endpoint looks like this:  
 
-TODO: Describe function
+```
+    #[endpoint(deployChildContracts)]
+    fn deploy_child_contracts(
+        &self,
+        egld_esdt_swap_code: BoxedBytes,
+        multi_transfer_esdt_code: BoxedBytes,
+        ethereum_fee_prepay_code: BoxedBytes,
+        esdt_safe_code: BoxedBytes,
+        aggregator_address: Address,
+        #[var_args] esdt_safe_token_whitelist: VarArgs<TokenIdentifier>
+```
+
+The `_code` arguments are the compiled wasm bytecode of the respective contracts. `aggregator_address` is the aggregator described in the intro (has to be deployed already, preferably by the same account as the multisig one), and optionally you can add any number of tokens to the initial whitelist, each as a different argument.  
 
 Once those are setup, the individual contracts will need a bit more setup themselves. These steps will be done through the multisig propose-sign-perform action flow.
 
@@ -78,5 +90,9 @@ The only additional setup this contract requires is adding `WrappedEgld` and `Wr
 ```
 
 Remember, `EgldEsdtSwap` and `MultiTransferEsdt` both have handy view functions to provide you with the relevant token identifiers.  
+
+## Ethereum Fee Prepay
+
+This contract requires no additional setup.  
 
 Setup is now complete! Now let's discuss the use-cases, workflows and more, in the [readme](../README.md) document.
