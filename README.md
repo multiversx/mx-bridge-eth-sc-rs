@@ -2,7 +2,7 @@
 
 ## Abstract
 
-In this repository you will find smart contracts on the Elrond side for Elrond-Ethereum bridge. For setup details, take a look [here](docs/setup.md).  
+In this repository you will find smart contracts on the Elrond side for Elrond-Ethereum bridge. For setup details, take a look [here](docs/setup.md). Documentation for relayers can be found [here](docs/relayer.md).  
 
 Although cryptocurrency is the future, there are still many challenges to overcome. One of them is providing an easy way to manage multiple different types of coins. Although we already have some exchange services, they can be a bit difficult to use and require many steps to perform the actual transfer, and they require you to trust a centralized third party and/or a centralized ERC20 token smart contract. With this suite of smart contracts, we aim to provide a decentralized way of transfering tokens between Elrond and Ethereum.  
 
