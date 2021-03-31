@@ -446,10 +446,13 @@ pub trait Multisig {
         ))
     }
 
-    #[endpoint]
-    fn propose_ethereum_pay_fee(&self, tx_sender: Address, relayer: Address) -> SCResult<usize> {
+    // Ethereum Fee Prepay SC calls
+
+    #[endpoint(proposeEthereumFeePrepayPayFee)]
+    fn propose_ethereum_prepay_fee_pay_fee(&self, tx_sender: Address) -> SCResult<usize> {
         sc_try!(self.require_ethereum_fee_prepay_deployed());
 
+        let relayer = self.get_caller();
         self.propose_action(Action::EthereumFeePrepayCall(
             EthereumFeePrepayCall::PayFee {
                 address: tx_sender,
