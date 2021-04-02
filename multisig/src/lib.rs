@@ -14,6 +14,9 @@ use user_role::UserRole;
 
 elrond_wasm::imports!();
 
+// Base cost for standalone + estimate cost of actual sc call
+const ISSUE_EXPECTED_GAS_COST: u64 = 90_000_000 + 25_000_000;
+
 //////
 // TODO: Automatically add/remove relayers from EthereumFeePrepay SC
 /////
@@ -809,7 +812,7 @@ pub trait Multisig {
                 contract_call
                     .with_token_transfer(TokenIdentifier::egld(), issue_cost)
                     .issueWrappedEgld(token_display_name, token_ticker, initial_supply)
-                    .execute_on_dest_context(gas, api);
+                    .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
             }
             EgldEsdtSwapCall::SetLocalMintRole => {
                 contract_call
