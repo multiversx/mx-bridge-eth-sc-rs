@@ -22,7 +22,14 @@ Once the multisig contract is deployed and setup properly, the owner must call t
 
 The `_code` arguments are the compiled wasm bytecode of the respective contracts. `aggregator_address` is the aggregator described in the intro (has to be deployed already, preferably by the same account as the multisig one), and optionally you can add any number of tokens to the initial whitelist, each as a different argument.  
 
-Once those are setup, the individual contracts will need a bit more setup themselves. These steps will be done through the multisig propose-sign-perform action flow.
+To complete the setup, there is one more step that has to be performed: We have to add the EsdtSafe to EthereumFeePrepay whitelist. This is done through the `finishSetup` endpoint (which is owner-only). No arguments required for this one.  
+
+```
+    #[endpoint(finishSetup)]
+    fn finish_setup(&self)
+```
+
+Once those are setup, the individual contracts will need a bit more setup themselves. These steps will be done through the multisig propose-sign-perform action flow.  
 
 # EgldEsdtSwap
 

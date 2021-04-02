@@ -1,0 +1,17 @@
+[package]
+name = "aggregator-mock-abi"
+version = "0.0.0"
+authors = [ "you",]
+edition = "2018"
+publish = false
+
+[dev-dependencies]
+
+[dependencies.aggregator-mock]
+path = ".."
+
+[dependencies.elrond-wasm]
+version = "0.14.1"
+
+[dependencies.elrond-wasm-debug]
+version = "0.14.1"

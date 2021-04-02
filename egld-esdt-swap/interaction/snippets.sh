@@ -7,11 +7,8 @@ CHAIN_ID=local-testnet
 
 TOKEN_DISPLAY_NAME=0x5772617070656445676c64  # "WrappedEgld"
 TOKEN_TICKER=0x5745474c44  # "WEGLD"
-TOKEN_IDENTIFIER=0x5745474c442d633764373566 # Manually update after issue
 
 UNWRAP_EGLD_ENDPOINT=0x756e7772617045676c64
-
-MULTI_TRANSFER_ESDT_ADDRESS=0x # Manually update after deploying
 
 deploy() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -38,7 +35,7 @@ setLocalMintRoleSelf() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-setLocalMintRoleMultiTransfer {
+setLocalMintRoleMultiTransfer() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --arguments ${MULTI_TRANSFER_ESDT_ADDRESS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -59,13 +56,16 @@ wrapMoreThanBalance() {
 }
 
 unwrapEgld() {
+    getWrappedEgldTokenIdentifier
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --function="ESDTTransfer" --arguments ${TOKEN_IDENTIFIER} 0x05 ${UNWRAP_EGLD_ENDPOINT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # views
 
 getWrappedEgldTokenIdentifier() {
-    erdpy --verbose contract query ${ADDRESS} --function="getWrappedEgldTokenIdentifier" --proxy=${PROXY}
+    local QUERY_OUTPUT=$(erdpy --verbose contract query ${ADDRESS} --function="getWrappedEgldTokenIdentifier" --proxy=${PROXY})
+    TOKEN_IDENTIFIER=0x$(jq -r '.[0] .hex' <<< "${QUERY_OUTPUT}")
+    echo "Wrapped eGLD token identifier: ${TOKEN_IDENTIFIER}"
 }
 
 getLockedEgldBalance() {

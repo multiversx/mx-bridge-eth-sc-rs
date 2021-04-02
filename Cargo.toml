@@ -1,5 +1,7 @@
 [workspace]
 members = [
+  "aggregator-mock",
+  "aggregator-mock/abi",
   "egld-esdt-swap",
   "egld-esdt-swap/abi",
   "esdt-safe",

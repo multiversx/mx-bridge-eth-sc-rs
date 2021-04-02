@@ -20,7 +20,7 @@ The first and most important prerequisite is being recognized as a board member 
 
 But that is only the first step. You will not be able to perform any board-member exclusive action until you've staked a certain amount of eGLD in the multisig contract. Once staked, you cannot unstake until your role has been revoked.  This can also happen in two ways:
 - You (or another board member) propose to remove you as board memmber, in which case you will then be able to unstake your full stake
-- Other board members propose to "slash" your stake, you lose your board member role and part of your stake and can unstake the rest.  
+- The owner proposes to "slash" your stake, you lose your board member role and part of your stake and can unstake the rest.  
 
 Stake "slashing" will only happen if you're actively being malicious. So play nice!  
 

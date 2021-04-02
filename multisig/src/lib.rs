@@ -126,7 +126,19 @@ pub trait Multisig {
         );
         self.esdt_safe_address().set(&esdt_safe_address);
 
-        // Add ESDT Safe to Ethereum Fee Prepay whitelist
+        Ok(())
+    }
+
+    /// Add ESDT Safe to Ethereum Fee Prepay whitelist
+    /// Can't be done in the previous step, as the contracts only exist after execution has finished
+    #[endpoint(finishSetup)]
+    fn finish_setup(&self) -> SCResult<()> {
+        only_owner!(self, "only owner may pause");
+        sc_try!(self.require_ethereum_fee_prepay_deployed());
+        sc_try!(self.require_egld_esdt_swap_deployed());
+
+        let ethereum_fee_prepay_address = self.ethereum_fee_prepay_address().get();
+        let esdt_safe_address = self.esdt_safe_address().get();
 
         contract_call!(self, ethereum_fee_prepay_address, EthereumFeePrepayProxy)
             .addToWhitelist(&esdt_safe_address)
