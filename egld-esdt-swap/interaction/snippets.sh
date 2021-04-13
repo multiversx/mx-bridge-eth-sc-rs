@@ -28,7 +28,7 @@ upgrade() {
 }
 
 issueWrappedEgld() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} 0x03E8 --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setLocalMintRoleSelf() {
@@ -37,10 +37,6 @@ setLocalMintRoleSelf() {
 
 setLocalMintRoleMultiTransfer() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --arguments ${MULTI_TRANSFER_ESDT_ADDRESS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-localMint() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --function="mintWrappedEgld" --arguments 0x64 --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 wrapEgld() {

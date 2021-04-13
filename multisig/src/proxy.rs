@@ -10,10 +10,8 @@ pub trait EgldEsdtSwap {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        initial_supply: BigUint,
     ) -> ContractCall<BigUint, ()>; // payable EGLD
     fn setLocalMintRole(&self) -> ContractCall<BigUint, ()>;
-    fn mintWrappedEgld(&self, amount: BigUint) -> ContractCall<BigUint, ()>;
 }
 
 #[elrond_wasm_derive::callable(EsdtSafeProxy)]
@@ -40,14 +38,8 @@ pub trait MultiTransferEsdt {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        initial_supply: BigUint,
     ) -> ContractCall<BigUint, ()>; // payable EGLD
     fn setLocalMintRole(&self, token_id: TokenIdentifier) -> ContractCall<BigUint, ()>;
-    fn mintEsdtToken(
-        &self,
-        token_id: TokenIdentifier,
-        amount: BigUint,
-    ) -> ContractCall<BigUint, ()>;
     fn transferEsdtToken(
         &self,
         to: Address,

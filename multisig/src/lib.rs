@@ -310,7 +310,6 @@ pub trait Multisig {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        initial_supply: BigUint,
         issue_cost: BigUint,
     ) -> SCResult<usize> {
         sc_try!(self.require_egld_esdt_swap_deployed());
@@ -319,7 +318,6 @@ pub trait Multisig {
             EgldEsdtSwapCall::IssueWrappedEgld {
                 token_display_name,
                 token_ticker,
-                initial_supply,
                 issue_cost,
             },
         ))
@@ -330,15 +328,6 @@ pub trait Multisig {
         sc_try!(self.require_egld_esdt_swap_deployed());
 
         self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::SetLocalMintRole))
-    }
-
-    #[endpoint(proposeEgldEsdtSwapMintWrappedEgld)]
-    fn propose_egld_esdt_swap_mint_wrapped_egld(&self, amount: BigUint) -> SCResult<usize> {
-        sc_try!(self.require_egld_esdt_swap_deployed());
-
-        self.propose_action(Action::EgldEsdtSwapCall(
-            EgldEsdtSwapCall::MintWrappedEgld { amount },
-        ))
     }
 
     // ESDT Safe SC calls
@@ -403,7 +392,6 @@ pub trait Multisig {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        initial_supply: BigUint,
         issue_cost: BigUint,
     ) -> SCResult<usize> {
         sc_try!(self.require_multi_transfer_esdt_deployed());
@@ -412,7 +400,6 @@ pub trait Multisig {
             MultiTransferEsdtCall::IssueEsdtToken {
                 token_display_name,
                 token_ticker,
-                initial_supply,
                 issue_cost,
             },
         ))
@@ -427,19 +414,6 @@ pub trait Multisig {
 
         self.propose_action(Action::MultiTransferEsdtCall(
             MultiTransferEsdtCall::SetLocalMintRole { token_id },
-        ))
-    }
-
-    #[endpoint(proposeMultiTransferEsdtMintEsdtToken)]
-    fn propose_multi_transfer_esdt_mint_esdt_token(
-        &self,
-        token_id: TokenIdentifier,
-        amount: BigUint,
-    ) -> SCResult<usize> {
-        sc_try!(self.require_multi_transfer_esdt_deployed());
-
-        self.propose_action(Action::MultiTransferEsdtCall(
-            MultiTransferEsdtCall::MintEsdtToken { token_id, amount },
         ))
     }
 
@@ -806,22 +780,16 @@ pub trait Multisig {
             EgldEsdtSwapCall::IssueWrappedEgld {
                 token_display_name,
                 token_ticker,
-                initial_supply,
                 issue_cost,
             } => {
                 contract_call
                     .with_token_transfer(TokenIdentifier::egld(), issue_cost)
-                    .issueWrappedEgld(token_display_name, token_ticker, initial_supply)
+                    .issueWrappedEgld(token_display_name, token_ticker)
                     .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
             }
             EgldEsdtSwapCall::SetLocalMintRole => {
                 contract_call
                     .setLocalMintRole()
-                    .execute_on_dest_context(gas, api);
-            }
-            EgldEsdtSwapCall::MintWrappedEgld { amount } => {
-                contract_call
-                    .mintWrappedEgld(amount)
                     .execute_on_dest_context(gas, api);
             }
         }
@@ -877,22 +845,16 @@ pub trait Multisig {
             MultiTransferEsdtCall::IssueEsdtToken {
                 token_display_name,
                 token_ticker,
-                initial_supply,
                 issue_cost,
             } => {
                 contract_call
                     .with_token_transfer(TokenIdentifier::egld(), issue_cost)
-                    .issueEsdtToken(token_display_name, token_ticker, initial_supply)
-                    .execute_on_dest_context(gas, api);
+                    .issueEsdtToken(token_display_name, token_ticker)
+                    .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
             }
             MultiTransferEsdtCall::SetLocalMintRole { token_id } => {
                 contract_call
                     .setLocalMintRole(token_id)
-                    .execute_on_dest_context(gas, api);
-            }
-            MultiTransferEsdtCall::MintEsdtToken { token_id, amount } => {
-                contract_call
-                    .mintEsdtToken(token_id, amount)
                     .execute_on_dest_context(gas, api);
             }
             MultiTransferEsdtCall::TransferEsdtToken {

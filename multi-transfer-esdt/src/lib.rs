@@ -2,6 +2,8 @@
 
 elrond_wasm::imports!();
 
+const INITIAL_SUPPLY: u32 = 1;
+
 #[elrond_wasm_derive::contract(MultiTransferEsdtImpl)]
 pub trait MultiTransferEsdt {
     #[init]
@@ -15,7 +17,6 @@ pub trait MultiTransferEsdt {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        initial_supply: BigUint,
         #[payment] issue_cost: BigUint,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
@@ -25,7 +26,7 @@ pub trait MultiTransferEsdt {
                 issue_cost,
                 &token_display_name,
                 &token_ticker,
-                &initial_supply,
+                &BigUint::from(INITIAL_SUPPLY),
                 FungibleTokenProperties {
                     num_decimals: 0,
                     can_freeze: false,
@@ -69,20 +70,6 @@ pub trait MultiTransferEsdt {
             .async_call())
     }
 
-    #[endpoint(mintEsdtToken)]
-    fn mint_esdt_token(&self, token_id: TokenIdentifier, amount: BigUint) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-        require!(
-            self.issued_tokens().contains(&token_id),
-            "Token has to be issued first"
-        );
-
-        self.send()
-            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
-
-        Ok(())
-    }
-
     /// This is mostly used to ensure Wrapped EGLD is "known" by this SC
     /// Only add after setting localMint role
     #[endpoint(addTokenToIssuedList)]
@@ -104,16 +91,8 @@ pub trait MultiTransferEsdt {
         only_owner!(self, "only owner may call this function");
         require!(!to.is_zero(), "Can't transfer to address zero");
 
-        let esdt_balance = self.get_sc_esdt_balance(&token_id);
-        if esdt_balance < amount {
-            let extra_needed = &amount - &esdt_balance;
-
-            self.send().esdt_local_mint(
-                self.get_gas_left(),
-                token_id.as_esdt_identifier(),
-                &extra_needed,
-            );
-        }
+        self.send()
+            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
 
         self.send().direct_esdt_via_transf_exec(
             &to,

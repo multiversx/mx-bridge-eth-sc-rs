@@ -67,14 +67,13 @@ unstake() {
 egldEsdtSwap_WrappedEgldIssue() {
     local WRAPPED_EGLD_TOKEN_DISPLAY_NAME=0x5772617070656445676c64  # "WrappedEgld"
     local WRAPPED_EGLD_TOKEN_TICKER=0x5745474c44  # "WEGLD"
-    local INITIAL_SUPPLY=0x03e8 # 1000
 
     # Alice pays for issue cost
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=25000000 --function="deposit" --value=${ESDT_ISSUE_COST_DECIMAL} --send --proxy=${PROXY} --chain=${CHAIN_ID}
     sleep 10
 
     # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapWrappedEgldIssue" --arguments ${WRAPPED_EGLD_TOKEN_DISPLAY_NAME} ${WRAPPED_EGLD_TOKEN_TICKER} ${INITIAL_SUPPLY} ${ESDT_ISSUE_COST} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapWrappedEgldIssue" --arguments ${WRAPPED_EGLD_TOKEN_DISPLAY_NAME} ${WRAPPED_EGLD_TOKEN_TICKER} ${ESDT_ISSUE_COST} --send --proxy=${PROXY} --chain=${CHAIN_ID}
     sleep 10
 
     # Bob signs the action
@@ -89,22 +88,6 @@ egldEsdtSwap_WrappedEgldIssue() {
 egldEsdtSwap_SetLocalMintRole() {
     # Bob proposes action
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapSetLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-
-    # Bob signs the action
-    getActionLastIndex
-    bobSign
-    sleep 10
-
-    # Bob executes the action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-egldEsdtSwap_MintWrappedEgld() {
-    local MINT_AMOUNT=0x03e8 # 1000
-
-    # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapMintWrappedEgld" --arguments ${MINT_AMOUNT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
     sleep 10
 
     # Bob signs the action

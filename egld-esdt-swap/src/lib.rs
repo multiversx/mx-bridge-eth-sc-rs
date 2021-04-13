@@ -3,6 +3,7 @@
 elrond_wasm::imports!();
 
 const EGLD_DECIMALS: usize = 18;
+const INITIAL_SUPPLY: u32 = 1;
 
 #[elrond_wasm_derive::contract(EgldEsdtSwapImpl)]
 pub trait EgldEsdtSwap {
@@ -17,7 +18,6 @@ pub trait EgldEsdtSwap {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        initial_supply: BigUint,
         #[payment] issue_cost: BigUint,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
@@ -31,7 +31,7 @@ pub trait EgldEsdtSwap {
                 issue_cost,
                 &token_display_name,
                 &token_ticker,
-                &initial_supply,
+                &BigUint::from(INITIAL_SUPPLY),
                 FungibleTokenProperties {
                     num_decimals: EGLD_DECIMALS,
                     can_freeze: false,
@@ -75,25 +75,6 @@ pub trait EgldEsdtSwap {
             .async_call())
     }
 
-    #[endpoint(mintWrappedEgld)]
-    fn mint_wrapped_egld(&self, amount: BigUint) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-        require!(
-            !self.wrapped_egld_token_identifier().is_empty(),
-            "Wrapped eGLD was not issued yet"
-        );
-
-        self.send().esdt_local_mint(
-            self.get_gas_left(),
-            self.wrapped_egld_token_identifier()
-                .get()
-                .as_esdt_identifier(),
-            &amount,
-        );
-
-        Ok(())
-    }
-
     // endpoints
 
     #[payable("EGLD")]
@@ -106,16 +87,11 @@ pub trait EgldEsdtSwap {
         );
 
         let wrapped_egld_token_id = self.wrapped_egld_token_identifier().get();
-        let wrapped_egld_left = self.get_wrapped_egld_remaining();
-        if wrapped_egld_left < payment {
-            let extra_needed = &payment - &wrapped_egld_left;
-
-            self.send().esdt_local_mint(
-                self.get_gas_left(),
-                wrapped_egld_token_id.as_esdt_identifier(),
-                &extra_needed,
-            );
-        }
+        self.send().esdt_local_mint(
+            self.get_gas_left(),
+            wrapped_egld_token_id.as_esdt_identifier(),
+            &payment,
+        );
 
         let caller = self.get_caller();
         self.send().direct_esdt_via_transf_exec(
@@ -135,13 +111,15 @@ pub trait EgldEsdtSwap {
         #[payment] payment: BigUint,
         #[payment_token] token_identifier: TokenIdentifier,
     ) -> SCResult<()> {
+        let wrapped_egld_token_id = self.wrapped_egld_token_identifier().get();
+
         require!(
             !self.wrapped_egld_token_identifier().is_empty(),
             "Wrapped eGLD was not issued yet"
         );
         require!(token_identifier.is_esdt(), "Only ESDT tokens accepted");
         require!(
-            token_identifier == self.wrapped_egld_token_identifier().get(),
+            token_identifier == wrapped_egld_token_id,
             "Wrong esdt token"
         );
         require!(payment > 0, "Must pay more than 0 tokens!");
@@ -149,6 +127,12 @@ pub trait EgldEsdtSwap {
         require!(
             payment <= self.get_sc_balance(),
             "Contract does not have enough funds"
+        );
+
+        self.send().esdt_local_burn(
+            self.get_gas_left(),
+            wrapped_egld_token_id.as_esdt_identifier(),
+            &payment,
         );
 
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
