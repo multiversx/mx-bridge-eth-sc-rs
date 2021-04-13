@@ -53,10 +53,7 @@ pub trait EsdtSafe {
     }
 
     #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(
-        &self,
-    ) -> SCResult<OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>>
-    {
+    fn get_next_pending_transaction(&self) -> SCResult<OptionalMultiResultTx<BigUint>> {
         only_owner!(self, "only owner may call this function");
 
         match self.pending_transaction_address_nonce_list().pop_front() {

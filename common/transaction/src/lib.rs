@@ -1,11 +1,13 @@
 #![no_std]
 
 use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{Address, TokenIdentifier};
+use elrond_wasm::types::{Address, MultiResult5, OptionalResult, TokenIdentifier};
 
 elrond_wasm::derive_imports!();
 
 pub type Nonce = usize;
+pub type OptionalMultiResultTx<BigUint> =
+    OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>;
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
