@@ -150,7 +150,7 @@ pub trait EsdtSafe {
         self.transaction_status(&caller, sender_nonce)
             .set(&TransactionStatus::Pending);
         self.pending_transaction_address_nonce_list()
-            .push_back((caller.clone(), sender_nonce));
+            .push_back((caller, sender_nonce));
 
         Ok(())
     }
