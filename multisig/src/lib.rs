@@ -327,7 +327,7 @@ pub trait Multisig {
     fn propose_egld_esdt_swap_set_local_mint_role(&self) -> SCResult<usize> {
         sc_try!(self.require_egld_esdt_swap_deployed());
 
-        self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::SetLocalMintRole))
+        self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::SetLocalRoles))
     }
 
     // ESDT Safe SC calls
@@ -787,9 +787,9 @@ pub trait Multisig {
                     .issueWrappedEgld(token_display_name, token_ticker)
                     .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
             }
-            EgldEsdtSwapCall::SetLocalMintRole => {
+            EgldEsdtSwapCall::SetLocalRoles => {
                 contract_call
-                    .setLocalMintRole()
+                    .setLocalRoles()
                     .execute_on_dest_context(gas, api);
             }
         }

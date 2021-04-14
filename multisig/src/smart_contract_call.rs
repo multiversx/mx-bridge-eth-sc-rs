@@ -11,7 +11,7 @@ pub enum EgldEsdtSwapCall<BigUint: BigUintApi> {
         token_ticker: BoxedBytes,
         issue_cost: BigUint,
     },
-    SetLocalMintRole,
+    SetLocalRoles,
 }
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]

@@ -49,8 +49,8 @@ pub trait EgldEsdtSwap {
     }
 
     /// Address to set role for. Defaults to own address
-    #[endpoint(setLocalMintRole)]
-    fn set_local_mint_role_self(
+    #[endpoint(setLocalRoles)]
+    fn set_local_roles(
         &self,
         #[var_args] opt_address: OptionalArg<Address>,
     ) -> SCResult<AsyncCall<BigUint>> {
@@ -70,7 +70,7 @@ pub trait EgldEsdtSwap {
             .set_special_roles(
                 &address,
                 token_id.as_esdt_identifier(),
-                &[EsdtLocalRole::Mint],
+                &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
             )
             .async_call())
     }
