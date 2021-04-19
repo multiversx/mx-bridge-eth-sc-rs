@@ -425,19 +425,30 @@ pub trait Multisig {
     #[endpoint(proposeMultiTransferEsdtTransferEsdtToken)]
     fn propose_multi_transfer_esdt_transfer_esdt_token(
         &self,
+        eth_tx_hash: H256,
         to: Address,
         token_id: TokenIdentifier,
         amount: BigUint,
     ) -> SCResult<usize> {
         sc_try!(self.require_multi_transfer_esdt_deployed());
+        require!(
+            self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash)
+                .is_empty(),
+            "Tx was already proposed"
+        );
 
-        self.propose_action(Action::MultiTransferEsdtCall(
+        let action_id = sc_try!(self.propose_action(Action::MultiTransferEsdtCall(
             MultiTransferEsdtCall::TransferEsdtToken {
                 to,
                 token_id,
                 amount,
             },
-        ))
+        )));
+
+        self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash)
+            .set(&action_id);
+
+        Ok(action_id)
     }
 
     // Ethereum Fee Prepay SC calls
@@ -624,6 +635,29 @@ pub trait Multisig {
         } else {
             OptionalResult::None
         }
+    }
+
+    /// Actions are cleared after execution, so an empty entry means the action was executed already
+    /// Returns "false" if the action ID is invalid
+    #[view(wasActionExecuted)]
+    fn was_action_executed(&self, action_id: usize) -> bool {
+        let min_id = 1;
+        let max_id = self.action_mapper().len();
+
+        if action_id >= min_id && action_id <= max_id {
+            self.action_mapper().item_is_empty(action_id)
+        } else {
+            false
+        }
+    }
+
+    /// An empty hash->id mapping will return id 0, which is an invalid id, leading to a "false" being returned
+    /// For valid hashes, an empty action in storage means the action was executed already
+    #[view(wasTransferActionExecuted)]
+    fn was_transfer_action_executed(&self, eth_tx_hash: H256) -> bool {
+        let action_id = self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash).get();
+
+        self.was_action_executed(action_id)
     }
 
     // private
@@ -1010,6 +1044,13 @@ pub trait Multisig {
 
     #[storage_mapper("currentTx")]
     fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<BigUint>>;
+
+    #[view(getActionIdForEthTxHash)]
+    #[storage_mapper("ethTxHashToActionIdMapping")]
+    fn eth_tx_hash_to_action_id_mapping(
+        &self,
+        eth_tx_hash: &H256,
+    ) -> SingleValueMapper<Self::Storage, usize>;
 
     // SC addresses
 
