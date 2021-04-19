@@ -53,7 +53,7 @@ pub trait EsdtSafe {
     }
 
     #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(&self) -> SCResult<OptionalMultiResultTx<BigUint>> {
+    fn get_next_pending_transaction(&self) -> SCResult<OptionalResult<TxAsMultiResult<BigUint>>> {
         only_owner!(self, "only owner may call this function");
 
         match self.pending_transaction_address_nonce_list().pop_front() {
@@ -63,9 +63,7 @@ pub trait EsdtSafe {
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                Ok(OptionalResult::Some(
-                    (nonce, tx.from, tx.to, tx.token_identifier, tx.amount).into(),
-                ))
+                Ok(OptionalResult::Some(tx.into_multiresult()))
             }
             None => Ok(OptionalResult::None),
         }
@@ -133,7 +131,9 @@ pub trait EsdtSafe {
         // used prevent transaction spam
         self.reserve_fee(&caller);
 
+        let sender_nonce = self.transactions_by_nonce(&caller).len() + 1;
         let tx = Transaction {
+            nonce: sender_nonce,
             from: caller.clone(),
             to,
             token_identifier: payment_token,
@@ -141,8 +141,6 @@ pub trait EsdtSafe {
         };
 
         self.transactions_by_nonce(&caller).push(&tx);
-
-        let sender_nonce = self.transactions_by_nonce(&caller).len();
 
         self.transaction_status(&caller, sender_nonce)
             .set(&TransactionStatus::Pending);
@@ -199,7 +197,8 @@ pub trait EsdtSafe {
 
     // storage
 
-    // transaction fee, can only be set by owner
+    // the FeeEstimator SC is an aggregator that will query the Oracles and provide an average
+    // used to estimate the cost of an Ethereum tx at any given point in time
 
     #[view(getFeeEstimatorContractAddress)]
     #[storage_mapper("feeEstimatorContractAddress")]

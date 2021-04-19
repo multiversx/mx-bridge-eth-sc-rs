@@ -356,17 +356,22 @@ pub trait Multisig {
         ))
     }
 
-    #[endpoint(proposeEsdtSafeGetNextPendingTransaction)]
-    fn propose_esdt_safe_get_next_pending_transaction(&self) -> SCResult<usize> {
+    #[endpoint(getNextPendingTransaction)]
+    fn get_next_pending_transaction(&self) -> SCResult<TxAsMultiResult<BigUint>> {
         sc_try!(self.require_esdt_safe_deployed());
         require!(
             self.current_tx().is_empty(),
             "Must execute and set status for current tx first"
         );
 
-        self.propose_action(Action::EsdtSafeCall(
-            EsdtSafeCall::GetNextPendingTransaction,
-        ))
+        // will set current_tx if any is available
+        self.execute_esdt_safe_call(EsdtSafeCall::GetNextPendingTransaction);
+
+        if !self.current_tx().is_empty() {
+            Ok(self.current_tx().get().into_multiresult())
+        } else {
+            sc_error!("No transactions left to execute")
+        }
     }
 
     #[endpoint(proposeEsdtSafeSetCurrentTransactionStatus)]
@@ -612,6 +617,15 @@ pub trait Multisig {
         self.action_mapper().get(action_id)
     }
 
+    #[view(getCurrentTx)]
+    fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<BigUint>> {
+        if !self.current_tx().is_empty() {
+            OptionalResult::Some(self.current_tx().get().into_multiresult())
+        } else {
+            OptionalResult::None
+        }
+    }
+
     // private
 
     fn propose_action(&self, action: Action<BigUint>) -> SCResult<usize> {
@@ -812,22 +826,22 @@ pub trait Multisig {
                     .removeTokenFromWhitelist(token_id)
                     .execute_on_dest_context(gas, api);
             }
-            EsdtSafeCall::GetNextPendingTransaction => {
+            EsdtSafeCall::GetNextPendingTransaction {} => {
                 match contract_call
                     .getNextPendingTransaction()
                     .execute_on_dest_context(gas, api)
                 {
                     OptionalArg::Some(multi_result) => {
-                        self.current_tx().set(&multi_result.into_tuple())
+                        self.current_tx().set(&Transaction::from(multi_result))
                     }
                     OptionalArg::None => {}
                 }
             }
             EsdtSafeCall::SetTransactionStatus { transaction_status } => {
-                let (nonce, sender, _, _, _) = self.current_tx().get();
+                let tx = self.current_tx().get();
 
                 contract_call
-                    .setTransactionStatus(sender, nonce, transaction_status)
+                    .setTransactionStatus(tx.from, tx.nonce, transaction_status)
                     .execute_on_dest_context(gas, api);
 
                 self.current_tx().clear();
@@ -994,11 +1008,8 @@ pub trait Multisig {
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
 
-    #[view(getCurrentTx)]
     #[storage_mapper("currentTx")]
-    fn current_tx(
-        &self,
-    ) -> SingleValueMapper<Self::Storage, (Nonce, Address, Address, TokenIdentifier, BigUint)>;
+    fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<BigUint>>;
 
     // SC addresses
 

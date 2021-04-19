@@ -1,20 +1,47 @@
 #![no_std]
 
 use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{Address, MultiResult5, OptionalResult, TokenIdentifier};
+use elrond_wasm::types::{Address, MultiResult5, TokenIdentifier};
 
 elrond_wasm::derive_imports!();
 
 pub type Nonce = usize;
-pub type OptionalMultiResultTx<BigUint> =
-    OptionalResult<MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>>;
+pub type TxAsMultiResult<BigUint> = MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>;
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
+    pub nonce: Nonce,
     pub from: Address,
     pub to: Address,
     pub token_identifier: TokenIdentifier,
     pub amount: BigUint,
+}
+
+impl<BigUint: BigUintApi> From<TxAsMultiResult<BigUint>> for Transaction<BigUint> {
+    fn from(tx_as_multiresult: TxAsMultiResult<BigUint>) -> Self {
+        let (nonce, from, to, token_identifier, amount) = tx_as_multiresult.into_tuple();
+
+        Transaction {
+            nonce,
+            from,
+            to,
+            token_identifier,
+            amount,
+        }
+    }
+}
+
+impl<BigUint: BigUintApi> Transaction<BigUint> {
+    pub fn into_multiresult(self) -> TxAsMultiResult<BigUint> {
+        (
+            self.nonce,
+            self.from,
+            self.to,
+            self.token_identifier,
+            self.amount,
+        )
+            .into()
+    }
 }
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq)]
