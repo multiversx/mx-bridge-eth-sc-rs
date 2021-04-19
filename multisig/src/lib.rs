@@ -656,17 +656,13 @@ pub trait Multisig {
         }
     }
 
-    /// Actions are cleared after execution, so a non-empty entry means the action was proposed
-    /// Returns "false" if the action ID is invalid
+    /// If the mapping was made, it means that the transfer action was proposed in the past
+    /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]
     fn was_transfer_action_proposed(&self, eth_tx_hash: H256) -> bool {
         let action_id = self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash).get();
 
-        if self.is_valid_action_id(action_id) {
-            !self.action_mapper().item_is_empty(action_id)
-        } else {
-            false
-        }
+        self.is_valid_action_id(action_id)
     }
 
     // private
