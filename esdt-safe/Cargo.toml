@@ -15,14 +15,14 @@ wasm-output-mode = [ "elrond-wasm-node",]
 path = "../common/transaction"
 
 [dependencies.elrond-wasm]
-version = "0.14.1"
+version = "0.14.2"
 
 [dependencies.elrond-wasm-derive]
-version = "0.14.1"
+version = "0.14.2"
 
 [dependencies.elrond-wasm-node]
-version = "0.14.1"
+version = "0.14.2"
 optional = true
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.14.1"
+version = "0.14.2"
