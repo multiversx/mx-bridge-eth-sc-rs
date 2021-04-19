@@ -637,27 +637,36 @@ pub trait Multisig {
         }
     }
 
+    #[view(isValidActionId)]
+    fn is_valid_action_id(&self, action_id: usize) -> bool {
+        let min_id = 1;
+        let max_id = self.action_mapper().len();
+
+        action_id >= min_id && action_id <= max_id
+    }
+
     /// Actions are cleared after execution, so an empty entry means the action was executed already
     /// Returns "false" if the action ID is invalid
     #[view(wasActionExecuted)]
     fn was_action_executed(&self, action_id: usize) -> bool {
-        let min_id = 1;
-        let max_id = self.action_mapper().len();
-
-        if action_id >= min_id && action_id <= max_id {
+        if self.is_valid_action_id(action_id) {
             self.action_mapper().item_is_empty(action_id)
         } else {
             false
         }
     }
 
-    /// An empty hash->id mapping will return id 0, which is an invalid id, leading to a "false" being returned
-    /// For valid hashes, an empty action in storage means the action was executed already
-    #[view(wasTransferActionExecuted)]
-    fn was_transfer_action_executed(&self, eth_tx_hash: H256) -> bool {
+    /// Actions are cleared after execution, so a non-empty entry means the action was proposed
+    /// Returns "false" if the action ID is invalid
+    #[view(wasTransferActionProposed)]
+    fn was_transfer_action_proposed(&self, eth_tx_hash: H256) -> bool {
         let action_id = self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash).get();
 
-        self.was_action_executed(action_id)
+        if self.is_valid_action_id(action_id) {
+            !self.action_mapper().item_is_empty(action_id)
+        } else {
+            false
+        }
     }
 
     // private
