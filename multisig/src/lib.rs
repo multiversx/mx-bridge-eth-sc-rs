@@ -356,17 +356,22 @@ pub trait Multisig {
         ))
     }
 
-    #[endpoint(proposeEsdtSafeGetNextPendingTransaction)]
-    fn propose_esdt_safe_get_next_pending_transaction(&self) -> SCResult<usize> {
+    #[endpoint(getNextPendingTransaction)]
+    fn get_next_pending_transaction(&self) -> SCResult<TxAsMultiResult<BigUint>> {
         sc_try!(self.require_esdt_safe_deployed());
         require!(
             self.current_tx().is_empty(),
             "Must execute and set status for current tx first"
         );
 
-        self.propose_action(Action::EsdtSafeCall(
-            EsdtSafeCall::GetNextPendingTransaction,
-        ))
+        // will set current_tx if any is available
+        self.execute_esdt_safe_call(EsdtSafeCall::GetNextPendingTransaction);
+
+        if !self.current_tx().is_empty() {
+            Ok(self.current_tx().get().into_multiresult())
+        } else {
+            sc_error!("No transactions left to execute")
+        }
     }
 
     #[endpoint(proposeEsdtSafeSetCurrentTransactionStatus)]
@@ -420,19 +425,30 @@ pub trait Multisig {
     #[endpoint(proposeMultiTransferEsdtTransferEsdtToken)]
     fn propose_multi_transfer_esdt_transfer_esdt_token(
         &self,
+        eth_tx_hash: H256,
         to: Address,
         token_id: TokenIdentifier,
         amount: BigUint,
     ) -> SCResult<usize> {
         sc_try!(self.require_multi_transfer_esdt_deployed());
+        require!(
+            self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash)
+                .is_empty(),
+            "Tx was already proposed"
+        );
 
-        self.propose_action(Action::MultiTransferEsdtCall(
+        let action_id = sc_try!(self.propose_action(Action::MultiTransferEsdtCall(
             MultiTransferEsdtCall::TransferEsdtToken {
                 to,
                 token_id,
                 amount,
             },
-        ))
+        )));
+
+        self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash)
+            .set(&action_id);
+
+        Ok(action_id)
     }
 
     // Ethereum Fee Prepay SC calls
@@ -610,6 +626,43 @@ pub trait Multisig {
     #[view(getActionData)]
     fn get_action_data(&self, action_id: usize) -> Action<BigUint> {
         self.action_mapper().get(action_id)
+    }
+
+    #[view(getCurrentTx)]
+    fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<BigUint>> {
+        if !self.current_tx().is_empty() {
+            OptionalResult::Some(self.current_tx().get().into_multiresult())
+        } else {
+            OptionalResult::None
+        }
+    }
+
+    #[view(isValidActionId)]
+    fn is_valid_action_id(&self, action_id: usize) -> bool {
+        let min_id = 1;
+        let max_id = self.action_mapper().len();
+
+        action_id >= min_id && action_id <= max_id
+    }
+
+    /// Actions are cleared after execution, so an empty entry means the action was executed already
+    /// Returns "false" if the action ID is invalid
+    #[view(wasActionExecuted)]
+    fn was_action_executed(&self, action_id: usize) -> bool {
+        if self.is_valid_action_id(action_id) {
+            self.action_mapper().item_is_empty(action_id)
+        } else {
+            false
+        }
+    }
+
+    /// If the mapping was made, it means that the transfer action was proposed in the past
+    /// To check if it was executed as well, use the wasActionExecuted view
+    #[view(wasTransferActionProposed)]
+    fn was_transfer_action_proposed(&self, eth_tx_hash: H256) -> bool {
+        let action_id = self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash).get();
+
+        self.is_valid_action_id(action_id)
     }
 
     // private
@@ -812,22 +865,22 @@ pub trait Multisig {
                     .removeTokenFromWhitelist(token_id)
                     .execute_on_dest_context(gas, api);
             }
-            EsdtSafeCall::GetNextPendingTransaction => {
+            EsdtSafeCall::GetNextPendingTransaction {} => {
                 match contract_call
                     .getNextPendingTransaction()
                     .execute_on_dest_context(gas, api)
                 {
                     OptionalArg::Some(multi_result) => {
-                        self.current_tx().set(&multi_result.into_tuple())
+                        self.current_tx().set(&Transaction::from(multi_result))
                     }
                     OptionalArg::None => {}
                 }
             }
             EsdtSafeCall::SetTransactionStatus { transaction_status } => {
-                let (nonce, sender, _, _, _) = self.current_tx().get();
+                let tx = self.current_tx().get();
 
                 contract_call
-                    .setTransactionStatus(sender, nonce, transaction_status)
+                    .setTransactionStatus(tx.from, tx.nonce, transaction_status)
                     .execute_on_dest_context(gas, api);
 
                 self.current_tx().clear();
@@ -994,11 +1047,15 @@ pub trait Multisig {
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
 
-    #[view(getCurrentTx)]
     #[storage_mapper("currentTx")]
-    fn current_tx(
+    fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<BigUint>>;
+
+    #[view(getActionIdForEthTxHash)]
+    #[storage_mapper("ethTxHashToActionIdMapping")]
+    fn eth_tx_hash_to_action_id_mapping(
         &self,
-    ) -> SingleValueMapper<Self::Storage, (Nonce, Address, Address, TokenIdentifier, BigUint)>;
+        eth_tx_hash: &H256,
+    ) -> SingleValueMapper<Self::Storage, usize>;
 
     // SC addresses
 
