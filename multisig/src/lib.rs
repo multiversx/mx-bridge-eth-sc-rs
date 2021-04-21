@@ -425,14 +425,14 @@ pub trait Multisig {
     #[endpoint(proposeMultiTransferEsdtTransferEsdtToken)]
     fn propose_multi_transfer_esdt_transfer_esdt_token(
         &self,
-        eth_tx_hash: H256,
+        eth_tx_nonce: u64,
         to: Address,
         token_id: TokenIdentifier,
         amount: BigUint,
     ) -> SCResult<usize> {
         sc_try!(self.require_multi_transfer_esdt_deployed());
         require!(
-            self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash)
+            self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce)
                 .is_empty(),
             "Tx was already proposed"
         );
@@ -445,7 +445,7 @@ pub trait Multisig {
             },
         )));
 
-        self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash)
+        self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce)
             .set(&action_id);
 
         Ok(action_id)
@@ -659,8 +659,8 @@ pub trait Multisig {
     /// If the mapping was made, it means that the transfer action was proposed in the past
     /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]
-    fn was_transfer_action_proposed(&self, eth_tx_hash: H256) -> bool {
-        let action_id = self.eth_tx_hash_to_action_id_mapping(&eth_tx_hash).get();
+    fn was_transfer_action_proposed(&self, eth_tx_nonce: u64) -> bool {
+        let action_id = self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce).get();
 
         self.is_valid_action_id(action_id)
     }
@@ -1050,11 +1050,11 @@ pub trait Multisig {
     #[storage_mapper("currentTx")]
     fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<BigUint>>;
 
-    #[view(getActionIdForEthTxHash)]
-    #[storage_mapper("ethTxHashToActionIdMapping")]
-    fn eth_tx_hash_to_action_id_mapping(
+    #[view(getActionIdForEthTxNonce)]
+    #[storage_mapper("ethTxNonceToActionIdMapping")]
+    fn eth_tx_nonce_to_action_id_mapping(
         &self,
-        eth_tx_hash: &H256,
+        eth_tx_nonce: u64,
     ) -> SingleValueMapper<Self::Storage, usize>;
 
     // SC addresses
