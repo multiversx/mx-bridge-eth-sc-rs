@@ -384,10 +384,19 @@ pub trait Multisig {
             !self.current_tx().is_empty(),
             "There is no transaction to set status for"
         );
+        require!(
+            self.action_id_for_set_current_transaction_status().get() == 0,
+            "Set status action already proposed"
+        );
 
-        self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::SetTransactionStatus {
-            transaction_status,
-        }))
+        let action_id = sc_try!(self.propose_action(Action::EsdtSafeCall(
+            EsdtSafeCall::SetTransactionStatus { transaction_status }
+        )));
+
+        self.action_id_for_set_current_transaction_status()
+            .set(&action_id);
+
+        Ok(action_id)
     }
 
     // Multi-transfer ESDT SC calls
@@ -665,6 +674,13 @@ pub trait Multisig {
         self.is_valid_action_id(action_id)
     }
 
+    #[view(wasSetCurrentTransactionStatusActionProposed)]
+    fn was_set_current_transaction_status_action_proposed(&self) -> bool {
+        let action_id = self.action_id_for_set_current_transaction_status().get();
+
+        self.is_valid_action_id(action_id)
+    }
+
     // private
 
     fn propose_action(&self, action: Action<BigUint>) -> SCResult<usize> {
@@ -884,6 +900,7 @@ pub trait Multisig {
                     .execute_on_dest_context(gas, api);
 
                 self.current_tx().clear();
+                self.action_id_for_set_current_transaction_status().clear();
             }
         }
     }
@@ -1055,6 +1072,12 @@ pub trait Multisig {
     fn eth_tx_nonce_to_action_id_mapping(
         &self,
         eth_tx_nonce: u64,
+    ) -> SingleValueMapper<Self::Storage, usize>;
+
+    #[view(getActionIdForSetCurrentTransactionStatus)]
+    #[storage_mapper("actionIdForSetCurrentTransactionStatus")]
+    fn action_id_for_set_current_transaction_status(
+        &self,
     ) -> SingleValueMapper<Self::Storage, usize>;
 
     // SC addresses
