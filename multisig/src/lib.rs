@@ -675,10 +675,24 @@ pub trait Multisig {
     }
 
     #[view(wasSetCurrentTransactionStatusActionProposed)]
-    fn was_set_current_transaction_status_action_proposed(&self) -> bool {
+    fn was_set_current_transaction_status_action_proposed(
+        &self,
+        expected_tx_status: TransactionStatus,
+    ) -> bool {
         let action_id = self.action_id_for_set_current_transaction_status().get();
 
-        self.is_valid_action_id(action_id)
+        if self.is_valid_action_id(action_id) {
+            let action = self.action_mapper().get(action_id);
+
+            match action {
+                Action::EsdtSafeCall(EsdtSafeCall::SetTransactionStatus { transaction_status }) => {
+                    transaction_status == expected_tx_status
+                }
+                _ => false,
+            }
+        } else {
+            false
+        }
     }
 
     // private
