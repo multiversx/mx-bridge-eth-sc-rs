@@ -14,8 +14,8 @@ use user_role::UserRole;
 
 elrond_wasm::imports!();
 
-// Base cost for standalone + estimate cost of actual sc call
-const ISSUE_EXPECTED_GAS_COST: u64 = 90_000_000 + 25_000_000;
+// Base cost for standalone + estimate cost of actual sc call + cost for set local roles
+const ISSUE_EXPECTED_GAS_COST: u64 = 90_000_000 + 25_000_000 + 50_000_000;
 
 //////
 // TODO: Automatically add/remove relayers from EthereumFeePrepay SC
@@ -323,11 +323,15 @@ pub trait Multisig {
         ))
     }
 
-    #[endpoint(proposeEgldEsdtSwapSetLocalMintRole)]
-    fn propose_egld_esdt_swap_set_local_mint_role(&self) -> SCResult<usize> {
+    #[endpoint(proposeEgldEsdtSwapSetLocalMintRoleForMultiTransferEsdt)]
+    fn propose_egld_esdt_swap_set_local_mint_role_for_multi_transfer_esdt(
+        &self,
+    ) -> SCResult<usize> {
         sc_try!(self.require_egld_esdt_swap_deployed());
 
-        self.propose_action(Action::EgldEsdtSwapCall(EgldEsdtSwapCall::SetLocalRoles))
+        self.propose_action(Action::EgldEsdtSwapCall(
+            EgldEsdtSwapCall::SetLocalRolesForMultiTransferEsdt,
+        ))
     }
 
     // ESDT Safe SC calls
@@ -416,18 +420,6 @@ pub trait Multisig {
                 token_ticker,
                 issue_cost,
             },
-        ))
-    }
-
-    #[endpoint(proposeMultiTransferEsdtSetLocalMintRole)]
-    fn propose_multi_transfer_esdt_set_local_mint_role(
-        &self,
-        token_id: TokenIdentifier,
-    ) -> SCResult<usize> {
-        sc_try!(self.require_multi_transfer_esdt_deployed());
-
-        self.propose_action(Action::MultiTransferEsdtCall(
-            MultiTransferEsdtCall::SetLocalMintRole { token_id },
         ))
     }
 
@@ -870,9 +862,9 @@ pub trait Multisig {
                     .issueWrappedEgld(token_display_name, token_ticker)
                     .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
             }
-            EgldEsdtSwapCall::SetLocalRoles => {
+            EgldEsdtSwapCall::SetLocalRolesForMultiTransferEsdt => {
                 contract_call
-                    .setLocalRoles()
+                    .setLocalRoles(self.multi_transfer_esdt_address().get())
                     .execute_on_dest_context(gas, api);
             }
         }
@@ -935,11 +927,6 @@ pub trait Multisig {
                     .with_token_transfer(TokenIdentifier::egld(), issue_cost)
                     .issueEsdtToken(token_display_name, token_ticker)
                     .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
-            }
-            MultiTransferEsdtCall::SetLocalMintRole { token_id } => {
-                contract_call
-                    .setLocalMintRole(token_id)
-                    .execute_on_dest_context(gas, api);
             }
             MultiTransferEsdtCall::TransferEsdtToken {
                 to,

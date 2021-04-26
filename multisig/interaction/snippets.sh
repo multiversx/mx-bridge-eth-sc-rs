@@ -85,7 +85,8 @@ egldEsdtSwap_WrappedEgldIssue() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-egldEsdtSwap_SetLocalMintRole() {
+# Sets local mint role MultiTransferEsdt contract, so wrapepd eGLD tokens can also be minted when returning from Ethereum
+egldEsdtSwap_SetLocalMintRoleForMultiTransferEsdt() {
     # Bob proposes action
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapSetLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
     sleep 10
@@ -164,7 +165,24 @@ MultiTransferEsdt_WrappedEthIssue() {
 }
 
 MultiTransferEsdt_TransferEsdt() {
+    local ETH_TX_NONCE=0x01
+    local DEST=${BOB_ADDRESS}
 
+    getLastIssuedToken
+    local TOKEN_ID=${WRAPPED_ETH_ID}
+    local AMOUNT=0x0A
+
+    # Bob proposes action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeMultiTransferEsdtTransferEsdtToken" --arguments ${ETH_TX_NONCE} ${DEST} ${TOKEN_ID} ${AMOUNT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    sleep 10
+
+    # Bob signs the action
+    getActionLastIndex
+    bobSign
+    sleep 10
+
+    # Bob executes the action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=100000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # views

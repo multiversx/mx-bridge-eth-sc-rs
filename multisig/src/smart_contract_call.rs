@@ -11,7 +11,7 @@ pub enum EgldEsdtSwapCall<BigUint: BigUintApi> {
         token_ticker: BoxedBytes,
         issue_cost: BigUint,
     },
-    SetLocalRoles,
+    SetLocalRolesForMultiTransferEsdt,
 }
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
@@ -34,9 +34,6 @@ pub enum MultiTransferEsdtCall<BigUint: BigUintApi> {
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
         issue_cost: BigUint,
-    },
-    SetLocalMintRole {
-        token_id: TokenIdentifier,
     },
     TransferEsdtToken {
         to: Address,

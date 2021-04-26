@@ -43,33 +43,6 @@ pub trait MultiTransferEsdt {
             .with_callback(self.callbacks().esdt_issue_callback()))
     }
 
-    /// Address to set role for. Defaults to own address
-    #[endpoint(setLocalMintRole)]
-    fn set_local_mint_role(
-        &self,
-        token_id: TokenIdentifier,
-        #[var_args] opt_address: OptionalArg<Address>,
-    ) -> SCResult<AsyncCall<BigUint>> {
-        only_owner!(self, "only owner may call this function");
-        require!(
-            self.issued_tokens().contains(&token_id),
-            "Token was not issued yet"
-        );
-
-        let address = match opt_address {
-            OptionalArg::Some(addr) => addr,
-            OptionalArg::None => self.blockchain().get_sc_address(),
-        };
-
-        Ok(ESDTSystemSmartContractProxy::new()
-            .set_special_roles(
-                &address,
-                token_id.as_esdt_identifier(),
-                &[EsdtLocalRole::Mint],
-            )
-            .async_call())
-    }
-
     /// This is mostly used to ensure Wrapped EGLD is "known" by this SC
     /// Only add after setting localMint role
     #[endpoint(addTokenToIssuedList)]
@@ -134,26 +107,38 @@ pub trait MultiTransferEsdt {
     #[callback]
     fn esdt_issue_callback(
         &self,
-        #[payment_token] token_identifier: TokenIdentifier,
+        #[payment_token] token_id: TokenIdentifier,
         #[payment] returned_tokens: BigUint,
         #[call_result] result: AsyncCallResult<()>,
-    ) {
+    ) -> OptionalResult<AsyncCall<BigUint>> {
         // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
         // so we can get the token identifier and amount from the call data
         match result {
             AsyncCallResult::Ok(()) => {
-                self.last_issued_token().set(&token_identifier);
-                self.issued_tokens().insert(token_identifier);
+                self.last_issued_token().set(&token_id);
+                self.issued_tokens().insert(token_id.clone());
+
+                OptionalResult::Some(
+                    ESDTSystemSmartContractProxy::new()
+                        .set_special_roles(
+                            &self.blockchain().get_sc_address(),
+                            token_id.as_esdt_identifier(),
+                            &[EsdtLocalRole::Mint],
+                        )
+                        .async_call(),
+                )
             }
             AsyncCallResult::Err(_) => {
                 // refund payment to caller, which is the sc owner
-                if token_identifier.is_egld() && returned_tokens > 0 {
+                if token_id.is_egld() && returned_tokens > 0 {
                     self.send().direct_egld(
                         &self.blockchain().get_owner_address(),
                         &returned_tokens,
                         &[],
                     );
                 }
+
+                OptionalResult::None
             }
         }
     }

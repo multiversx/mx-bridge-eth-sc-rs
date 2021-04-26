@@ -28,11 +28,7 @@ upgrade() {
 }
 
 issueWrappedEgld() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-setLocalMintRoleSelf() {
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=150000000 --value=5000000000000000000 --function="issueWrappedEgld" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setLocalMintRoleMultiTransfer() {
