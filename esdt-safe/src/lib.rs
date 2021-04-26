@@ -125,7 +125,7 @@ pub trait EsdtSafe {
         require!(payment > 0, "Must transfer more than 0");
         require!(!to.is_zero(), "Can't transfer to address zero");
 
-        let caller = self.get_caller();
+        let caller = self.blockchain().get_caller();
 
         // reserve transaction fee beforehand
         // used prevent transaction spam
@@ -178,7 +178,7 @@ pub trait EsdtSafe {
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
-        if self.is_smart_contract(to) {
+        if self.blockchain().is_smart_contract(to) {
             &[]
         } else {
             data
@@ -192,7 +192,7 @@ pub trait EsdtSafe {
             EthereumFeePrepayProxy
         )
         .reserveFee(from, TransactionType::Erc20, Priority::Low)
-        .execute_on_dest_context(self.get_gas_left(), self.send());
+        .execute_on_dest_context(self.blockchain().get_gas_left(), self.send());
     }
 
     // storage

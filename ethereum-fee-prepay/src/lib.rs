@@ -15,7 +15,7 @@ pub trait EthereumFeePrepay {
     #[init]
     fn init(&self, aggregator: Address) {
         self.aggregator().set(&aggregator);
-        self.whitelist().insert(self.get_caller());
+        self.whitelist().insert(self.blockchain().get_caller());
     }
 
     // balance management endpoints
@@ -23,14 +23,14 @@ pub trait EthereumFeePrepay {
     #[payable("EGLD")]
     #[endpoint(depositTransactionFee)]
     fn deposit_transaction_fee(&self, #[payment] payment: BigUint) {
-        let caller = &self.get_caller();
+        let caller = &self.blockchain().get_caller();
         self.increase_balance(caller, &payment);
     }
 
     /// defaults to max amount
     #[endpoint]
     fn withdraw(&self, #[var_args] opt_amount: OptionalArg<BigUint>) -> SCResult<()> {
-        let caller = &self.get_caller();
+        let caller = &self.blockchain().get_caller();
         let amount = match opt_amount {
             OptionalArg::Some(amt) => amt,
             OptionalArg::None => self.deposit(&caller).get(),
@@ -84,7 +84,7 @@ pub trait EthereumFeePrepay {
         let optional_arg_round =
             contract_call!(self, self.aggregator().get(), AggregatorInterfaceProxy)
                 .latestRoundData()
-                .execute_on_dest_context(self.get_gas_left(), self.send());
+                .execute_on_dest_context(self.blockchain().get_gas_left(), self.send());
         let aggregator_result = sc_try!(aggregator_result::try_parse_round(optional_arg_round));
 
         let gas_limit = match transaction_type {
@@ -135,7 +135,7 @@ pub trait EthereumFeePrepay {
 
     fn require_whitelisted(&self) -> SCResult<()> {
         require!(
-            self.is_whitelisted(&self.get_caller()),
+            self.is_whitelisted(&self.blockchain().get_caller()),
             "only whitelisted callers allowed"
         );
         Ok(())

@@ -140,6 +140,33 @@ esdtSafe_GetAndExecuteNextPendingTransaction() {
     # TODO: Perform rest of the steps
 }
 
+# MultiTransferEsdtCalls
+
+MultiTransferEsdt_WrappedEthIssue() {
+    local WRAPPED_ETH_TOKEN_DISPLAY_NAME=0x57726170706564457468  # "WrappedEth"
+    local WRAPPED_ETH_TOKEN_TICKER=0x57455448  # "WETH"
+
+    # Alice pays for issue cost
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=25000000 --function="deposit" --value=${ESDT_ISSUE_COST_DECIMAL} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    sleep 10
+
+    # Bob proposes action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeMultiTransferEsdtIssueEsdtToken" --arguments ${WRAPPED_ETH_TOKEN_DISPLAY_NAME} ${WRAPPED_ETH_TOKEN_TICKER} ${ESDT_ISSUE_COST} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    sleep 10
+
+    # Bob signs the action
+    getActionLastIndex
+    bobSign
+    sleep 10
+
+    # Bob executes the action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+MultiTransferEsdt_TransferEsdt() {
+
+}
+
 # views
 
 getEgldEsdtSwapAddress() {
@@ -167,6 +194,15 @@ getMultiTransferEsdtAddress() {
 
     MULTI_TRANSFER_ESDT_ADDRESS=${ADDRESS_BECH32}
     echo "MultiTransferEsdt address: ${MULTI_TRANSFER_ESDT_ADDRESS}"
+}
+
+getLastIssuedToken() {
+    getMultiTransferEsdtAddress
+    local QUERY_OUTPUT=$(erdpy --verbose contract query ${MULTI_TRANSFER_ESDT_ADDRESS} --function="getLastIssuedToken" --proxy=${PROXY})
+    parseQueryOutput
+
+    WRAPPED_ETH_ID=0x${PARSED}
+    echo "Last issued token: ${WRAPPED_ETH_ID}"
 }
 
 getEthereumFeePrepayAddress() {

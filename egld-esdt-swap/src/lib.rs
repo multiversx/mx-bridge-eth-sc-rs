@@ -63,7 +63,7 @@ pub trait EgldEsdtSwap {
         let token_id = self.wrapped_egld_token_identifier().get();
         let address = match opt_address {
             OptionalArg::Some(addr) => addr,
-            OptionalArg::None => self.get_sc_address(),
+            OptionalArg::None => self.blockchain().get_sc_address(),
         };
 
         Ok(ESDTSystemSmartContractProxy::new()
@@ -88,20 +88,21 @@ pub trait EgldEsdtSwap {
 
         let wrapped_egld_token_id = self.wrapped_egld_token_identifier().get();
         self.send().esdt_local_mint(
-            self.get_gas_left(),
+            self.blockchain().get_gas_left(),
             wrapped_egld_token_id.as_esdt_identifier(),
             &payment,
         );
 
-        let caller = self.get_caller();
-        self.send().direct_esdt_via_transf_exec(
+        let caller = self.blockchain().get_caller();
+        match self.send().direct_esdt_via_transf_exec(
             &caller,
             wrapped_egld_token_id.as_esdt_identifier(),
             &payment,
             self.data_or_empty(&caller, b"wrapping"),
-        );
-
-        Ok(())
+        ) {
+            Result::Ok(()) => Ok(()),
+            Result::Err(_) => sc_error!("Wrapping failed"),
+        }
     }
 
     #[payable("*")]
@@ -125,18 +126,18 @@ pub trait EgldEsdtSwap {
         require!(payment > 0, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
-            payment <= self.get_sc_balance(),
+            payment <= self.blockchain().get_sc_balance(),
             "Contract does not have enough funds"
         );
 
         self.send().esdt_local_burn(
-            self.get_gas_left(),
+            self.blockchain().get_gas_left(),
             wrapped_egld_token_id.as_esdt_identifier(),
             &payment,
         );
 
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
-        let caller = self.get_caller();
+        let caller = self.blockchain().get_caller();
         self.send().direct_egld(
             &caller,
             &payment,
@@ -150,13 +151,13 @@ pub trait EgldEsdtSwap {
 
     #[view(getLockedEgldBalance)]
     fn get_locked_egld_balance(&self) -> BigUint {
-        self.get_sc_balance()
+        self.blockchain().get_sc_balance()
     }
 
     #[view(getWrappedEgldRemaining)]
     fn get_wrapped_egld_remaining(&self) -> BigUint {
-        self.get_esdt_balance(
-            &self.get_sc_address(),
+        self.blockchain().get_esdt_balance(
+            &self.blockchain().get_sc_address(),
             self.wrapped_egld_token_identifier()
                 .get()
                 .as_esdt_identifier(),
@@ -167,7 +168,7 @@ pub trait EgldEsdtSwap {
     // private
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
-        if self.is_smart_contract(to) {
+        if self.blockchain().is_smart_contract(to) {
             &[]
         } else {
             data
@@ -192,8 +193,11 @@ pub trait EgldEsdtSwap {
             AsyncCallResult::Err(_) => {
                 // refund payment to caller, which is the sc owner
                 if token_identifier.is_egld() && returned_tokens > 0 {
-                    self.send()
-                        .direct_egld(&self.get_owner_address(), &returned_tokens, &[]);
+                    self.send().direct_egld(
+                        &self.blockchain().get_owner_address(),
+                        &returned_tokens,
+                        &[],
+                    );
                 }
             }
         }

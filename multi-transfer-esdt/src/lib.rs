@@ -58,7 +58,7 @@ pub trait MultiTransferEsdt {
 
         let address = match opt_address {
             OptionalArg::Some(addr) => addr,
-            OptionalArg::None => self.get_sc_address(),
+            OptionalArg::None => self.blockchain().get_sc_address(),
         };
 
         Ok(ESDTSystemSmartContractProxy::new()
@@ -91,30 +91,38 @@ pub trait MultiTransferEsdt {
         only_owner!(self, "only owner may call this function");
         require!(!to.is_zero(), "Can't transfer to address zero");
 
-        self.send()
-            .esdt_local_mint(self.get_gas_left(), token_id.as_esdt_identifier(), &amount);
+        self.send().esdt_local_mint(
+            self.blockchain().get_gas_left(),
+            token_id.as_esdt_identifier(),
+            &amount,
+        );
 
-        self.send().direct_esdt_via_transf_exec(
+        match self.send().direct_esdt_via_transf_exec(
             &to,
             token_id.as_esdt_identifier(),
             &amount,
             self.data_or_empty(&to, b"offchain transfer"),
-        );
-
-        Ok(())
+        ) {
+            Result::Ok(()) => Ok(()),
+            Result::Err(_) => sc_error!("Transfer failed"),
+        }
     }
 
     // views
 
     #[view(getScEsdtBalance)]
     fn get_sc_esdt_balance(&self, token_id: &TokenIdentifier) -> BigUint {
-        self.get_esdt_balance(&self.get_sc_address(), token_id.as_esdt_identifier(), 0)
+        self.blockchain().get_esdt_balance(
+            &self.blockchain().get_sc_address(),
+            token_id.as_esdt_identifier(),
+            0,
+        )
     }
 
     // private
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
-        if self.is_smart_contract(to) {
+        if self.blockchain().is_smart_contract(to) {
             &[]
         } else {
             data
@@ -140,8 +148,11 @@ pub trait MultiTransferEsdt {
             AsyncCallResult::Err(_) => {
                 // refund payment to caller, which is the sc owner
                 if token_identifier.is_egld() && returned_tokens > 0 {
-                    self.send()
-                        .direct_egld(&self.get_owner_address(), &returned_tokens, &[]);
+                    self.send().direct_egld(
+                        &self.blockchain().get_owner_address(),
+                        &returned_tokens,
+                        &[],
+                    );
                 }
             }
         }

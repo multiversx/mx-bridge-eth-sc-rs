@@ -76,7 +76,7 @@ pub trait Multisig {
         // eGLD ESDT swap deploy
 
         let egld_esdt_swap_address = self.send().deploy_contract(
-            self.get_gas_left(),
+            self.blockchain().get_gas_left(),
             &BigUint::zero(),
             &egld_esdt_swap_code,
             CodeMetadata::DEFAULT,
@@ -87,7 +87,7 @@ pub trait Multisig {
         // Multi-transfer ESDT deploy
 
         let multi_transfer_esdt_address = self.send().deploy_contract(
-            self.get_gas_left(),
+            self.blockchain().get_gas_left(),
             &BigUint::zero(),
             &multi_transfer_esdt_code,
             CodeMetadata::DEFAULT,
@@ -102,7 +102,7 @@ pub trait Multisig {
         ethereum_fee_prepay_arg_buffer.push_argument_bytes(aggregator_address.as_bytes());
 
         let ethereum_fee_prepay_address = self.send().deploy_contract(
-            self.get_gas_left(),
+            self.blockchain().get_gas_left(),
             &BigUint::zero(),
             &ethereum_fee_prepay_code,
             CodeMetadata::DEFAULT,
@@ -121,7 +121,7 @@ pub trait Multisig {
         }
 
         let esdt_safe_address = self.send().deploy_contract(
-            self.get_gas_left(),
+            self.blockchain().get_gas_left(),
             &BigUint::zero(),
             &esdt_safe_code,
             CodeMetadata::DEFAULT,
@@ -145,7 +145,7 @@ pub trait Multisig {
 
         contract_call!(self, ethereum_fee_prepay_address, EthereumFeePrepayProxy)
             .addToWhitelist(&esdt_safe_address)
-            .execute_on_dest_context(self.get_gas_left(), self.send());
+            .execute_on_dest_context(self.blockchain().get_gas_left(), self.send());
 
         Ok(())
     }
@@ -188,7 +188,7 @@ pub trait Multisig {
     #[payable("EGLD")]
     #[endpoint]
     fn stake(&self, #[payment] payment: BigUint) -> SCResult<()> {
-        let caller = self.get_caller();
+        let caller = self.blockchain().get_caller();
         let caller_role = self.user_role(&caller);
         require!(
             caller_role == UserRole::BoardMember,
@@ -204,7 +204,7 @@ pub trait Multisig {
 
     #[endpoint]
     fn unstake(&self, amount: BigUint) -> SCResult<()> {
-        let caller = self.get_caller();
+        let caller = self.blockchain().get_caller();
         let amount_staked = self.amount_staked(&caller).get();
         require!(
             amount <= amount_staked,
@@ -234,7 +234,7 @@ pub trait Multisig {
             "action does not exist"
         );
 
-        let caller_address = self.get_caller();
+        let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
         require!(caller_role.can_sign(), "only board members can sign");
@@ -258,7 +258,7 @@ pub trait Multisig {
             "action does not exist"
         );
 
-        let caller_address = self.get_caller();
+        let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
         require!(caller_role.can_sign(), "only board members can un-sign");
@@ -466,7 +466,7 @@ pub trait Multisig {
     fn propose_ethereum_prepay_fee_pay_fee(&self, tx_sender: Address) -> SCResult<usize> {
         sc_try!(self.require_ethereum_fee_prepay_deployed());
 
-        let relayer = self.get_caller();
+        let relayer = self.blockchain().get_caller();
         self.propose_action(Action::EthereumFeePrepayCall(
             EthereumFeePrepayCall::PayFee {
                 address: tx_sender,
@@ -480,7 +480,7 @@ pub trait Multisig {
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
-        let caller_address = self.get_caller();
+        let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
         require!(
@@ -500,7 +500,7 @@ pub trait Multisig {
     /// Otherwise this endpoint would be prone to abuse.
     #[endpoint(discardAction)]
     fn discard_action(&self, action_id: usize) -> SCResult<()> {
-        let caller_address = self.get_caller();
+        let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
         require!(
@@ -698,7 +698,7 @@ pub trait Multisig {
     // private
 
     fn propose_action(&self, action: Action<BigUint>) -> SCResult<usize> {
-        let caller_address = self.get_caller();
+        let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
         require!(
@@ -856,7 +856,7 @@ pub trait Multisig {
     fn execute_egld_esdt_swap_call(&self, call: EgldEsdtSwapCall<BigUint>) {
         let contract_address = self.egld_esdt_swap_address().get();
         let contract_call = contract_call!(self, contract_address, EgldEsdtSwapProxy);
-        let gas = self.get_gas_left();
+        let gas = self.blockchain().get_gas_left();
         let api = self.send();
 
         match call {
@@ -881,7 +881,7 @@ pub trait Multisig {
     fn execute_esdt_safe_call(&self, call: EsdtSafeCall) {
         let contract_address = self.esdt_safe_address().get();
         let contract_call = contract_call!(self, contract_address, EsdtSafeProxy);
-        let gas = self.get_gas_left();
+        let gas = self.blockchain().get_gas_left();
         let api = self.send();
 
         match call {
@@ -922,7 +922,7 @@ pub trait Multisig {
     fn execute_multi_transfer_esdt_call(&self, call: MultiTransferEsdtCall<BigUint>) {
         let contract_address = self.multi_transfer_esdt_address().get();
         let contract_call = contract_call!(self, contract_address, MultiTransferEsdtProxy);
-        let gas = self.get_gas_left();
+        let gas = self.blockchain().get_gas_left();
         let api = self.send();
 
         match call {
@@ -956,7 +956,7 @@ pub trait Multisig {
     fn execute_ethereum_fee_prepay_call(&self, call: EthereumFeePrepayCall) {
         let contract_address = self.ethereum_fee_prepay_address().get();
         let contract_call = contract_call!(self, contract_address, EthereumFeePrepayProxy);
-        let gas = self.get_gas_left();
+        let gas = self.blockchain().get_gas_left();
         let api = self.send();
 
         match call {
