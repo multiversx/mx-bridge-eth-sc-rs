@@ -303,7 +303,7 @@ pub trait Multisig {
         self.propose_action(Action::ChangeQuorum(new_quorum))
     }
 
-    #[endpoint]
+    #[endpoint(proposeAddMapping)]
     fn propose_add_mapping(
         &self,
         erc20_address: Address,
