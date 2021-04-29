@@ -24,7 +24,7 @@ pub trait EsdtSafe {
     fn setTransactionStatus(
         &self,
         sender: Address,
-        nonce: Nonce,
+        nonce: TxNonce,
         transaction_status: TransactionStatus,
     ) -> ContractCall<BigUint, ()>;
 }

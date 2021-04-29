@@ -1,5 +1,5 @@
 use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{Address, Vec};
+use elrond_wasm::types::{Address, TokenIdentifier, Vec};
 
 use crate::smart_contract_call::{
     EgldEsdtSwapCall, EsdtSafeCall, EthereumFeePrepayCall, MultiTransferEsdtCall,
