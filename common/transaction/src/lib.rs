@@ -5,12 +5,15 @@ use elrond_wasm::types::{Address, MultiResult5, TokenIdentifier};
 
 elrond_wasm::derive_imports!();
 
-pub type Nonce = usize;
-pub type TxAsMultiResult<BigUint> = MultiResult5<Nonce, Address, Address, TokenIdentifier, BigUint>;
+pub type TxNonce = usize;
+pub type BlockNonce = u64;
+pub type TxAsMultiResult<BigUint> =
+    MultiResult6<BlockNonce, TxNonce, Address, Address, TokenIdentifier, BigUint>;
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
-    pub nonce: Nonce,
+    pub block_nonce: BlockNonce,
+    pub nonce: TxNonce,
     pub from: Address,
     pub to: Address,
     pub token_identifier: TokenIdentifier,
@@ -19,9 +22,11 @@ pub struct Transaction<BigUint: BigUintApi> {
 
 impl<BigUint: BigUintApi> From<TxAsMultiResult<BigUint>> for Transaction<BigUint> {
     fn from(tx_as_multiresult: TxAsMultiResult<BigUint>) -> Self {
-        let (nonce, from, to, token_identifier, amount) = tx_as_multiresult.into_tuple();
+        let (block_nonce, nonce, from, to, token_identifier, amount) =
+            tx_as_multiresult.into_tuple();
 
         Transaction {
+            block_nonce,
             nonce,
             from,
             to,
@@ -34,6 +39,7 @@ impl<BigUint: BigUintApi> From<TxAsMultiResult<BigUint>> for Transaction<BigUint
 impl<BigUint: BigUintApi> Transaction<BigUint> {
     pub fn into_multiresult(self) -> TxAsMultiResult<BigUint> {
         (
+            self.block_nonce,
             self.nonce,
             self.from,
             self.to,

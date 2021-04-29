@@ -73,7 +73,7 @@ pub trait EsdtSafe {
     fn set_transaction_status(
         &self,
         sender: Address,
-        nonce: Nonce,
+        nonce: TxNonce,
         transaction_status: TransactionStatus,
     ) -> SCResult<AsyncCall<BigUint>> {
         only_owner!(self, "only owner may call this function");
@@ -133,6 +133,7 @@ pub trait EsdtSafe {
 
         let sender_nonce = self.transactions_by_nonce(&caller).len() + 1;
         let tx = Transaction {
+            block_nonce: self.blockchain().get_block_nonce(),
             nonce: sender_nonce,
             from: caller.clone(),
             to,
@@ -223,11 +224,11 @@ pub trait EsdtSafe {
     fn transaction_status(
         &self,
         sender: &Address,
-        nonce: Nonce,
+        nonce: TxNonce,
     ) -> SingleValueMapper<Self::Storage, TransactionStatus>;
 
     #[storage_mapper("pendingTransactionList")]
     fn pending_transaction_address_nonce_list(
         &self,
-    ) -> LinkedListMapper<Self::Storage, (Address, Nonce)>;
+    ) -> LinkedListMapper<Self::Storage, (Address, TxNonce)>;
 }
