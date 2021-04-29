@@ -15,6 +15,7 @@ pub enum Action<BigUint: BigUintApi> {
     RemoveUser(Address),
     SlashUser(Address),
     ChangeQuorum(usize),
+    AddMapping(Address, TokenIdentifier),
     EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
     EsdtSafeCall(EsdtSafeCall),
     MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>),

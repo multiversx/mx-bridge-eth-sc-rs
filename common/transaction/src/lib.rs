@@ -1,7 +1,7 @@
 #![no_std]
 
 use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{Address, MultiResult5, TokenIdentifier};
+use elrond_wasm::types::{Address, MultiResult6, TokenIdentifier};
 
 elrond_wasm::derive_imports!();
 
