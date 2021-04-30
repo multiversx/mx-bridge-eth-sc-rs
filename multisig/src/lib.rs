@@ -303,6 +303,15 @@ pub trait Multisig {
         self.propose_action(Action::ChangeQuorum(new_quorum))
     }
 
+    #[endpoint(proposeAddMapping)]
+    fn propose_add_mapping(
+        &self,
+        erc20_address: Address,
+        token_id: TokenIdentifier,
+    ) -> SCResult<usize> {
+        self.propose_action(Action::AddMapping(erc20_address, token_id))
+    }
+
     // EGLD-ESDT Swap SC calls
 
     #[endpoint(proposeEgldEsdtSwapWrappedEgldIssue)]
@@ -836,6 +845,12 @@ pub trait Multisig {
                 );
                 self.quorum().set(&new_quorum);
             }
+            Action::AddMapping(erc20_address, token_id) => {
+                self.erc20_address_for_token_id(&token_id)
+                    .set(&erc20_address);
+                self.token_id_for_erc20_address(&erc20_address)
+                    .set(&token_id);
+            }
             Action::EgldEsdtSwapCall(call) => self.execute_egld_esdt_swap_call(call),
             Action::EsdtSafeCall(call) => self.execute_esdt_safe_call(call),
             Action::MultiTransferEsdtCall(call) => self.execute_multi_transfer_esdt_call(call),
@@ -1080,6 +1095,22 @@ pub trait Multisig {
     fn action_id_for_set_current_transaction_status(
         &self,
     ) -> SingleValueMapper<Self::Storage, usize>;
+
+    /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
+
+    #[view(getErc20AddressForTokenId)]
+    #[storage_mapper("erc20AddressForTokenId")]
+    fn erc20_address_for_token_id(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<Self::Storage, Address>;
+
+    #[view(getTokenIdForErc20Address)]
+    #[storage_mapper("tokenIdForErc20Address")]
+    fn token_id_for_erc20_address(
+        &self,
+        erc20_address: &Address,
+    ) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
 
     // SC addresses
 
