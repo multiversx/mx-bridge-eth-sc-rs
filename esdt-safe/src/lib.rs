@@ -2,6 +2,7 @@
 #![allow(non_snake_case)]
 
 use transaction::*;
+use eth_address::*;
 
 elrond_wasm::imports!();
 
@@ -112,7 +113,7 @@ pub trait EsdtSafe {
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment] payment: BigUint,
-        to: Address,
+        to: EthAddress,
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
