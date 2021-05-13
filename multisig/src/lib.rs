@@ -916,12 +916,12 @@ pub trait Multisig {
             EsdtSafeCall::SetTransactionStatus { transaction_status } => {
                 let tx = self.current_tx().get();
 
+                self.current_tx().clear();
+                self.action_id_for_set_current_transaction_status().clear();
+
                 contract_call
                     .setTransactionStatus(tx.from, tx.nonce, transaction_status)
                     .execute_on_dest_context(gas / 2, api);
-
-                self.current_tx().clear();
-                self.action_id_for_set_current_transaction_status().clear();
             }
         }
     }
