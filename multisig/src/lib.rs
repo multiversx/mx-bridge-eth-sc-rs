@@ -918,7 +918,7 @@ pub trait Multisig {
 
                 contract_call
                     .setTransactionStatus(tx.from, tx.nonce, transaction_status)
-                    .execute_on_dest_context(gas, api);
+                    .execute_on_dest_context(gas / 2, api);
 
                 self.current_tx().clear();
                 self.action_id_for_set_current_transaction_status().clear();
