@@ -2,20 +2,21 @@
 
 use elrond_wasm::api::BigUintApi;
 use elrond_wasm::types::{Address, MultiResult6, TokenIdentifier};
+use eth_address::EthAddress;
 
 elrond_wasm::derive_imports!();
 
 pub type TxNonce = usize;
 pub type BlockNonce = u64;
 pub type TxAsMultiResult<BigUint> =
-    MultiResult6<BlockNonce, TxNonce, Address, Address, TokenIdentifier, BigUint>;
+    MultiResult6<BlockNonce, TxNonce, Address, EthAddress, TokenIdentifier, BigUint>;
 
 #[derive(TopEncode, TopDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
     pub from: Address,
-    pub to: Address,
+    pub to: EthAddress,
     pub token_identifier: TokenIdentifier,
     pub amount: BigUint,
 }
