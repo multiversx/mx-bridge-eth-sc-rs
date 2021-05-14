@@ -1,5 +1,6 @@
 {
     "name": "unwrap egld",
+    "gasSchedule": "dummy",
     "steps": [
         {
             "step": "externalSteps",
@@ -12,8 +13,10 @@
                 "from": "address:user",
                 "to": "address:contract",
                 "value": "0",
-                "esdtTokenName": "str:WEGLD-abcdef",
-                "esdtValue": "300",
+                "esdt": {
+                    "tokenIdentifier": "str:WEGLD-abcdef",
+                    "value": "300"
+                },
                 "function": "unwrapEgld",
                 "arguments": [],
                 "gasLimit": "100,000,000",
@@ -41,11 +44,16 @@
                     "nonce": "0",
                     "balance": "200",
                     "esdt": {
-                        "str:WEGLD-abcdef": "1800"
+                        "str:WEGLD-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef",
-                        "str:wrappedEgldRemaining": "1800"
+                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }

@@ -5,7 +5,7 @@ elrond_wasm::imports!();
 const EGLD_DECIMALS: usize = 18;
 const INITIAL_SUPPLY: u32 = 1;
 
-#[elrond_wasm_derive::contract(EgldEsdtSwapImpl)]
+#[elrond_wasm_derive::contract]
 pub trait EgldEsdtSwap {
     #[init]
     fn init(&self) {}
@@ -18,20 +18,20 @@ pub trait EgldEsdtSwap {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        #[payment] issue_cost: BigUint,
-    ) -> SCResult<AsyncCall<BigUint>> {
+        #[payment] issue_cost: Self::BigUint,
+    ) -> SCResult<AsyncCall<Self::SendApi>> {
         only_owner!(self, "only owner may call this function");
         require!(
             self.wrapped_egld_token_identifier().is_empty(),
             "wrapped egld was already issued"
         );
 
-        Ok(ESDTSystemSmartContractProxy::new()
+        Ok(ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
             .issue_fungible(
                 issue_cost,
                 &token_display_name,
                 &token_ticker,
-                &BigUint::from(INITIAL_SUPPLY),
+                &Self::BigUint::from(INITIAL_SUPPLY),
                 FungibleTokenProperties {
                     num_decimals: EGLD_DECIMALS,
                     can_freeze: false,
@@ -50,7 +50,7 @@ pub trait EgldEsdtSwap {
 
     /// Address to set role for
     #[endpoint(setLocalRoles)]
-    fn set_local_roles(&self, address: Address) -> SCResult<AsyncCall<BigUint>> {
+    fn set_local_roles(&self, address: Address) -> SCResult<AsyncCall<Self::SendApi>> {
         only_owner!(self, "only owner may call this function");
         require!(
             !self.wrapped_egld_token_identifier().is_empty(),
@@ -59,7 +59,7 @@ pub trait EgldEsdtSwap {
 
         let token_id = self.wrapped_egld_token_identifier().get();
 
-        Ok(ESDTSystemSmartContractProxy::new()
+        Ok(ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
             .set_special_roles(
                 &address,
                 token_id.as_esdt_identifier(),
@@ -72,7 +72,7 @@ pub trait EgldEsdtSwap {
 
     #[payable("EGLD")]
     #[endpoint(wrapEgld)]
-    fn wrap_egld(&self, #[payment] payment: BigUint) -> SCResult<()> {
+    fn wrap_egld(&self, #[payment] payment: Self::BigUint) -> SCResult<()> {
         require!(payment > 0, "Payment must be more than 0");
         require!(
             !self.wrapped_egld_token_identifier().is_empty(),
@@ -102,7 +102,7 @@ pub trait EgldEsdtSwap {
     #[endpoint(unwrapEgld)]
     fn unwrap_egld(
         &self,
-        #[payment] payment: BigUint,
+        #[payment] payment: Self::BigUint,
         #[payment_token] token_identifier: TokenIdentifier,
     ) -> SCResult<()> {
         let wrapped_egld_token_id = self.wrapped_egld_token_identifier().get();
@@ -143,12 +143,12 @@ pub trait EgldEsdtSwap {
     // views
 
     #[view(getLockedEgldBalance)]
-    fn get_locked_egld_balance(&self) -> BigUint {
+    fn get_locked_egld_balance(&self) -> Self::BigUint {
         self.blockchain().get_sc_balance()
     }
 
     #[view(getWrappedEgldRemaining)]
-    fn get_wrapped_egld_remaining(&self) -> BigUint {
+    fn get_wrapped_egld_remaining(&self) -> Self::BigUint {
         self.blockchain().get_esdt_balance(
             &self.blockchain().get_sc_address(),
             self.wrapped_egld_token_identifier()
@@ -174,9 +174,9 @@ pub trait EgldEsdtSwap {
     fn esdt_issue_callback(
         &self,
         #[payment_token] token_id: TokenIdentifier,
-        #[payment] returned_tokens: BigUint,
+        #[payment] returned_tokens: Self::BigUint,
         #[call_result] result: AsyncCallResult<()>,
-    ) -> OptionalResult<AsyncCall<BigUint>> {
+    ) -> OptionalResult<AsyncCall<Self::SendApi>> {
         // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
         // so we can get the token identifier and amount from the call data
         match result {
@@ -184,7 +184,7 @@ pub trait EgldEsdtSwap {
                 self.wrapped_egld_token_identifier().set(&token_id);
 
                 OptionalResult::Some(
-                    ESDTSystemSmartContractProxy::new()
+                    ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
                         .set_special_roles(
                             &self.blockchain().get_sc_address(),
                             token_id.as_esdt_identifier(),

@@ -1,5 +1,6 @@
 {
     "name": "wrap egld",
+    "gasSchedule": "dummy",
     "steps": [
         {
             "step": "setState",
@@ -13,11 +14,16 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:WEGLD-abcdef": "2000"
+                        "str:WEGLD-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef",
-                        "str:wrappedEgldRemaining": "2000"
+                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }
@@ -57,11 +63,16 @@
                     "nonce": "0",
                     "balance": "500",
                     "esdt": {
-                        "str:WEGLD-abcdef": "1500"
+                        "str:WEGLD-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef",
-                        "str:wrappedEgldRemaining": "1500"
+                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }

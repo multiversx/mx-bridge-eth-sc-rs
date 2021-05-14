@@ -11,22 +11,21 @@ path = "src/lib.rs"
 [features]
 wasm-output-mode = [ "elrond-wasm-node",]
 
-[dependencies.aggregator]
-git = "https://github.com/ElrondNetwork/sc-chainlink-rs"
-rev = "1bef5ea"
+[dependencies]
+aggregator = { package = "aggregator-mock", path = "../aggregator-mock"}
 
 [dependencies.transaction]
 path = "../common/transaction"
 
 [dependencies.elrond-wasm]
-version = "0.15.0"
+version = "0.16.0"
 
 [dependencies.elrond-wasm-derive]
-version = "0.15.0"
+version = "0.16.0"
 
 [dependencies.elrond-wasm-node]
-version = "0.15.0"
+version = "0.16.0"
 optional = true
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.15.0"
+version = "0.16.0"

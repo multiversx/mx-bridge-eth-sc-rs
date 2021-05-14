@@ -3,15 +3,19 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+use aggregator_result::AggregatorResult;
 use transaction::*;
 
 pub mod aggregator_result;
 
-extern crate aggregator;
-use crate::aggregator::aggregator_interface::{AggregatorInterface, AggregatorInterfaceProxy};
-
-#[elrond_wasm_derive::contract(EthereumFeePrepayImpl)]
+#[elrond_wasm_derive::contract]
 pub trait EthereumFeePrepay {
+    #[proxy]
+    fn aggregator_proxy(
+        &self,
+        sc_address: Address,
+    ) -> aggregator::Proxy<Self::SendApi>;
+
     #[init]
     fn init(&self, aggregator: Address) {
         self.aggregator().set(&aggregator);
@@ -22,21 +26,21 @@ pub trait EthereumFeePrepay {
 
     #[payable("EGLD")]
     #[endpoint(depositTransactionFee)]
-    fn deposit_transaction_fee(&self, #[payment] payment: BigUint) {
+    fn deposit_transaction_fee(&self, #[payment] payment: Self::BigUint) {
         let caller = &self.blockchain().get_caller();
         self.increase_balance(caller, &payment);
     }
 
     /// defaults to max amount
     #[endpoint]
-    fn withdraw(&self, #[var_args] opt_amount: OptionalArg<BigUint>) -> SCResult<()> {
+    fn withdraw(&self, #[var_args] opt_amount: OptionalArg<Self::BigUint>) -> SCResult<()> {
         let caller = &self.blockchain().get_caller();
         let amount = match opt_amount {
             OptionalArg::Some(amt) => amt,
             OptionalArg::None => self.deposit(&caller).get(),
         };
 
-        sc_try!(self.try_decrease_balance(caller, &amount));
+        self.try_decrease_balance(caller, &amount)?;
         self.send().direct_egld(caller, &amount, &[]);
 
         Ok(())
@@ -52,9 +56,9 @@ pub trait EthereumFeePrepay {
         transaction_type: TransactionType,
         priority: Priority,
     ) -> SCResult<()> {
-        sc_try!(self.require_whitelisted());
+        self.require_whitelisted()?;
 
-        let estimate = sc_try!(self.compute_estimate(transaction_type, priority));
+        let estimate = self.compute_estimate(transaction_type, priority)?;
         self.transfer(&address, &relayer, &estimate);
 
         Ok(())
@@ -67,10 +71,10 @@ pub trait EthereumFeePrepay {
         transaction_type: TransactionType,
         priority: Priority,
     ) -> SCResult<()> {
-        sc_try!(self.require_whitelisted());
+        self.require_whitelisted()?;
 
-        let estimate = sc_try!(self.compute_estimate(transaction_type, priority));
-        sc_try!(self.try_reserve_from_balance(&address, &estimate));
+        let estimate = self.compute_estimate(transaction_type, priority)?;
+        self.try_reserve_from_balance(&address, &estimate)?;
 
         Ok(())
     }
@@ -80,12 +84,12 @@ pub trait EthereumFeePrepay {
         &self,
         transaction_type: TransactionType,
         priority: Priority,
-    ) -> SCResult<BigUint> {
+    ) -> SCResult<Self::BigUint> {
         let optional_arg_round =
-            contract_call!(self, self.aggregator().get(), AggregatorInterfaceProxy)
-                .latestRoundData()
-                .execute_on_dest_context(self.blockchain().get_gas_left(), self.send());
-        let aggregator_result = sc_try!(aggregator_result::try_parse_round(optional_arg_round));
+            self.aggregator_proxy(self.aggregator().get())
+                .get_latest_round_data()
+                .execute_on_dest_context(self.blockchain().get_gas_left());
+        let aggregator_result: AggregatorResult<Self::BigUint> = aggregator_result::try_parse_round(optional_arg_round)?;
 
         let gas_limit = match transaction_type {
             TransactionType::Ethereum => aggregator_result.transaction_gas_limits.ethereum,
@@ -141,13 +145,13 @@ pub trait EthereumFeePrepay {
         Ok(())
     }
 
-    fn increase_balance(&self, address: &Address, amount: &BigUint) {
+    fn increase_balance(&self, address: &Address, amount: &Self::BigUint) {
         let mut deposit = self.deposit(address).get();
         deposit += amount;
         self.deposit(address).set(&deposit);
     }
 
-    fn try_decrease_balance(&self, address: &Address, amount: &BigUint) -> SCResult<()> {
+    fn try_decrease_balance(&self, address: &Address, amount: &Self::BigUint) -> SCResult<()> {
         let mut deposit = self.deposit(address).get();
 
         require!(&deposit >= amount, "insufficient balance");
@@ -158,7 +162,7 @@ pub trait EthereumFeePrepay {
         Ok(())
     }
 
-    fn transfer(&self, from: &Address, to: &Address, amount: &BigUint) {
+    fn transfer(&self, from: &Address, to: &Address, amount: &Self::BigUint) {
         let reserve = self.reserved_amount(from).get();
 
         // This is done to prevent a potential bug
@@ -174,20 +178,20 @@ pub trait EthereumFeePrepay {
         self.increase_balance(to, &amount_to_send);
     }
 
-    fn increase_reserve(&self, address: &Address, amount: &BigUint) {
+    fn increase_reserve(&self, address: &Address, amount: &Self::BigUint) {
         let mut reserve = self.reserved_amount(address).get();
         reserve += amount;
         self.reserved_amount(address).set(&reserve);
     }
 
-    fn decrease_reserve(&self, address: &Address, amount: &BigUint) {
+    fn decrease_reserve(&self, address: &Address, amount: &Self::BigUint) {
         let mut reserve = self.reserved_amount(address).get();
         reserve -= amount;
         self.reserved_amount(address).set(&reserve);
     }
 
-    fn try_reserve_from_balance(&self, from: &Address, amount: &BigUint) -> SCResult<()> {
-        sc_try!(self.try_decrease_balance(from, amount));
+    fn try_reserve_from_balance(&self, from: &Address, amount: &Self::BigUint) -> SCResult<()> {
+        self.try_decrease_balance(from, amount)?;
         self.increase_reserve(from, amount);
 
         Ok(())
@@ -200,11 +204,11 @@ pub trait EthereumFeePrepay {
 
     #[view(getDeposit)]
     #[storage_mapper("deposit")]
-    fn deposit(&self, address: &Address) -> SingleValueMapper<Self::Storage, BigUint>;
+    fn deposit(&self, address: &Address) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     #[view(getReservedAmount)]
     #[storage_mapper("reservedAmount")]
-    fn reserved_amount(&self, address: &Address) -> SingleValueMapper<Self::Storage, BigUint>;
+    fn reserved_amount(&self, address: &Address) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     #[storage_mapper("aggregator")]
     fn aggregator(&self) -> SingleValueMapper<Self::Storage, Address>;

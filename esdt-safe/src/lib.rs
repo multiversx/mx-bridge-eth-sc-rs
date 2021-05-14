@@ -1,22 +1,12 @@
 #![no_std]
 #![allow(non_snake_case)]
 
-use transaction::*;
 use eth_address::*;
+use transaction::*;
 
 elrond_wasm::imports!();
 
-#[elrond_wasm_derive::callable(EthereumFeePrepayProxy)]
-pub trait EthereumFeePrepay {
-    fn reserveFee(
-        &self,
-        address: &Address,
-        transaction_type: TransactionType,
-        priority: Priority,
-    ) -> ContractCall<BigUint, ()>;
-}
-
-#[elrond_wasm_derive::contract(EsdtSafeImpl)]
+#[elrond_wasm_derive::contract]
 pub trait EsdtSafe {
     #[init]
     fn init(
@@ -54,7 +44,9 @@ pub trait EsdtSafe {
     }
 
     #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(&self) -> SCResult<OptionalResult<TxAsMultiResult<BigUint>>> {
+    fn get_next_pending_transaction(
+        &self,
+    ) -> SCResult<OptionalResult<TxAsMultiResult<Self::BigUint>>> {
         only_owner!(self, "only owner may call this function");
 
         match self.pending_transaction_address_nonce_list().pop_front() {
@@ -76,7 +68,7 @@ pub trait EsdtSafe {
         sender: Address,
         nonce: TxNonce,
         transaction_status: TransactionStatus,
-    ) -> SCResult<AsyncCall<BigUint>> {
+    ) -> SCResult<AsyncCall<Self::SendApi>> {
         only_owner!(self, "only owner may call this function");
 
         require!(
@@ -112,7 +104,7 @@ pub trait EsdtSafe {
     fn create_transaction(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
-        #[payment] payment: BigUint,
+        #[payment] payment: Self::BigUint,
         to: EthAddress,
     ) -> SCResult<()> {
         require!(
@@ -127,11 +119,6 @@ pub trait EsdtSafe {
         require!(!to.is_zero(), "Can't transfer to address zero");
 
         let caller = self.blockchain().get_caller();
-
-        // reserve transaction fee beforehand
-        // used prevent transaction spam
-        self.reserve_fee(&caller);
-
         let sender_nonce = self.transactions_by_nonce(&caller).len() + 1;
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
@@ -147,7 +134,11 @@ pub trait EsdtSafe {
         self.transaction_status(&caller, sender_nonce)
             .set(&TransactionStatus::Pending);
         self.pending_transaction_address_nonce_list()
-            .push_back((caller, sender_nonce));
+            .push_back((caller.clone(), sender_nonce));
+
+        // reserve transaction fee beforehand
+        // used prevent transaction spam
+        self.reserve_fee(caller);
 
         Ok(())
     }
@@ -157,9 +148,9 @@ pub trait EsdtSafe {
     fn burn_esdt_token(
         &self,
         token_identifier: &TokenIdentifier,
-        amount: &BigUint,
-    ) -> AsyncCall<BigUint> {
-        ESDTSystemSmartContractProxy::new()
+        amount: &Self::BigUint,
+    ) -> AsyncCall<Self::SendApi> {
+        ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
             .burn(token_identifier.as_esdt_identifier(), amount)
             .async_call()
     }
@@ -168,14 +159,14 @@ pub trait EsdtSafe {
         &self,
         to: Address,
         token_id: TokenIdentifier,
-        amount: BigUint,
-    ) -> AsyncCall<BigUint> {
-        ContractCall::<BigUint, ()>::new(
+        amount: Self::BigUint,
+    ) -> AsyncCall<Self::SendApi> {
+        ContractCall::<Self::SendApi, ()>::new(
+            self.send(),
             to.clone(),
-            token_id,
-            amount,
             BoxedBytes::from(self.data_or_empty(&to, b"refund")),
         )
+        .with_token_transfer(token_id, amount)
         .async_call()
     }
 
@@ -187,15 +178,19 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(&self, from: &Address) {
-        contract_call!(
-            self,
-            self.fee_estimator_contract_address().get(),
-            EthereumFeePrepayProxy
-        )
-        .reserveFee(from, TransactionType::Erc20, Priority::Low)
-        .execute_on_dest_context(self.blockchain().get_gas_left(), self.send());
+    fn reserve_fee(&self, from: Address) {
+        self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
+            .reserve_fee(from, TransactionType::Erc20, Priority::Low)
+            .execute_on_dest_context(self.blockchain().get_gas_left());
     }
+
+    // proxies
+
+    #[proxy]
+    fn ethereum_fee_prepay_proxy(
+        &self,
+        sc_address: Address,
+    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
 
     // storage
 
@@ -218,7 +213,7 @@ pub trait EsdtSafe {
     fn transactions_by_nonce(
         &self,
         address: &Address,
-    ) -> VecMapper<Self::Storage, Transaction<BigUint>>;
+    ) -> VecMapper<Self::Storage, Transaction<Self::BigUint>>;
 
     #[view(getTransactionStatus)]
     #[storage_mapper("transactionStatus")]
