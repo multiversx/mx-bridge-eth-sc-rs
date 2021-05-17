@@ -4,7 +4,7 @@ elrond_wasm::imports!();
 
 const INITIAL_SUPPLY: u32 = 1;
 
-#[elrond_wasm_derive::contract(MultiTransferEsdtImpl)]
+#[elrond_wasm_derive::contract]
 pub trait MultiTransferEsdt {
     #[init]
     fn init(&self) {}
@@ -17,16 +17,16 @@ pub trait MultiTransferEsdt {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        #[payment] issue_cost: BigUint,
-    ) -> SCResult<AsyncCall<BigUint>> {
+        #[payment] issue_cost: Self::BigUint,
+    ) -> SCResult<AsyncCall<Self::SendApi>> {
         only_owner!(self, "only owner may call this function");
 
-        Ok(ESDTSystemSmartContractProxy::new()
+        Ok(ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
             .issue_fungible(
                 issue_cost,
                 &token_display_name,
                 &token_ticker,
-                &BigUint::from(INITIAL_SUPPLY),
+                &Self::BigUint::from(INITIAL_SUPPLY),
                 FungibleTokenProperties {
                     num_decimals: 0,
                     can_freeze: false,
@@ -59,7 +59,7 @@ pub trait MultiTransferEsdt {
         &self,
         to: Address,
         token_id: TokenIdentifier,
-        amount: BigUint,
+        amount: Self::BigUint,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
         require!(!to.is_zero(), "Can't transfer to address zero");
@@ -84,7 +84,7 @@ pub trait MultiTransferEsdt {
     // views
 
     #[view(getScEsdtBalance)]
-    fn get_sc_esdt_balance(&self, token_id: &TokenIdentifier) -> BigUint {
+    fn get_sc_esdt_balance(&self, token_id: &TokenIdentifier) -> Self::BigUint {
         self.blockchain().get_esdt_balance(
             &self.blockchain().get_sc_address(),
             token_id.as_esdt_identifier(),
@@ -108,9 +108,9 @@ pub trait MultiTransferEsdt {
     fn esdt_issue_callback(
         &self,
         #[payment_token] token_id: TokenIdentifier,
-        #[payment] returned_tokens: BigUint,
+        #[payment] returned_tokens: Self::BigUint,
         #[call_result] result: AsyncCallResult<()>,
-    ) -> OptionalResult<AsyncCall<BigUint>> {
+    ) -> OptionalResult<AsyncCall<Self::SendApi>> {
         // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
         // so we can get the token identifier and amount from the call data
         match result {
@@ -119,7 +119,7 @@ pub trait MultiTransferEsdt {
                 self.issued_tokens().insert(token_id.clone());
 
                 OptionalResult::Some(
-                    ESDTSystemSmartContractProxy::new()
+                    ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
                         .set_special_roles(
                             &self.blockchain().get_sc_address(),
                             token_id.as_esdt_identifier(),

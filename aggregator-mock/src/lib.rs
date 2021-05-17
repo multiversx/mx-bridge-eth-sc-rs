@@ -19,14 +19,14 @@ pub struct Round<BigUint: BigUintApi> {
     pub answered_in_round: u64,
 }
 
-#[elrond_wasm_derive::contract(AggregatorMockImpl)]
+#[elrond_wasm_derive::contract]
 pub trait AggregatorMock {
     #[endpoint(latestRoundData)]
-    fn get_latest_round_data(&self) -> OptionalArg<Round<BigUint>> {
+    fn get_latest_round_data(&self) -> OptionalArg<Round<Self::BigUint>> {
         // mock all data as "1"
         let mut submissions = Vec::new();
         for _ in 0..8 {
-            submissions.push(BigUint::from(1u32));
+            submissions.push(Self::BigUint::from(1u32));
         }
 
         OptionalArg::Some(Round {

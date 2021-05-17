@@ -4,7 +4,7 @@ use elrond_wasm::sc_error;
 use transaction::*;
 
 extern crate aggregator;
-pub use crate::aggregator::aggregator_interface::Round;
+pub use aggregator::*;
 
 pub struct AggregatorResult<BigUint: BigUintApi> {
     pub egld_to_eth: BigUint,

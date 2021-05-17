@@ -2,12 +2,10 @@
 #![allow(non_snake_case)]
 
 mod action;
-mod proxy;
 mod smart_contract_call;
 mod user_role;
 
 use action::{Action, ActionFullInfo};
-use proxy::*;
 use smart_contract_call::*;
 use transaction::*;
 use user_role::UserRole;
@@ -23,13 +21,13 @@ const ISSUE_EXPECTED_GAS_COST: u64 = 90_000_000 + 25_000_000 + 50_000_000;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
-#[elrond_wasm_derive::contract(MultisigImpl)]
+#[elrond_wasm_derive::contract]
 pub trait Multisig {
     #[init]
     fn init(
         &self,
-        required_stake: BigUint,
-        slash_amount: BigUint,
+        required_stake: Self::BigUint,
+        slash_amount: Self::BigUint,
         quorum: usize,
         #[var_args] board: VarArgs<Address>,
     ) -> SCResult<()> {
@@ -77,7 +75,7 @@ pub trait Multisig {
 
         let egld_esdt_swap_address = self.send().deploy_contract(
             self.blockchain().get_gas_left(),
-            &BigUint::zero(),
+            &Self::BigUint::zero(),
             &egld_esdt_swap_code,
             CodeMetadata::DEFAULT,
             &ArgBuffer::new(),
@@ -88,7 +86,7 @@ pub trait Multisig {
 
         let multi_transfer_esdt_address = self.send().deploy_contract(
             self.blockchain().get_gas_left(),
-            &BigUint::zero(),
+            &Self::BigUint::zero(),
             &multi_transfer_esdt_code,
             CodeMetadata::DEFAULT,
             &ArgBuffer::new(),
@@ -103,7 +101,7 @@ pub trait Multisig {
 
         let ethereum_fee_prepay_address = self.send().deploy_contract(
             self.blockchain().get_gas_left(),
-            &BigUint::zero(),
+            &Self::BigUint::zero(),
             &ethereum_fee_prepay_code,
             CodeMetadata::DEFAULT,
             &ethereum_fee_prepay_arg_buffer,
@@ -122,7 +120,7 @@ pub trait Multisig {
 
         let esdt_safe_address = self.send().deploy_contract(
             self.blockchain().get_gas_left(),
-            &BigUint::zero(),
+            &Self::BigUint::zero(),
             &esdt_safe_code,
             CodeMetadata::DEFAULT,
             &esdt_safe_arg_buffer,
@@ -137,15 +135,15 @@ pub trait Multisig {
     #[endpoint(finishSetup)]
     fn finish_setup(&self) -> SCResult<()> {
         only_owner!(self, "only owner may pause");
-        sc_try!(self.require_ethereum_fee_prepay_deployed());
-        sc_try!(self.require_egld_esdt_swap_deployed());
+        self.require_ethereum_fee_prepay_deployed()?;
+        self.require_egld_esdt_swap_deployed()?;
 
         let ethereum_fee_prepay_address = self.ethereum_fee_prepay_address().get();
         let esdt_safe_address = self.esdt_safe_address().get();
 
-        contract_call!(self, ethereum_fee_prepay_address, EthereumFeePrepayProxy)
-            .addToWhitelist(&esdt_safe_address)
-            .execute_on_dest_context(self.blockchain().get_gas_left(), self.send());
+        self.ethereum_fee_prepay_proxy(ethereum_fee_prepay_address)
+            .add_to_whitelist(esdt_safe_address)
+            .execute_on_dest_context(self.blockchain().get_gas_left());
 
         Ok(())
     }
@@ -187,7 +185,7 @@ pub trait Multisig {
 
     #[payable("EGLD")]
     #[endpoint]
-    fn stake(&self, #[payment] payment: BigUint) -> SCResult<()> {
+    fn stake(&self, #[payment] payment: Self::BigUint) -> SCResult<()> {
         let caller = self.blockchain().get_caller();
         let caller_role = self.user_role(&caller);
         require!(
@@ -203,7 +201,7 @@ pub trait Multisig {
     }
 
     #[endpoint]
-    fn unstake(&self, amount: BigUint) -> SCResult<()> {
+    fn unstake(&self, amount: Self::BigUint) -> SCResult<()> {
         let caller = self.blockchain().get_caller();
         let amount_staked = self.amount_staked(&caller).get();
         require!(
@@ -319,9 +317,9 @@ pub trait Multisig {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        issue_cost: BigUint,
+        issue_cost: Self::BigUint,
     ) -> SCResult<usize> {
-        sc_try!(self.require_egld_esdt_swap_deployed());
+        self.require_egld_esdt_swap_deployed()?;
 
         self.propose_action(Action::EgldEsdtSwapCall(
             EgldEsdtSwapCall::IssueWrappedEgld {
@@ -336,7 +334,7 @@ pub trait Multisig {
     fn propose_egld_esdt_swap_set_local_mint_role_for_multi_transfer_esdt(
         &self,
     ) -> SCResult<usize> {
-        sc_try!(self.require_egld_esdt_swap_deployed());
+        self.require_egld_esdt_swap_deployed()?;
 
         self.propose_action(Action::EgldEsdtSwapCall(
             EgldEsdtSwapCall::SetLocalRolesForMultiTransferEsdt,
@@ -350,7 +348,7 @@ pub trait Multisig {
         &self,
         token_id: TokenIdentifier,
     ) -> SCResult<usize> {
-        sc_try!(self.require_esdt_safe_deployed());
+        self.require_esdt_safe_deployed()?;
 
         self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::AddTokenToWhitelist {
             token_id,
@@ -362,7 +360,7 @@ pub trait Multisig {
         &self,
         token_id: TokenIdentifier,
     ) -> SCResult<usize> {
-        sc_try!(self.require_esdt_safe_deployed());
+        self.require_esdt_safe_deployed()?;
 
         self.propose_action(Action::EsdtSafeCall(
             EsdtSafeCall::RemoveTokenFromWhitelist { token_id },
@@ -370,8 +368,8 @@ pub trait Multisig {
     }
 
     #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(&self) -> SCResult<TxAsMultiResult<BigUint>> {
-        sc_try!(self.require_esdt_safe_deployed());
+    fn get_next_pending_transaction(&self) -> SCResult<TxAsMultiResult<Self::BigUint>> {
+        self.require_esdt_safe_deployed()?;
         require!(
             self.current_tx().is_empty(),
             "Must execute and set status for current tx first"
@@ -392,7 +390,7 @@ pub trait Multisig {
         &self,
         transaction_status: TransactionStatus,
     ) -> SCResult<usize> {
-        sc_try!(self.require_esdt_safe_deployed());
+        self.require_esdt_safe_deployed()?;
         require!(
             !self.current_tx().is_empty(),
             "There is no transaction to set status for"
@@ -402,9 +400,10 @@ pub trait Multisig {
             "Set status action already proposed"
         );
 
-        let action_id = sc_try!(self.propose_action(Action::EsdtSafeCall(
-            EsdtSafeCall::SetTransactionStatus { transaction_status }
-        )));
+        let action_id =
+            self.propose_action(Action::EsdtSafeCall(EsdtSafeCall::SetTransactionStatus {
+                transaction_status,
+            }))?;
 
         self.action_id_for_set_current_transaction_status()
             .set(&action_id);
@@ -419,9 +418,9 @@ pub trait Multisig {
         &self,
         token_display_name: BoxedBytes,
         token_ticker: BoxedBytes,
-        issue_cost: BigUint,
+        issue_cost: Self::BigUint,
     ) -> SCResult<usize> {
-        sc_try!(self.require_multi_transfer_esdt_deployed());
+        self.require_multi_transfer_esdt_deployed()?;
 
         self.propose_action(Action::MultiTransferEsdtCall(
             MultiTransferEsdtCall::IssueEsdtToken {
@@ -438,22 +437,22 @@ pub trait Multisig {
         eth_tx_nonce: u64,
         to: Address,
         token_id: TokenIdentifier,
-        amount: BigUint,
+        amount: Self::BigUint,
     ) -> SCResult<usize> {
-        sc_try!(self.require_multi_transfer_esdt_deployed());
+        self.require_multi_transfer_esdt_deployed()?;
         require!(
             self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce)
                 .is_empty(),
             "Tx was already proposed"
         );
 
-        let action_id = sc_try!(self.propose_action(Action::MultiTransferEsdtCall(
+        let action_id = self.propose_action(Action::MultiTransferEsdtCall(
             MultiTransferEsdtCall::TransferEsdtToken {
                 to,
                 token_id,
                 amount,
             },
-        )));
+        ))?;
 
         self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce)
             .set(&action_id);
@@ -465,7 +464,7 @@ pub trait Multisig {
 
     #[endpoint(proposeEthereumFeePrepayPayFee)]
     fn propose_ethereum_prepay_fee_pay_fee(&self, tx_sender: Address) -> SCResult<usize> {
-        sc_try!(self.require_ethereum_fee_prepay_deployed());
+        self.require_ethereum_fee_prepay_deployed()?;
 
         let relayer = self.blockchain().get_caller();
         self.propose_action(Action::EthereumFeePrepayCall(
@@ -525,7 +524,7 @@ pub trait Multisig {
     /// - the serialized action data
     /// - (number of signers followed by) list of signer addresses.
     #[view(getPendingActionFullInfo)]
-    fn get_pending_action_full_info(&self) -> MultiResultVec<ActionFullInfo<BigUint>> {
+    fn get_pending_action_full_info(&self) -> MultiResultVec<ActionFullInfo<Self::BigUint>> {
         let mut result = Vec::new();
         let action_last_index = self.get_action_last_index();
         let action_mapper = self.action_mapper();
@@ -634,12 +633,12 @@ pub trait Multisig {
 
     /// Serialized action data of an action with index.
     #[view(getActionData)]
-    fn get_action_data(&self, action_id: usize) -> Action<BigUint> {
+    fn get_action_data(&self, action_id: usize) -> Action<Self::BigUint> {
         self.action_mapper().get(action_id)
     }
 
     #[view(getCurrentTx)]
-    fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<BigUint>> {
+    fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<Self::BigUint>> {
         if !self.current_tx().is_empty() {
             OptionalResult::Some(self.current_tx().get().into_multiresult())
         } else {
@@ -698,7 +697,7 @@ pub trait Multisig {
 
     // private
 
-    fn propose_action(&self, action: Action<BigUint>) -> SCResult<usize> {
+    fn propose_action(&self, action: Action<Self::BigUint>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
@@ -860,11 +859,10 @@ pub trait Multisig {
         Ok(())
     }
 
-    fn execute_egld_esdt_swap_call(&self, call: EgldEsdtSwapCall<BigUint>) {
+    fn execute_egld_esdt_swap_call(&self, call: EgldEsdtSwapCall<Self::BigUint>) {
         let contract_address = self.egld_esdt_swap_address().get();
-        let contract_call = contract_call!(self, contract_address, EgldEsdtSwapProxy);
+        let contract_call = self.egld_esdt_swap_proxy(contract_address);
         let gas = self.blockchain().get_gas_left();
-        let api = self.send();
 
         match call {
             EgldEsdtSwapCall::IssueWrappedEgld {
@@ -873,39 +871,37 @@ pub trait Multisig {
                 issue_cost,
             } => {
                 contract_call
-                    .with_token_transfer(TokenIdentifier::egld(), issue_cost)
-                    .issueWrappedEgld(token_display_name, token_ticker)
-                    .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
+                    .issue_wrapped_egld(token_display_name, token_ticker, issue_cost)
+                    .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST);
             }
             EgldEsdtSwapCall::SetLocalRolesForMultiTransferEsdt => {
                 contract_call
-                    .setLocalRoles(self.multi_transfer_esdt_address().get())
-                    .execute_on_dest_context(gas, api);
+                    .set_local_roles(self.multi_transfer_esdt_address().get())
+                    .execute_on_dest_context(gas);
             }
         }
     }
 
     fn execute_esdt_safe_call(&self, call: EsdtSafeCall) {
         let contract_address = self.esdt_safe_address().get();
-        let contract_call = contract_call!(self, contract_address, EsdtSafeProxy);
+        let contract_call = self.esdt_safe_proxy(contract_address);
         let gas = self.blockchain().get_gas_left();
-        let api = self.send();
 
         match call {
             EsdtSafeCall::AddTokenToWhitelist { token_id } => {
                 contract_call
-                    .addTokenToWhitelist(token_id)
-                    .execute_on_dest_context(gas, api);
+                    .add_token_to_whitelist(token_id)
+                    .execute_on_dest_context(gas);
             }
             EsdtSafeCall::RemoveTokenFromWhitelist { token_id } => {
                 contract_call
-                    .removeTokenFromWhitelist(token_id)
-                    .execute_on_dest_context(gas, api);
+                    .remove_token_from_whitelist(token_id)
+                    .execute_on_dest_context(gas);
             }
             EsdtSafeCall::GetNextPendingTransaction {} => {
                 match contract_call
-                    .getNextPendingTransaction()
-                    .execute_on_dest_context(gas, api)
+                    .get_next_pending_transaction()
+                    .execute_on_dest_context(gas)
                 {
                     OptionalArg::Some(multi_result) => {
                         self.current_tx().set(&Transaction::from(multi_result))
@@ -920,17 +916,16 @@ pub trait Multisig {
                 self.action_id_for_set_current_transaction_status().clear();
 
                 contract_call
-                    .setTransactionStatus(tx.from, tx.nonce, transaction_status)
-                    .execute_on_dest_context(gas / 2, api);
+                    .set_transaction_status(tx.from, tx.nonce, transaction_status)
+                    .execute_on_dest_context(gas / 2);
             }
         }
     }
 
-    fn execute_multi_transfer_esdt_call(&self, call: MultiTransferEsdtCall<BigUint>) {
+    fn execute_multi_transfer_esdt_call(&self, call: MultiTransferEsdtCall<Self::BigUint>) {
         let contract_address = self.multi_transfer_esdt_address().get();
-        let contract_call = contract_call!(self, contract_address, MultiTransferEsdtProxy);
+        let contract_call = self.multi_transfer_esdt_proxy(contract_address);
         let gas = self.blockchain().get_gas_left();
-        let api = self.send();
 
         match call {
             MultiTransferEsdtCall::IssueEsdtToken {
@@ -939,9 +934,8 @@ pub trait Multisig {
                 issue_cost,
             } => {
                 contract_call
-                    .with_token_transfer(TokenIdentifier::egld(), issue_cost)
-                    .issueEsdtToken(token_display_name, token_ticker)
-                    .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST, api);
+                    .issue_esdt_token_endpoint(token_display_name, token_ticker, issue_cost)
+                    .execute_on_dest_context(ISSUE_EXPECTED_GAS_COST);
             }
             MultiTransferEsdtCall::TransferEsdtToken {
                 to,
@@ -949,17 +943,16 @@ pub trait Multisig {
                 amount,
             } => {
                 contract_call
-                    .transferEsdtToken(to, token_id, amount)
-                    .execute_on_dest_context(gas, api);
+                    .transfer_esdt_token(to, token_id, amount)
+                    .execute_on_dest_context(gas);
             }
         }
     }
 
     fn execute_ethereum_fee_prepay_call(&self, call: EthereumFeePrepayCall) {
         let contract_address = self.ethereum_fee_prepay_address().get();
-        let contract_call = contract_call!(self, contract_address, EthereumFeePrepayProxy);
+        let contract_call = self.ethereum_fee_prepay_proxy(contract_address);
         let gas = self.blockchain().get_gas_left();
-        let api = self.send();
 
         match call {
             EthereumFeePrepayCall::PayFee {
@@ -969,8 +962,8 @@ pub trait Multisig {
                 priority,
             } => {
                 contract_call
-                    .payFee(&address, &relayer, transaction_type, priority)
-                    .execute_on_dest_context(gas, api);
+                    .pay_fee(address, relayer, transaction_type, priority)
+                    .execute_on_dest_context(gas);
             }
         }
     }
@@ -1019,6 +1012,26 @@ pub trait Multisig {
         Ok(())
     }
 
+    // proxies
+
+    #[proxy]
+    fn egld_esdt_swap_proxy(&self, sc_address: Address) -> egld_esdt_swap::Proxy<Self::SendApi>;
+
+    #[proxy]
+    fn esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe::Proxy<Self::SendApi>;
+
+    #[proxy]
+    fn multi_transfer_esdt_proxy(
+        &self,
+        sc_address: Address,
+    ) -> multi_transfer_esdt::Proxy<Self::SendApi>;
+
+    #[proxy]
+    fn ethereum_fee_prepay_proxy(
+        &self,
+        sc_address: Address,
+    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
+
     // storage
 
     /// Minimum number of signatures needed to perform any action.
@@ -1048,7 +1061,7 @@ pub trait Multisig {
     fn num_proposers(&self) -> SingleValueMapper<Self::Storage, usize>;
 
     #[storage_mapper("action_data")]
-    fn action_mapper(&self) -> VecMapper<Self::Storage, Action<BigUint>>;
+    fn action_mapper(&self) -> VecMapper<Self::Storage, Action<Self::BigUint>>;
 
     #[storage_mapper("action_signer_ids")]
     fn action_signer_ids(&self, action_id: usize) -> SingleValueMapper<Self::Storage, Vec<usize>>;
@@ -1056,7 +1069,7 @@ pub trait Multisig {
     /// The required amount to stake for accepting relayer position
     #[view(getRequiredStakeAmount)]
     #[storage_mapper("requiredStakeAmount")]
-    fn required_stake_amount(&self) -> SingleValueMapper<Self::Storage, BigUint>;
+    fn required_stake_amount(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     /// Staked amount by each board member.
     #[view(getAmountStaked)]
@@ -1064,24 +1077,24 @@ pub trait Multisig {
     fn amount_staked(
         &self,
         board_member_address: &Address,
-    ) -> SingleValueMapper<Self::Storage, BigUint>;
+    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     /// Amount of stake slashed if a relayer is misbehaving
     #[view(getSlashAmount)]
     #[storage_mapper("slashAmount")]
-    fn slash_amount(&self) -> SingleValueMapper<Self::Storage, BigUint>;
+    fn slash_amount(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     /// Total slashed tokens accumulated
     #[view(getSlashedTokensAmount)]
     #[storage_mapper("slashedTokensAmount")]
-    fn slashed_tokens_amount(&self) -> SingleValueMapper<Self::Storage, BigUint>;
+    fn slashed_tokens_amount(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     #[view(isPaused)]
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
 
     #[storage_mapper("currentTx")]
-    fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<BigUint>>;
+    fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<Self::BigUint>>;
 
     #[view(getActionIdForEthTxNonce)]
     #[storage_mapper("ethTxNonceToActionIdMapping")]
