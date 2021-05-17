@@ -63,7 +63,7 @@ pub trait Multisig {
         aggregator_address: Address,
         #[var_args] esdt_safe_token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
+        self.require_caller_owner()?;
 
         let zero_address = Address::zero();
 
@@ -143,7 +143,7 @@ pub trait Multisig {
     /// Can't be done in the previous step, as the contracts only exist after execution has finished
     #[endpoint(finishSetup)]
     fn finish_setup(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may pause");
+        self.require_caller_owner()?;
         self.require_ethereum_fee_prepay_deployed()?;
         self.require_egld_esdt_swap_deployed()?;
 
@@ -159,7 +159,7 @@ pub trait Multisig {
 
     #[endpoint]
     fn pause(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may pause");
+        self.require_caller_owner()?;
 
         self.pause_status().set(&true);
 
@@ -168,7 +168,7 @@ pub trait Multisig {
 
     #[endpoint]
     fn unpause(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may unpause");
+        self.require_caller_owner()?;
 
         self.pause_status().set(&false);
 
@@ -177,7 +177,7 @@ pub trait Multisig {
 
     #[endpoint(proposeSlashUser)]
     fn propose_slash_user(&self, user_address: Address) -> SCResult<usize> {
-        only_owner!(self, "only owner may propose slashing");
+        self.require_caller_owner()?;
         require!(
             self.user_role(&user_address) == UserRole::BoardMember,
             "can only slash board members"
