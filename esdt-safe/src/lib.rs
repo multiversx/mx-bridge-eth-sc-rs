@@ -29,6 +29,7 @@ pub trait EsdtSafe {
     fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
+        self.require_local_burn_role_set(&token_id)?;
         self.token_whitelist().insert(token_id);
 
         Ok(())
@@ -65,10 +66,11 @@ pub trait EsdtSafe {
     #[endpoint(setTransactionStatus)]
     fn set_transaction_status(
         &self,
+        relayer_reward_address: Address,
         sender: Address,
         nonce: TxNonce,
         transaction_status: TransactionStatus,
-    ) -> SCResult<AsyncCall<Self::SendApi>> {
+    ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
         require!(
@@ -83,7 +85,7 @@ pub trait EsdtSafe {
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                Ok(self.burn_esdt_token(&tx.token_identifier, &tx.amount))
+                self.burn_esdt_token(&tx.token_identifier, &tx.amount);
             }
             TransactionStatus::Rejected => {
                 self.transaction_status(&sender, nonce)
@@ -91,10 +93,15 @@ pub trait EsdtSafe {
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                Ok(self.refund_esdt_token(tx.from, tx.token_identifier, tx.amount))
+                self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
             }
-            _ => sc_error!("Transaction status may only be set to Executed or Rejected"),
+            _ => return sc_error!("Transaction status may only be set to Executed or Rejected"),
         }
+
+        // pay tx fees to the relayer that processed the transaction
+        self.pay_fee(sender, relayer_reward_address);
+
+        Ok(())
     }
 
     // endpoints
@@ -145,29 +152,21 @@ pub trait EsdtSafe {
 
     // private
 
-    fn burn_esdt_token(
-        &self,
-        token_identifier: &TokenIdentifier,
-        amount: &Self::BigUint,
-    ) -> AsyncCall<Self::SendApi> {
-        ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
-            .burn(token_identifier.as_esdt_identifier(), amount)
-            .async_call()
+    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+        self.send().esdt_local_burn(
+            self.blockchain().get_gas_left(),
+            token_id.as_esdt_identifier(),
+            amount,
+        );
     }
 
-    fn refund_esdt_token(
-        &self,
-        to: Address,
-        token_id: TokenIdentifier,
-        amount: Self::BigUint,
-    ) -> AsyncCall<Self::SendApi> {
-        ContractCall::<Self::SendApi, ()>::new(
-            self.send(),
-            to.clone(),
-            BoxedBytes::from(self.data_or_empty(&to, b"refund")),
-        )
-        .with_token_transfer(token_id, amount)
-        .async_call()
+    fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+        let _ = self.send().direct_esdt_via_transf_exec(
+            to,
+            token_id.as_esdt_identifier(),
+            &amount,
+            self.data_or_empty(to, b"refund"),
+        );
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -182,6 +181,31 @@ pub trait EsdtSafe {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
             .reserve_fee(from, TransactionType::Erc20, Priority::Low)
             .execute_on_dest_context(self.blockchain().get_gas_left());
+    }
+
+    fn pay_fee(&self, tx_sender: Address, relayer_reward_address: Address) {
+        self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
+            .pay_fee(
+                tx_sender,
+                relayer_reward_address,
+                TransactionType::Erc20,
+                Priority::Low,
+            )
+            .execute_on_dest_context(self.blockchain().get_gas_left());
+    }
+
+    fn require_local_burn_role_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
+        /* TODO: Uncomment on next elrond-wasm version
+        let roles = self
+            .blockchain()
+            .get_esdt_local_roles(token_id.as_esdt_identifier());
+        require!(
+            roles.contains(&EsdtLocalRole::Burn),
+            "Must set local burn role first"
+        );
+        */
+
+        Ok(())
     }
 
     // proxies

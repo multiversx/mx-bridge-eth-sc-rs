@@ -2,8 +2,6 @@
 
 elrond_wasm::imports!();
 
-const INITIAL_SUPPLY: u32 = 1;
-
 #[elrond_wasm_derive::contract]
 pub trait MultiTransferEsdt {
     #[init]
@@ -11,44 +9,12 @@ pub trait MultiTransferEsdt {
 
     // endpoints - owner-only
 
-    #[payable("EGLD")]
-    #[endpoint(issueEsdtToken)]
-    fn issue_esdt_token_endpoint(
-        &self,
-        token_display_name: BoxedBytes,
-        token_ticker: BoxedBytes,
-        #[payment] issue_cost: Self::BigUint,
-    ) -> SCResult<AsyncCall<Self::SendApi>> {
-        only_owner!(self, "only owner may call this function");
-
-        Ok(ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
-            .issue_fungible(
-                issue_cost,
-                &token_display_name,
-                &token_ticker,
-                &Self::BigUint::from(INITIAL_SUPPLY),
-                FungibleTokenProperties {
-                    num_decimals: 0,
-                    can_freeze: false,
-                    can_wipe: false,
-                    can_pause: false,
-                    can_mint: true,
-                    can_burn: false,
-                    can_change_owner: false,
-                    can_upgrade: true,
-                    can_add_special_roles: true,
-                },
-            )
-            .async_call()
-            .with_callback(self.callbacks().esdt_issue_callback()))
-    }
-
-    /// This is mostly used to ensure Wrapped EGLD is "known" by this SC
     /// Only add after setting localMint role
     #[endpoint(addTokenToIssuedList)]
     fn add_token_to_issued_list(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
+        self.require_local_mint_role_set(&token_id)?;
         self.issued_tokens().insert(token_id);
 
         Ok(())
@@ -92,6 +58,17 @@ pub trait MultiTransferEsdt {
         )
     }
 
+    #[view(getAllKnownTokens)]
+    fn get_all_known_tokens(&self) -> MultiResultVec<TokenIdentifier> {
+        let mut all_tokens = Vec::new();
+
+        for token_id in self.issued_tokens().iter() {
+            all_tokens.push(token_id);
+        }
+
+        all_tokens.into()
+    }
+
     // private
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -102,53 +79,22 @@ pub trait MultiTransferEsdt {
         }
     }
 
-    // callbacks
+    fn require_local_mint_role_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
+        /* TODO: Uncomment on next elrond-wasm version
+        let roles = self
+            .blockchain()
+            .get_esdt_local_roles(token_id.as_esdt_identifier());
+        require!(
+            roles.contains(&EsdtLocalRole::Mint),
+            "Must set local mint role first"
+        );
+        */
 
-    #[callback]
-    fn esdt_issue_callback(
-        &self,
-        #[payment_token] token_id: TokenIdentifier,
-        #[payment] returned_tokens: Self::BigUint,
-        #[call_result] result: AsyncCallResult<()>,
-    ) -> OptionalResult<AsyncCall<Self::SendApi>> {
-        // callback is called with ESDTTransfer of the newly issued token, with the amount requested,
-        // so we can get the token identifier and amount from the call data
-        match result {
-            AsyncCallResult::Ok(()) => {
-                self.last_issued_token().set(&token_id);
-                self.issued_tokens().insert(token_id.clone());
-
-                OptionalResult::Some(
-                    ESDTSystemSmartContractProxy::new_proxy_obj(self.send())
-                        .set_special_roles(
-                            &self.blockchain().get_sc_address(),
-                            token_id.as_esdt_identifier(),
-                            &[EsdtLocalRole::Mint],
-                        )
-                        .async_call(),
-                )
-            }
-            AsyncCallResult::Err(_) => {
-                // refund payment to caller, which is the sc owner
-                if token_id.is_egld() && returned_tokens > 0 {
-                    self.send().direct_egld(
-                        &self.blockchain().get_owner_address(),
-                        &returned_tokens,
-                        &[],
-                    );
-                }
-
-                OptionalResult::None
-            }
-        }
+        Ok(())
     }
 
     // storage
 
     #[storage_mapper("issuedTokens")]
     fn issued_tokens(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
-
-    #[view(getLastIssuedToken)]
-    #[storage_mapper("lastIssuedToken")]
-    fn last_issued_token(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
 }
