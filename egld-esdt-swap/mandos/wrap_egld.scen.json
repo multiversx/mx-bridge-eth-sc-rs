@@ -10,7 +10,7 @@
                     "balance": "1000",
                     "storage": {}
                 },
-                "address:contract": {
+                "sc:egld_esdt_swap": {
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
@@ -34,7 +34,7 @@
             "txId": "wrap-egld",
             "tx": {
                 "from": "address:user",
-                "to": "address:contract",
+                "to": "sc:egld_esdt_swap",
                 "value": "500",
                 "function": "wrapEgld",
                 "arguments": [],
@@ -59,7 +59,7 @@
                     },
                     "storage": {}
                 },
-                "address:contract": {
+                "sc:egld_esdt_swap": {
                     "nonce": "0",
                     "balance": "500",
                     "esdt": {
