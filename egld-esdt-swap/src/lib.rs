@@ -13,6 +13,10 @@ pub trait EgldEsdtSwap {
     fn set_wrapped_egld_token_id(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
         require!(token_id.is_valid_esdt_identifier(), "Invalid token id");
+        require!(
+            self.wrapped_egld_token_id().is_empty(),
+            "Token id already set"
+        );
 
         /* TODO: Uncomment on next elrond-wasm version
         let roles = self

@@ -16,6 +16,9 @@ wasm-output-mode = [
 [dependencies.transaction]
 path = "../common/transaction"
 
+[dependencies.eth-address]
+path = "../common/eth-address"
+
 [dependencies.egld-esdt-swap]
 path = "../egld-esdt-swap"
 
