@@ -61,13 +61,23 @@ pub trait Multisig {
         ethereum_fee_prepay_code: BoxedBytes,
         esdt_safe_code: BoxedBytes,
         aggregator_address: Address,
-        #[var_args] esdt_safe_token_whitelist: VarArgs<TokenIdentifier>,
+        wrapped_egld_token_id: TokenIdentifier,
+        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.require_caller_owner()?;
 
         let zero_address = Address::zero();
+        let mut arg_buffer_token_whitelist = ArgBuffer::new();
+
+        arg_buffer_token_whitelist.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        for token in token_whitelist.into_vec() {
+            arg_buffer_token_whitelist.push_argument_bytes(token.as_esdt_identifier());
+        }
 
         // eGLD ESDT swap deploy
+
+        let mut egld_esdt_swap_arg_buffer = ArgBuffer::new();
+        egld_esdt_swap_arg_buffer.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
 
         let egld_esdt_swap_address = self.send().deploy_contract(
             self.blockchain().get_gas_left(),
@@ -89,7 +99,7 @@ pub trait Multisig {
             &Self::BigUint::zero(),
             &multi_transfer_esdt_code,
             CodeMetadata::DEFAULT,
-            &ArgBuffer::new(),
+            &arg_buffer_token_whitelist,
         );
         require!(
             multi_transfer_esdt_address != zero_address,
@@ -121,10 +131,7 @@ pub trait Multisig {
 
         let mut esdt_safe_arg_buffer = ArgBuffer::new();
         esdt_safe_arg_buffer.push_argument_bytes(ethereum_fee_prepay_address.as_bytes());
-
-        for token_id in esdt_safe_token_whitelist.into_vec() {
-            esdt_safe_arg_buffer.push_argument_bytes(token_id.as_esdt_identifier());
-        }
+        esdt_safe_arg_buffer = esdt_safe_arg_buffer.concat(arg_buffer_token_whitelist);
 
         let esdt_safe_address = self.send().deploy_contract(
             self.blockchain().get_gas_left(),
@@ -396,8 +403,8 @@ pub trait Multisig {
 
     // Multi-transfer ESDT SC calls
 
-    #[endpoint(multiTransferEsdtaddTokenToIssuedList)]
-    fn multi_transfer_esdt_add_token_to_issued_list(
+    #[endpoint(multiTransferEsdtaddTokenToWhitelist)]
+    fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
     ) -> SCResult<()> {
@@ -405,7 +412,7 @@ pub trait Multisig {
         self.require_multi_transfer_esdt_deployed()?;
 
         self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .add_token_to_issued_list(token_id)
+            .add_token_to_whitelist(token_id)
             .execute_on_dest_context(self.blockchain().get_gas_left());
 
         Ok(())

@@ -85,6 +85,7 @@ pub trait EsdtSafe {
 
                 let tx = self.transactions_by_nonce(&sender).get(nonce);
 
+                self.require_local_burn_role_set(&tx.token_identifier)?;
                 self.burn_esdt_token(&tx.token_identifier, &tx.amount);
             }
             TransactionStatus::Rejected => {
