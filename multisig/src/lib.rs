@@ -390,7 +390,7 @@ pub trait Multisig {
             "Set status action already proposed"
         );
 
-        let action_id = self.propose_action(Action::SetTransactionStatus {
+        let action_id = self.propose_action(Action::SetCurrentTransactionStatus {
             relayer_reward_address,
             tx_status: transaction_status,
         })?;
@@ -653,7 +653,7 @@ pub trait Multisig {
             let action = self.action_mapper().get(action_id);
 
             match action {
-                Action::SetTransactionStatus {
+                Action::SetCurrentTransactionStatus {
                     relayer_reward_address: _,
                     tx_status,
                 } => tx_status == expected_tx_status,
@@ -813,7 +813,7 @@ pub trait Multisig {
                 );
                 self.quorum().set(&new_quorum);
             }
-            Action::SetTransactionStatus {
+            Action::SetCurrentTransactionStatus {
                 relayer_reward_address,
                 tx_status,
             } => {
