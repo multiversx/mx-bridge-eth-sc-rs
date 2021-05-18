@@ -4,7 +4,7 @@ elrond_wasm::derive_imports!();
 
 pub const ETH_ADDRESS_LEN: usize = 20;
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode)]
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone)]
 pub struct EthAddress([u8; ETH_ADDRESS_LEN]);
 
 impl EthAddress {

@@ -23,7 +23,7 @@
                         }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef"
+                        "str:wrappedEgldTokenId": "str:WEGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }
@@ -72,7 +72,7 @@
                         }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenIdentifier": "str:WEGLD-abcdef"
+                        "str:wrappedEgldTokenId": "str:WEGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }

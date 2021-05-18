@@ -1,9 +1,6 @@
 use elrond_wasm::api::BigUintApi;
 use elrond_wasm::types::{Address, TokenIdentifier, Vec};
-
-use crate::smart_contract_call::{
-    EgldEsdtSwapCall, EsdtSafeCall, EthereumFeePrepayCall, MultiTransferEsdtCall,
-};
+use transaction::TransactionStatus;
 
 elrond_wasm::derive_imports!();
 
@@ -15,11 +12,15 @@ pub enum Action<BigUint: BigUintApi> {
     RemoveUser(Address),
     SlashUser(Address),
     ChangeQuorum(usize),
-    AddMapping(Address, TokenIdentifier),
-    EgldEsdtSwapCall(EgldEsdtSwapCall<BigUint>),
-    EsdtSafeCall(EsdtSafeCall),
-    MultiTransferEsdtCall(MultiTransferEsdtCall<BigUint>),
-    EthereumFeePrepayCall(EthereumFeePrepayCall),
+    SetTransactionStatus{ 
+        relayer_reward_address: Address, 
+        tx_status: TransactionStatus
+    },
+    TransferEsdtToken {
+        to: Address, 
+        token_id: TokenIdentifier, 
+        amount: BigUint
+    },
 }
 
 impl<BigUint: BigUintApi> Action<BigUint> {
