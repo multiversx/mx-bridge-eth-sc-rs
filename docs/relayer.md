@@ -80,6 +80,48 @@ fn propose_multi_transfer_esdt_transfer_esdt_token(
 
 `eth_tx_nonce` is the nonce of the transaction from the Ethereum side. It is used internally to know if an action was proposed for that specific tx.  
 
+## Miscellaneous view functions
+
+```
+#[view(getActionIdForEthTxNonce)]
+#[storage_mapper("ethTxNonceToActionIdMapping")]
+fn eth_tx_nonce_to_action_id_mapping(
+    &self,
+    eth_tx_nonce: u64,
+) -> SingleValueMapper<Self::Storage, usize>;
+```
+
+Returns the action id for the transaction with the nonce given as argument. Returns 0 if it does not exist.  
+
+```
+#[view(getActionIdForSetCurrentTransactionStatus)]
+#[storage_mapper("actionIdForSetCurrentTransactionStatus")]
+fn action_id_for_set_current_transaction_status(
+    &self,
+) -> SingleValueMapper<Self::Storage, usize>;
+```
+
+Returns the action id for the `SetCurrentTransactionStatus` action, 0 if it does not exist.  
+
+```
+/// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
+#[view(getErc20AddressForTokenId)]
+#[storage_mapper("erc20AddressForTokenId")]
+fn erc20_address_for_token_id(
+    &self,
+    token_id: &TokenIdentifier,
+) -> SingleValueMapper<Self::Storage, EthAddress>;
+
+#[view(getTokenIdForErc20Address)]
+#[storage_mapper("tokenIdForErc20Address")]
+fn token_id_for_erc20_address(
+    &self,
+    erc20_address: &EthAddress,
+) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
+```
+
+Returns the mapping between Elrond ESDT token identifier and Ethereum ERC20 contract address.  
+
 ## Conclusion
 
 And that sums up pretty much all the high-level information you'll need to know as a relayer. Through this bridge we hope to be one step closer to bringing all the blockchains together, instead of each being as a lone island.
