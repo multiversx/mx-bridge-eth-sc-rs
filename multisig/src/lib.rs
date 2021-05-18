@@ -145,7 +145,7 @@ pub trait Multisig {
     fn finish_setup(&self) -> SCResult<()> {
         self.require_caller_owner()?;
         self.require_ethereum_fee_prepay_deployed()?;
-        self.require_egld_esdt_swap_deployed()?;
+        self.require_esdt_safe_deployed()?;
 
         let ethereum_fee_prepay_address = self.ethereum_fee_prepay_address().get();
         let esdt_safe_address = self.esdt_safe_address().get();
@@ -314,20 +314,6 @@ pub trait Multisig {
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
-
-        Ok(())
-    }
-
-    // EGLD-ESDT Swap SC calls
-
-    #[endpoint(egldEsdtSwapSetWrappedEgldTokenId)]
-    fn egld_esdt_swap_set_wrapped_egld_token_id(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
-        self.require_egld_esdt_swap_deployed()?;
-
-        self.egld_esdt_swap_proxy(self.egld_esdt_swap_address().get())
-            .set_wrapped_egld_token_id(token_id)
-            .execute_on_dest_context(self.blockchain().get_gas_left());
 
         Ok(())
     }
@@ -866,14 +852,6 @@ pub trait Multisig {
 
     fn require_caller_owner(&self) -> SCResult<()> {
         only_owner!(self, "Only owner may call this function");
-        Ok(())
-    }
-
-    fn require_egld_esdt_swap_deployed(&self) -> SCResult<()> {
-        require!(
-            !self.egld_esdt_swap_address().is_empty(),
-            "EGLD-ESDT Swap SC has to be deployed first"
-        );
         Ok(())
     }
 
