@@ -20,11 +20,11 @@ WRAPPED_ETH_TOKEN_ID=0x
 
 deploy() {
     #########################################################################
-    ################## Update with the aggregator's address #################
+    ################## Update with the contract's address #################
     #########################################################################
-    local AGGREGATOR_SC_ADDRESS=0x
+    local ETHEREUM_FEE_PREPAY_SC_ADDRESS=0x
 
-    erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --arguments ${AGGREGATOR_SC_ADDRESS} ${WRAPPED_EGLD_TOKEN_ID} ${WRAPPED_ETH_TOKEN_ID} --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+    erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --arguments ${ETHEREUM_FEE_PREPAY_SC_ADDRESS} ${WRAPPED_EGLD_TOKEN_ID} ${WRAPPED_ETH_TOKEN_ID} --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
     ADDRESS=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['address']")
