@@ -5,17 +5,23 @@ elrond_wasm::imports!();
 #[elrond_wasm_derive::contract]
 pub trait MultiTransferEsdt {
     #[init]
-    fn init(&self) {}
+    fn init(&self, #[var_args] token_whitelist: VarArgs<TokenIdentifier>) -> SCResult<()> {
+        for token in token_whitelist.into_vec() {
+            self.token_whitelist().insert(token);
+        }
+
+        Ok(())
+    }
 
     // endpoints - owner-only
 
     /// Only add after setting localMint role
-    #[endpoint(addTokenToIssuedList)]
-    fn add_token_to_issued_list(&self, token_id: TokenIdentifier) -> SCResult<()> {
+    #[endpoint(addTokenToWhitelist)]
+    fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
         self.require_local_mint_role_set(&token_id)?;
-        self.issued_tokens().insert(token_id);
+        self.token_whitelist().insert(token_id);
 
         Ok(())
     }
@@ -62,7 +68,7 @@ pub trait MultiTransferEsdt {
     fn get_all_known_tokens(&self) -> MultiResultVec<TokenIdentifier> {
         let mut all_tokens = Vec::new();
 
-        for token_id in self.issued_tokens().iter() {
+        for token_id in self.token_whitelist().iter() {
             all_tokens.push(token_id);
         }
 
@@ -95,6 +101,6 @@ pub trait MultiTransferEsdt {
 
     // storage
 
-    #[storage_mapper("issuedTokens")]
-    fn issued_tokens(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
+    #[storage_mapper("tokenWhitelist")]
+    fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 }

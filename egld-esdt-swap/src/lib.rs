@@ -5,30 +5,13 @@ elrond_wasm::imports!();
 #[elrond_wasm_derive::contract]
 pub trait EgldEsdtSwap {
     #[init]
-    fn init(&self) {}
-
-    // endpoints - owner-only
-
-    #[endpoint(setWrappedEgldTokenId)]
-    fn set_wrapped_egld_token_id(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-        require!(token_id.is_valid_esdt_identifier(), "Invalid token id");
+    fn init(&self, wrapped_egld_token_id: TokenIdentifier) -> SCResult<()> {
         require!(
-            self.wrapped_egld_token_id().is_empty(),
-            "Token id already set"
+            wrapped_egld_token_id.is_valid_esdt_identifier(),
+            "Invalid token id"
         );
 
-        /* TODO: Uncomment on next elrond-wasm version
-        let roles = self
-            .blockchain()
-            .get_esdt_local_roles(token_id.as_esdt_identifier());
-        require!(
-            roles.contains(&EsdtLocalRole::Mint) && roles.contains(&EsdtLocalRole::Burn),
-            "Must set local roles first"
-        );
-        */
-
-        self.wrapped_egld_token_id().set(&token_id);
+        self.wrapped_egld_token_id().set(&wrapped_egld_token_id);
 
         Ok(())
     }
@@ -39,12 +22,10 @@ pub trait EgldEsdtSwap {
     #[endpoint(wrapEgld)]
     fn wrap_egld(&self, #[payment] payment: Self::BigUint) -> SCResult<()> {
         require!(payment > 0, "Payment must be more than 0");
-        require!(
-            !self.wrapped_egld_token_id().is_empty(),
-            "Wrapped eGLD was not issued yet"
-        );
 
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
+        
+        self.require_local_roles_set(&wrapped_egld_token_id)?;
         self.send().esdt_local_mint(
             self.blockchain().get_gas_left(),
             wrapped_egld_token_id.as_esdt_identifier(),
@@ -72,10 +53,6 @@ pub trait EgldEsdtSwap {
     ) -> SCResult<()> {
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
 
-        require!(
-            !self.wrapped_egld_token_id().is_empty(),
-            "Wrapped eGLD was not issued yet"
-        );
         require!(token_id.is_esdt(), "Only ESDT tokens accepted");
         require!(token_id == wrapped_egld_token_id, "Wrong esdt token");
         require!(payment > 0, "Must pay more than 0 tokens!");
@@ -85,6 +62,7 @@ pub trait EgldEsdtSwap {
             "Contract does not have enough funds"
         );
 
+        self.require_local_roles_set(&wrapped_egld_token_id)?;
         self.send().esdt_local_burn(
             self.blockchain().get_gas_left(),
             wrapped_egld_token_id.as_esdt_identifier(),
@@ -126,6 +104,20 @@ pub trait EgldEsdtSwap {
         } else {
             data
         }
+    }
+
+    fn require_local_roles_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
+        /* TODO: Uncomment on next elrond-wasm version
+        let roles = self
+            .blockchain()
+            .get_esdt_local_roles(token_id.as_esdt_identifier());
+        require!(
+            roles.contains(&EsdtLocalRole::Mint) && roles.contains(&EsdtLocalRole::Burn),
+            "Must set local roles first"
+        );
+        */
+
+        Ok(())
     }
 
     // storage
