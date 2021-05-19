@@ -68,26 +68,26 @@ getNextPendingTransaction() {
 }
 
 setTransactionExecuted() {
-    local RELAYER_REWARD_ADDRESS = CAROL_ADDRESS
-    local ORIGINAL_TX_SENDER = BOB_ADDRESS
+    local RELAYER_REWARD_ADDRESS = ${CAROL_ADDRESS}
+    local ORIGINAL_TX_SENDER = ${BOB_ADDRESS}
     local TX_NONCE = 0x01
-    local TX_STATUS = TX_STATUS_EXECUTED
+    local TX_STATUS = ${TX_STATUS_EXECUTED}
 
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setTransactionStatus" --arguments ${RELAYER_REWARD_ADDRESS} ${ORIGINAL_TX_SENDER} ${TX_NONCE} ${TX_STATUS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setTransactionRejected() {
-    local RELAYER_REWARD_ADDRESS = CAROL_ADDRESS
-    local ORIGINAL_TX_SENDER = BOB_ADDRESS
+    local RELAYER_REWARD_ADDRESS = ${CAROL_ADDRESS}
+    local ORIGINAL_TX_SENDER = ${BOB_ADDRESS}
     local TX_NONCE = 0x02
-    local TX_STATUS = TX_STATUS_REJECTED
+    local TX_STATUS = ${TX_STATUS_REJECTED}
 
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=90000000 --function="setTransactionStatus" --arguments ${RELAYER_REWARD_ADDRESS} ${ORIGINAL_TX_SENDER} ${TX_NONCE} ${TX_STATUS} --send --proxy=${PROXY} --chain=${CHAIN_ID}D}
 }
 
 createTransaction() {
     local CREATE_TRANSACTION_ENDPOINT = 0x6372656174655472616e73616374696f6e # "createTransaction"
-    local DEST_ADDRESS = ALICE_ETH_ADDRESS
+    local DEST_ADDRESS = ${ALICE_ETH_ADDRESS}
     
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=50000000 --function="ESDTTransfer" --arguments ${WRAPPED_EGLD_TOKEN_IDENTIFIER} 0x64 ${CREATE_TRANSACTION_ENDPOINT} ${DEST_ADDRESS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
