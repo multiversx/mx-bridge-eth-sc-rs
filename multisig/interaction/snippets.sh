@@ -98,41 +98,44 @@ issueWrappedEth() {
 
 setLocalRolesEgldEsdtSwap() {
     getEgldEsdtSwapAddress
+    bech32ToHex ${EGLD_ESDT_SWAP_ADDRESS}
 
     local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
     local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
 
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${EGLD_ESDT_SWAP_ADDRESS} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # Note: increase sleep time if needed
 setLocalRolesEsdtSafe() {
     getEsdtSafeAddress
+    bech32ToHex ${ESDT_SAFE_ADDRESS}
 
     local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
 
     # set roles for WrappedEgld
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ESDT_SAFE_ADDRESS} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 
     sleep 10
 
     # set roles for WrappedEth
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${ESDT_SAFE_ADDRESS} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # Note: increase sleep time if needed
 setLocalRolesMultiTransferEsdt() {
     getMultiTransferEsdtAddress
+    bech32 ${MULTI_TRANSFER_ESDT_ADDRESS}
 
     local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
 
     # set roles for WrappedEgld
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${MULTI_TRANSFER_ESDT_ADDRESS} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 
     sleep 10
 
     # set roles for WrappedEth
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${MULTI_TRANSFER_ESDT_ADDRESS} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # MultiTransferEsdtCalls
@@ -255,4 +258,8 @@ parsedAddressToBech32() {
 
 bobSign() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="sign" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+bech32ToHex() {
+    ADDRESS_HEX=$(erdpy wallet bech32 --decode $1)
 }
