@@ -16,6 +16,8 @@ ESDT_ISSUE_COST=0x4563918244f40000 # 5 eGLD
 ESDT_ISSUE_COST_DECIMAL=5000000000000000000
 BOB_ADDRESS=0x8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8
 
+ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
+
 # Setup and aggregator first, then put its address hex-encoded in this variable
 AGGREGATOR_ADDRESS=0x
 
