@@ -85,7 +85,7 @@ pub trait Multisig {
             &Self::BigUint::zero(),
             &egld_esdt_swap_code,
             CodeMetadata::DEFAULT,
-            &ArgBuffer::new(),
+            &egld_esdt_swap_arg_buffer,
         );
         require!(
             egld_esdt_swap_address != zero_address,
