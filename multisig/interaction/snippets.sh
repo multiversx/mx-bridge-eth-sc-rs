@@ -125,7 +125,7 @@ setLocalRolesEsdtSafe() {
 # Note: increase sleep time if needed
 setLocalRolesMultiTransferEsdt() {
     getMultiTransferEsdtAddress
-    bech32 ${MULTI_TRANSFER_ESDT_ADDRESS}
+    bech32ToHex ${MULTI_TRANSFER_ESDT_ADDRESS}
 
     local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
 
