@@ -68,6 +68,7 @@ pub trait Multisig {
 
         let zero_address = Address::zero();
         let mut arg_buffer_token_whitelist = ArgBuffer::new();
+        let gas_per_deploy = self.blockchain().get_gas_left() / 4;
 
         arg_buffer_token_whitelist.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
         for token in token_whitelist.into_vec() {
@@ -80,11 +81,11 @@ pub trait Multisig {
         egld_esdt_swap_arg_buffer.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
 
         let egld_esdt_swap_address = self.send().deploy_contract(
-            self.blockchain().get_gas_left(),
+            gas_per_deploy,
             &Self::BigUint::zero(),
             &egld_esdt_swap_code,
             CodeMetadata::DEFAULT,
-            &ArgBuffer::new(),
+            &egld_esdt_swap_arg_buffer,
         );
         require!(
             egld_esdt_swap_address != zero_address,
@@ -95,7 +96,7 @@ pub trait Multisig {
         // Multi-transfer ESDT deploy
 
         let multi_transfer_esdt_address = self.send().deploy_contract(
-            self.blockchain().get_gas_left(),
+            gas_per_deploy,
             &Self::BigUint::zero(),
             &multi_transfer_esdt_code,
             CodeMetadata::DEFAULT,
@@ -114,7 +115,7 @@ pub trait Multisig {
         ethereum_fee_prepay_arg_buffer.push_argument_bytes(aggregator_address.as_bytes());
 
         let ethereum_fee_prepay_address = self.send().deploy_contract(
-            self.blockchain().get_gas_left(),
+            gas_per_deploy,
             &Self::BigUint::zero(),
             &ethereum_fee_prepay_code,
             CodeMetadata::DEFAULT,
@@ -134,7 +135,7 @@ pub trait Multisig {
         esdt_safe_arg_buffer = esdt_safe_arg_buffer.concat(arg_buffer_token_whitelist);
 
         let esdt_safe_address = self.send().deploy_contract(
-            self.blockchain().get_gas_left(),
+            gas_per_deploy,
             &Self::BigUint::zero(),
             &esdt_safe_code,
             CodeMetadata::DEFAULT,

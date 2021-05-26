@@ -8,16 +8,24 @@ CAROL="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/carol.pem"
 
 ADDRESS=$(erdpy data load --key=address-testnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
-PROXY=http://localhost:7950
-CHAIN_ID=local-testnet
+PROXY=https://testnet-gateway.elrond.com
+CHAIN_ID=T
 
 RELAYER_REQUIRED_STAKE=0x03e8 # 1000
 ESDT_ISSUE_COST=0x4563918244f40000 # 5 eGLD
 ESDT_ISSUE_COST_DECIMAL=5000000000000000000
 BOB_ADDRESS=0x8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8
 
+ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
+
 # Setup and aggregator first, then put its address hex-encoded in this variable
-AGGREGATOR_ADDRESS=0x00000000000000000500f8f0a3640b575e92b09423ccdb32dc6c2399eec869e1
+AGGREGATOR_ADDRESS=0x
+
+#########################################################################
+################## Update after issueing the tokens #####################
+#########################################################################
+WRAPPED_EGLD_TOKEN_ID=0x
+WRAPPED_ETH_TOKEN_ID=0x
 
 deploy() {
     local SLASH_AMOUNT=0x01f4 # 500
@@ -44,7 +52,7 @@ deployChildContracts() {
     local MULTI_TRANSFER_ESDT_CODE=0x"$(xxd -p ../multi-transfer-esdt/output/multi-transfer-esdt.wasm | tr -d '\n')"
     local ETHEREUM_FEE_PREPAY_CODE=0x"$(xxd -p ../ethereum-fee-prepay/output/ethereum-fee-prepay.wasm | tr -d '\n')"
 
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=400000000 --function="deployChildContracts" --arguments ${EGLD_ESDT_SWAP_CODE} ${MULTI_TRANSFER_ESDT_CODE} ${ETHEREUM_FEE_PREPAY_CODE} ${ESDT_SAFE_CODE} ${AGGREGATOR_ADDRESS} --send --outfile="deploy-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=400000000 --function="deployChildContracts" --arguments ${EGLD_ESDT_SWAP_CODE} ${MULTI_TRANSFER_ESDT_CODE} ${ETHEREUM_FEE_PREPAY_CODE} ${ESDT_SAFE_CODE} ${AGGREGATOR_ADDRESS} ${WRAPPED_EGLD_TOKEN_ID} ${WRAPPED_ETH_TOKEN_ID} --send --outfile="deploy-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 
     sleep 10
 
@@ -62,97 +70,84 @@ unstake() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="unstake" --arguments ${RELAYER_REQUIRED_STAKE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-# EgldEsdtSwap calls
+# Issue Tokens
 
-egldEsdtSwap_WrappedEgldIssue() {
-    local WRAPPED_EGLD_TOKEN_DISPLAY_NAME=0x5772617070656445676c64  # "WrappedEgld"
-    local WRAPPED_EGLD_TOKEN_TICKER=0x5745474c44  # "WEGLD"
+issueWrappedEgld() {
+    local TOKEN_DISPLAY_NAME=0x5772617070656445676c64  # "WrappedEgld"
+    local TOKEN_TICKER=0x5745474c44  # "WEGLD"
+    local INITIAL_SUPPLY=0x01 # 1
+    local NR_DECIMALS=0x12 # 18
+    local CAN_ADD_SPECIAL_ROLES=0x63616e4164645370656369616c526f6c6573 # "canAddSpecialRoles"
+    local TRUE=0x74727565 # "true"
 
-    # Alice pays for issue cost
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=25000000 --function="deposit" --value=${ESDT_ISSUE_COST_DECIMAL} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-
-    # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapWrappedEgldIssue" --arguments ${WRAPPED_EGLD_TOKEN_DISPLAY_NAME} ${WRAPPED_EGLD_TOKEN_TICKER} ${ESDT_ISSUE_COST} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-
-    # Bob signs the action
-    getActionLastIndex
-    bobSign
-    sleep 10
-
-    # Bob executes the action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --value=5000000000000000000 --function="issue" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} ${INITIAL_SUPPLY} ${NR_DECIMALS} ${CAN_ADD_SPECIAL_ROLES} ${TRUE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-# Sets local mint role MultiTransferEsdt contract, so wrapepd eGLD tokens can also be minted when returning from Ethereum
-egldEsdtSwap_SetLocalMintRoleForMultiTransferEsdt() {
-    # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEgldEsdtSwapSetLocalMintRole" --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
+issueWrappedEth() {
+    local TOKEN_DISPLAY_NAME=0x57726170706564457468  # "WrappedEth"
+    local TOKEN_TICKER=0x57455448  # "WETH"
+    local INITIAL_SUPPLY=0x01 # 1
+    local NR_DECIMALS=0x12 # 18
+    local CAN_ADD_SPECIAL_ROLES=0x63616e4164645370656369616c526f6c6573 # "canAddSpecialRoles"
+    local TRUE=0x74727565 # "true"
 
-    # Bob signs the action
-    getActionLastIndex
-    bobSign
-    sleep 10
-
-    # Bob executes the action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --value=5000000000000000000 --function="issue" --arguments ${TOKEN_DISPLAY_NAME} ${TOKEN_TICKER} ${INITIAL_SUPPLY} ${NR_DECIMALS} ${CAN_ADD_SPECIAL_ROLES} ${TRUE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-# EsdtSafe calls
+# Set Local Roles
 
-##########################################################################################
-##########################################################################################
-##########################################################################################
-# TODO: Also add WrappedEth to whitelist
-##########################################################################################
-##########################################################################################
-##########################################################################################
-
-esdtSafe_AddWrappedEgldToWhitelist() {
-    getWrappedEgldTokenIdentifier
-
-    # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEsdtSafeAddTokenToWhitelist" --arguments ${WRAPPED_EGLD_TOKEN_IDENTIFIER} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-
-    # Bob signs the action
-    getActionLastIndex
-    bobSign
-    sleep 10
-
-    # Bob executes the action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-esdtSafe_GetAndExecuteNextPendingTransaction() {
-    # Get the required addresses
+setLocalRolesEgldEsdtSwap() {
     getEgldEsdtSwapAddress
-    getEsdtSafeAddress
-    getEthereumFeePrepayAddress
-    
-    local EGLD_WRAPPED=1000
-    local EGLD_WRAPPED_HEX=0x03e8
-    
-    # Carol wraps some eGLD
-    erdpy --verbose contract call ${EGLD_ESDT_SWAP_ADDRESS} --recall-nonce --pem=${CAROL} --gas-limit=10000000 --value=${EGLD_WRAPPED} --function="wrapEgld" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    bech32ToHex ${EGLD_ESDT_SWAP_ADDRESS}
 
-    # TODO: Perform rest of the steps
+    local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
+    local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
+
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+# Note: increase sleep time if needed
+setLocalRolesEsdtSafe() {
+    getEsdtSafeAddress
+    bech32ToHex ${ESDT_SAFE_ADDRESS}
+
+    local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
+
+    # set roles for WrappedEgld
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    sleep 10
+
+    # set roles for WrappedEth
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_BURN_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+# Note: increase sleep time if needed
+setLocalRolesMultiTransferEsdt() {
+    getMultiTransferEsdtAddress
+    bech32ToHex ${MULTI_TRANSFER_ESDT_ADDRESS}
+
+    local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
+
+    # set roles for WrappedEgld
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    sleep 10
+
+    # set roles for WrappedEth
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # MultiTransferEsdtCalls
 
-MultiTransferEsdt_WrappedEthIssue() {
-    local WRAPPED_ETH_TOKEN_DISPLAY_NAME=0x57726170706564457468  # "WrappedEth"
-    local WRAPPED_ETH_TOKEN_TICKER=0x57455448  # "WETH"
-
-    # Alice pays for issue cost
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=25000000 --function="deposit" --value=${ESDT_ISSUE_COST_DECIMAL} --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
+transferEsdt() {
+    local ETH_TX_NONCE = 0x01
+    local DEST = ${CAROL_ADDRESS}
+    local TOKEN_ID = ${WRAPPED_ETH_TOKEN_ID}
+    local AMOUNT = 0x0A
 
     # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeMultiTransferEsdtIssueEsdtToken" --arguments ${WRAPPED_ETH_TOKEN_DISPLAY_NAME} ${WRAPPED_ETH_TOKEN_TICKER} ${ESDT_ISSUE_COST} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeMultiTransferEsdtTransferEsdtToken" --arguments ${ETH_TX_NONCE} ${DEST} ${TOKEN_ID} ${AMOUNT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
     sleep 10
 
     # Bob signs the action
@@ -161,20 +156,35 @@ MultiTransferEsdt_WrappedEthIssue() {
     sleep 10
 
     # Bob executes the action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=200000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=100000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-MultiTransferEsdt_TransferEsdt() {
-    local ETH_TX_NONCE=0x01
-    local DEST=${BOB_ADDRESS}
+getNextPendingTransaction() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="getNextPendingTransaction" --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
 
-    getLastIssuedToken
-    local TOKEN_ID=${WRAPPED_ETH_ID}
-    local AMOUNT=0x0A
+setTransactionExecuted() {
+    local RELAYER_REWARD_ADDRESS = ${BOB_ADDRESS}
+    local TX_STATUS = 0x03
 
     # Bob proposes action
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeMultiTransferEsdtTransferEsdtToken" --arguments ${ETH_TX_NONCE} ${DEST} ${TOKEN_ID} ${AMOUNT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEsdtSafeSetCurrentTransactionStatus" --arguments ${RELAYER_REWARD_ADDRESS} ${TX_STATUS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    # Bob signs the action
+    getActionLastIndex
+    bobSign
     sleep 10
+
+    # Bob executes the action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=100000000 --function="performAction" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setTransactionRejected() {
+    local RELAYER_REWARD_ADDRESS = ${BOB_ADDRESS}
+    local TX_STATUS = 0x04
+
+    # Bob proposes action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="proposeEsdtSafeSetCurrentTransactionStatus" --arguments ${RELAYER_REWARD_ADDRESS} ${TX_STATUS} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 
     # Bob signs the action
     getActionLastIndex
@@ -214,15 +224,6 @@ getMultiTransferEsdtAddress() {
     echo "MultiTransferEsdt address: ${MULTI_TRANSFER_ESDT_ADDRESS}"
 }
 
-getLastIssuedToken() {
-    getMultiTransferEsdtAddress
-    local QUERY_OUTPUT=$(erdpy --verbose contract query ${MULTI_TRANSFER_ESDT_ADDRESS} --function="getLastIssuedToken" --proxy=${PROXY})
-    parseQueryOutput
-
-    WRAPPED_ETH_ID=0x${PARSED}
-    echo "Last issued token: ${WRAPPED_ETH_ID}"
-}
-
 getEthereumFeePrepayAddress() {
     local QUERY_OUTPUT=$(erdpy --verbose contract query ${ADDRESS} --function="getEthereumFeePrepayAddress" --proxy=${PROXY})
     parseQueryOutput
@@ -232,16 +233,6 @@ getEthereumFeePrepayAddress() {
     echo "EthereumFeePrepay address: ${ETHEREUM_FEE_PREPAY_ADDRESS}"
 }
 
-getWrappedEgldTokenIdentifier() {
-    getEgldEsdtSwapAddress
-    local QUERY_OUTPUT=$(erdpy --verbose contract query ${EGLD_ESDT_SWAP_ADDRESS} --function="getWrappedEgldTokenIdentifier" --proxy=${PROXY})
-    parseQueryOutput
-
-    WRAPPED_EGLD_TOKEN_IDENTIFIER=0x${PARSED}
-
-    echo "Wrapped eGLD token identifier: ${WRAPPED_EGLD_TOKEN_IDENTIFIER}"
-}
-
 getActionLastIndex() {
     local QUERY_OUTPUT=$(erdpy --verbose contract query ${ADDRESS} --function="getActionLastIndex" --proxy=${PROXY})
     parseQueryOutput
@@ -249,6 +240,10 @@ getActionLastIndex() {
     ACTION_INDEX=0x${PARSED}
 
     echo "Last action index: ${ACTION_INDEX}"
+}
+
+getCurrentTx() {
+    erdpy --verbose contract query ${ADDRESS} --function="getCurrentTx" --proxy=${PROXY}
 }
 
 # helpers
@@ -263,4 +258,8 @@ parsedAddressToBech32() {
 
 bobSign() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=25000000 --function="sign" --arguments ${ACTION_INDEX} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+bech32ToHex() {
+    ADDRESS_HEX=$(erdpy wallet bech32 --decode $1)
 }

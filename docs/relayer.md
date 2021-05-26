@@ -122,6 +122,20 @@ fn token_id_for_erc20_address(
 
 Returns the mapping between Elrond ESDT token identifier and Ethereum ERC20 contract address.  
 
+```
+#[view(getCurrentTx)]
+fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<Self::BigUint>>
+```
+
+Returns the current transaction, each field separated by '@'. The result type is defined as follows:
+
+```
+pub type TxAsMultiResult<BigUint> =
+MultiResult6<BlockNonce, TxNonce, Address, EthAddress, TokenIdentifier, BigUint>;
+```
+
+The fields are, in order: block nonce, tx nonce, sender address, receiver address, token type, amount.  
+
 ## Conclusion
 
 And that sums up pretty much all the high-level information you'll need to know as a relayer. Through this bridge we hope to be one step closer to bringing all the blockchains together, instead of each being as a lone island.

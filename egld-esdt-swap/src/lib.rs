@@ -87,15 +87,6 @@ pub trait EgldEsdtSwap {
         self.blockchain().get_sc_balance()
     }
 
-    #[view(getWrappedEgldRemaining)]
-    fn get_wrapped_egld_remaining(&self) -> Self::BigUint {
-        self.blockchain().get_esdt_balance(
-            &self.blockchain().get_sc_address(),
-            self.wrapped_egld_token_id().get().as_esdt_identifier(),
-            0,
-        )
-    }
-
     // private
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {

@@ -178,13 +178,16 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(&self, from: Address) {
+    fn reserve_fee(&self, _from: Address) {
+        /* TODO: Uncomment once the integration is complete
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
             .reserve_fee(from, TransactionType::Erc20, Priority::Low)
             .execute_on_dest_context(self.blockchain().get_gas_left());
+        */
     }
 
-    fn pay_fee(&self, tx_sender: Address, relayer_reward_address: Address) {
+    fn pay_fee(&self, _tx_sender: Address, _relayer_reward_address: Address) {
+        /* TODO: Uncomment once the integration is complete
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
             .pay_fee(
                 tx_sender,
@@ -193,6 +196,7 @@ pub trait EsdtSafe {
                 Priority::Low,
             )
             .execute_on_dest_context(self.blockchain().get_gas_left());
+        */
     }
 
     fn require_local_burn_role_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
