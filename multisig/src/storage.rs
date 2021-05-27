@@ -78,7 +78,7 @@ pub trait StorageModule {
         batch_id: u64,
     ) -> SingleValueMapper<Self::Storage, usize>;
 
-    #[view(getActionIdForSetCurrentTransactionStatus)]
+    #[view(getActionIdForSetCurrentTransactionBatchStatus)]
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(
         &self,
