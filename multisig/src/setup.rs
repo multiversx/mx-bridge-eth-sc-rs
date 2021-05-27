@@ -164,4 +164,76 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         Ok(())
     }
+
+    /// Add ESDT Safe to Ethereum Fee Prepay whitelist
+    /// Can't be done in the previous step, as the contracts only exist after execution has finished
+    #[endpoint(finishSetup)]
+    fn finish_setup(&self) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_ethereum_fee_prepay_deployed()?;
+        self.require_esdt_safe_deployed()?;
+
+        let ethereum_fee_prepay_address = self.ethereum_fee_prepay_address().get();
+        let esdt_safe_address = self.esdt_safe_address().get();
+
+        self.setup_ethereum_fee_prepay_proxy(ethereum_fee_prepay_address)
+            .add_to_whitelist(esdt_safe_address)
+            .execute_on_dest_context(self.blockchain().get_gas_left());
+
+        Ok(())
+    }
+
+    #[endpoint(esdtSafeAddTokenToWhitelist)]
+    fn esdt_safe_add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_esdt_safe_deployed()?;
+
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+            .add_token_to_whitelist(token_id)
+            .execute_on_dest_context(self.blockchain().get_gas_left());
+
+        Ok(())
+    }
+
+    #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
+    fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_esdt_safe_deployed()?;
+
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+            .remove_token_from_whitelist(token_id)
+            .execute_on_dest_context(self.blockchain().get_gas_left());
+
+        Ok(())
+    }
+
+    #[endpoint(multiTransferEsdtaddTokenToWhitelist)]
+    fn multi_transfer_esdt_add_token_to_whitelist(
+        &self,
+        token_id: TokenIdentifier,
+    ) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_multi_transfer_esdt_deployed()?;
+
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+            .add_token_to_whitelist(token_id)
+            .execute_on_dest_context(self.blockchain().get_gas_left());
+
+        Ok(())
+    }
+
+    #[proxy]
+    fn setup_esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe::Proxy<Self::SendApi>;
+
+    #[proxy]
+    fn setup_multi_transfer_esdt_proxy(
+        &self,
+        sc_address: Address,
+    ) -> multi_transfer_esdt::Proxy<Self::SendApi>;
+
+    #[proxy]
+    fn setup_ethereum_fee_prepay_proxy(
+        &self,
+        sc_address: Address,
+    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
 }
