@@ -1,5 +1,7 @@
 #![no_std]
 
+use transaction::TransactionStatus;
+
 elrond_wasm::imports!();
 
 #[elrond_wasm_derive::contract]
@@ -19,38 +21,48 @@ pub trait MultiTransferEsdt {
     #[endpoint(addTokenToWhitelist)]
     fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
+        require!(
+            self.is_local_mint_role_set(&token_id),
+            "Must set local mint role first"
+        );
 
-        self.require_local_mint_role_set(&token_id)?;
         self.token_whitelist().insert(token_id);
 
         Ok(())
     }
 
-    #[endpoint(transferEsdtToken)]
-    fn transfer_esdt_token(
+    #[endpoint(batchTransferEsdtToken)]
+    fn batch_transfer_esdt_token(
         &self,
-        to: Address,
-        token_id: TokenIdentifier,
-        amount: Self::BigUint,
-    ) -> SCResult<()> {
+        #[var_args] transfers: VarArgs<(Address, TokenIdentifier, Self::BigUint)>,
+    ) -> SCResult<MultiResultVec<TransactionStatus>> {
         only_owner!(self, "only owner may call this function");
-        require!(!to.is_zero(), "Can't transfer to address zero");
 
-        self.send().esdt_local_mint(
-            self.blockchain().get_gas_left(),
-            token_id.as_esdt_identifier(),
-            &amount,
-        );
+        let mut tx_statuses = Vec::new();
 
-        match self.send().direct_esdt_via_transf_exec(
-            &to,
-            token_id.as_esdt_identifier(),
-            &amount,
-            self.data_or_empty(&to, b"offchain transfer"),
-        ) {
-            Result::Ok(()) => Ok(()),
-            Result::Err(_) => sc_error!("Transfer failed"),
+        for (to, token_id, amount) in transfers.into_vec() {
+            if to.is_zero() || self.blockchain().is_smart_contract(&to) {
+                tx_statuses.push(TransactionStatus::Rejected);
+                continue;
+            }
+            if !self.token_whitelist().contains(&token_id)
+                || !self.is_local_mint_role_set(&token_id)
+            {
+                tx_statuses.push(TransactionStatus::Rejected);
+                continue;
+            }
+
+            self.send().esdt_local_mint(
+                self.blockchain().get_gas_left(),
+                token_id.as_esdt_identifier(),
+                &amount,
+            );
+            self.send().direct(&to, &token_id, &amount, &[]);
+
+            tx_statuses.push(TransactionStatus::Executed);
         }
+
+        Ok(tx_statuses.into())
     }
 
     // views
@@ -85,18 +97,12 @@ pub trait MultiTransferEsdt {
         }
     }
 
-    fn require_local_mint_role_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
-        /* TODO: Uncomment on next elrond-wasm version
+    fn is_local_mint_role_set(&self, token_id: &TokenIdentifier) -> bool {
         let roles = self
             .blockchain()
             .get_esdt_local_roles(token_id.as_esdt_identifier());
-        require!(
-            roles.contains(&EsdtLocalRole::Mint),
-            "Must set local mint role first"
-        );
-        */
 
-        Ok(())
+        roles.contains(&EsdtLocalRole::Mint)
     }
 
     // storage

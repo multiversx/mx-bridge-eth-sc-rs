@@ -11,7 +11,7 @@ pub type BlockNonce = u64;
 pub type TxAsMultiResult<BigUint> =
     MultiResult6<BlockNonce, TxNonce, Address, EthAddress, TokenIdentifier, BigUint>;
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi)]
 pub struct Transaction<BigUint: BigUintApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
@@ -51,7 +51,7 @@ impl<BigUint: BigUintApi> Transaction<BigUint> {
     }
 }
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, PartialEq, Clone, Copy)]
 pub enum TransactionStatus {
     None,
     Pending,

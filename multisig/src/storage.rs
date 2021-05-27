@@ -67,19 +67,20 @@ pub trait StorageModule {
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
 
-    #[storage_mapper("currentTx")]
-    fn current_tx(&self) -> SingleValueMapper<Self::Storage, Transaction<Self::BigUint>>;
+    #[storage_mapper("currentTxBatch")]
+    fn current_tx_batch(&self)
+        -> SingleValueMapper<Self::Storage, Vec<Transaction<Self::BigUint>>>;
 
-    #[view(getActionIdForEthTxNonce)]
-    #[storage_mapper("ethTxNonceToActionIdMapping")]
-    fn eth_tx_nonce_to_action_id_mapping(
+    #[view(getActionIdForBatchId)]
+    #[storage_mapper("batchIdToActionIdMapping")]
+    fn batch_id_to_action_id_mapping(
         &self,
-        eth_tx_nonce: u64,
+        batch_id: u64,
     ) -> SingleValueMapper<Self::Storage, usize>;
 
     #[view(getActionIdForSetCurrentTransactionStatus)]
-    #[storage_mapper("actionIdForSetCurrentTransactionStatus")]
-    fn action_id_for_set_current_transaction_status(
+    #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
+    fn action_id_for_set_current_transaction_batch_status(
         &self,
     ) -> SingleValueMapper<Self::Storage, usize>;
 

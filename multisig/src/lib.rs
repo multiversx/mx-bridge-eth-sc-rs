@@ -131,51 +131,64 @@ pub trait Multisig:
 
     // ESDT Safe SC calls
 
-    #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(&self) -> SCResult<TxAsMultiResult<Self::BigUint>> {
+    #[endpoint(getNextTransactionBatch)]
+    fn get_next_transaction_batch(
+        &self,
+    ) -> SCResult<MultiResultVec<TxAsMultiResult<Self::BigUint>>> {
         self.require_esdt_safe_deployed()?;
         require!(
-            self.current_tx().is_empty(),
-            "Must execute and set status for current tx first"
+            self.current_tx_batch().is_empty(),
+            "Must execute and set status for current tx batch first"
         );
 
-        match self
+        let tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
-            .get_next_pending_transaction()
+            .get_next_transaction_batch()
             .execute_on_dest_context(self.blockchain().get_gas_left())
-        {
-            OptionalArg::Some(multi_result) => {
-                self.current_tx()
-                    .set(&Transaction::from(multi_result.clone()));
+            .into_vec();
 
-                Ok(multi_result)
-            }
-            OptionalArg::None => sc_error!("No transactions left to execute"),
+        self.current_tx_batch().set(&tx_batch);
+
+        // convert into MultiResult for easier parsing
+        let mut result_vec = Vec::with_capacity(tx_batch.len());
+        for tx in tx_batch {
+            result_vec.push(tx.into_multiresult());
         }
+
+        Ok(result_vec.into())
     }
 
-    #[endpoint(proposeEsdtSafeSetCurrentTransactionStatus)]
-    fn propose_esdt_safe_set_current_transaction_status(
+    #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
+    fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
         relayer_reward_address: Address,
-        transaction_status: TransactionStatus,
+        #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
         self.require_esdt_safe_deployed()?;
         require!(
-            !self.current_tx().is_empty(),
+            !self.current_tx_batch().is_empty(),
             "There is no transaction to set status for"
         );
         require!(
-            self.action_id_for_set_current_transaction_status().get() == 0,
+            self.action_id_for_set_current_transaction_batch_status()
+                .get()
+                == 0,
             "Set status action already proposed"
+        );
+
+        let current_batch_len = self.current_tx_batch().get().len();
+        let status_batch_len = tx_batch_status.len();
+        require!(
+            current_batch_len == status_batch_len,
+            "Number of statuses provided must be equal to number of transactions in current batch"
         );
 
         let action_id = self.propose_action(Action::SetCurrentTransactionStatus {
             relayer_reward_address,
-            tx_status: transaction_status,
+            tx_batch_status: tx_batch_status.into_vec(),
         })?;
 
-        self.action_id_for_set_current_transaction_status()
+        self.action_id_for_set_current_transaction_batch_status()
             .set(&action_id);
 
         Ok(action_id)
@@ -183,36 +196,39 @@ pub trait Multisig:
 
     // Multi-transfer ESDT SC calls
 
-    #[endpoint(proposeMultiTransferEsdtTransferEsdtToken)]
-    fn propose_multi_transfer_esdt_transfer_esdt_token(
+    #[endpoint(proposeMultiTransferEsdtBatch)]
+    fn propose_multi_transfer_esdt_batch(
         &self,
-        eth_tx_nonce: u64,
-        to: Address,
-        token_id: TokenIdentifier,
-        amount: Self::BigUint,
+        batch_id: u64,
+        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
     ) -> SCResult<usize> {
         self.require_multi_transfer_esdt_deployed()?;
         require!(
-            self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce)
-                .is_empty(),
-            "Tx was already proposed"
+            self.batch_id_to_action_id_mapping(batch_id).is_empty(),
+            "This batch was already proposed"
         );
 
-        let action_id = self.propose_action(Action::TransferEsdtToken {
-            to,
-            token_id,
-            amount,
+        let mut transfers_as_tuples = Vec::new();
+        for transfer in transfers.into_vec() {
+            transfers_as_tuples.push(transfer.into_tuple());
+        }
+
+        let action_id = self.propose_action(Action::BatchTransferEsdtToken {
+            batch_id,
+            transfers: transfers_as_tuples,
         })?;
 
-        self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce)
-            .set(&action_id);
+        self.batch_id_to_action_id_mapping(batch_id).set(&action_id);
 
         Ok(action_id)
     }
 
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
-    fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
+    fn perform_action_endpoint(
+        &self,
+        action_id: usize,
+    ) -> SCResult<OptionalResult<MultiResultVec<TransactionStatus>>> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
@@ -228,13 +244,16 @@ pub trait Multisig:
         self.perform_action(action_id)
     }
 
-    #[view(getCurrentTx)]
-    fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<Self::BigUint>> {
-        if !self.current_tx().is_empty() {
-            OptionalResult::Some(self.current_tx().get().into_multiresult())
-        } else {
-            OptionalResult::None
+    #[view(getCurrentTxBatch)]
+    fn get_current_tx_batch(&self) -> MultiResultVec<TxAsMultiResult<Self::BigUint>> {
+        let current_tx_batch = self.current_tx_batch().get();
+
+        let mut result_vec = Vec::with_capacity(current_tx_batch.len());
+        for tx in current_tx_batch {
+            result_vec.push(tx.into_multiresult());
         }
+
+        result_vec.into()
     }
 
     #[view(isValidActionId)]
@@ -259,18 +278,20 @@ pub trait Multisig:
     /// If the mapping was made, it means that the transfer action was proposed in the past
     /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]
-    fn was_transfer_action_proposed(&self, eth_tx_nonce: u64) -> bool {
-        let action_id = self.eth_tx_nonce_to_action_id_mapping(eth_tx_nonce).get();
+    fn was_transfer_action_proposed(&self, batch_id: u64) -> bool {
+        let action_id = self.batch_id_to_action_id_mapping(batch_id).get();
 
         self.is_valid_action_id(action_id)
     }
 
-    #[view(wasSetCurrentTransactionStatusActionProposed)]
-    fn was_set_current_transaction_status_action_proposed(
+    #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
+    fn was_set_current_transaction_batch_status_action_proposed(
         &self,
-        expected_tx_status: TransactionStatus,
+        #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
     ) -> bool {
-        let action_id = self.action_id_for_set_current_transaction_status().get();
+        let action_id = self
+            .action_id_for_set_current_transaction_batch_status()
+            .get();
 
         if self.is_valid_action_id(action_id) {
             let action = self.action_mapper().get(action_id);
@@ -278,8 +299,20 @@ pub trait Multisig:
             match action {
                 Action::SetCurrentTransactionStatus {
                     relayer_reward_address: _,
-                    tx_status,
-                } => tx_status == expected_tx_status,
+                    tx_batch_status,
+                } => {
+                    for (expected_status, actual_status) in expected_tx_batch_status
+                        .into_vec()
+                        .iter()
+                        .zip(tx_batch_status.iter())
+                    {
+                        if expected_status != actual_status {
+                            return false;
+                        }
+                    }
+
+                    true
+                }
                 _ => false,
             }
         } else {
@@ -289,7 +322,10 @@ pub trait Multisig:
 
     // private
 
-    fn perform_action(&self, action_id: usize) -> SCResult<()> {
+    fn perform_action(
+        &self,
+        action_id: usize,
+    ) -> SCResult<OptionalResult<MultiResultVec<TransactionStatus>>> {
         let action = self.action_mapper().get(action_id);
 
         if self.pause_status().get() {
@@ -303,6 +339,9 @@ pub trait Multisig:
         // happens before actual execution, because the match provides the return on each branch
         // syntax aside, the async_call_raw kills contract execution so cleanup cannot happen afterwards
         self.clear_action(action_id);
+
+        // only used when the action is batch transfer from Ethereum -> Elrond
+        let mut return_statuses = OptionalResult::None;
 
         match action {
             Action::Nothing => {}
@@ -366,34 +405,37 @@ pub trait Multisig:
             }
             Action::SetCurrentTransactionStatus {
                 relayer_reward_address,
-                tx_status,
+                tx_batch_status,
             } => {
-                let current_tx = self.current_tx().get();
+                let current_tx_batch = self.current_tx_batch().get();
 
-                self.current_tx().clear();
-                self.action_id_for_set_current_transaction_status().clear();
+                self.current_tx_batch().clear();
+                self.action_id_for_set_current_transaction_batch_status()
+                    .clear();
+
+                let mut args = Vec::new();
+                for (tx, tx_status) in current_tx_batch.iter().zip(tx_batch_status.iter()) {
+                    args.push((tx.from.clone(), tx.nonce, *tx_status));
+                }
 
                 self.esdt_safe_proxy(self.esdt_safe_address().get())
-                    .set_transaction_status(
-                        relayer_reward_address,
-                        current_tx.from,
-                        current_tx.nonce,
-                        tx_status,
-                    )
+                    .set_transaction_batch_status(relayer_reward_address, VarArgs::from(args))
                     .execute_on_dest_context(self.blockchain().get_gas_left());
             }
-            Action::TransferEsdtToken {
-                to,
-                token_id,
-                amount,
+            Action::BatchTransferEsdtToken {
+                batch_id: _,
+                transfers,
             } => {
-                self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-                    .transfer_esdt_token(to, token_id, amount)
+                let statuses = self
+                    .multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+                    .batch_transfer_esdt_token(transfers.into())
                     .execute_on_dest_context(self.blockchain().get_gas_left());
+
+                return_statuses = OptionalResult::Some(statuses);
             }
         }
 
-        Ok(())
+        Ok(return_statuses)
     }
 
     // proxies

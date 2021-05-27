@@ -6,6 +6,9 @@ use transaction::*;
 
 elrond_wasm::imports!();
 
+const MAX_TX_BATCH_SIZE: usize = 10;
+const MAX_BLOCK_NONCE_DIFF: u64 = 5;
+
 #[elrond_wasm_derive::contract]
 pub trait EsdtSafe {
     #[init]
@@ -44,63 +47,76 @@ pub trait EsdtSafe {
         Ok(())
     }
 
-    #[endpoint(getNextPendingTransaction)]
-    fn get_next_pending_transaction(
-        &self,
-    ) -> SCResult<OptionalResult<TxAsMultiResult<Self::BigUint>>> {
+    #[endpoint(getNextTransactionBatch)]
+    fn get_next_transaction_batch(&self) -> SCResult<MultiResultVec<Transaction<Self::BigUint>>> {
         only_owner!(self, "only owner may call this function");
 
-        match self.pending_transaction_address_nonce_list().pop_front() {
-            Some((sender, nonce)) => {
-                self.transaction_status(&sender, nonce)
-                    .set(&TransactionStatus::InProgress);
+        let mut tx_batch = Vec::with_capacity(MAX_TX_BATCH_SIZE);
+        let mut first_tx_block_nonce = 0;
 
-                let tx = self.transactions_by_nonce(&sender).get(nonce);
-
-                Ok(OptionalResult::Some(tx.into_multiresult()))
+        while let Some(tx) = self.get_next_pending_transaction() {
+            if tx_batch.is_empty() {
+                first_tx_block_nonce = tx.block_nonce;
             }
-            None => Ok(OptionalResult::None),
+
+            let block_nonce_diff = tx.block_nonce - first_tx_block_nonce;
+            if block_nonce_diff > MAX_BLOCK_NONCE_DIFF {
+                break;
+            }
+
+            self.transaction_status(&tx.from, tx.nonce)
+                .set(&TransactionStatus::InProgress);
+            self.clear_next_pending_transaction();
+
+            tx_batch.push(tx);
+            if tx_batch.len() == MAX_TX_BATCH_SIZE {
+                break;
+            }
         }
+
+        Ok(tx_batch.into())
     }
 
-    #[endpoint(setTransactionStatus)]
-    fn set_transaction_status(
+    #[endpoint(setTransactionBatchStatus)]
+    fn set_transaction_batch_status(
         &self,
         relayer_reward_address: Address,
-        sender: Address,
-        nonce: TxNonce,
-        transaction_status: TransactionStatus,
+        #[var_args] tx_status_batch: VarArgs<(Address, TxNonce, TransactionStatus)>,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
 
-        require!(
-            self.transaction_status(&sender, nonce).get() == TransactionStatus::InProgress,
-            "Transaction has to be executed first"
-        );
+        for (sender, nonce, tx_status) in tx_status_batch.into_vec() {
+            require!(
+                self.transaction_status(&sender, nonce).get() == TransactionStatus::InProgress,
+                "Transaction has to be executed first"
+            );
 
-        match transaction_status {
-            TransactionStatus::Executed => {
-                self.transaction_status(&sender, nonce)
-                    .set(&TransactionStatus::Executed);
+            match tx_status {
+                TransactionStatus::Executed => {
+                    self.transaction_status(&sender, nonce)
+                        .set(&TransactionStatus::Executed);
 
-                let tx = self.transactions_by_nonce(&sender).get(nonce);
+                    let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                self.require_local_burn_role_set(&tx.token_identifier)?;
-                self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                    self.require_local_burn_role_set(&tx.token_identifier)?;
+                    self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                }
+                TransactionStatus::Rejected => {
+                    self.transaction_status(&sender, nonce)
+                        .set(&TransactionStatus::Rejected);
+
+                    let tx = self.transactions_by_nonce(&sender).get(nonce);
+
+                    self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+                }
+                _ => {
+                    return sc_error!("Transaction status may only be set to Executed or Rejected")
+                }
             }
-            TransactionStatus::Rejected => {
-                self.transaction_status(&sender, nonce)
-                    .set(&TransactionStatus::Rejected);
 
-                let tx = self.transactions_by_nonce(&sender).get(nonce);
-
-                self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
-            }
-            _ => return sc_error!("Transaction status may only be set to Executed or Rejected"),
+            // pay tx fees to the relayer that processed the transaction
+            self.pay_fee(sender, relayer_reward_address.clone());
         }
-
-        // pay tx fees to the relayer that processed the transaction
-        self.pay_fee(sender, relayer_reward_address);
 
         Ok(())
     }
@@ -199,8 +215,7 @@ pub trait EsdtSafe {
         */
     }
 
-    fn require_local_burn_role_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
-        /* TODO: Uncomment on next elrond-wasm version
+    fn require_local_burn_role_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
         let roles = self
             .blockchain()
             .get_esdt_local_roles(token_id.as_esdt_identifier());
@@ -208,9 +223,19 @@ pub trait EsdtSafe {
             roles.contains(&EsdtLocalRole::Burn),
             "Must set local burn role first"
         );
-        */
 
         Ok(())
+    }
+
+    fn get_next_pending_transaction(&self) -> Option<Transaction<Self::BigUint>> {
+        match self.pending_transaction_address_nonce_list().front() {
+            Some((sender, nonce)) => Some(self.transactions_by_nonce(&sender).get(nonce)),
+            None => None,
+        }
+    }
+
+    fn clear_next_pending_transaction(&self) {
+        let _ = self.pending_transaction_address_nonce_list().pop_front();
     }
 
     // proxies

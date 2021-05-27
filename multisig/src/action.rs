@@ -12,14 +12,13 @@ pub enum Action<BigUint: BigUintApi> {
     RemoveUser(Address),
     SlashUser(Address),
     ChangeQuorum(usize),
-    SetCurrentTransactionStatus{ 
-        relayer_reward_address: Address, 
-        tx_status: TransactionStatus
+    SetCurrentTransactionStatus {
+        relayer_reward_address: Address,
+        tx_batch_status: Vec<TransactionStatus>,
     },
-    TransferEsdtToken {
-        to: Address, 
-        token_id: TokenIdentifier, 
-        amount: BigUint
+    BatchTransferEsdtToken {
+        batch_id: u64,
+        transfers: Vec<(Address, TokenIdentifier, BigUint)>,
     },
 }
 
