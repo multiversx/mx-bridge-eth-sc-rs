@@ -44,7 +44,12 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "400"
+                        "str:BRIDGE-123456": {
+                            "balance": "400",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
                     },
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
