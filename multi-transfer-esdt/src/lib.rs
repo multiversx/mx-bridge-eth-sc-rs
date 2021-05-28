@@ -9,6 +9,7 @@ pub trait MultiTransferEsdt {
     #[init]
     fn init(&self, #[var_args] token_whitelist: VarArgs<TokenIdentifier>) -> SCResult<()> {
         for token in token_whitelist.into_vec() {
+            require!(token.is_valid_esdt_identifier(), "Invalid token ID");
             self.token_whitelist().insert(token);
         }
 
@@ -17,10 +18,10 @@ pub trait MultiTransferEsdt {
 
     // endpoints - owner-only
 
-    /// Only add after setting localMint role
     #[endpoint(addTokenToWhitelist)]
     fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
+        require!(token_id.is_valid_esdt_identifier(), "Invalid token ID");
         require!(
             self.is_local_mint_role_set(&token_id),
             "Must set local mint role first"
@@ -66,15 +67,6 @@ pub trait MultiTransferEsdt {
     }
 
     // views
-
-    #[view(getScEsdtBalance)]
-    fn get_sc_esdt_balance(&self, token_id: &TokenIdentifier) -> Self::BigUint {
-        self.blockchain().get_esdt_balance(
-            &self.blockchain().get_sc_address(),
-            token_id.as_esdt_identifier(),
-            0,
-        )
-    }
 
     #[view(getAllKnownTokens)]
     fn get_all_known_tokens(&self) -> MultiResultVec<TokenIdentifier> {
