@@ -16,13 +16,21 @@ pub trait EsdtSafe {
         &self,
         fee_estimator_contract_address: Address,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
-    ) {
+    ) -> SCResult<()> {
+        require!(
+            self.blockchain()
+                .is_smart_contract(&fee_estimator_contract_address),
+            "provided address is not a smart contract"
+        );
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
 
         for token in token_whitelist.into_vec() {
+            require!(token.is_valid_esdt_identifier(), "Invalid token ID");
             self.token_whitelist().insert(token.clone());
         }
+
+        Ok(())
     }
 
     // endpoints - owner-only
