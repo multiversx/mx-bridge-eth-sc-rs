@@ -3,22 +3,23 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "deposit_egld.scen.json"
+            "path": "setup_accounts.scen.json"
         },
         {
             "step": "scCall",
             "txId": "create-transaction-ok",
             "tx": {
                 "from": "address:user1",
-                "to": "address:contract",
-                "value": "0",
-                "esdtTokenName": "str:BridgeToken",
-                "esdtValue": "400",
+                "to": "sc:esdt_safe",
+                "esdt": {
+                    "tokenIdentifier": "str:BRIDGE-123456",
+                    "value": "400"
+                },
                 "function": "createTransaction",
                 "arguments": [
-                    "address:other_chain_address"
+                    "0x0102030405060708091011121314151617181920"
                 ],
-                "gasLimit": "100,000,000",
+                "gasLimit": "20,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -31,46 +32,40 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:owner": {
+                "address:user1": {
                     "nonce": "1",
                     "balance": "0",
-                    "storage": {}
-                },
-                "address:user1": {
-                    "nonce": "2",
-                    "balance": "500",
                     "esdt": {
-                        "str:BridgeToken": "600"
+                        "str:BRIDGE-123456": "600"
                     },
                     "storage": {}
                 },
-                "address:contract": {
+                "sc:esdt_safe": {
                     "nonce": "0",
-                    "balance": "500",
+                    "balance": "0",
                     "esdt": {
-                        "str:BridgeToken": "400"
+                        "str:BRIDGE-123456": "400"
                     },
                     "storage": {
-                        "str:transactionFee": "100",
-                        "str:tokenWhitelist.value|u32:1": "str:BridgeToken",
-                        "str:deposit|address:user1": "400",
-                        "str:claimableTransactionFee": "100",
-
-                        "str:transactionStatus|address:user1|u32:1": "1",
-
-                        "str:transactionsByNonce|address:user1|u32:0": "1",
-                        "str:transactionsByNonce|address:user1|u32:1": "address:user1|address:other_chain_address|u32:11|str:BridgeToken|u32:2|u16:400",
-
-                        "str:pendingTransactionList.node_links|u32:1": "u32:0|u32:0",
+                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
-                        "str:pendingTransactionList.info": "u32:1|u32:1|u32:1|u32:1",
+                        
+                        "str:transactionStatus|address:user1|u32:1": "1",
+                        "str:transactionsByNonce|address:user1|str:.item|u32:1": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u32:1",
+                            "3-from": "address:user1",
+                            "4-to": "0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:BRIDGE-123456",
+                            "6-amount": "biguint:400"
+                        },
 
-                        "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:0",
-                        "str:tokenWhitelist.node_id|str:BridgeToken": "1",
-                        "str:tokenWhitelist.info": "u32:1|u32:1|u32:1|u32:1"
+                        "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
-                }
+                },
+                "+": {}
             }
         }
     ]
