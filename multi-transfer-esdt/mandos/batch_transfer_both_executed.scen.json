@@ -1,5 +1,5 @@
 {
-    "name": "transfer ok",
+    "name": "batch transfer both executed",
     "steps": [
         {
             "step": "externalSteps",
@@ -7,22 +7,24 @@
         },
         {
             "step": "scCall",
-            "txId": "transfer-ok",
+            "txId": "batch-transfer-both-executed",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
                 "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
-                    "address:user1|nested:str:BRIDGE-123456|biguint:200"
+                    "address:user1|nested:str:BRIDGE-123456|biguint:200",
+                    "address:user2|nested:str:WRAPPED-123456|biguint:500"
                 ],
-                "gasLimit": "8,000,000",
+                "gasLimit": "9,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
                 "out": [
+                    "3",
                     "3"
                 ],
                 "gas": "*",
@@ -42,6 +44,14 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": "200"
+                    },
+                    "storage": {}
+                },
+                "address:user2": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WRAPPED-123456": "500"
                     },
                     "storage": {}
                 },
