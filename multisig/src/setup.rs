@@ -56,12 +56,13 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         let zero_address = Address::zero();
         let mut arg_buffer_token_whitelist = ArgBuffer::new();
-        let gas_per_deploy = self.blockchain().get_gas_left() / 4;
 
         arg_buffer_token_whitelist.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
         for token in token_whitelist.into_vec() {
             arg_buffer_token_whitelist.push_argument_bytes(token.as_esdt_identifier());
         }
+
+        let gas_per_deploy = self.blockchain().get_gas_left() / 4;
 
         // eGLD ESDT swap deploy
 

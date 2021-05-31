@@ -17,11 +17,6 @@ pub trait EsdtSafe {
         fee_estimator_contract_address: Address,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
-        require!(
-            self.blockchain()
-                .is_smart_contract(&fee_estimator_contract_address),
-            "provided address is not a smart contract"
-        );
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
 

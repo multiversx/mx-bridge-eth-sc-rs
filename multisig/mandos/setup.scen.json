@@ -1,0 +1,123 @@
+{
+    "name": "setup accounts",
+    "steps": [
+        {
+            "step": "setState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:relayer1": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "storage": {}
+                },
+                "address:relayer2": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": "1000"
+                    },
+                    "storage": {}
+                },
+                "sc:aggregator_mock": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {},
+                    "code": "file:../../aggregator-mock/output/aggregator-mock.wasm"
+                }
+            },
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "0",
+                    "newAddress": "sc:multisig"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "txId": "deploy",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "file:../output/multisig.wasm",
+                "value": "0",
+                "arguments": [
+                    "1000",
+                    "500",
+                    "2",
+                    "address:relayer1",
+                    "address:relayer2"
+                ],
+                "gasLimit": "30,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "sc:multisig": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "str:num_board_members": "2",
+                        "str:quorum": "2",
+                        "str:requiredStakeAmount": "1000",
+                        "str:slashAmount": "500",
+                        "str:user_id_to_address|u32:1": "address:relayer1",
+                        "str:user_id_to_address|u32:2": "address:relayer2",
+                        "+": ""
+                    },
+                    "code": "file:../output/multisig.wasm"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "deploy-child-contracts",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "deployChildContracts",
+                "arguments": [
+                    "file:../../egld-esdt-swap/output/egld-esdt-swap.wasm",
+                    "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm",
+                    "file:../../ethereum-fee-prepay/output/ethereum-fee-prepay.wasm",
+                    "file:../../esdt-safe/output/esdt-safe.wasm",
+                    "sc:aggregator_mock",
+                    "str:WEGLD-123456",
+                    "str:WETH-123456"
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}
