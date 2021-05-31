@@ -80,7 +80,7 @@ pub trait Multisig:
         let tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_next_transaction_batch()
-            .execute_on_dest_context(self.blockchain().get_gas_left())
+            .execute_on_dest_context()
             .into_vec();
 
         self.current_tx_batch().set(&tx_batch);
@@ -356,7 +356,7 @@ pub trait Multisig:
 
                 self.esdt_safe_proxy(self.esdt_safe_address().get())
                     .set_transaction_batch_status(relayer_reward_address, VarArgs::from(args))
-                    .execute_on_dest_context(self.blockchain().get_gas_left());
+                    .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
                 batch_id: _,
@@ -365,7 +365,7 @@ pub trait Multisig:
                 let statuses = self
                     .multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
                     .batch_transfer_esdt_token(transfers.into())
-                    .execute_on_dest_context(self.blockchain().get_gas_left());
+                    .execute_on_dest_context();
 
                 return_statuses = OptionalResult::Some(statuses);
             }

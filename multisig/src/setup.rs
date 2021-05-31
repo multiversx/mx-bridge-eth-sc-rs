@@ -179,7 +179,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         self.setup_ethereum_fee_prepay_proxy(ethereum_fee_prepay_address)
             .add_to_whitelist(esdt_safe_address)
-            .execute_on_dest_context(self.blockchain().get_gas_left());
+            .execute_on_dest_context();
 
         Ok(())
     }
@@ -191,7 +191,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .add_token_to_whitelist(token_id)
-            .execute_on_dest_context(self.blockchain().get_gas_left());
+            .execute_on_dest_context();
 
         Ok(())
     }
@@ -203,7 +203,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .remove_token_from_whitelist(token_id)
-            .execute_on_dest_context(self.blockchain().get_gas_left());
+            .execute_on_dest_context();
 
         Ok(())
     }
@@ -218,7 +218,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .add_token_to_whitelist(token_id)
-            .execute_on_dest_context(self.blockchain().get_gas_left());
+            .execute_on_dest_context();
 
         Ok(())
     }

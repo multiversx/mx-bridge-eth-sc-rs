@@ -173,20 +173,13 @@ pub trait EsdtSafe {
     // private
 
     fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        self.send().esdt_local_burn(
-            self.blockchain().get_gas_left(),
-            token_id.as_esdt_identifier(),
-            amount,
-        );
+        self.send().esdt_local_burn(token_id, amount);
     }
 
     fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        let _ = self.send().direct_esdt_via_transf_exec(
-            to,
-            token_id.as_esdt_identifier(),
-            &amount,
-            self.data_or_empty(to, b"refund"),
-        );
+        let _ = self
+            .send()
+            .direct(to, token_id, &amount, self.data_or_empty(to, b"refund"));
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -201,7 +194,7 @@ pub trait EsdtSafe {
         /* TODO: Uncomment once the integration is complete
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
             .reserve_fee(from, TransactionType::Erc20, Priority::Low)
-            .execute_on_dest_context(self.blockchain().get_gas_left());
+            .execute_on_dest_context();
         */
     }
 
@@ -214,14 +207,12 @@ pub trait EsdtSafe {
                 TransactionType::Erc20,
                 Priority::Low,
             )
-            .execute_on_dest_context(self.blockchain().get_gas_left());
+            .execute_on_dest_context();
         */
     }
 
     fn require_local_burn_role_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
-        let roles = self
-            .blockchain()
-            .get_esdt_local_roles(token_id.as_esdt_identifier());
+        let roles = self.blockchain().get_esdt_local_roles(token_id);
         require!(
             roles.contains(&EsdtLocalRole::Burn),
             "Must set local burn role first"

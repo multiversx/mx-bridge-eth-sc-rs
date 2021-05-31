@@ -24,24 +24,20 @@ pub trait EgldEsdtSwap {
         require!(payment > 0, "Payment must be more than 0");
 
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
-        
+
         self.require_local_roles_set(&wrapped_egld_token_id)?;
-        self.send().esdt_local_mint(
-            self.blockchain().get_gas_left(),
-            wrapped_egld_token_id.as_esdt_identifier(),
-            &payment,
-        );
+        self.send()
+            .esdt_local_mint(&wrapped_egld_token_id, &payment);
 
         let caller = self.blockchain().get_caller();
-        match self.send().direct_esdt_via_transf_exec(
+        self.send().direct(
             &caller,
-            wrapped_egld_token_id.as_esdt_identifier(),
+            &wrapped_egld_token_id,
             &payment,
             self.data_or_empty(&caller, b"wrapping"),
-        ) {
-            Result::Ok(()) => Ok(()),
-            Result::Err(_) => sc_error!("Wrapping failed"),
-        }
+        );
+
+        Ok(())
     }
 
     #[payable("*")]
@@ -63,11 +59,8 @@ pub trait EgldEsdtSwap {
         );
 
         self.require_local_roles_set(&wrapped_egld_token_id)?;
-        self.send().esdt_local_burn(
-            self.blockchain().get_gas_left(),
-            wrapped_egld_token_id.as_esdt_identifier(),
-            &payment,
-        );
+        self.send()
+            .esdt_local_burn(&wrapped_egld_token_id, &payment);
 
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
         let caller = self.blockchain().get_caller();

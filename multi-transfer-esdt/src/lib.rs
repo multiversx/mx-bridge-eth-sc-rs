@@ -53,11 +53,7 @@ pub trait MultiTransferEsdt {
                 continue;
             }
 
-            self.send().esdt_local_mint(
-                self.blockchain().get_gas_left(),
-                token_id.as_esdt_identifier(),
-                &amount,
-            );
+            self.send().esdt_local_mint(&token_id, &amount);
             self.send().direct(&to, &token_id, &amount, &[]);
 
             tx_statuses.push(TransactionStatus::Executed);
@@ -90,9 +86,7 @@ pub trait MultiTransferEsdt {
     }
 
     fn is_local_mint_role_set(&self, token_id: &TokenIdentifier) -> bool {
-        let roles = self
-            .blockchain()
-            .get_esdt_local_roles(token_id.as_esdt_identifier());
+        let roles = self.blockchain().get_esdt_local_roles(token_id);
 
         roles.contains(&EsdtLocalRole::Mint)
     }

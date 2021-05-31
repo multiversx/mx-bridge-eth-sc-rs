@@ -11,10 +11,7 @@ pub mod aggregator_result;
 #[elrond_wasm_derive::contract]
 pub trait EthereumFeePrepay {
     #[proxy]
-    fn aggregator_proxy(
-        &self,
-        sc_address: Address,
-    ) -> aggregator::Proxy<Self::SendApi>;
+    fn aggregator_proxy(&self, sc_address: Address) -> aggregator::Proxy<Self::SendApi>;
 
     #[init]
     fn init(&self, aggregator: Address) {
@@ -85,11 +82,12 @@ pub trait EthereumFeePrepay {
         transaction_type: TransactionType,
         priority: Priority,
     ) -> SCResult<Self::BigUint> {
-        let optional_arg_round =
-            self.aggregator_proxy(self.aggregator().get())
-                .get_latest_round_data()
-                .execute_on_dest_context(self.blockchain().get_gas_left());
-        let aggregator_result: AggregatorResult<Self::BigUint> = aggregator_result::try_parse_round(optional_arg_round)?;
+        let optional_arg_round = self
+            .aggregator_proxy(self.aggregator().get())
+            .get_latest_round_data()
+            .execute_on_dest_context();
+        let aggregator_result: AggregatorResult<Self::BigUint> =
+            aggregator_result::try_parse_round(optional_arg_round)?;
 
         let gas_limit = match transaction_type {
             TransactionType::Ethereum => aggregator_result.transaction_gas_limits.ethereum,
@@ -208,7 +206,8 @@ pub trait EthereumFeePrepay {
 
     #[view(getReservedAmount)]
     #[storage_mapper("reservedAmount")]
-    fn reserved_amount(&self, address: &Address) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    fn reserved_amount(&self, address: &Address)
+        -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     #[storage_mapper("aggregator")]
     fn aggregator(&self) -> SingleValueMapper<Self::Storage, Address>;
