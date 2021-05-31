@@ -331,6 +331,72 @@
                     "code": "file:../../esdt-safe/output/esdt-safe.wasm"
                 }
             }
+        },
+        {
+            "step": "scCall",
+            "txId": "first-relayer-stake",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "1000",
+                "function": "stake",
+                "arguments": [],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "second-relayer-stake",
+            "tx": {
+                "from": "address:relayer2",
+                "to": "sc:multisig",
+                "value": "1000",
+                "function": "stake",
+                "arguments": [],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:relayer1": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:relayer2": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "sc:multisig": {
+                    "nonce": "*",
+                    "balance": "2000",
+                    "storage": {
+                        "str:amountStaked|address:relayer1": "1000",
+                        "str:amountStaked|address:relayer2": "1000",
+                        "+": ""
+                    },
+                    "code": "file:../output/multisig.wasm"
+                },
+                "+": {}
+            }
         }
     ]
 }

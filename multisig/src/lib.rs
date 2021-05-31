@@ -35,9 +35,8 @@ pub trait Multisig:
             "Only board members can stake"
         );
 
-        let mut amount_staked = self.amount_staked(&caller).get();
-        amount_staked += payment;
-        self.amount_staked(&caller).set(&amount_staked);
+        self.amount_staked(&caller)
+            .update(|amount_staked| *amount_staked += payment);
 
         Ok(())
     }
