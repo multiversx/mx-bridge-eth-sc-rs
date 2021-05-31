@@ -22,3 +22,13 @@ fn execute_elrond_to_ethereum_tx_batch_go() {
 fn reject_elrond_to_ethereum_tx_batch_go() {
     elrond_wasm_debug::mandos_go("mandos/reject_elrond_to_ethereum_tx_batch.scen.json");
 }
+
+#[test]
+fn ethereum_to_elrond_tx_batch_ok_go() {
+    elrond_wasm_debug::mandos_go("mandos/ethereum_to_elrond_tx_batch_ok.scen.json");
+}
+
+#[test]
+fn ethereum_to_elrond_tx_batch_rejected_go() {
+    elrond_wasm_debug::mandos_go("mandos/ethereum_to_elrond_tx_batch_rejected.scen.json");
+}
