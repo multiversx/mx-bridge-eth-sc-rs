@@ -90,16 +90,12 @@ pub trait EgldEsdtSwap {
         }
     }
 
-    fn require_local_roles_set(&self, _token_id: &TokenIdentifier) -> SCResult<()> {
-        /* TODO: Uncomment on next elrond-wasm version
-        let roles = self
-            .blockchain()
-            .get_esdt_local_roles(token_id.as_esdt_identifier());
+    fn require_local_roles_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
+        let roles = self.blockchain().get_esdt_local_roles(token_id);
         require!(
             roles.contains(&EsdtLocalRole::Mint) && roles.contains(&EsdtLocalRole::Burn),
             "Must set local roles first"
         );
-        */
 
         Ok(())
     }
