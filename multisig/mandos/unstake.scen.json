@@ -283,6 +283,28 @@
                 },
                 "+": {}
             }
+        },
+        {
+            "step": "scCall",
+            "txId": "try-propose-after-removed",
+            "tx": {
+                "from": "address:relayer2",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "proposeChangeQuorum",
+                "arguments": [
+                    "2"
+                ],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:only board members and proposers can propose",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
         }
     ]
 }

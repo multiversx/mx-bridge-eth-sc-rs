@@ -77,6 +77,13 @@ pub trait Multisig:
             "Must execute and set status for current tx batch first"
         );
 
+        let caller = self.blockchain().get_caller();
+        let caller_role = self.user_role(&caller);
+        require!(
+            caller_role == UserRole::BoardMember,
+            "Only board members can call this function"
+        );
+
         let tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_next_transaction_batch()

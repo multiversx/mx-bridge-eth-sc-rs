@@ -21,9 +21,9 @@
                 },
                 "address:user": {
                     "nonce": "0",
-                    "balance": "0",
+                    "balance": "1000",
                     "esdt": {
-                        "str:BRIDGE-123456": "1000"
+                        "str:WETH-123456": "1000"
                     },
                     "storage": {}
                 },
@@ -271,6 +271,7 @@
                     "storage": {
                         "str:wrappedEgldTokenId": "str:WEGLD-123456"
                     },
+                    "owner": "sc:multisig",
                     "code": "file:../../egld-esdt-swap/output/egld-esdt-swap.wasm"
                 },
                 "sc:multi_transfer": {
@@ -299,6 +300,7 @@
                         "str:tokenWhitelist.value|u32:1": "str:WEGLD-123456",
                         "str:tokenWhitelist.value|u32:2": "str:WETH-123456"
                     },
+                    "owner": "sc:multisig",
                     "code": "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm"
                 },
                 "sc:esdt_safe": {
@@ -328,6 +330,7 @@
                         "str:tokenWhitelist.value|u32:1": "str:WEGLD-123456",
                         "str:tokenWhitelist.value|u32:2": "str:WETH-123456"
                     },
+                    "owner": "sc:multisig",
                     "code": "file:../../esdt-safe/output/esdt-safe.wasm"
                 }
             }
