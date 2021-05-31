@@ -222,10 +222,9 @@ pub trait EsdtSafe {
     }
 
     fn get_next_pending_transaction(&self) -> Option<Transaction<Self::BigUint>> {
-        match self.pending_transaction_address_nonce_list().front() {
-            Some((sender, nonce)) => Some(self.transactions_by_nonce(&sender).get(nonce)),
-            None => None,
-        }
+        self.pending_transaction_address_nonce_list()
+            .front()
+            .map(|(sender, nonce)| self.transactions_by_nonce(&sender).get(nonce))
     }
 
     fn clear_next_pending_transaction(&self) {
