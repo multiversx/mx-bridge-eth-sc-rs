@@ -12,7 +12,7 @@ pub enum Action<BigUint: BigUintApi> {
     RemoveUser(Address),
     SlashUser(Address),
     ChangeQuorum(usize),
-    SetCurrentTransactionStatus {
+    SetCurrentTransactionBatchStatus {
         relayer_reward_address: Address,
         tx_batch_status: Vec<TransactionStatus>,
     },

@@ -126,7 +126,7 @@ pub trait Multisig:
             "Number of statuses provided must be equal to number of transactions in current batch"
         );
 
-        let action_id = self.propose_action(Action::SetCurrentTransactionStatus {
+        let action_id = self.propose_action(Action::SetCurrentTransactionBatchStatus {
             relayer_reward_address,
             tx_batch_status: tx_batch_status.into_vec(),
         })?;
@@ -240,7 +240,7 @@ pub trait Multisig:
             let action = self.action_mapper().get(action_id);
 
             match action {
-                Action::SetCurrentTransactionStatus {
+                Action::SetCurrentTransactionBatchStatus {
                     relayer_reward_address: _,
                     tx_batch_status,
                 } => {
@@ -346,7 +346,7 @@ pub trait Multisig:
                 );
                 self.quorum().set(&new_quorum);
             }
-            Action::SetCurrentTransactionStatus {
+            Action::SetCurrentTransactionBatchStatus {
                 relayer_reward_address,
                 tx_batch_status,
             } => {
