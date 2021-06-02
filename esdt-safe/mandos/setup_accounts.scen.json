@@ -56,7 +56,7 @@
                     "sc:fee_estimator_contract",
                     "str:BRIDGE-123456"
                 ],
-                "gasLimit": "15,000,000",
+                "gasLimit": "20,000,000",
                 "gasPrice": "0"
             },
             "expect": {

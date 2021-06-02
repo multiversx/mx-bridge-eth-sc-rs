@@ -17,7 +17,7 @@
                     "address:relayer",
                     "address:user1|u32:1|u8:3"
                 ],
-                "gasLimit": "12,000,000",
+                "gasLimit": "15,000,000",
                 "gasPrice": "0"
             },
             "expect": {
