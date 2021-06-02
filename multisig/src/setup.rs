@@ -208,6 +208,30 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
+    #[endpoint(esdtSafeSetMaxTxBatchSize)]
+    fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_esdt_safe_deployed()?;
+
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+            .set_max_tx_batch_size(new_max_tx_batch_size)
+            .execute_on_dest_context();
+
+        Ok(())
+    }
+
+    #[endpoint(esdtSafeSetMaxBlockNonceDiff)]
+    fn esdt_safe_set_max_block_nonce_diff(&self, new_max_block_nonce_diff: u64) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_esdt_safe_deployed()?;
+
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+            .set_max_block_nonce_diff(new_max_block_nonce_diff)
+            .execute_on_dest_context();
+
+        Ok(())
+    }
+
     #[endpoint(multiTransferEsdtaddTokenToWhitelist)]
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,

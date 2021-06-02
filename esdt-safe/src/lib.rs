@@ -6,8 +6,8 @@ use transaction::*;
 
 elrond_wasm::imports!();
 
-const MAX_TX_BATCH_SIZE: usize = 10;
-const MAX_BLOCK_NONCE_DIFF: u64 = 5;
+const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
+const DEFAULT_MAX_BLOCK_NONCE_DIFF: u64 = 100;
 
 #[elrond_wasm_derive::contract]
 pub trait EsdtSafe {
@@ -25,6 +25,10 @@ pub trait EsdtSafe {
             self.token_whitelist().insert(token.clone());
         }
 
+        self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_block_nonce_diff()
+            .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
+
         Ok(())
     }
 
@@ -33,9 +37,9 @@ pub trait EsdtSafe {
 
     #[endpoint(addTokenToWhitelist)]
     fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
+        self.require_caller_owner()?;
         self.require_local_burn_role_set(&token_id)?;
+
         self.token_whitelist().insert(token_id);
 
         Ok(())
@@ -43,9 +47,35 @@ pub trait EsdtSafe {
 
     #[endpoint(removeTokenFromWhitelist)]
     fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
+        self.require_caller_owner()?;
 
         self.token_whitelist().remove(&token_id);
+
+        Ok(())
+    }
+
+    #[endpoint(setMaxTxBatchSize)]
+    fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
+        self.require_caller_owner()?;
+        require!(
+            new_max_tx_batch_size > 0,
+            "Max tx batch size must be more than 0"
+        );
+
+        self.max_tx_batch_size().set(&new_max_tx_batch_size);
+
+        Ok(())
+    }
+
+    #[endpoint(setMaxBlockNonceDiff)]
+    fn set_max_block_nonce_diff(&self, new_max_block_nonce_diff: u64) -> SCResult<()> {
+        self.require_caller_owner()?;
+        require!(
+            new_max_block_nonce_diff > 0,
+            "Max block nonce diff must be more than 0"
+        );
+
+        self.max_block_nonce_diff().set(&new_max_block_nonce_diff);
 
         Ok(())
     }
@@ -54,8 +84,10 @@ pub trait EsdtSafe {
     fn get_next_transaction_batch(&self) -> SCResult<MultiResultVec<Transaction<Self::BigUint>>> {
         only_owner!(self, "only owner may call this function");
 
-        let mut tx_batch = Vec::with_capacity(MAX_TX_BATCH_SIZE);
+        let mut tx_batch = Vec::new();
         let mut first_tx_block_nonce = 0;
+        let max_tx_batch_size = self.max_tx_batch_size().get();
+        let max_block_nonce_diff = self.max_block_nonce_diff().get();
 
         while let Some(tx) = self.get_next_pending_transaction() {
             if tx_batch.is_empty() {
@@ -63,7 +95,7 @@ pub trait EsdtSafe {
             }
 
             let block_nonce_diff = tx.block_nonce - first_tx_block_nonce;
-            if block_nonce_diff > MAX_BLOCK_NONCE_DIFF {
+            if block_nonce_diff > max_block_nonce_diff {
                 break;
             }
 
@@ -72,7 +104,7 @@ pub trait EsdtSafe {
             self.clear_next_pending_transaction();
 
             tx_batch.push(tx);
-            if tx_batch.len() == MAX_TX_BATCH_SIZE {
+            if tx_batch.len() == max_tx_batch_size {
                 break;
             }
         }
@@ -211,6 +243,11 @@ pub trait EsdtSafe {
         */
     }
 
+    fn require_caller_owner(&self) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+        Ok(())
+    }
+
     fn require_local_burn_role_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
         let roles = self.blockchain().get_esdt_local_roles(token_id);
         require!(
@@ -274,4 +311,12 @@ pub trait EsdtSafe {
     fn pending_transaction_address_nonce_list(
         &self,
     ) -> LinkedListMapper<Self::Storage, (Address, TxNonce)>;
+
+    // configurable
+
+    #[storage_mapper("maxTxBatchSize")]
+    fn max_tx_batch_size(&self) -> SingleValueMapper<Self::Storage, usize>;
+
+    #[storage_mapper("maxBlockNonceDiff")]
+    fn max_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
 }
