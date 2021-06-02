@@ -3,15 +3,17 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-use aggregator_result::AggregatorResult;
-use transaction::*;
+mod aggregator_proxy;
+use aggregator_proxy::*;
 
-pub mod aggregator_result;
+const GWEI_STRING: &[u8] = b"GWEI";
+const EGLD_STRING: &[u8] = b"EGLD";
+const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
 
 #[elrond_wasm_derive::contract]
 pub trait EthereumFeePrepay {
     #[proxy]
-    fn aggregator_proxy(&self, sc_address: Address) -> aggregator::Proxy<Self::SendApi>;
+    fn aggregator_proxy(&self, sc_address: Address) -> aggregator_proxy::Proxy<Self::SendApi>;
 
     #[init]
     fn init(&self, aggregator: Address) {
@@ -46,63 +48,34 @@ pub trait EthereumFeePrepay {
     // estimate endpoints
 
     #[endpoint(payFee)]
-    fn pay_fee(
-        &self,
-        address: Address,
-        relayer: Address,
-        transaction_type: TransactionType,
-        priority: Priority,
-    ) -> SCResult<()> {
+    fn pay_fee(&self, address: Address, relayer: Address) -> SCResult<()> {
         self.require_whitelisted()?;
 
-        let estimate = self.compute_estimate(transaction_type, priority)?;
+        let estimate = self.compute_estimate();
         self.transfer(&address, &relayer, &estimate);
 
         Ok(())
     }
 
     #[endpoint(reserveFee)]
-    fn reserve_fee(
-        &self,
-        address: Address,
-        transaction_type: TransactionType,
-        priority: Priority,
-    ) -> SCResult<()> {
+    fn reserve_fee(&self, address: Address) -> SCResult<()> {
         self.require_whitelisted()?;
 
-        let estimate = self.compute_estimate(transaction_type, priority)?;
+        let estimate = self.compute_estimate();
         self.try_reserve_from_balance(&address, &estimate)?;
 
         Ok(())
     }
 
     #[endpoint(computeEstimate)]
-    fn compute_estimate(
-        &self,
-        transaction_type: TransactionType,
-        priority: Priority,
-    ) -> SCResult<Self::BigUint> {
-        let optional_arg_round = self
+    fn compute_estimate(&self) -> Self::BigUint {
+        let aggregator_result: AggregatorResult<Self::BigUint> = self
             .aggregator_proxy(self.aggregator().get())
-            .get_latest_round_data()
-            .execute_on_dest_context();
-        let aggregator_result: AggregatorResult<Self::BigUint> =
-            aggregator_result::try_parse_round(optional_arg_round)?;
+            .latest_price_feed(BoxedBytes::from(GWEI_STRING), BoxedBytes::from(EGLD_STRING))
+            .execute_on_dest_context()
+            .into();
 
-        let gas_limit = match transaction_type {
-            TransactionType::Ethereum => aggregator_result.transaction_gas_limits.ethereum,
-            TransactionType::Erc20 => aggregator_result.transaction_gas_limits.erc20,
-            TransactionType::Erc721 => aggregator_result.transaction_gas_limits.erc721,
-            TransactionType::Erc1155 => aggregator_result.transaction_gas_limits.erc1155,
-        };
-        let gas_price = match priority {
-            Priority::Fast => aggregator_result.priority_gas_costs.fast,
-            Priority::Average => aggregator_result.priority_gas_costs.average,
-            Priority::Low => aggregator_result.priority_gas_costs.low,
-        };
-
-        Ok(aggregator_result.egld_to_eth * gas_limit * gas_price
-            / aggregator_result.egld_to_eth_scaling)
+        aggregator_result.price * ETH_ERC20_TX_GAS_LIMIT.into()
     }
 
     // whitelist endpoints

@@ -11,12 +11,6 @@ path = "src/lib.rs"
 [features]
 wasm-output-mode = [ "elrond-wasm-node",]
 
-[dependencies]
-aggregator = { package = "aggregator-mock", path = "../aggregator-mock"}
-
-[dependencies.transaction]
-path = "../common/transaction"
-
 [dependencies.elrond-wasm]
 version = "0.17.0"
 
