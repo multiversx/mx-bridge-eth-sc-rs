@@ -4,6 +4,11 @@ fn create_another_tx_ok_go() {
 }
 
 #[test]
+fn create_transaction_without_fee_deposit() {
+    elrond_wasm_debug::mandos_go("mandos/create_transaction_without_fee_deposit.scen.json");
+}
+
+#[test]
 fn create_transaction_ok_go() {
     elrond_wasm_debug::mandos_go("mandos/create_transaction_ok.scen.json");
 }
