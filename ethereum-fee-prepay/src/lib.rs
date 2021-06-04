@@ -146,7 +146,8 @@ pub trait EthereumFeePrepay {
         };
 
         self.decrease_reserve(from, &amount_to_send);
-        self.increase_balance(to, &amount_to_send);
+        self.send()
+            .direct_egld(to, &amount_to_send, b"Ethereum tx fees");
     }
 
     fn increase_reserve(&self, address: &Address, amount: &Self::BigUint) {
