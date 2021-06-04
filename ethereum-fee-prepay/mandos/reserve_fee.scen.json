@@ -16,7 +16,7 @@
                 "arguments": [
                     "address:user"
                 ],
-                "gasLimit": "50,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {

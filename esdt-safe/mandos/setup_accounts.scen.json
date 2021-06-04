@@ -2,21 +2,15 @@
     "name": "setup accounts",
     "steps": [
         {
+            "step": "externalSteps",
+            "path": "../../ethereum-fee-prepay/mandos/setup_accounts.scen.json"
+        },
+        {
             "step": "setState",
             "accounts": {
-                "address:owner": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
-                },
-                "address:relayer": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
-                },
                 "address:user1": {
                     "nonce": "0",
-                    "balance": "0",
+                    "balance": "3,000,000",
                     "esdt": {
                         "str:BRIDGE-123456": "1000"
                     },
@@ -24,23 +18,17 @@
                 },
                 "address:user2": {
                     "nonce": "0",
-                    "balance": "0",
+                    "balance": "3,000,000",
                     "esdt": {
                         "str:BRIDGE-123456": "1000"
                     },
                     "storage": {}
-                },
-                "sc:fee_estimator_contract": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {},
-                    "code": "file:../../ethereum-fee-prepay/output/ethereum-fee-prepay.wasm"
                 }
             },
             "newAddresses": [
                 {
                     "creatorAddress": "address:owner",
-                    "creatorNonce": "0",
+                    "creatorNonce": "2",
                     "newAddress": "sc:esdt_safe"
                 }
             ]
@@ -53,7 +41,7 @@
                 "contractCode": "file:../output/esdt-safe.wasm",
                 "value": "0",
                 "arguments": [
-                    "sc:fee_estimator_contract",
+                    "sc:ethereum_fee_prepay",
                     "str:BRIDGE-123456"
                 ],
                 "gasLimit": "20,000,000",
@@ -70,7 +58,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "1",
+                    "nonce": "3",
                     "balance": "0",
                     "storage": {}
                 },
@@ -78,7 +66,7 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "+": ""
                     },
@@ -103,7 +91,7 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
 
                         "str:tokenWhitelist.info": "0x00000001000000010000000100000001",
@@ -113,6 +101,44 @@
                     "code": "file:../output/esdt-safe.wasm",
                     "owner": "address:owner"
                 }
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-esdt-safe-sc-to-whitelist",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:ethereum_fee_prepay",
+                "value": "0",
+                "function": "addToWhitelist",
+                "arguments": [
+                    "sc:esdt_safe"
+                ],
+                "gasLimit": "12,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "sc:ethereum_fee_prepay": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "str:aggregator": "sc:price_aggregator",
+                        "str:whitelist.value|u32:1": "address:owner",
+                        "str:whitelist.value|u32:2": "sc:esdt_safe",
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
             }
         }
     ]

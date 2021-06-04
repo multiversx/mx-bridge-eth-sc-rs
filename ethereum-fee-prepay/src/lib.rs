@@ -48,11 +48,15 @@ pub trait EthereumFeePrepay {
     // estimate endpoints
 
     #[endpoint(payFee)]
-    fn pay_fee(&self, address: Address, relayer: Address) -> SCResult<()> {
+    fn pay_fee(&self, tx_senders: Vec<Address>, relayer: Address) -> SCResult<()> {
         self.require_whitelisted()?;
 
-        let estimate = self.compute_estimate();
-        self.transfer(&address, &relayer, &estimate);
+        // To save gas for the relayers, we always use the latest queried value
+        // No need to check for empty, since this is guaranteed to be set by a previous CreateTransaction in EsdtSafe
+        let estimate = self.last_query_price().get() * ETH_ERC20_TX_GAS_LIMIT.into();
+        for tx_sender in tx_senders {
+            self.transfer(&tx_sender, &relayer, &estimate);
+        }
 
         Ok(())
     }
@@ -74,6 +78,8 @@ pub trait EthereumFeePrepay {
             .latest_price_feed(BoxedBytes::from(GWEI_STRING), BoxedBytes::from(EGLD_STRING))
             .execute_on_dest_context()
             .into();
+
+        self.last_query_price().set(&aggregator_result.price);
 
         aggregator_result.price * ETH_ERC20_TX_GAS_LIMIT.into()
     }
@@ -185,4 +191,7 @@ pub trait EthereumFeePrepay {
 
     #[storage_mapper("aggregator")]
     fn aggregator(&self) -> SingleValueMapper<Self::Storage, Address>;
+
+    #[storage_mapper("lastQueryPrice")]
+    fn last_query_price(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 }

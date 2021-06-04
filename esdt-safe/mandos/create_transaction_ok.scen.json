@@ -7,19 +7,33 @@
         },
         {
             "step": "scCall",
-            "txId": "create-transaction-ok",
+            "txId": "user1-deposit-fee",
             "tx": {
                 "from": "address:user1",
-                "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:BRIDGE-123456",
-                    "value": "400"
-                },
-                "function": "createTransaction",
-                "arguments": [
-                    "0x0102030405060708091011121314151617181920"
-                ],
-                "gasLimit": "25,000,000",
+                "to": "sc:ethereum_fee_prepay",
+                "value": "3,000,000",
+                "function": "depositTransactionFee",
+                "arguments": [],
+                "gasLimit": "10,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "user2-deposit-fee",
+            "tx": {
+                "from": "address:user2",
+                "to": "sc:ethereum_fee_prepay",
+                "value": "3,000,000",
+                "function": "depositTransactionFee",
+                "arguments": [],
+                "gasLimit": "10,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -32,8 +46,58 @@
         {
             "step": "checkState",
             "accounts": {
+                "sc:ethereum_fee_prepay": {
+                    "nonce": "0",
+                    "balance": "6,000,000",
+                    "storage": {
+                        "str:aggregator": "sc:price_aggregator",
+                        "str:whitelist.value|u32:1": "address:owner",
+                        "str:whitelist.value|u32:2": "sc:esdt_safe",
+                        "str:deposit|address:user1": "3,000,000",
+                        "str:deposit|address:user2": "3,000,000",
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "create-transaction-ok",
+            "tx": {
+                "from": "address:user1",
+                "to": "sc:esdt_safe",
+                "esdt": {
+                    "tokenIdentifier": "str:BRIDGE-123456",
+                    "value": "400"
+                },
+                "function": "createTransaction",
+                "arguments": [
+                    "0x0102030405060708091011121314151617181920"
+                ],
+                "gasLimit": "60,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "out": [
+                    "1",
+                    "str:GWEI",
+                    "str:EGLD",
+                    "10",
+                    "0"
+                ],
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
                 "address:user1": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": "600"
@@ -52,7 +116,7 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
                         
