@@ -84,13 +84,12 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "40,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -99,6 +98,11 @@
             "step": "checkState",
             "comment": "the tokens are burned after successful tx execution",
             "accounts": {
+                "address:relayer1": {
+                    "nonce": "*",
+                    "balance": "3,000,000",
+                    "storage": {}
+                },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",

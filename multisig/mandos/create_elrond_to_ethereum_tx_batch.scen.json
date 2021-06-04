@@ -30,7 +30,7 @@
             "accounts": {
                 "address:user": {
                     "nonce": "1",
-                    "balance": "0",
+                    "balance": "3,000,000",
                     "esdt": {
                         "str:WETH-123456": "1000",
                         "str:WEGLD-123456": "1000"
@@ -50,6 +50,25 @@
         },
         {
             "step": "scCall",
+            "txId": "user-deposit-fee",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:ethereum_fee_prepay",
+                "value": "3,000,000",
+                "function": "depositTransactionFee",
+                "arguments": [],
+                "gasLimit": "10,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
             "txId": "first-create-transaction",
             "tx": {
                 "from": "address:user",
@@ -62,11 +81,18 @@
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "60,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
+                "out": [
+                    "1",
+                    "str:GWEI",
+                    "str:EGLD",
+                    "10",
+                    "0"
+                ],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -76,7 +102,7 @@
             "step": "checkState",
             "accounts": {
                 "address:user": {
-                    "nonce": "2",
+                    "nonce": "3",
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": "0",
@@ -135,11 +161,18 @@
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
                 ],
-                "gasLimit": "20,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
+                "out": [
+                    "1",
+                    "str:GWEI",
+                    "str:EGLD",
+                    "10",
+                    "0"
+                ],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -149,7 +182,7 @@
             "step": "checkState",
             "accounts": {
                 "address:user": {
-                    "nonce": "3",
+                    "nonce": "4",
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": "0",

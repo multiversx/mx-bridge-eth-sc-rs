@@ -84,7 +84,7 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "40,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -99,6 +99,11 @@
             "step": "checkState",
             "comment": "the tokens are refunded after rejected transaction",
             "accounts": {
+                "address:relayer1": {
+                    "nonce": "*",
+                    "balance": "3,000,000",
+                    "storage": {}
+                },
                 "address:user": {
                     "nonce": "*",
                     "balance": "0",
