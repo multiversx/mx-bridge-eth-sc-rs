@@ -1,5 +1,4 @@
 elrond_wasm::imports!();
-use elrond_wasm::sc_error;
 
 use transaction::*;
 

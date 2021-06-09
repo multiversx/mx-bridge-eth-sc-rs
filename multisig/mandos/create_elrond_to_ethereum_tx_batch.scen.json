@@ -1,0 +1,284 @@
+{
+    "name": "batch tx from Elrond to Ethereum",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "setup.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "wrap-egld",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:egld_esdt_swap",
+                "value": "1000",
+                "function": "wrapEgld",
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:user": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WETH-123456": "1000",
+                        "str:WEGLD-123456": "1000"
+                    },
+                    "storage": {}
+                },
+                "sc:egld_esdt_swap": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "storage": {
+                        "str:wrappedEgldTokenId": "str:WEGLD-123456"
+                    },
+                    "code": "file:../../egld-esdt-swap/output/egld-esdt-swap.wasm"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "first-create-transaction",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "esdt": {
+                    "tokenIdentifier": "str:WEGLD-123456",
+                    "value": "1000"
+                },
+                "function": "createTransaction",
+                "arguments": [
+                    "0x0102030405060708091011121314151617181920"
+                ],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:user": {
+                    "nonce": "2",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": "0",
+                        "str:WETH-123456": "1000"
+                    },
+                    "storage": {}
+                },
+                "sc:esdt_safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": {
+                            "balance": "1000",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WETH-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:pendingTransactionList.value|u32:1": "address:user|u32:1",
+                        
+                        "str:transactionStatus|address:user|u32:1": "1",
+                        "str:transactionsByNonce|address:user|str:.item|u32:1": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u32:1",
+                            "3-from": "address:user",
+                            "4-to": "0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:WEGLD-123456",
+                            "6-amount": "biguint:1000"
+                        },
+
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "second-create-transaction",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "esdt": {
+                    "tokenIdentifier": "str:WETH-123456",
+                    "value": "1000"
+                },
+                "function": "createTransaction",
+                "arguments": [
+                    "0x0102030405060708091011121314151617181920"
+                ],
+                "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:user": {
+                    "nonce": "3",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": "0",
+                        "str:WETH-123456": "0"
+                    },
+                    "storage": {}
+                },
+                "sc:esdt_safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": {
+                            "balance": "1000",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WETH-123456": {
+                            "balance": "1000",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:pendingTransactionList.value|u32:1": "address:user|u32:1",
+                        "str:pendingTransactionList.value|u32:2": "address:user|u32:2",
+                        
+                        "str:transactionStatus|address:user|u32:1": "1",
+                        "str:transactionsByNonce|address:user|str:.item|u32:1": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u32:1",
+                            "3-from": "address:user",
+                            "4-to": "0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:WEGLD-123456",
+                            "6-amount": "biguint:1000"
+                        },
+
+                        "str:transactionStatus|address:user|u32:2": "1",
+                        "str:transactionsByNonce|address:user|str:.item|u32:2": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u32:2",
+                            "3-from": "address:user",
+                            "4-to": "0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:WETH-123456",
+                            "6-amount": "biguint:1000"
+                        },
+
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "get-next-pending-tx-batch",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "getNextTransactionBatch",
+                "arguments": [],
+                "gasLimit": "55,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    {
+                        "1-block_nonce": "u64:0",
+                        "2-nonce": "u32:1",
+                        "3-from": "address:user",
+                        "4-to": "0x0102030405060708091011121314151617181920",
+                        "5-token_identifier": "nested:str:WEGLD-123456",
+                        "6-amount": "biguint:1000"
+                    },
+                    {
+                        "1-block_nonce": "u64:0",
+                        "2-nonce": "u32:2",
+                        "3-from": "address:user",
+                        "4-to": "0x0102030405060708091011121314151617181920",
+                        "5-token_identifier": "nested:str:WETH-123456",
+                        "6-amount": "biguint:1000"
+                    },
+
+                    "0x", "1", "address:user", "0x0102030405060708091011121314151617181920", 
+                    "str:WEGLD-123456", "1000",
+
+                    "0x", "2", "address:user", "0x0102030405060708091011121314151617181920", 
+                    "str:WETH-123456", "1000"
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "sc:multisig": {
+                    "nonce": "*",
+                    "balance": "*",
+                    "storage": {
+                        "str:currentTxBatch": [
+                            {
+                                "1-block_nonce": "u64:0",
+                                "2-nonce": "u32:1",
+                                "3-from": "address:user",
+                                "4-to": "0x0102030405060708091011121314151617181920",
+                                "5-token_identifier": "nested:str:WEGLD-123456",
+                                "6-amount": "biguint:1000"
+                            },
+                            {
+                                "1-block_nonce": "u64:0",
+                                "2-nonce": "u32:2",
+                                "3-from": "address:user",
+                                "4-to": "0x0102030405060708091011121314151617181920",
+                                "5-token_identifier": "nested:str:WETH-123456",
+                                "6-amount": "biguint:1000"
+                            }
+                        ],
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        }
+    ]
+}

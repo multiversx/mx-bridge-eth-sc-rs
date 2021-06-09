@@ -28,24 +28,30 @@ Stake "slashing" will only happen if you're actively being malicious. So play ni
 
 For this kind of transaction, we'll be using the `EsdtSafe` and `EthereumFeePrepay` contracts. The user will first have to pay the transaction fees through the `EthereumFeePrepay` SC, and then to submit the transaction through the `EsdtSafe` SC. To protect against transaction flood, the fee is locked at the time of saving the transaction.  
 
-After the user played their part, anyone may call `getNextPendingTransaction`. There is no risk of overwriting a transaction, as the function will return an error if the current transaction was not executed yet. `getNextPendingTransaction` will query the `EsdtSafe` contract and, as the name suggests, get a pending transaction (if any). The transaction data (block nonce, transaction nonce, sender, receiver, token_id and amount) will be stored inside the multisig SC for further processing. Any one of the relayers will be able to get the transaction and execute it on the Ethereum side.  
+After the user played their part, any relayer may call `getNextTransactionBatch`. There is no risk of overwriting, as the function will return an error if the current batch was not executed yet. `getNextTransactionBatch` will query the `EsdtSafe` contract and, as the name suggests, get the next N pending transactions. 
+
+The batch will not exceed a pre-defined size, and it will also not bundle transactions that are too far from each other in terms of their creation date. These are configurable constants in the `EsdtSafe` smart contract.
+
+The transaction data (block nonce, transaction nonce, sender, receiver, token_id and amount) will be stored inside the multisig SC for further processing. Any one of the relayers will be able to get the transactions and execute them on the Ethereum side.  
 
 Note: Transaction nonce is not the account nonce of the sender account, and rather an internal nonce used by the `EsdtSafe` smart contract. It can safely be ignored by relayers.  
 
-Once the transaction has been executed, a `SetCurrentTransactionStatus` action will be proposed (through the `proposeEsdtSafeSetCurrentTransactionStatus` endpoint), which will set the status to "Executed" if it was executed successfully, or "Rejected" if it failed for any reason. Success will burn the tokens on the Elrond side, while a failure will return the tokens to the user. Endpoint signature is as follows:  
+Once the transaction has been executed, a `SetCurrentTransactionBatchStatus` action will be proposed (through the `proposeEsdtSafeSetCurrentTransactionBatchStatus` endpoint), which, for each transaction in the batch, will set the status to "Executed" if it was executed successfully, or "Rejected" if it failed for any reason. Success will burn the tokens on the Elrond side, while a failure will return the tokens to the user. Endpoint signature is as follows:  
 
 ```
-#[endpoint(proposeEsdtSafeSetCurrentTransactionStatus)]
-fn propose_esdt_safe_set_current_transaction_status(
+#[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
+fn propose_esdt_safe_set_current_transaction_batch_status(
     &self,
     relayer_reward_address: Address,
-    transaction_status: TransactionStatus,
+    #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
 ) -> SCResult<usize> {
 ```
 
 `relayer_reward_address` is the address of the relayer that processed the transaction on the Ethereum side. The relayer will receive the transaction fee deposited by the user to compensate for the transaction costs on Ethereum.  
 
-`transaction_status` is the status that will be set. `TransactionStatus` is an enum:  
+`tx_batch_status` is the status that will be set for each transaction. They are expected to be in the same order as the order in which the transactions were returned to the relayers.  
+
+`TransactionStatus` is an enum:  
 
 ```
 pub enum TransactionStatus {
@@ -57,51 +63,49 @@ pub enum TransactionStatus {
 }
 ```
 
-Since only `Executed` and `Rejected` are valid, the argument will always be 0x03 or 0x04 respectively.  
+Since only `Executed` and `Rejected` are valid, the status arguments will always be 0x03 or 0x04 respectively.  
 
 And that's about it for Elrond -> Ethereum transactions. The only thing you'll have to figure out yourself is how to decide which relayer executes the transaction and the steps required on the Ethereum side.  
 
 ## Ethereum -> Elrond transaction
 
-In this case the process is very simple, as most of the processing will happen on the Ethereum side. Once all that is complete, all the relayers have to do is propose a `TransferEsdtToken` to the `MultiTransferEsdt` SC, with the appropriate receiver, token identifier and amount. When this action is executed, the user will receive their tokens.  
+In this case the process is very simple, as most of the processing will happen on the Ethereum side. Once all that is complete, all the relayers have to do is propose a `BatchTransferEsdtToken` to the `MultiTransferEsdt` SC, with the appropriate receiver, token identifier and amount. When this action is executed, the user will receive their tokens.  
 
-This is done through the `proposeMultiTransferEsdtTransferEsdtToken` endpoint:  
+This is done through the `proposeMultiTransferEsdtBatch` endpoint:  
 
 ```
-#[endpoint(proposeMultiTransferEsdtTransferEsdtToken)]
-fn propose_multi_transfer_esdt_transfer_esdt_token(
+#[endpoint(proposeMultiTransferEsdtBatch)]
+fn propose_multi_transfer_esdt_batch(
     &self,
-    eth_tx_nonce: u64,
-    to: Address,
-    token_id: TokenIdentifier,
-    amount: Self::BigUint,
-) -> SCResult<usize>
+    batch_id: u64,
+    #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+) -> SCResult<usize> {
 ```
 
-`eth_tx_nonce` is the nonce of the transaction from the Ethereum side. It is used internally to know if an action was proposed for that specific tx.  
+`batch_id` is an id provided by the relayers. It is used internally to know if an action was proposed for that specific batch.  
 
 ## Miscellaneous view functions
 
 ```
-#[view(getActionIdForEthTxNonce)]
-#[storage_mapper("ethTxNonceToActionIdMapping")]
-fn eth_tx_nonce_to_action_id_mapping(
+#[view(getActionIdForBatchId)]
+#[storage_mapper("batchIdToActionIdMapping")]
+fn batch_id_to_action_id_mapping(
     &self,
-    eth_tx_nonce: u64,
+    batch_id: u64,
 ) -> SingleValueMapper<Self::Storage, usize>;
 ```
 
-Returns the action id for the transaction with the nonce given as argument. Returns 0 if it does not exist.  
+Returns the action id for the transaction batch with the id provided as argument. Returns 0 if it does not exist.  
 
 ```
-#[view(getActionIdForSetCurrentTransactionStatus)]
-#[storage_mapper("actionIdForSetCurrentTransactionStatus")]
-fn action_id_for_set_current_transaction_status(
+#[view(getActionIdForSetCurrentTransactionBatchStatus)]
+#[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
+fn action_id_for_set_current_transaction_batch_status(
     &self,
 ) -> SingleValueMapper<Self::Storage, usize>;
 ```
 
-Returns the action id for the `SetCurrentTransactionStatus` action, 0 if it does not exist.  
+Returns the action id for the `SetCurrentTransactionBatchStatus` action, 0 if it does not exist.  
 
 ```
 /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
@@ -123,11 +127,11 @@ fn token_id_for_erc20_address(
 Returns the mapping between Elrond ESDT token identifier and Ethereum ERC20 contract address.  
 
 ```
-#[view(getCurrentTx)]
-fn get_current_tx(&self) -> OptionalResult<TxAsMultiResult<Self::BigUint>>
+#[view(getCurrentTxBatch)]
+    fn get_current_tx_batch(&self) -> MultiResultVec<TxAsMultiResult<Self::BigUint>>
 ```
 
-Returns the current transaction, each field separated by '@'. The result type is defined as follows:
+Returns the current transaction batch, each field of each transaction separated by '@'. The result type is defined as follows:
 
 ```
 pub type TxAsMultiResult<BigUint> =

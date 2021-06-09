@@ -21,6 +21,9 @@ pub struct Round<BigUint: BigUintApi> {
 
 #[elrond_wasm_derive::contract]
 pub trait AggregatorMock {
+    #[init]
+    fn init(&self) {}
+
     #[endpoint(latestRoundData)]
     fn get_latest_round_data(&self) -> OptionalArg<Round<Self::BigUint>> {
         // mock all data as "1"

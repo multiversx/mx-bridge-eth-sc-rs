@@ -1,6 +1,5 @@
 {
     "name": "wrap egld",
-    "gasSchedule": "dummy",
     "steps": [
         {
             "step": "setState",
@@ -38,7 +37,7 @@
                 "value": "500",
                 "function": "wrapEgld",
                 "arguments": [],
-                "gasLimit": "100,000,000",
+                "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
             "expect": {

@@ -21,14 +21,14 @@ path = "../common/eth-address"
 path = "../ethereum-fee-prepay"
 
 [dependencies.elrond-wasm]
-version = "0.16.0"
+version = "0.17.0"
 
 [dependencies.elrond-wasm-derive]
-version = "0.16.0"
+version = "0.17.0"
 
 [dependencies.elrond-wasm-node]
-version = "0.16.0"
+version = "0.17.0"
 optional = true
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.16.0"
+version = "0.17.0"
