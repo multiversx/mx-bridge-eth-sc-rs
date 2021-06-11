@@ -53,8 +53,8 @@
                         "str:aggregator": "sc:price_aggregator",
                         "str:whitelist.value|u32:1": "address:owner",
                         "str:whitelist.value|u32:2": "sc:esdt_safe",
-                        "str:deposit|address:user1": "3,000,000",
-                        "str:deposit|address:user2": "3,000,000",
+                        "str:deposit|address:user1|u8:0": "3,000,000",
+                        "str:deposit|address:user2|u8:0": "3,000,000",
                         "+": ""
                     },
                     "code": "*"
@@ -74,7 +74,8 @@
                 },
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920"
+                    "0x0102030405060708091011121314151617181920",
+                    "str:EGLD"
                 ],
                 "gasLimit": "60,000,000",
                 "gasPrice": "0"

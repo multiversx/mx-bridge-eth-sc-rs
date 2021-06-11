@@ -114,7 +114,7 @@
                 "arguments": [
                     "sc:esdt_safe"
                 ],
-                "gasLimit": "12,000,000",
+                "gasLimit": "15,000,000",
                 "gasPrice": "0"
             },
             "expect": {
