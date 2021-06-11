@@ -192,6 +192,7 @@
                     "balance": "0",
                     "storage": {
                         "str:aggregator": "sc:price_aggregator",
+                        "str:wrappedEthTokenId": "str:WETH-123456",
 
                         "str:whitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:whitelist.node_id|sc:multisig": "1",
