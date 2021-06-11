@@ -173,6 +173,7 @@ pub trait EsdtSafe {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment] payment: Self::BigUint,
         to: EthAddress,
+        token_used_for_fee_payment: TokenIdentifier
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
