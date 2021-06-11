@@ -155,7 +155,7 @@ pub trait EsdtSafe {
                 }
             }
 
-            tx_senders.push(sender);
+            tx_senders.push((sender, nonce));
         }
 
         // pay tx fees to the relayer that processed the transaction
@@ -173,7 +173,7 @@ pub trait EsdtSafe {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment] payment: Self::BigUint,
         to: EthAddress,
-        token_used_for_fee_payment: TokenIdentifier
+        token_used_for_fee_payment: TokenIdentifier,
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
@@ -206,7 +206,7 @@ pub trait EsdtSafe {
 
         // reserve transaction fee beforehand
         // used prevent transaction spam
-        self.reserve_fee(caller);
+        self.reserve_fee(caller, sender_nonce, token_used_for_fee_payment);
 
         Ok(())
     }
@@ -231,13 +231,18 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(&self, from: Address) {
+    fn reserve_fee(
+        &self,
+        from: Address,
+        sender_nonce: usize,
+        token_used_for_fee_payment: TokenIdentifier,
+    ) {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .reserve_fee(from)
+            .reserve_fee(from, sender_nonce, token_used_for_fee_payment)
             .execute_on_dest_context();
     }
 
-    fn pay_fee(&self, tx_senders: Vec<Address>, relayer_reward_address: Address) {
+    fn pay_fee(&self, tx_senders: Vec<(Address, usize)>, relayer_reward_address: Address) {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
             .pay_fee(tx_senders, relayer_reward_address)
             .execute_on_dest_context();

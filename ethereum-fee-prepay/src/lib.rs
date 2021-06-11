@@ -75,7 +75,7 @@ pub trait EthereumFeePrepay {
     // estimate endpoints
 
     #[endpoint(payFee)]
-    fn pay_fee(&self, tx_senders: Vec<(Address, u64)>, relayer: Address) -> SCResult<()> {
+    fn pay_fee(&self, tx_senders: Vec<(Address, usize)>, relayer: Address) -> SCResult<()> {
         self.require_whitelisted()?;
 
         for (sender_address, sender_nonce) in tx_senders {
@@ -100,7 +100,7 @@ pub trait EthereumFeePrepay {
     fn reserve_fee(
         &self,
         sender_address: Address,
-        sender_nonce: u64,
+        sender_nonce: usize,
         token_used_for_fee_payment: TokenIdentifier,
     ) -> SCResult<()> {
         self.require_whitelisted()?;
@@ -238,7 +238,7 @@ pub trait EthereumFeePrepay {
     fn tx_fee_payment(
         &self,
         sender_address: &Address,
-        sender_nonce: u64,
+        sender_nonce: usize,
     ) -> SingleValueMapper<Self::Storage, (TxFeePaymentToken, Self::BigUint)>;
 
     #[storage_mapper("aggregator")]
