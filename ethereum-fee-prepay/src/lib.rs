@@ -90,6 +90,7 @@ pub trait EthereumFeePrepay {
                 self.tx_fee_payment(&sender_address, sender_nonce).get();
             let token_id = self.convert_to_token_id(tx_fee_payment_token);
 
+            self.tx_fee_payment(&sender_address, sender_nonce).clear();
             self.send().direct(&relayer, &token_id, &amount, &[]);
         }
 

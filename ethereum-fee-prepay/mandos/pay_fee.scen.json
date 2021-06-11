@@ -14,10 +14,10 @@
                 "value": "0",
                 "function": "payFee",
                 "arguments": [
-                    "address:user",
+                    "address:user|u32:1",
                     "address:relayer"
                 ],
-                "gasLimit": "10,000,000",
+                "gasLimit": "15,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -41,8 +41,8 @@
                     "storage": {
                         "str:aggregator": "sc:price_aggregator",
                         "str:whitelist.value|u32:1": "address:owner",
-                        "str:deposit|address:user": "1,500,000",
-                        "str:reservedAmount|address:user": "0",
+                        "str:deposit|address:user|u8:0": "1,500,000",
+                        "str:txFeePayment|address:user|u32:1": "",
                         "+": ""
                     },
                     "code": "*"
