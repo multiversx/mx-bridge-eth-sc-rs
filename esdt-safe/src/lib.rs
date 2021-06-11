@@ -25,9 +25,13 @@ pub trait EsdtSafe {
             self.token_whitelist().insert(token.clone());
         }
 
-        self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
-        self.max_block_nonce_diff()
-            .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
+        if self.max_tx_batch_size().is_empty() {
+            self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
+        }
+        if self.max_block_nonce_diff().is_empty() {
+            self.max_block_nonce_diff()
+                .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
+        }
 
         Ok(())
     }
