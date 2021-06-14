@@ -59,14 +59,14 @@ pub trait EthereumFeePrepay {
         tx_fee_payment_token: TxFeePaymentToken,
         #[var_args] opt_amount: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
-        let caller = &self.blockchain().get_caller();
+        let caller = self.blockchain().get_caller();
         let token_id = self.convert_to_token_id(tx_fee_payment_token);
         let amount = match opt_amount {
             OptionalArg::Some(amt) => amt,
             OptionalArg::None => self.deposit(&caller, tx_fee_payment_token).get(),
         };
 
-        self.try_decrease_balance(caller, tx_fee_payment_token, &amount)?;
+        self.try_decrease_balance(&caller, tx_fee_payment_token, &amount)?;
         self.send().direct(&caller, &token_id, &amount, &[]);
 
         Ok(())
