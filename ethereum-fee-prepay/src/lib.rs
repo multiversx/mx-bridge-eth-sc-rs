@@ -8,6 +8,7 @@ use aggregator_proxy::*;
 
 const GWEI_STRING: &[u8] = b"GWEI";
 const EGLD_STRING: &[u8] = b"EGLD";
+const ETH_STRING: &[u8] = b"ETH";
 const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
 
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Copy)]
@@ -124,7 +125,7 @@ pub trait EthereumFeePrepay {
                 (BoxedBytes::from(GWEI_STRING), BoxedBytes::from(EGLD_STRING))
             }
             TxFeePaymentToken::WrappedEth => {
-                (BoxedBytes::from(GWEI_STRING), BoxedBytes::from(GWEI_STRING))
+                (BoxedBytes::from(GWEI_STRING), BoxedBytes::from(ETH_STRING))
             }
         };
 
