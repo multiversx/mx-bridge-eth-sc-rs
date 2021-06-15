@@ -59,10 +59,3 @@ pub enum TransactionStatus {
     Executed,
     Rejected,
 }
-
-#[derive(TopEncode, TopDecode, TypeAbi)]
-pub struct PriorityGasCosts<BigUint: BigUintApi> {
-    pub fast: BigUint,
-    pub average: BigUint,
-    pub low: BigUint,
-}
