@@ -38,7 +38,7 @@
                     "storage": {
                         "str:aggregator": "sc:price_aggregator",
                         "str:whitelist.value|u32:1": "address:owner",
-                        "str:deposit|address:user": "3,000,000",
+                        "str:deposit|address:user|u8:0": "3,000,000",
                         "+": ""
                     },
                     "code": "*"

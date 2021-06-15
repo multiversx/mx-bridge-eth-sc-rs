@@ -8,7 +8,14 @@ use aggregator_proxy::*;
 
 const GWEI_STRING: &[u8] = b"GWEI";
 const EGLD_STRING: &[u8] = b"EGLD";
+const ETH_STRING: &[u8] = b"ETH";
 const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
+
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Copy)]
+pub enum TxFeePaymentToken {
+    Egld,
+    WrappedEth,
+}
 
 #[elrond_wasm_derive::contract]
 pub trait EthereumFeePrepay {
@@ -16,31 +23,52 @@ pub trait EthereumFeePrepay {
     fn aggregator_proxy(&self, sc_address: Address) -> aggregator_proxy::Proxy<Self::SendApi>;
 
     #[init]
-    fn init(&self, aggregator: Address) {
+    fn init(&self, aggregator: Address, wrapped_eth_token_id: TokenIdentifier) -> SCResult<()> {
         self.aggregator().set(&aggregator);
         self.whitelist().insert(self.blockchain().get_caller());
+
+        require!(
+            wrapped_eth_token_id.is_valid_esdt_identifier(),
+            "Invalid token ID"
+        );
+        self.wrapped_eth_token_id().set(&wrapped_eth_token_id);
+
+        Ok(())
     }
 
     // balance management endpoints
 
-    #[payable("EGLD")]
+    #[payable("*")]
     #[endpoint(depositTransactionFee)]
-    fn deposit_transaction_fee(&self, #[payment] payment: Self::BigUint) {
+    fn deposit_transaction_fee(
+        &self,
+        #[payment_token] payment_token: TokenIdentifier,
+        #[payment] payment: Self::BigUint,
+    ) -> SCResult<()> {
         let caller = &self.blockchain().get_caller();
-        self.increase_balance(caller, &payment);
+        let tx_fee_payment_token = self.try_convert_to_tx_fee_payment_token(&payment_token)?;
+
+        self.increase_balance(caller, tx_fee_payment_token, &payment);
+
+        Ok(())
     }
 
     /// defaults to max amount
     #[endpoint]
-    fn withdraw(&self, #[var_args] opt_amount: OptionalArg<Self::BigUint>) -> SCResult<()> {
-        let caller = &self.blockchain().get_caller();
+    fn withdraw(
+        &self,
+        tx_fee_payment_token: TxFeePaymentToken,
+        #[var_args] opt_amount: OptionalArg<Self::BigUint>,
+    ) -> SCResult<()> {
+        let caller = self.blockchain().get_caller();
+        let token_id = self.convert_to_token_id(tx_fee_payment_token);
         let amount = match opt_amount {
             OptionalArg::Some(amt) => amt,
-            OptionalArg::None => self.deposit(&caller).get(),
+            OptionalArg::None => self.deposit(&caller, tx_fee_payment_token).get(),
         };
 
-        self.try_decrease_balance(caller, &amount)?;
-        self.send().direct_egld(caller, &amount, &[]);
+        self.try_decrease_balance(&caller, tx_fee_payment_token, &amount)?;
+        self.send().direct(&caller, &token_id, &amount, &[]);
 
         Ok(())
     }
@@ -48,38 +76,64 @@ pub trait EthereumFeePrepay {
     // estimate endpoints
 
     #[endpoint(payFee)]
-    fn pay_fee(&self, tx_senders: Vec<Address>, relayer: Address) -> SCResult<()> {
+    fn pay_fee(&self, tx_senders: Vec<(Address, usize)>, relayer: Address) -> SCResult<()> {
         self.require_whitelisted()?;
 
-        // To save gas for the relayers, we always use the latest queried value
-        // No need to check for empty, since this is guaranteed to be set by a previous CreateTransaction in EsdtSafe
-        let estimate = self.last_query_price().get() * ETH_ERC20_TX_GAS_LIMIT.into();
-        for tx_sender in tx_senders {
-            self.transfer(&tx_sender, &relayer, &estimate);
+        for (sender_address, sender_nonce) in tx_senders {
+            require!(
+                !self
+                    .tx_fee_payment(&sender_address, sender_nonce)
+                    .is_empty(),
+                "Empty payment entry"
+            );
+
+            let (tx_fee_payment_token, amount) =
+                self.tx_fee_payment(&sender_address, sender_nonce).get();
+            let token_id = self.convert_to_token_id(tx_fee_payment_token);
+
+            self.tx_fee_payment(&sender_address, sender_nonce).clear();
+            self.send().direct(&relayer, &token_id, &amount, &[]);
         }
 
         Ok(())
     }
 
     #[endpoint(reserveFee)]
-    fn reserve_fee(&self, address: Address) -> SCResult<()> {
+    fn reserve_fee(
+        &self,
+        sender_address: Address,
+        sender_nonce: usize,
+        token_used_for_fee_payment: TokenIdentifier,
+    ) -> SCResult<()> {
         self.require_whitelisted()?;
 
-        let estimate = self.compute_estimate();
-        self.try_reserve_from_balance(&address, &estimate)?;
+        let tx_fee_payment_token =
+            self.try_convert_to_tx_fee_payment_token(&token_used_for_fee_payment)?;
+        let estimate = self.compute_estimate(tx_fee_payment_token);
+
+        self.try_decrease_balance(&sender_address, tx_fee_payment_token, &estimate)?;
+        self.tx_fee_payment(&sender_address, sender_nonce)
+            .set(&(tx_fee_payment_token, estimate));
 
         Ok(())
     }
 
     #[endpoint(computeEstimate)]
-    fn compute_estimate(&self) -> Self::BigUint {
+    fn compute_estimate(&self, tx_fee_payment_token: TxFeePaymentToken) -> Self::BigUint {
+        let (from_token_name, to_token_name) = match tx_fee_payment_token {
+            TxFeePaymentToken::Egld => {
+                (BoxedBytes::from(GWEI_STRING), BoxedBytes::from(EGLD_STRING))
+            }
+            TxFeePaymentToken::WrappedEth => {
+                (BoxedBytes::from(GWEI_STRING), BoxedBytes::from(ETH_STRING))
+            }
+        };
+
         let aggregator_result: AggregatorResult<Self::BigUint> = self
             .aggregator_proxy(self.aggregator().get())
-            .latest_price_feed(BoxedBytes::from(GWEI_STRING), BoxedBytes::from(EGLD_STRING))
+            .latest_price_feed(from_token_name, to_token_name)
             .execute_on_dest_context()
             .into();
-
-        self.last_query_price().set(&aggregator_result.price);
 
         aggregator_result.price * ETH_ERC20_TX_GAS_LIMIT.into()
     }
@@ -122,57 +176,48 @@ pub trait EthereumFeePrepay {
         Ok(())
     }
 
-    fn increase_balance(&self, address: &Address, amount: &Self::BigUint) {
-        let mut deposit = self.deposit(address).get();
-        deposit += amount;
-        self.deposit(address).set(&deposit);
+    fn increase_balance(
+        &self,
+        address: &Address,
+        tx_fee_payment_token: TxFeePaymentToken,
+        amount: &Self::BigUint,
+    ) {
+        self.deposit(address, tx_fee_payment_token)
+            .update(|deposit| *deposit += amount);
     }
 
-    fn try_decrease_balance(&self, address: &Address, amount: &Self::BigUint) -> SCResult<()> {
-        let mut deposit = self.deposit(address).get();
-
-        require!(&deposit >= amount, "insufficient balance");
-
-        deposit -= amount;
-        self.deposit(address).set(&deposit);
-
-        Ok(())
+    fn try_decrease_balance(
+        &self,
+        address: &Address,
+        tx_fee_payment_token: TxFeePaymentToken,
+        amount: &Self::BigUint,
+    ) -> SCResult<()> {
+        self.deposit(address, tx_fee_payment_token)
+            .update(|deposit| {
+                require!(&*deposit >= amount, "insufficient balance");
+                *deposit -= amount;
+                Ok(())
+            })
     }
 
-    fn transfer(&self, from: &Address, to: &Address, amount: &Self::BigUint) {
-        let reserve = self.reserved_amount(from).get();
-
-        // This is done to prevent a potential bug
-        // If the fee increases even slightly between the "reserve" and "pay"
-        // The call would fail with not enough funds
-        let amount_to_send = if &reserve < amount {
-            reserve
+    fn try_convert_to_tx_fee_payment_token(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SCResult<TxFeePaymentToken> {
+        if token_id.is_egld() {
+            Ok(TxFeePaymentToken::Egld)
+        } else if token_id == &self.wrapped_eth_token_id().get() {
+            Ok(TxFeePaymentToken::WrappedEth)
         } else {
-            amount.clone()
-        };
-
-        self.decrease_reserve(from, &amount_to_send);
-        self.send()
-            .direct_egld(to, &amount_to_send, b"Ethereum tx fees");
+            sc_error!("Wrong payment token")
+        }
     }
 
-    fn increase_reserve(&self, address: &Address, amount: &Self::BigUint) {
-        let mut reserve = self.reserved_amount(address).get();
-        reserve += amount;
-        self.reserved_amount(address).set(&reserve);
-    }
-
-    fn decrease_reserve(&self, address: &Address, amount: &Self::BigUint) {
-        let mut reserve = self.reserved_amount(address).get();
-        reserve -= amount;
-        self.reserved_amount(address).set(&reserve);
-    }
-
-    fn try_reserve_from_balance(&self, from: &Address, amount: &Self::BigUint) -> SCResult<()> {
-        self.try_decrease_balance(from, amount)?;
-        self.increase_reserve(from, amount);
-
-        Ok(())
+    fn convert_to_token_id(&self, tx_fee_payment_token: TxFeePaymentToken) -> TokenIdentifier {
+        match tx_fee_payment_token {
+            TxFeePaymentToken::Egld => TokenIdentifier::egld(),
+            TxFeePaymentToken::WrappedEth => self.wrapped_eth_token_id().get(),
+        }
     }
 
     // storage
@@ -180,18 +225,24 @@ pub trait EthereumFeePrepay {
     #[storage_mapper("whitelist")]
     fn whitelist(&self) -> SetMapper<Self::Storage, Address>;
 
+    #[storage_mapper("wrappedEthTokenId")]
+    fn wrapped_eth_token_id(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
+
     #[view(getDeposit)]
     #[storage_mapper("deposit")]
-    fn deposit(&self, address: &Address) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    fn deposit(
+        &self,
+        address: &Address,
+        token: TxFeePaymentToken,
+    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
-    #[view(getReservedAmount)]
-    #[storage_mapper("reservedAmount")]
-    fn reserved_amount(&self, address: &Address)
-        -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    #[storage_mapper("txFeePayment")]
+    fn tx_fee_payment(
+        &self,
+        sender_address: &Address,
+        sender_nonce: usize,
+    ) -> SingleValueMapper<Self::Storage, (TxFeePaymentToken, Self::BigUint)>;
 
     #[storage_mapper("aggregator")]
     fn aggregator(&self) -> SingleValueMapper<Self::Storage, Address>;
-
-    #[storage_mapper("lastQueryPrice")]
-    fn last_query_price(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 }

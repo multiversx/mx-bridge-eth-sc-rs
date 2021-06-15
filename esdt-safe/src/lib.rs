@@ -25,9 +25,13 @@ pub trait EsdtSafe {
             self.token_whitelist().insert(token.clone());
         }
 
-        self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
-        self.max_block_nonce_diff()
-            .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
+        if self.max_tx_batch_size().is_empty() {
+            self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
+        }
+        if self.max_block_nonce_diff().is_empty() {
+            self.max_block_nonce_diff()
+                .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
+        }
 
         Ok(())
     }
@@ -151,7 +155,7 @@ pub trait EsdtSafe {
                 }
             }
 
-            tx_senders.push(sender);
+            tx_senders.push((sender, nonce));
         }
 
         // pay tx fees to the relayer that processed the transaction
@@ -169,6 +173,7 @@ pub trait EsdtSafe {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment] payment: Self::BigUint,
         to: EthAddress,
+        token_used_for_fee_payment: TokenIdentifier,
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
@@ -201,7 +206,7 @@ pub trait EsdtSafe {
 
         // reserve transaction fee beforehand
         // used prevent transaction spam
-        self.reserve_fee(caller);
+        self.reserve_fee(caller, sender_nonce, token_used_for_fee_payment);
 
         Ok(())
     }
@@ -215,7 +220,7 @@ pub trait EsdtSafe {
     fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
         let _ = self
             .send()
-            .direct(to, token_id, &amount, self.data_or_empty(to, b"refund"));
+            .direct(to, token_id, amount, self.data_or_empty(to, b"refund"));
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -226,13 +231,18 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(&self, from: Address) {
+    fn reserve_fee(
+        &self,
+        from: Address,
+        sender_nonce: usize,
+        token_used_for_fee_payment: TokenIdentifier,
+    ) {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .reserve_fee(from)
+            .reserve_fee(from, sender_nonce, token_used_for_fee_payment)
             .execute_on_dest_context();
     }
 
-    fn pay_fee(&self, tx_senders: Vec<Address>, relayer_reward_address: Address) {
+    fn pay_fee(&self, tx_senders: Vec<(Address, usize)>, relayer_reward_address: Address) {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
             .pay_fee(tx_senders, relayer_reward_address)
             .execute_on_dest_context();
