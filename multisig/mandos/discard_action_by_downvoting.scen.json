@@ -1,0 +1,135 @@
+{
+    "name": "discard action by downvoting",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "create_elrond_to_ethereum_tx_batch.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "propose-transfer-to-smart-contract",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "proposeMultiTransferEsdtBatch",
+                "arguments": [
+                    "1",
+                    "sc:egld_esdt_swap", "str:WEGLD-123456", "500",
+                    "sc:egld_esdt_swap", "str:WETH-123456", "500"
+                ],
+                "gasLimit": "30,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "1"
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "first-relayer-downvote",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "downvote",
+                "arguments": [
+                    "1"
+                ],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "second-relayer-downvote",
+            "tx": {
+                "from": "address:relayer2",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "downvote",
+                "arguments": [
+                    "1"
+                ],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "discard-action",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "discardAction",
+                "arguments": [
+                    "1"
+                ],
+                "gasLimit": "25,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "sc:multisig": {
+                    "nonce": "*",
+                    "balance": "*",
+                    "storage": {
+                        "str:currentTxBatch": [
+                            {
+                                "1-block_nonce": "u64:0",
+                                "2-nonce": "u32:1",
+                                "3-from": "address:user",
+                                "4-to": "0x0102030405060708091011121314151617181920",
+                                "5-token_identifier": "nested:str:WEGLD-123456",
+                                "6-amount": "biguint:1000"
+                            },
+                            {
+                                "1-block_nonce": "u64:0",
+                                "2-nonce": "u32:2",
+                                "3-from": "address:user",
+                                "4-to": "0x0102030405060708091011121314151617181920",
+                                "5-token_identifier": "nested:str:WETH-123456",
+                                "6-amount": "biguint:1000"
+                            }
+                        ],
+                        "str:actionIdForSetCurrentTransactionBatchStatus": "",
+                        "str:action_data.item|u32:1": "",
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        }
+    ]
+}
