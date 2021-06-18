@@ -40,6 +40,9 @@ pub trait StorageModule {
     #[storage_mapper("action_signer_ids")]
     fn action_signer_ids(&self, action_id: usize) -> SingleValueMapper<Self::Storage, Vec<usize>>;
 
+    #[storage_mapper("action_downvoter_ids")]
+    fn action_downvoter_ids(&self, action_id: usize) -> SingleValueMapper<Self::Storage, Vec<usize>>;
+
     /// The required amount to stake for accepting relayer position
     #[view(getRequiredStakeAmount)]
     #[storage_mapper("requiredStakeAmount")]

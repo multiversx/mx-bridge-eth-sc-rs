@@ -57,22 +57,71 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         Ok(())
     }
 
+    #[endpoint]
+    fn downvote(&self, action_id: usize) -> SCResult<()> {
+        require!(
+            !self.action_mapper().item_is_empty_unchecked(action_id),
+            "action does not exist"
+        );
+
+        let caller_address = self.blockchain().get_caller();
+        let caller_id = self.user_mapper().get_user_id(&caller_address);
+        let caller_role = self.get_user_id_to_role(caller_id);
+        require!(caller_role.can_sign(), "only board members can downvote");
+        require!(self.has_enough_stake(&caller_address), "not enough stake");
+
+        self.action_downvoter_ids(action_id)
+            .update(|downvoter_ids| {
+                if !downvoter_ids.contains(&caller_id) {
+                    downvoter_ids.push(caller_id);
+                }
+            });
+
+        Ok(())
+    }
+
     /// Clears storage pertaining to an action that is no longer supposed to be executed.
-    /// Any signatures that the action received must first be removed, via `unsign`.
+    /// Any signatures that the action received must first be removed, via `unsign`,
+    /// or have enough downvotes.
     /// Otherwise this endpoint would be prone to abuse.
     #[endpoint(discardAction)]
     fn discard_action(&self, action_id: usize) -> SCResult<()> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
+        let quorum = self.quorum().get();
+
+        require!(
+            !self.action_mapper().item_is_empty_unchecked(action_id),
+            "action does not exist"
+        );
         require!(
             caller_role.can_discard_action(),
             "only board members and proposers can discard actions"
         );
         require!(
-            self.get_action_valid_signer_count(action_id) == 0,
-            "cannot discard action with valid signatures"
+            self.get_action_valid_signer_count(action_id) == 0
+                || self.get_action_valid_downvoter_count(action_id) >= quorum,
+            "cannot discard action with valid signatures and too few downvotes"
         );
+
+        // delete additional ID mappings for complex actions
+        match self.action_mapper().get(action_id) {
+            Action::BatchTransferEsdtToken {
+                batch_id,
+                transfers: _,
+            } => {
+                self.batch_id_to_action_id_mapping(batch_id).clear();
+            }
+            Action::SetCurrentTransactionBatchStatus {
+                relayer_reward_address: _,
+                tx_batch_status: _,
+            } => {
+                self.action_id_for_set_current_transaction_batch_status()
+                    .clear();
+            }
+            _ => {}
+        }
 
         self.clear_action(action_id);
         Ok(())
@@ -136,6 +185,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
     fn clear_action(&self, action_id: usize) {
         self.action_mapper().clear_entry_unchecked(action_id);
         self.action_signer_ids(action_id).clear();
+        self.action_downvoter_ids(action_id).clear();
     }
 
     /// Can be used to:
