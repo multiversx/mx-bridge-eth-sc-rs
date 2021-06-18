@@ -17,7 +17,7 @@
                     "address:relayer1",
                     "4", "4"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
