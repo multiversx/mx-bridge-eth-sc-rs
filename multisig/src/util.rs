@@ -104,6 +104,18 @@ pub trait UtilModule: crate::storage::StorageModule {
             .count()
     }
 
+    #[view(getActionValidDownvoterCount)]
+    fn get_action_valid_downvoter_count(&self, action_id: usize) -> usize {
+        let downvoter_ids = self.action_downvoter_ids(action_id).get();
+        downvoter_ids
+            .iter()
+            .filter(|downvoter_id| {
+                let downvoter_role = self.get_user_id_to_role(**downvoter_id);
+                downvoter_role.can_sign()
+            })
+            .count()
+    }
+
     /// Returns `true` (`1`) if `getActionValidSignerCount >= getQuorum`.
     #[view(quorumReached)]
     fn quorum_reached(&self, action_id: usize) -> bool {
