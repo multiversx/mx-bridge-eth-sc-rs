@@ -65,7 +65,6 @@ pub trait UtilModule: crate::storage::StorageModule {
     #[view(getAllStakedRelayers)]
     fn get_all_staked_relayers(&self) -> MultiResultVec<Address> {
         let mut relayers = self.get_all_board_members().into_vec();
-
         relayers.retain(|relayer| self.has_enough_stake(relayer));
 
         relayers.into()
