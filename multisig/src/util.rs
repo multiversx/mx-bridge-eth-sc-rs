@@ -62,6 +62,20 @@ pub trait UtilModule: crate::storage::StorageModule {
         self.get_all_users_with_role(UserRole::BoardMember)
     }
 
+    #[view(getAllStakedRelayers)]
+    fn get_all_staked_relayers(&self) -> MultiResultVec<Address> {
+        let all_relayers = self.get_all_board_members().into_vec();
+        let mut staked_relayers = Vec::new();
+
+        for relayer in all_relayers {
+            if self.has_enough_stake(&relayer) {
+                staked_relayers.push(relayer);
+            }
+        }
+
+        staked_relayers.into()
+    }
+
     /// Lists all proposers that are not board members.
     #[view(getAllProposers)]
     fn get_all_proposers(&self) -> MultiResultVec<Address> {
