@@ -31,14 +31,14 @@ pub trait EthereumFeePrepay {
     /// defaults to max amount
     #[endpoint]
     fn withdraw(&self, #[var_args] opt_amount: OptionalArg<Self::BigUint>) -> SCResult<()> {
-        let caller = &self.blockchain().get_caller();
+        let caller = self.blockchain().get_caller();
         let amount = match opt_amount {
             OptionalArg::Some(amt) => amt,
             OptionalArg::None => self.deposit(&caller).get(),
         };
 
-        self.try_decrease_balance(caller, &amount)?;
-        self.send().direct_egld(caller, &amount, &[]);
+        self.try_decrease_balance(&caller, &amount)?;
+        self.send().direct_egld(&caller, &amount, &[]);
 
         Ok(())
     }

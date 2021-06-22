@@ -48,7 +48,7 @@ pub trait UtilModule: crate::storage::StorageModule {
     /// `2` = can propose and sign.
     #[view(userRole)]
     fn user_role(&self, user: &Address) -> UserRole {
-        let user_id = self.user_mapper().get_user_id(&user);
+        let user_id = self.user_mapper().get_user_id(user);
         if user_id == 0 {
             UserRole::None
         } else {
