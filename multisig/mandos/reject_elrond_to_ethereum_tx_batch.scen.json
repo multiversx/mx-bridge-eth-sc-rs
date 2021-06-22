@@ -15,9 +15,10 @@
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
                     "address:relayer1",
+                    "1",
                     "4", "4"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -37,12 +38,12 @@
                     "nonce": "*",
                     "balance": "*",
                     "storage": {
-                        "str:actionIdForSetCurrentTransactionBatchStatus": "1",
                         "str:action_data.item|u32:1": {
                             "1-action_type": "u8:6",
                             "2-relayer_reward_address": "address:relayer1",
-                            "3-tx_batch_status_len": "u32:2",
-                            "4-tx_batch_status_vec": "u8:4|u8:4"
+                            "3-batch_id": "u32:1",
+                            "4-tx_batch_status_len": "u32:2",
+                            "5-tx_batch_status_vec": "u8:4|u8:4"
                         },
                         "+": ""
                     },

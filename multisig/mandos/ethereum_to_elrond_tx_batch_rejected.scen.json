@@ -38,7 +38,6 @@
                     "nonce": "*",
                     "balance": "*",
                     "storage": {
-                        "str:batchIdToActionIdMapping|u64:1": "1",
                         "str:action_data.item|u32:1": {
                             "1-action_type": "u8:7",
                             "2-batch_id": "u64:1",
