@@ -6,6 +6,7 @@ mod action;
 mod user_role;
 
 use action::Action;
+use esdt_safe::EsdtSafeTxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
@@ -68,9 +69,7 @@ pub trait Multisig:
     // ESDT Safe SC calls
 
     #[endpoint(getNextTransactionBatch)]
-    fn get_next_transaction_batch(
-        &self,
-    ) -> SCResult<MultiResultVec<TxAsMultiResult<Self::BigUint>>> {
+    fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
         self.require_esdt_safe_deployed()?;
         require!(
             self.current_tx_batch().is_empty(),
@@ -84,27 +83,29 @@ pub trait Multisig:
             "Only board members can call this function"
         );
 
-        let tx_batch = self
+        let esdt_safe_tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_next_transaction_batch()
-            .execute_on_dest_context()
-            .into_vec();
+            .execute_on_dest_context();
+        let esdt_safe_batch_id = esdt_safe_tx_batch.batch_id;
+        let batch_len = esdt_safe_tx_batch.transactions.len();
 
-        self.current_tx_batch().set(&tx_batch);
+        self.current_tx_batch().set(&esdt_safe_tx_batch);
 
         // convert into MultiResult for easier parsing
-        let mut result_vec = Vec::with_capacity(tx_batch.len());
-        for tx in tx_batch {
+        let mut result_vec = Vec::with_capacity(batch_len);
+        for tx in esdt_safe_tx_batch.transactions {
             result_vec.push(tx.into_multiresult());
         }
 
-        Ok(result_vec.into())
+        Ok((esdt_safe_batch_id, result_vec.into()).into())
     }
 
     #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
         relayer_reward_address: Address,
+        esdt_safe_batch_id: usize,
         #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
         self.require_esdt_safe_deployed()?;
@@ -113,26 +114,38 @@ pub trait Multisig:
             "There is no transaction to set status for"
         );
         require!(
-            self.action_id_for_set_current_transaction_batch_status()
-                .get()
+            self.action_id_for_set_current_transaction_batch_status(
+                esdt_safe_batch_id,
+                &tx_batch_status.0
+            )
+            .get()
                 == 0,
-            "Set status action already proposed"
+            "Action already proposed"
         );
 
-        let current_batch_len = self.current_tx_batch().get().len();
+        let esdt_safe_tx_batch = self.current_tx_batch().get();
+        let current_batch_len = esdt_safe_tx_batch.transactions.len();
         let status_batch_len = tx_batch_status.len();
         require!(
             current_batch_len == status_batch_len,
             "Number of statuses provided must be equal to number of transactions in current batch"
         );
+        require!(
+            esdt_safe_batch_id == esdt_safe_tx_batch.batch_id,
+            "Current EsdtSafe tx batch does not have the provided ID"
+        );
 
         let action_id = self.propose_action(Action::SetCurrentTransactionBatchStatus {
             relayer_reward_address,
-            tx_batch_status: tx_batch_status.into_vec(),
+            esdt_safe_batch_id,
+            tx_batch_status: tx_batch_status.0.clone(),
         })?;
 
-        self.action_id_for_set_current_transaction_batch_status()
-            .set(&action_id);
+        self.action_id_for_set_current_transaction_batch_status(
+            esdt_safe_batch_id,
+            &tx_batch_status.0,
+        )
+        .set(&action_id);
 
         Ok(action_id)
     }
@@ -188,15 +201,16 @@ pub trait Multisig:
     }
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> MultiResultVec<TxAsMultiResult<Self::BigUint>> {
-        let current_tx_batch = self.current_tx_batch().get();
+    fn get_current_tx_batch(&self) -> EsdtSafeTxBatchSplitInFields<Self::BigUint> {
+        let esdt_safe_tx_batch = self.current_tx_batch().get();
+        let batch_len = esdt_safe_tx_batch.transactions.len();
 
-        let mut result_vec = Vec::with_capacity(current_tx_batch.len());
-        for tx in current_tx_batch {
+        let mut result_vec = Vec::with_capacity(batch_len);
+        for tx in esdt_safe_tx_batch.transactions {
             result_vec.push(tx.into_multiresult());
         }
 
-        result_vec.into()
+        (esdt_safe_tx_batch.batch_id, result_vec.into()).into()
     }
 
     #[view(isValidActionId)]
@@ -230,10 +244,14 @@ pub trait Multisig:
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
     fn was_set_current_transaction_batch_status_action_proposed(
         &self,
+        esdt_safe_batch_id: usize,
         #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
     ) -> bool {
         let action_id = self
-            .action_id_for_set_current_transaction_batch_status()
+            .action_id_for_set_current_transaction_batch_status(
+                esdt_safe_batch_id,
+                &expected_tx_batch_status.0,
+            )
             .get();
 
         if self.is_valid_action_id(action_id) {
@@ -242,10 +260,11 @@ pub trait Multisig:
             match action {
                 Action::SetCurrentTransactionBatchStatus {
                     relayer_reward_address: _,
+                    esdt_safe_batch_id: _,
                     tx_batch_status,
                 } => {
                     for (expected_status, actual_status) in expected_tx_batch_status
-                        .into_vec()
+                        .0
                         .iter()
                         .zip(tx_batch_status.iter())
                     {
@@ -348,13 +367,18 @@ pub trait Multisig:
             }
             Action::SetCurrentTransactionBatchStatus {
                 relayer_reward_address,
+                esdt_safe_batch_id,
                 tx_batch_status,
             } => {
-                let current_tx_batch = self.current_tx_batch().get();
+                let esdt_safe_tx_batch = self.current_tx_batch().get();
+                let current_tx_batch = &esdt_safe_tx_batch.transactions;
 
                 self.current_tx_batch().clear();
-                self.action_id_for_set_current_transaction_batch_status()
-                    .clear();
+                self.action_id_for_set_current_transaction_batch_status(
+                    esdt_safe_batch_id,
+                    &tx_batch_status,
+                )
+                .clear();
 
                 let mut args = Vec::new();
                 for (tx, tx_status) in current_tx_batch.iter().zip(tx_batch_status.iter()) {

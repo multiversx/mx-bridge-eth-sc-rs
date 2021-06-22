@@ -5,9 +5,19 @@ use eth_address::*;
 use transaction::*;
 
 elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_BLOCK_NONCE_DIFF: u64 = 100;
+
+#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode)]
+pub struct EsdtSafeTxBatch<BigUint: BigUintApi> {
+    pub batch_id: usize,
+    pub transactions: Vec<Transaction<BigUint>>,
+}
+
+pub type EsdtSafeTxBatchSplitInFields<BigUint> =
+    MultiResult2<usize, MultiResultVec<TxAsMultiResult<BigUint>>>;
 
 #[elrond_wasm_derive::contract]
 pub trait EsdtSafe {
@@ -81,7 +91,7 @@ pub trait EsdtSafe {
     }
 
     #[endpoint(getNextTransactionBatch)]
-    fn get_next_transaction_batch(&self) -> SCResult<MultiResultVec<Transaction<Self::BigUint>>> {
+    fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatch<Self::BigUint>> {
         only_owner!(self, "only owner may call this function");
 
         let mut tx_batch = Vec::new();
@@ -109,7 +119,12 @@ pub trait EsdtSafe {
             }
         }
 
-        Ok(tx_batch.into())
+        let batch_id = self.last_valid_batch_id().update(|batch_id| {
+            *batch_id += 1;
+            *batch_id
+        });
+
+        Ok(EsdtSafeTxBatch { batch_id, transactions: tx_batch })
     }
 
     #[endpoint(setTransactionBatchStatus)]
@@ -311,6 +326,9 @@ pub trait EsdtSafe {
     fn pending_transaction_address_nonce_list(
         &self,
     ) -> LinkedListMapper<Self::Storage, (Address, TxNonce)>;
+
+    #[storage_mapper("lastValidBatchId")]
+    fn last_valid_batch_id(&self) -> SingleValueMapper<Self::Storage, usize>;
 
     // configurable
 
