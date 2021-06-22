@@ -211,7 +211,7 @@ pub trait EsdtSafe {
     fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
         let _ = self
             .send()
-            .direct(to, token_id, &amount, self.data_or_empty(to, b"refund"));
+            .direct(to, token_id, amount, self.data_or_empty(to, b"refund"));
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {

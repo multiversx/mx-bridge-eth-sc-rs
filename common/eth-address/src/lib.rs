@@ -28,7 +28,7 @@ impl<'a> From<&'a [u8]> for EthAddress {
     fn from(slice: &'a [u8]) -> Self {
         let mut zero = Self::zero();
         if slice.len() == ETH_ADDRESS_LEN {
-            (*zero.0).copy_from_slice(&slice)
+            (*zero.0).copy_from_slice(slice)
         }
 
         zero
