@@ -1,5 +1,7 @@
 elrond_wasm::imports!();
 
+use multi_transfer_esdt::SingleTransferTuple;
+
 use crate::action::Action;
 use crate::action::ActionFullInfo;
 use crate::user_role::UserRole;
@@ -172,5 +174,17 @@ pub trait UtilModule: crate::storage::StorageModule {
         let amount_staked = self.amount_staked(board_member_address).get();
 
         amount_staked >= required_stake
+    }
+
+    fn transfers_multiarg_to_tuples_vec(
+        &self,
+        transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    ) -> Vec<SingleTransferTuple<Self::BigUint>> {
+        let mut transfers_as_tuples = Vec::new();
+        for transfer in transfers.into_vec() {
+            transfers_as_tuples.push(transfer.into_tuple());
+        }
+
+        transfers_as_tuples
     }
 }

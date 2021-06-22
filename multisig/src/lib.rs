@@ -159,22 +159,22 @@ pub trait Multisig:
         #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
     ) -> SCResult<usize> {
         self.require_multi_transfer_esdt_deployed()?;
+
+        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+
         require!(
-            self.batch_id_to_action_id_mapping(batch_id).is_empty(),
+            self.batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
+                .is_empty(),
             "This batch was already proposed"
         );
 
-        let mut transfers_as_tuples = Vec::new();
-        for transfer in transfers.into_vec() {
-            transfers_as_tuples.push(transfer.into_tuple());
-        }
-
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
             batch_id,
-            transfers: transfers_as_tuples,
+            transfers: transfers_as_tuples.clone(),
         })?;
 
-        self.batch_id_to_action_id_mapping(batch_id).set(&action_id);
+        self.batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
+            .set(&action_id);
 
         Ok(action_id)
     }
@@ -235,8 +235,15 @@ pub trait Multisig:
     /// If the mapping was made, it means that the transfer action was proposed in the past
     /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]
-    fn was_transfer_action_proposed(&self, batch_id: u64) -> bool {
-        let action_id = self.batch_id_to_action_id_mapping(batch_id).get();
+    fn was_transfer_action_proposed(
+        &self,
+        batch_id: u64,
+        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    ) -> bool {
+        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+        let action_id = self
+            .batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
+            .get();
 
         self.is_valid_action_id(action_id)
     }

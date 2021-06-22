@@ -2,7 +2,8 @@ elrond_wasm::imports!();
 
 use esdt_safe::EsdtSafeTxBatch;
 use eth_address::EthAddress;
-use transaction::{TransactionStatus};
+use multi_transfer_esdt::SingleTransferTuple;
+use transaction::TransactionStatus;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
@@ -69,14 +70,14 @@ pub trait StorageModule {
     fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
 
     #[storage_mapper("currentTxBatch")]
-    fn current_tx_batch(&self)
-        -> SingleValueMapper<Self::Storage, EsdtSafeTxBatch<Self::BigUint>>;
+    fn current_tx_batch(&self) -> SingleValueMapper<Self::Storage, EsdtSafeTxBatch<Self::BigUint>>;
 
     #[view(getActionIdForBatchId)]
     #[storage_mapper("batchIdToActionIdMapping")]
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
+        transfers: &[SingleTransferTuple<Self::BigUint>],
     ) -> SingleValueMapper<Self::Storage, usize>;
 
     #[view(getActionIdForSetCurrentTransactionBatchStatus)]

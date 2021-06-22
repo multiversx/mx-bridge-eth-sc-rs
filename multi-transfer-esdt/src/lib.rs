@@ -4,6 +4,8 @@ use transaction::TransactionStatus;
 
 elrond_wasm::imports!();
 
+pub type SingleTransferTuple<BigUint> = (Address, TokenIdentifier, BigUint);
+
 #[elrond_wasm_derive::contract]
 pub trait MultiTransferEsdt {
     #[init]
@@ -35,7 +37,7 @@ pub trait MultiTransferEsdt {
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
-        #[var_args] transfers: VarArgs<(Address, TokenIdentifier, Self::BigUint)>,
+        #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
     ) -> SCResult<MultiResultVec<TransactionStatus>> {
         only_owner!(self, "only owner may call this function");
 
@@ -46,8 +48,7 @@ pub trait MultiTransferEsdt {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
-            if !self.token_whitelist().contains(token_id)
-                || !self.is_local_mint_role_set(token_id)
+            if !self.token_whitelist().contains(token_id) || !self.is_local_mint_role_set(token_id)
             {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
