@@ -240,12 +240,23 @@ pub trait Multisig:
         batch_id: u64,
         #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
     ) -> bool {
+        let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
+
+        self.is_valid_action_id(action_id)
+    }
+
+    #[view(getActionIdForTransferBatch)]
+    fn get_action_id_for_transfer_batch(
+        &self,
+        batch_id: u64,
+        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
         let action_id = self
             .batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
             .get();
 
-        self.is_valid_action_id(action_id)
+        action_id
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]

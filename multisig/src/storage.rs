@@ -72,7 +72,6 @@ pub trait StorageModule {
     #[storage_mapper("currentTxBatch")]
     fn current_tx_batch(&self) -> SingleValueMapper<Self::Storage, EsdtSafeTxBatch<Self::BigUint>>;
 
-    #[view(getActionIdForBatchId)]
     #[storage_mapper("batchIdToActionIdMapping")]
     fn batch_id_to_action_id_mapping(
         &self,
