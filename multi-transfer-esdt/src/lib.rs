@@ -41,20 +41,20 @@ pub trait MultiTransferEsdt {
 
         let mut tx_statuses = Vec::new();
 
-        for (to, token_id, amount) in transfers.into_vec() {
-            if to.is_zero() || self.blockchain().is_smart_contract(&to) {
+        for (i, (to, token_id, amount)) in transfers.into_vec().iter().enumerate() {
+            if to.is_zero() || self.blockchain().is_smart_contract(to) {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
-            if !self.token_whitelist().contains(&token_id)
-                || !self.is_local_mint_role_set(&token_id)
+            if !self.token_whitelist().contains(token_id)
+                || !self.is_local_mint_role_set(token_id)
             {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
 
-            self.send().esdt_local_mint(&token_id, &amount);
-            self.send().direct(&to, &token_id, &amount, &[]);
+            self.send().esdt_local_mint(token_id, amount);
+            self.send().direct(to, token_id, amount, &[i as u8]);
 
             tx_statuses.push(TransactionStatus::Executed);
         }
