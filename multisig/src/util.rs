@@ -64,16 +64,11 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     #[view(getAllStakedRelayers)]
     fn get_all_staked_relayers(&self) -> MultiResultVec<Address> {
-        let all_relayers = self.get_all_board_members().into_vec();
-        let mut staked_relayers = Vec::new();
+        let mut relayers = self.get_all_board_members().into_vec();
 
-        for relayer in all_relayers {
-            if self.has_enough_stake(&relayer) {
-                staked_relayers.push(relayer);
-            }
-        }
+        relayers.retain(|relayer| self.has_enough_stake(relayer));
 
-        staked_relayers.into()
+        relayers.into()
     }
 
     /// Lists all proposers that are not board members.
