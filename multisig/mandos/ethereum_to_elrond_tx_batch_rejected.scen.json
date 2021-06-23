@@ -18,7 +18,7 @@
                     "sc:egld_esdt_swap", "str:WEGLD-123456", "500",
                     "sc:egld_esdt_swap", "str:WETH-123456", "500"
                 ],
-                "gasLimit": "30,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -73,7 +73,7 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
