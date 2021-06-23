@@ -114,12 +114,9 @@ pub trait Multisig:
             "There is no transaction to set status for"
         );
         require!(
-            self.action_id_for_set_current_transaction_batch_status(
-                esdt_safe_batch_id,
-                &tx_batch_status.0
-            )
-            .get()
-                == 0,
+            self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+                .get(&tx_batch_status.0)
+                == None,
             "Action already proposed"
         );
 
@@ -141,11 +138,8 @@ pub trait Multisig:
             tx_batch_status: tx_batch_status.0.clone(),
         })?;
 
-        self.action_id_for_set_current_transaction_batch_status(
-            esdt_safe_batch_id,
-            &tx_batch_status.0,
-        )
-        .set(&action_id);
+        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+            .insert(tx_batch_status.0, action_id);
 
         Ok(action_id)
     }
@@ -163,8 +157,9 @@ pub trait Multisig:
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
         require!(
-            self.batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
-                .is_empty(),
+            self.batch_id_to_action_id_mapping(batch_id)
+                .get(&transfers_as_tuples)
+                == None,
             "This batch was already proposed"
         );
 
@@ -173,8 +168,8 @@ pub trait Multisig:
             transfers: transfers_as_tuples.clone(),
         })?;
 
-        self.batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
-            .set(&action_id);
+        self.batch_id_to_action_id_mapping(batch_id)
+            .insert(transfers_as_tuples, action_id);
 
         Ok(action_id)
     }
@@ -253,8 +248,13 @@ pub trait Multisig:
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
-        self.batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
-            .get()
+        match self
+            .batch_id_to_action_id_mapping(batch_id)
+            .get(&transfers_as_tuples)
+        {
+            Some(action_id) => action_id,
+            None => 0,
+        }
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
@@ -263,38 +263,24 @@ pub trait Multisig:
         esdt_safe_batch_id: usize,
         #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
     ) -> bool {
-        let action_id = self
-            .action_id_for_set_current_transaction_batch_status(
-                esdt_safe_batch_id,
-                &expected_tx_batch_status.0,
-            )
-            .get();
+        self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
+            esdt_safe_batch_id,
+            expected_tx_batch_status,
+        ))
+    }
 
-        if self.is_valid_action_id(action_id) {
-            let action = self.action_mapper().get(action_id);
-
-            match action {
-                Action::SetCurrentTransactionBatchStatus {
-                    relayer_reward_address: _,
-                    esdt_safe_batch_id: _,
-                    tx_batch_status,
-                } => {
-                    for (expected_status, actual_status) in expected_tx_batch_status
-                        .0
-                        .iter()
-                        .zip(tx_batch_status.iter())
-                    {
-                        if expected_status != actual_status {
-                            return false;
-                        }
-                    }
-
-                    true
-                }
-                _ => false,
-            }
-        } else {
-            false
+    #[view(getActionIdForSetCurrentTransactionBatchStatus)]
+    fn get_action_id_for_set_current_transaction_batch_status(
+        &self,
+        esdt_safe_batch_id: usize,
+        #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
+    ) -> usize {
+        match self
+            .action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+            .get(&expected_tx_batch_status.0)
+        {
+            Some(action_id) => action_id,
+            None => 0,
         }
     }
 
@@ -390,11 +376,8 @@ pub trait Multisig:
                 let current_tx_batch = &esdt_safe_tx_batch.transactions;
 
                 self.current_tx_batch().clear();
-                self.action_id_for_set_current_transaction_batch_status(
-                    esdt_safe_batch_id,
-                    &tx_batch_status,
-                )
-                .clear();
+                self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+                    .clear();
 
                 let mut args = Vec::new();
                 for (tx, tx_status) in current_tx_batch.iter().zip(tx_batch_status.iter()) {
@@ -406,7 +389,7 @@ pub trait Multisig:
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
-                batch_id: _,
+                batch_id,
                 transfers,
             } => {
                 let statuses = self
@@ -415,6 +398,8 @@ pub trait Multisig:
                     .execute_on_dest_context();
 
                 return_statuses = OptionalResult::Some(statuses);
+
+                self.batch_id_to_action_id_mapping(batch_id).clear();
             }
         }
 
