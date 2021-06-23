@@ -252,11 +252,9 @@ pub trait Multisig:
         #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
-        let action_id = self
-            .batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
-            .get();
 
-        action_id
+        self.batch_id_to_action_id_mapping(batch_id, &transfers_as_tuples)
+            .get()
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]

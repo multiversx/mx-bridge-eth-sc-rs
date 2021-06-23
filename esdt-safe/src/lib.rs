@@ -10,7 +10,7 @@ elrond_wasm::derive_imports!();
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_BLOCK_NONCE_DIFF: u64 = 100;
 
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode)]
+#[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct EsdtSafeTxBatch<BigUint: BigUintApi> {
     pub batch_id: usize,
     pub transactions: Vec<Transaction<BigUint>>,
