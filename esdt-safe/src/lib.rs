@@ -32,7 +32,7 @@ pub trait EsdtSafe {
 
         for token in token_whitelist.into_vec() {
             require!(token.is_valid_esdt_identifier(), "Invalid token ID");
-            self.token_whitelist().insert(token.clone());
+            self.token_whitelist().insert(token);
         }
 
         self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
@@ -92,7 +92,7 @@ pub trait EsdtSafe {
 
     #[endpoint(getNextTransactionBatch)]
     fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatch<Self::BigUint>> {
-        only_owner!(self, "only owner may call this function");
+        self.require_caller_owner()?;
 
         let mut tx_batch = Vec::new();
         let mut first_tx_block_nonce = 0;
@@ -124,7 +124,10 @@ pub trait EsdtSafe {
             *batch_id
         });
 
-        Ok(EsdtSafeTxBatch { batch_id, transactions: tx_batch })
+        Ok(EsdtSafeTxBatch {
+            batch_id,
+            transactions: tx_batch,
+        })
     }
 
     #[endpoint(setTransactionBatchStatus)]
@@ -143,18 +146,12 @@ pub trait EsdtSafe {
 
             match tx_status {
                 TransactionStatus::Executed => {
-                    self.transaction_status(&sender, nonce)
-                        .set(&TransactionStatus::Executed);
-
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
 
                     self.require_local_burn_role_set(&tx.token_identifier)?;
                     self.burn_esdt_token(&tx.token_identifier, &tx.amount);
                 }
                 TransactionStatus::Rejected => {
-                    self.transaction_status(&sender, nonce)
-                        .set(&TransactionStatus::Rejected);
-
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
 
                     self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
@@ -163,6 +160,10 @@ pub trait EsdtSafe {
                     return sc_error!("Transaction status may only be set to Executed or Rejected")
                 }
             }
+
+            // storage cleanup
+            self.transaction_status(&sender, nonce).clear();
+            self.transactions_by_nonce(&sender).clear_entry(nonce);
 
             // pay tx fees to the relayer that processed the transaction
             self.pay_fee(sender, relayer_reward_address.clone());
@@ -224,8 +225,7 @@ pub trait EsdtSafe {
     }
 
     fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        let _ = self
-            .send()
+        self.send()
             .direct(to, token_id, amount, self.data_or_empty(to, b"refund"));
     }
 
