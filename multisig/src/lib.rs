@@ -6,6 +6,7 @@ mod action;
 mod user_role;
 
 use action::Action;
+use esdt_safe::EsdtSafeTxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
@@ -68,9 +69,7 @@ pub trait Multisig:
     // ESDT Safe SC calls
 
     #[endpoint(getNextTransactionBatch)]
-    fn get_next_transaction_batch(
-        &self,
-    ) -> SCResult<MultiResultVec<TxAsMultiResult<Self::BigUint>>> {
+    fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
         self.require_esdt_safe_deployed()?;
         require!(
             self.current_tx_batch().is_empty(),
@@ -84,27 +83,29 @@ pub trait Multisig:
             "Only board members can call this function"
         );
 
-        let tx_batch = self
+        let esdt_safe_tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_next_transaction_batch()
-            .execute_on_dest_context()
-            .into_vec();
+            .execute_on_dest_context();
+        let esdt_safe_batch_id = esdt_safe_tx_batch.batch_id;
+        let batch_len = esdt_safe_tx_batch.transactions.len();
 
-        self.current_tx_batch().set(&tx_batch);
+        self.current_tx_batch().set(&esdt_safe_tx_batch);
 
         // convert into MultiResult for easier parsing
-        let mut result_vec = Vec::with_capacity(tx_batch.len());
-        for tx in tx_batch {
+        let mut result_vec = Vec::with_capacity(batch_len);
+        for tx in esdt_safe_tx_batch.transactions {
             result_vec.push(tx.into_multiresult());
         }
 
-        Ok(result_vec.into())
+        Ok((esdt_safe_batch_id, result_vec.into()).into())
     }
 
     #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
         relayer_reward_address: Address,
+        esdt_safe_batch_id: usize,
         #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
         self.require_esdt_safe_deployed()?;
@@ -113,26 +114,32 @@ pub trait Multisig:
             "There is no transaction to set status for"
         );
         require!(
-            self.action_id_for_set_current_transaction_batch_status()
-                .get()
-                == 0,
-            "Set status action already proposed"
+            self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+                .get(&tx_batch_status.0)
+                == None,
+            "Action already proposed"
         );
 
-        let current_batch_len = self.current_tx_batch().get().len();
+        let esdt_safe_tx_batch = self.current_tx_batch().get();
+        let current_batch_len = esdt_safe_tx_batch.transactions.len();
         let status_batch_len = tx_batch_status.len();
         require!(
             current_batch_len == status_batch_len,
             "Number of statuses provided must be equal to number of transactions in current batch"
         );
+        require!(
+            esdt_safe_batch_id == esdt_safe_tx_batch.batch_id,
+            "Current EsdtSafe tx batch does not have the provided ID"
+        );
 
         let action_id = self.propose_action(Action::SetCurrentTransactionBatchStatus {
             relayer_reward_address,
-            tx_batch_status: tx_batch_status.into_vec(),
+            esdt_safe_batch_id,
+            tx_batch_status: tx_batch_status.0.clone(),
         })?;
 
-        self.action_id_for_set_current_transaction_batch_status()
-            .set(&action_id);
+        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+            .insert(tx_batch_status.0, action_id);
 
         Ok(action_id)
     }
@@ -146,22 +153,23 @@ pub trait Multisig:
         #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
     ) -> SCResult<usize> {
         self.require_multi_transfer_esdt_deployed()?;
+
+        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+
         require!(
-            self.batch_id_to_action_id_mapping(batch_id).is_empty(),
+            self.batch_id_to_action_id_mapping(batch_id)
+                .get(&transfers_as_tuples)
+                == None,
             "This batch was already proposed"
         );
 
-        let mut transfers_as_tuples = Vec::new();
-        for transfer in transfers.into_vec() {
-            transfers_as_tuples.push(transfer.into_tuple());
-        }
-
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
             batch_id,
-            transfers: transfers_as_tuples,
+            transfers: transfers_as_tuples.clone(),
         })?;
 
-        self.batch_id_to_action_id_mapping(batch_id).set(&action_id);
+        self.batch_id_to_action_id_mapping(batch_id)
+            .insert(transfers_as_tuples, action_id);
 
         Ok(action_id)
     }
@@ -188,15 +196,16 @@ pub trait Multisig:
     }
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> MultiResultVec<TxAsMultiResult<Self::BigUint>> {
-        let current_tx_batch = self.current_tx_batch().get();
+    fn get_current_tx_batch(&self) -> EsdtSafeTxBatchSplitInFields<Self::BigUint> {
+        let esdt_safe_tx_batch = self.current_tx_batch().get();
+        let batch_len = esdt_safe_tx_batch.transactions.len();
 
-        let mut result_vec = Vec::with_capacity(current_tx_batch.len());
-        for tx in current_tx_batch {
+        let mut result_vec = Vec::with_capacity(batch_len);
+        for tx in esdt_safe_tx_batch.transactions {
             result_vec.push(tx.into_multiresult());
         }
 
-        result_vec.into()
+        (esdt_safe_tx_batch.batch_id, result_vec.into()).into()
     }
 
     #[view(isValidActionId)]
@@ -221,45 +230,57 @@ pub trait Multisig:
     /// If the mapping was made, it means that the transfer action was proposed in the past
     /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]
-    fn was_transfer_action_proposed(&self, batch_id: u64) -> bool {
-        let action_id = self.batch_id_to_action_id_mapping(batch_id).get();
+    fn was_transfer_action_proposed(
+        &self,
+        batch_id: u64,
+        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    ) -> bool {
+        let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
 
         self.is_valid_action_id(action_id)
+    }
+
+    #[view(getActionIdForTransferBatch)]
+    fn get_action_id_for_transfer_batch(
+        &self,
+        batch_id: u64,
+        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    ) -> usize {
+        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+
+        match self
+            .batch_id_to_action_id_mapping(batch_id)
+            .get(&transfers_as_tuples)
+        {
+            Some(action_id) => action_id,
+            None => 0,
+        }
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
     fn was_set_current_transaction_batch_status_action_proposed(
         &self,
+        esdt_safe_batch_id: usize,
         #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
     ) -> bool {
-        let action_id = self
-            .action_id_for_set_current_transaction_batch_status()
-            .get();
+        self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
+            esdt_safe_batch_id,
+            expected_tx_batch_status,
+        ))
+    }
 
-        if self.is_valid_action_id(action_id) {
-            let action = self.action_mapper().get(action_id);
-
-            match action {
-                Action::SetCurrentTransactionBatchStatus {
-                    relayer_reward_address: _,
-                    tx_batch_status,
-                } => {
-                    for (expected_status, actual_status) in expected_tx_batch_status
-                        .into_vec()
-                        .iter()
-                        .zip(tx_batch_status.iter())
-                    {
-                        if expected_status != actual_status {
-                            return false;
-                        }
-                    }
-
-                    true
-                }
-                _ => false,
-            }
-        } else {
-            false
+    #[view(getActionIdForSetCurrentTransactionBatchStatus)]
+    fn get_action_id_for_set_current_transaction_batch_status(
+        &self,
+        esdt_safe_batch_id: usize,
+        #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
+    ) -> usize {
+        match self
+            .action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+            .get(&expected_tx_batch_status.0)
+        {
+            Some(action_id) => action_id,
+            None => 0,
         }
     }
 
@@ -348,12 +369,14 @@ pub trait Multisig:
             }
             Action::SetCurrentTransactionBatchStatus {
                 relayer_reward_address,
+                esdt_safe_batch_id,
                 tx_batch_status,
             } => {
-                let current_tx_batch = self.current_tx_batch().get();
+                let esdt_safe_tx_batch = self.current_tx_batch().get();
+                let current_tx_batch = &esdt_safe_tx_batch.transactions;
 
                 self.current_tx_batch().clear();
-                self.action_id_for_set_current_transaction_batch_status()
+                self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
                     .clear();
 
                 let mut args = Vec::new();
@@ -366,7 +389,7 @@ pub trait Multisig:
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
-                batch_id: _,
+                batch_id,
                 transfers,
             } => {
                 let statuses = self
@@ -375,6 +398,8 @@ pub trait Multisig:
                     .execute_on_dest_context();
 
                 return_statuses = OptionalResult::Some(statuses);
+
+                self.batch_id_to_action_id_mapping(batch_id).clear();
             }
         }
 
