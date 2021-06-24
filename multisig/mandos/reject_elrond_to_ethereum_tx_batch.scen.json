@@ -17,7 +17,7 @@
                     "address:relayer1",
                     "4", "4"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -84,7 +84,7 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "40,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
