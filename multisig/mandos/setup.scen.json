@@ -362,6 +362,22 @@
             }
         },
         {
+            "step": "scQuery",
+            "txId": "getAllStakedRelayers - only one staked",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getAllStakedRelayers",
+                "arguments": []
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "address:relayer1"
+                ]
+            }
+        },
+        {
             "step": "scCall",
             "txId": "second-relayer-stake",
             "tx": {
@@ -405,6 +421,23 @@
                     "code": "file:../output/multisig.wasm"
                 },
                 "+": {}
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "getAllStakedRelayers - both staked",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getAllStakedRelayers",
+                "arguments": []
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "address:relayer1",
+                    "address:relayer2"
+                ]
             }
         }
     ]
