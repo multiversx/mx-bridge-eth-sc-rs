@@ -2,14 +2,14 @@
 # Bob will be the single board member
 # Quorum size will be 1
 
-ALICE="/home/elrond/Downloads/testnetWalletKey.pem"
+ALICE="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/alice.pem"
 BOB="/home/elrond/elrond-sdk-erdpy/erdpy/testnet/wallets/users/bob.pem"
 CAROL="/home/elrond/elrond-sdk-erdpy/erdpy/testnet/wallets/users/carol.pem"
 
-ADDRESS=erd1qqqqqqqqqqqqqpgqp4wjgyws7gu60kqdyhemdrmddmhz8xkv6j7quc7hph
+ADDRESS=$(erdpy data load --key=address-testnet)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
-PROXY=https://devnet-gateway.elrond.com
-CHAIN_ID=D
+PROXY=https://testnet-gateway.elrond.com
+CHAIN_ID=T
 
 RELAYER_REQUIRED_STAKE=0x03e8 # 1000
 ESDT_ISSUE_COST=0x4563918244f40000 # 5 eGLD
@@ -24,8 +24,8 @@ AGGREGATOR_ADDRESS=0xb0d1c728af35de1ff2dab61d960bab6c756e875d73dac06bdcd59cc3790
 #########################################################################
 ################## Update after issueing the tokens #####################
 #########################################################################
-WRAPPED_EGLD_TOKEN_ID=0x5745474c442d353937613761
-WRAPPED_ETH_TOKEN_ID=0x574554482d626631623064
+WRAPPED_EGLD_TOKEN_ID=0x
+WRAPPED_ETH_TOKEN_ID=0x
 
 deploy() {
     local SLASH_AMOUNT=0x01f4 # 500
