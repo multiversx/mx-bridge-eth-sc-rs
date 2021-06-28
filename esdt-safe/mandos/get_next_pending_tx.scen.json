@@ -14,7 +14,7 @@
                 "value": "0",
                 "function": "getNextTransactionBatch",
                 "arguments": [],
-                "gasLimit": "20,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {

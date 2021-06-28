@@ -90,7 +90,9 @@ pub trait Multisig:
         let esdt_safe_batch_id = esdt_safe_tx_batch.batch_id;
         let batch_len = esdt_safe_tx_batch.transactions.len();
 
-        self.current_tx_batch().set(&esdt_safe_tx_batch);
+        if batch_len > 0 {
+            self.current_tx_batch().set(&esdt_safe_tx_batch);
+        }
 
         // convert into MultiResult for easier parsing
         let mut result_vec = Vec::with_capacity(batch_len);
