@@ -250,13 +250,9 @@ pub trait Multisig:
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
-        match self
-            .batch_id_to_action_id_mapping(batch_id)
+        self.batch_id_to_action_id_mapping(batch_id)
             .get(&transfers_as_tuples)
-        {
-            Some(action_id) => action_id,
-            None => 0,
-        }
+            .unwrap_or(0)
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
@@ -277,13 +273,9 @@ pub trait Multisig:
         esdt_safe_batch_id: usize,
         #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
     ) -> usize {
-        match self
-            .action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
             .get(&expected_tx_batch_status.0)
-        {
-            Some(action_id) => action_id,
-            None => 0,
-        }
+            .unwrap_or(0)
     }
 
     // private
