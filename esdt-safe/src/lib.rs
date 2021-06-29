@@ -94,6 +94,13 @@ pub trait EsdtSafe {
     fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatch<Self::BigUint>> {
         self.require_caller_owner()?;
 
+        if self.pending_transaction_address_nonce_list().is_empty() {
+            return Ok(EsdtSafeTxBatch {
+                batch_id: 0,
+                transactions: Vec::new()
+            })
+        }
+
         let mut tx_batch = Vec::new();
         let mut first_tx_block_nonce = 0;
         let max_tx_batch_size = self.max_tx_batch_size().get();
