@@ -91,7 +91,7 @@ pub trait EsdtSafe {
         self.require_caller_owner()?;
         require!(
             new_min_block_nonce_diff > 0,
-            "Max block nonce diff must be more than 0"
+            "Min block nonce diff must be more than 0"
         );
 
         self.min_block_nonce_diff().set(&new_min_block_nonce_diff);
