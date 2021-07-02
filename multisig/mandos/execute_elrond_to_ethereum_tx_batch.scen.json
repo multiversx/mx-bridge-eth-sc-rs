@@ -14,7 +14,6 @@
                 "value": "0",
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
-                    "address:relayer1",
                     "u32:1",
                     "3", "3"
                 ],
@@ -40,10 +39,9 @@
                     "storage": {
                         "str:action_data.item|u32:1": {
                             "1-action_type": "u8:6",
-                            "2-relayer_reward_address": "address:relayer1",
-                            "3-batch_id": "u32:1",
-                            "4-tx_batch_status_len": "u32:2",
-                            "5-tx_batch_status_vec": "u8:3|u8:3"
+                            "2-batch_id": "u32:1",
+                            "3-tx_batch_status_len": "u32:2",
+                            "4-tx_batch_status_vec": "u8:3|u8:3"
                         },
                         "+": ""
                     },
@@ -99,11 +97,6 @@
             "step": "checkState",
             "comment": "the tokens are burned after successful tx execution",
             "accounts": {
-                "address:relayer1": {
-                    "nonce": "*",
-                    "balance": "3,000,000",
-                    "storage": {}
-                },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
@@ -131,6 +124,38 @@
                         "+": ""
                     },
                     "code": "*"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "owner-send-fees-to-relayer",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "claimAccumulatedFees",
+                "arguments": [
+                    "address:relayer1"
+                ],
+                "gasLimit": "200,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:relayer1": {
+                    "nonce": "*",
+                    "balance": "3,000,000",
+                    "storage": {}
                 },
                 "+": {}
             }

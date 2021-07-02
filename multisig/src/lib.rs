@@ -33,7 +33,7 @@ pub trait Multisig:
     fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
         self.require_caller_owner()?;
         require!(
-            self.blockchain().is_smart_contract(&dest_address),
+            !self.blockchain().is_smart_contract(&dest_address),
             "Cannot have SC as destination"
         );
 
