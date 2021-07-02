@@ -8,12 +8,21 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_BLOCK_NONCE_DIFF: u64 = 100;
+const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 100;
 
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct EsdtSafeTxBatch<BigUint: BigUintApi> {
     pub batch_id: usize,
     pub transactions: Vec<Transaction<BigUint>>,
+}
+
+impl<BigUint: BigUintApi> Default for EsdtSafeTxBatch<BigUint> {
+    fn default() -> Self {
+        EsdtSafeTxBatch {
+            batch_id: 0,
+            transactions: Vec::new(),
+        }
+    }
 }
 
 pub type EsdtSafeTxBatchSplitInFields<BigUint> =
@@ -36,8 +45,8 @@ pub trait EsdtSafe {
         }
 
         self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
-        self.max_block_nonce_diff()
-            .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
+        self.min_block_nonce_diff()
+            .set(&DEFAULT_MIN_BLOCK_NONCE_DIFF);
 
         Ok(())
     }
@@ -77,15 +86,15 @@ pub trait EsdtSafe {
         Ok(())
     }
 
-    #[endpoint(setMaxBlockNonceDiff)]
-    fn set_max_block_nonce_diff(&self, new_max_block_nonce_diff: u64) -> SCResult<()> {
+    #[endpoint(setMinBlockNonceDiff)]
+    fn set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
         self.require_caller_owner()?;
         require!(
-            new_max_block_nonce_diff > 0,
+            new_min_block_nonce_diff > 0,
             "Max block nonce diff must be more than 0"
         );
 
-        self.max_block_nonce_diff().set(&new_max_block_nonce_diff);
+        self.min_block_nonce_diff().set(&new_min_block_nonce_diff);
 
         Ok(())
     }
@@ -94,28 +103,22 @@ pub trait EsdtSafe {
     fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatch<Self::BigUint>> {
         self.require_caller_owner()?;
 
-        if self.pending_transaction_address_nonce_list().is_empty() {
-            return Ok(EsdtSafeTxBatch {
-                batch_id: 0,
-                transactions: Vec::new()
-            })
+        let current_block_nonce = self.blockchain().get_block_nonce();
+        let first_tx_block_nonce = match self.get_first_pending_transaction_block_nonce() {
+            Some(block_nonce) => block_nonce,
+            None => return Ok(EsdtSafeTxBatch::default()),
+        };
+        let block_nonce_diff = current_block_nonce - first_tx_block_nonce;
+        let min_block_nonce_diff = self.min_block_nonce_diff().get();
+
+        if block_nonce_diff < min_block_nonce_diff {
+            return Ok(EsdtSafeTxBatch::default());
         }
 
         let mut tx_batch = Vec::new();
-        let mut first_tx_block_nonce = 0;
         let max_tx_batch_size = self.max_tx_batch_size().get();
-        let max_block_nonce_diff = self.max_block_nonce_diff().get();
 
         while let Some(tx) = self.get_next_pending_transaction() {
-            if tx_batch.is_empty() {
-                first_tx_block_nonce = tx.block_nonce;
-            }
-
-            let block_nonce_diff = tx.block_nonce - first_tx_block_nonce;
-            if block_nonce_diff > max_block_nonce_diff {
-                break;
-            }
-
             self.transaction_status(&tx.from, tx.nonce)
                 .set(&TransactionStatus::InProgress);
             self.clear_next_pending_transaction();
@@ -290,6 +293,12 @@ pub trait EsdtSafe {
         let _ = self.pending_transaction_address_nonce_list().pop_front();
     }
 
+    fn get_first_pending_transaction_block_nonce(&self) -> Option<u64> {
+        self.pending_transaction_address_nonce_list()
+            .front()
+            .map(|(address, nonce)| self.transactions_by_nonce(&address).get(nonce).block_nonce)
+    }
+
     // proxies
 
     #[proxy]
@@ -342,6 +351,6 @@ pub trait EsdtSafe {
     #[storage_mapper("maxTxBatchSize")]
     fn max_tx_batch_size(&self) -> SingleValueMapper<Self::Storage, usize>;
 
-    #[storage_mapper("maxBlockNonceDiff")]
-    fn max_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
+    #[storage_mapper("minBlockNonceDiff")]
+    fn min_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
 }
