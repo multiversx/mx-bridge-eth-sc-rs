@@ -143,12 +143,9 @@ pub trait EsdtSafe {
     #[endpoint(setTransactionBatchStatus)]
     fn set_transaction_batch_status(
         &self,
-        relayer_reward_address: Address,
         #[var_args] tx_status_batch: VarArgs<(Address, TxNonce, TransactionStatus)>,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
-
-        let mut tx_senders = Vec::with_capacity(tx_status_batch.len());
 
         for (sender, nonce, tx_status) in tx_status_batch.into_vec() {
             require!(
@@ -176,12 +173,7 @@ pub trait EsdtSafe {
             // storage cleanup
             self.transaction_status(&sender, nonce).clear();
             self.transactions_by_nonce(&sender).clear_entry(nonce);
-
-            tx_senders.push((sender, nonce));
         }
-
-        // pay tx fees to the relayer that processed the transaction
-        self.pay_fee(tx_senders, relayer_reward_address);
 
         Ok(())
     }
@@ -228,7 +220,7 @@ pub trait EsdtSafe {
 
         // reserve transaction fee beforehand
         // used prevent transaction spam
-        self.reserve_fee(caller, sender_nonce, token_used_for_fee_payment);
+        self.reserve_fee(caller, token_used_for_fee_payment);
 
         Ok(())
     }
@@ -252,20 +244,9 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(
-        &self,
-        from: Address,
-        sender_nonce: usize,
-        token_used_for_fee_payment: TokenIdentifier,
-    ) {
+    fn reserve_fee(&self, from: Address, token_used_for_fee_payment: TokenIdentifier) {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .reserve_fee(from, sender_nonce, token_used_for_fee_payment)
-            .execute_on_dest_context();
-    }
-
-    fn pay_fee(&self, tx_senders: Vec<(Address, usize)>, relayer_reward_address: Address) {
-        self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .pay_fee(tx_senders, relayer_reward_address)
+            .reserve_fee(from, token_used_for_fee_payment)
             .execute_on_dest_context();
     }
 

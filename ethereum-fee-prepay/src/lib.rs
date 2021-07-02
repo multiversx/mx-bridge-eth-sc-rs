@@ -11,6 +11,10 @@ const EGLD_STRING: &[u8] = b"EGLD";
 const ETH_STRING: &[u8] = b"ETH";
 const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
 
+// Only used until we have a real aggregator setup
+const DEFAULT_EGLD_TX_FEE: u64 = 100_000_000_000_000_000; // 0.1 EGLD
+const DEFAULT_ETH_TX_FEE: u64 = 5_000_000_000_000_000; // 0.005 Wrapped ETH
+
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, Copy)]
 pub enum TxFeePaymentToken {
     Egld,
@@ -22,6 +26,7 @@ pub trait EthereumFeePrepay {
     #[proxy]
     fn aggregator_proxy(&self, sc_address: Address) -> aggregator_proxy::Proxy<Self::SendApi>;
 
+    /// Pass zero-address for aggregator to use the default values for tx fees
     #[init]
     fn init(&self, aggregator: Address, wrapped_eth_token_id: TokenIdentifier) -> SCResult<()> {
         self.aggregator().set(&aggregator);
@@ -73,36 +78,38 @@ pub trait EthereumFeePrepay {
         Ok(())
     }
 
-    // estimate endpoints
-
-    #[endpoint(payFee)]
-    fn pay_fee(&self, tx_senders: Vec<(Address, usize)>, relayer: Address) -> SCResult<()> {
+    /// Owner is a multisig SC, so we can't send directly to the owner or caller address here
+    #[endpoint(claimAccumulatedFees)]
+    fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
         self.require_whitelisted()?;
 
-        for (sender_address, sender_nonce) in tx_senders {
-            require!(
-                !self
-                    .tx_fee_payment(&sender_address, sender_nonce)
-                    .is_empty(),
-                "Empty payment entry"
-            );
+        let accumulated_egld = self.accumulated_tx_fees(TxFeePaymentToken::Egld).get();
+        let accumulated_wrapped_eth = self
+            .accumulated_tx_fees(TxFeePaymentToken::WrappedEth)
+            .get();
 
-            let (tx_fee_payment_token, amount) =
-                self.tx_fee_payment(&sender_address, sender_nonce).get();
-            let token_id = self.convert_to_token_id(tx_fee_payment_token);
-
-            self.tx_fee_payment(&sender_address, sender_nonce).clear();
-            self.send().direct(&relayer, &token_id, &amount, &[]);
-        }
+        self.send().direct(
+            &dest_address,
+            &TokenIdentifier::egld(),
+            &accumulated_egld,
+            &[],
+        );
+        self.send().direct(
+            &dest_address,
+            &self.wrapped_eth_token_id().get(),
+            &accumulated_wrapped_eth,
+            &[],
+        );
 
         Ok(())
     }
+
+    // estimate endpoints
 
     #[endpoint(reserveFee)]
     fn reserve_fee(
         &self,
         sender_address: Address,
-        sender_nonce: usize,
         token_used_for_fee_payment: TokenIdentifier,
     ) -> SCResult<()> {
         self.require_whitelisted()?;
@@ -112,14 +119,21 @@ pub trait EthereumFeePrepay {
         let estimate = self.compute_estimate(tx_fee_payment_token);
 
         self.try_decrease_balance(&sender_address, tx_fee_payment_token, &estimate)?;
-        self.tx_fee_payment(&sender_address, sender_nonce)
-            .set(&(tx_fee_payment_token, estimate));
+        self.accumulated_tx_fees(tx_fee_payment_token)
+            .update(|tx_fees| *tx_fees += estimate);
 
         Ok(())
     }
 
     #[endpoint(computeEstimate)]
     fn compute_estimate(&self, tx_fee_payment_token: TxFeePaymentToken) -> Self::BigUint {
+        if self.aggregator().is_empty() {
+            match tx_fee_payment_token {
+                TxFeePaymentToken::Egld => return DEFAULT_EGLD_TX_FEE.into(),
+                TxFeePaymentToken::WrappedEth => return DEFAULT_ETH_TX_FEE.into(),
+            }
+        }
+
         let (from_token_name, to_token_name) = match tx_fee_payment_token {
             TxFeePaymentToken::Egld => {
                 (BoxedBytes::from(GWEI_STRING), BoxedBytes::from(EGLD_STRING))
@@ -236,12 +250,11 @@ pub trait EthereumFeePrepay {
         token: TxFeePaymentToken,
     ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
-    #[storage_mapper("txFeePayment")]
-    fn tx_fee_payment(
+    #[storage_mapper("accumulatedTxFees")]
+    fn accumulated_tx_fees(
         &self,
-        sender_address: &Address,
-        sender_nonce: usize,
-    ) -> SingleValueMapper<Self::Storage, (TxFeePaymentToken, Self::BigUint)>;
+        token: TxFeePaymentToken,
+    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     #[storage_mapper("aggregator")]
     fn aggregator(&self) -> SingleValueMapper<Self::Storage, Address>;

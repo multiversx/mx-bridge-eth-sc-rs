@@ -26,6 +26,24 @@ pub trait Multisig:
     + storage::StorageModule
     + util::UtilModule
 {
+    /// Owner claims accumulated fees and distributes them to relayers
+    /// Only centralized until we have a finalized fee distribution algorithm in place
+    /// Not using get_owner API function, as the owner may also be a multisig SC
+    #[endpoint(claimAccumulatedFees)]
+    fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
+        self.require_caller_owner()?;
+        require!(
+            self.blockchain().is_smart_contract(&dest_address),
+            "Cannot have SC as destination"
+        );
+
+        self.ethereum_fee_prepay_proxy(self.ethereum_fee_prepay_address().get())
+            .claim_accumulated_fees(dest_address)
+            .execute_on_dest_context();
+
+        Ok(())
+    }
+
     #[payable("EGLD")]
     #[endpoint]
     fn stake(&self, #[payment] payment: Self::BigUint) -> SCResult<()> {
@@ -106,7 +124,6 @@ pub trait Multisig:
     #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
-        relayer_reward_address: Address,
         esdt_safe_batch_id: usize,
         #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
@@ -135,7 +152,6 @@ pub trait Multisig:
         );
 
         let action_id = self.propose_action(Action::SetCurrentTransactionBatchStatus {
-            relayer_reward_address,
             esdt_safe_batch_id,
             tx_batch_status: tx_batch_status.0.clone(),
         })?;
@@ -362,7 +378,6 @@ pub trait Multisig:
                 self.quorum().set(&new_quorum);
             }
             Action::SetCurrentTransactionBatchStatus {
-                relayer_reward_address,
                 esdt_safe_batch_id,
                 tx_batch_status,
             } => {
@@ -379,7 +394,7 @@ pub trait Multisig:
                 }
 
                 self.esdt_safe_proxy(self.esdt_safe_address().get())
-                    .set_transaction_batch_status(relayer_reward_address, VarArgs::from(args))
+                    .set_transaction_batch_status(VarArgs::from(args))
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
