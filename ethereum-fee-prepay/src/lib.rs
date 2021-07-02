@@ -136,7 +136,9 @@ pub trait EthereumFeePrepay {
 
     #[endpoint(computeEstimate)]
     fn compute_estimate(&self, tx_fee_payment_token: TxFeePaymentToken) -> Self::BigUint {
-        if self.aggregator().is_empty() {
+        let aggregator_address = self.aggregator().get();
+
+        if aggregator_address.is_zero() {
             match tx_fee_payment_token {
                 TxFeePaymentToken::Egld => return DEFAULT_EGLD_TX_FEE.into(),
                 TxFeePaymentToken::WrappedEth => return DEFAULT_ETH_TX_FEE.into(),
@@ -153,7 +155,7 @@ pub trait EthereumFeePrepay {
         };
 
         let aggregator_result: AggregatorResult<Self::BigUint> = self
-            .aggregator_proxy(self.aggregator().get())
+            .aggregator_proxy(aggregator_address)
             .latest_price_feed(from_token_name, to_token_name)
             .execute_on_dest_context()
             .into();
