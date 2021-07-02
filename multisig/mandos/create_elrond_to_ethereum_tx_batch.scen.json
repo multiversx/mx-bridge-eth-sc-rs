@@ -206,6 +206,12 @@
             }
         },
         {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "500"
+            }
+        },
+        {
             "step": "scCall",
             "txId": "get-next-pending-tx-batch",
             "tx": {

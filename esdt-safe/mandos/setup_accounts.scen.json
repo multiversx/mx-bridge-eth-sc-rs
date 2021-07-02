@@ -108,7 +108,10 @@
 
                         "str:tokenWhitelist.info": "0x00000001000000010000000100000001",
                         "str:tokenWhitelist.node_idBRIDGE-123456": "0x01",
-                        "str:tokenWhitelist.node_links|u32:1": "0x0000000000000000"
+                        "str:tokenWhitelist.node_links|u32:1": "0x0000000000000000",
+
+                        "str:maxTxBatchSize": "10",
+                        "str:minBlockNonceDiff": "5"
                     },
                     "code": "file:../output/esdt-safe.wasm",
                     "owner": "address:owner"

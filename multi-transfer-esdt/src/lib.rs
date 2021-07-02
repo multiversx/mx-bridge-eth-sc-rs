@@ -34,6 +34,15 @@ pub trait MultiTransferEsdt {
         Ok(())
     }
 
+    #[endpoint(removeTokenFromWhitelist)]
+    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        only_owner!(self, "only owner may call this function");
+
+        self.token_whitelist().remove(&token_id);
+
+        Ok(())
+    }
+
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
