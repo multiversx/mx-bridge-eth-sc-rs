@@ -34,11 +34,6 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:owner": {
-                    "nonce": "4",
-                    "balance": "0",
-                    "storage": {}
-                },
                 "address:user1": {
                     "nonce": "0",
                     "balance": "0",
@@ -54,30 +49,6 @@
                         "str:WRAPPED-123456": "500"
                     },
                     "storage": {}
-                },
-                "sc:multi_transfer_esdt": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": {
-                        "str:BRIDGE-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalMint"
-                            ]
-                        },
-                        "str:WRAPPED-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalMint"
-                            ]
-                        }
-                    },
-                    "storage": {
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-                        "str:tokenWhitelist.value|u32:2": "str:WRAPPED-123456",
-                        "+": ""
-                    },
-                    "code": "file:../output/multi-transfer-esdt.wasm"
                 },
                 "+": {}
             }

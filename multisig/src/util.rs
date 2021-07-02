@@ -1,5 +1,7 @@
 elrond_wasm::imports!();
 
+use multi_transfer_esdt::SingleTransferTuple;
+
 use crate::action::Action;
 use crate::action::ActionFullInfo;
 use crate::user_role::UserRole;
@@ -60,6 +62,14 @@ pub trait UtilModule: crate::storage::StorageModule {
     #[view(getAllBoardMembers)]
     fn get_all_board_members(&self) -> MultiResultVec<Address> {
         self.get_all_users_with_role(UserRole::BoardMember)
+    }
+
+    #[view(getAllStakedRelayers)]
+    fn get_all_staked_relayers(&self) -> MultiResultVec<Address> {
+        let mut relayers = self.get_all_board_members().into_vec();
+        relayers.retain(|relayer| self.has_enough_stake(relayer));
+
+        relayers.into()
     }
 
     /// Lists all proposers that are not board members.
@@ -172,5 +182,17 @@ pub trait UtilModule: crate::storage::StorageModule {
         let amount_staked = self.amount_staked(board_member_address).get();
 
         amount_staked >= required_stake
+    }
+
+    fn transfers_multiarg_to_tuples_vec(
+        &self,
+        transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    ) -> Vec<SingleTransferTuple<Self::BigUint>> {
+        let mut transfers_as_tuples = Vec::new();
+        for transfer in transfers.into_vec() {
+            transfers_as_tuples.push(transfer.into_tuple());
+        }
+
+        transfers_as_tuples
     }
 }

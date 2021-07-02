@@ -223,13 +223,13 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
-    #[endpoint(esdtSafeSetMaxBlockNonceDiff)]
-    fn esdt_safe_set_max_block_nonce_diff(&self, new_max_block_nonce_diff: u64) -> SCResult<()> {
+    #[endpoint(esdtSafeSetMinBlockNonceDiff)]
+    fn esdt_safe_set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
         self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_max_block_nonce_diff(new_max_block_nonce_diff)
+            .set_min_block_nonce_diff(new_min_block_nonce_diff)
             .execute_on_dest_context();
 
         Ok(())
@@ -245,6 +245,21 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .add_token_to_whitelist(token_id)
+            .execute_on_dest_context();
+
+        Ok(())
+    }
+
+    #[endpoint(multiTransferEsdtRemoveTokenFromWhitelist)]
+    fn multi_transfer_esdt_remove_token_from_whitelist(
+        &self,
+        token_id: TokenIdentifier,
+    ) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_multi_transfer_esdt_deployed()?;
+
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+            .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
 
         Ok(())

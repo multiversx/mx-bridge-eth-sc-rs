@@ -3,8 +3,8 @@
 # Quorum size will be 1
 
 ALICE="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/alice.pem"
-BOB="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/bob.pem"
-CAROL="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/carol.pem"
+BOB="/home/elrond/elrond-sdk-erdpy/erdpy/testnet/wallets/users/bob.pem"
+CAROL="/home/elrond/elrond-sdk-erdpy/erdpy/testnet/wallets/users/carol.pem"
 
 ADDRESS=$(erdpy data load --key=address-testnet-multisig)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
@@ -19,7 +19,7 @@ BOB_ADDRESS=0x8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8
 ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
 
 # Setup and aggregator first, then put its address hex-encoded in this variable
-AGGREGATOR_ADDRESS=0x
+AGGREGATOR_ADDRESS=0xb0d1c728af35de1ff2dab61d960bab6c756e875d73dac06bdcd59cc3790ed4bc
 
 #########################################################################
 ################## Update after issueing the tokens #####################
@@ -249,6 +249,19 @@ setTransactionRejected() {
     --gas-limit=100000000 --function="performAction" \
     --arguments ${ACTION_INDEX} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+addBoardMember() {
+    # Bob proposes action
+    #erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=100000000 --function="proposeAddBoardMember" --arguments 0xb0d1c728af35de1ff2dab61d960bab6c756e875d73dac06bdcd59cc3790ed4bc --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    # Bob signs the action
+    #getActionLastIndex
+    #bobSign
+    #sleep 10
+
+    # Bob executes the action
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} --gas-limit=100000000 --function="performAction" --arguments 0x02 --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 # views

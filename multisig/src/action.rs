@@ -14,6 +14,7 @@ pub enum Action<BigUint: BigUintApi> {
     ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
         relayer_reward_address: Address,
+        esdt_safe_batch_id: usize,
         tx_batch_status: Vec<TransactionStatus>,
     },
     BatchTransferEsdtToken {

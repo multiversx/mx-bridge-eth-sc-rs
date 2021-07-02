@@ -241,6 +241,12 @@
             }
         },
         {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "500"
+            }
+        },
+        {
             "step": "scCall",
             "txId": "get-next-pending-tx-batch",
             "tx": {
@@ -249,29 +255,33 @@
                 "value": "0",
                 "function": "getNextTransactionBatch",
                 "arguments": [],
-                "gasLimit": "55,000,000",
+                "gasLimit": "60,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
                 "out": [
-                    {
-                        "1-block_nonce": "u64:0",
-                        "2-nonce": "u32:1",
-                        "3-from": "address:user",
-                        "4-to": "0x0102030405060708091011121314151617181920",
-                        "5-token_identifier": "nested:str:WEGLD-123456",
-                        "6-amount": "biguint:1000"
+                    {   
+                        "01-batch_id": "u32:1",
+                        "02-vec_len": "u32:2",
+
+                        "11-block_nonce": "u64:0",
+                        "12-nonce": "u32:1",
+                        "13-from": "address:user",
+                        "14-to": "0x0102030405060708091011121314151617181920",
+                        "15-token_identifier": "nested:str:WEGLD-123456",
+                        "16-amount": "biguint:1000",
+
+                        "21-block_nonce": "u64:0",
+                        "22-nonce": "u32:2",
+                        "23-from": "address:user",
+                        "24-to": "0x0102030405060708091011121314151617181920",
+                        "25-token_identifier": "nested:str:WETH-123456",
+                        "26-amount": "biguint:1000"
                     },
-                    {
-                        "1-block_nonce": "u64:0",
-                        "2-nonce": "u32:2",
-                        "3-from": "address:user",
-                        "4-to": "0x0102030405060708091011121314151617181920",
-                        "5-token_identifier": "nested:str:WETH-123456",
-                        "6-amount": "biguint:1000"
-                    },
+
+                    "1",
 
                     "0x", "1", "address:user", "0x0102030405060708091011121314151617181920", 
                     "str:WEGLD-123456", "1000",
@@ -291,21 +301,23 @@
                     "balance": "*",
                     "storage": {
                         "str:currentTxBatch": [
-                            {
-                                "1-block_nonce": "u64:0",
-                                "2-nonce": "u32:1",
-                                "3-from": "address:user",
-                                "4-to": "0x0102030405060708091011121314151617181920",
-                                "5-token_identifier": "nested:str:WEGLD-123456",
-                                "6-amount": "biguint:1000"
-                            },
-                            {
-                                "1-block_nonce": "u64:0",
-                                "2-nonce": "u32:2",
-                                "3-from": "address:user",
-                                "4-to": "0x0102030405060708091011121314151617181920",
-                                "5-token_identifier": "nested:str:WETH-123456",
-                                "6-amount": "biguint:1000"
+                            {   
+                                "01-batch_id": "u32:1",
+                                "02-vec_len": "u32:2",
+        
+                                "11-block_nonce": "u64:0",
+                                "12-nonce": "u32:1",
+                                "13-from": "address:user",
+                                "14-to": "0x0102030405060708091011121314151617181920",
+                                "15-token_identifier": "nested:str:WEGLD-123456",
+                                "16-amount": "biguint:1000",
+        
+                                "21-block_nonce": "u64:0",
+                                "22-nonce": "u32:2",
+                                "23-from": "address:user",
+                                "24-to": "0x0102030405060708091011121314151617181920",
+                                "25-token_identifier": "nested:str:WETH-123456",
+                                "26-amount": "biguint:1000"
                             }
                         ],
                         "+": ""

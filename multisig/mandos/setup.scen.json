@@ -49,7 +49,7 @@
                     "address:relayer1",
                     "address:relayer2"
                 ],
-                "gasLimit": "30,000,000",
+                "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -146,7 +146,7 @@
                 "value": "0",
                 "function": "finishSetup",
                 "arguments": [],
-                "gasLimit": "35,000,000",
+                "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -210,7 +210,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:maxTxBatchSize": "10",
-                        "str:maxBlockNonceDiff": "100",
+                        "str:minBlockNonceDiff": "5",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:tokenWhitelist.node_idWEGLD-123456": "1",
@@ -320,7 +320,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:maxTxBatchSize": "10",
-                        "str:maxBlockNonceDiff": "100",
+                        "str:minBlockNonceDiff": "5",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:tokenWhitelist.node_idWEGLD-123456": "1",
@@ -344,7 +344,7 @@
                 "value": "1000",
                 "function": "stake",
                 "arguments": [],
-                "gasLimit": "25,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -356,6 +356,22 @@
             }
         },
         {
+            "step": "scQuery",
+            "txId": "getAllStakedRelayers - only one staked",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getAllStakedRelayers",
+                "arguments": []
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "address:relayer1"
+                ]
+            }
+        },
+        {
             "step": "scCall",
             "txId": "second-relayer-stake",
             "tx": {
@@ -364,7 +380,7 @@
                 "value": "1000",
                 "function": "stake",
                 "arguments": [],
-                "gasLimit": "25,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -399,6 +415,23 @@
                     "code": "file:../output/multisig.wasm"
                 },
                 "+": {}
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "getAllStakedRelayers - both staked",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getAllStakedRelayers",
+                "arguments": []
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "address:relayer1",
+                    "address:relayer2"
+                ]
             }
         }
     ]

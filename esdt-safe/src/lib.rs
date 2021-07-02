@@ -5,9 +5,28 @@ use eth_address::*;
 use transaction::*;
 
 elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_BLOCK_NONCE_DIFF: u64 = 100;
+const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 5;
+
+#[derive(TypeAbi, TopEncode, TopDecode)]
+pub struct EsdtSafeTxBatch<BigUint: BigUintApi> {
+    pub batch_id: usize,
+    pub transactions: Vec<Transaction<BigUint>>,
+}
+
+impl<BigUint: BigUintApi> Default for EsdtSafeTxBatch<BigUint> {
+    fn default() -> Self {
+        EsdtSafeTxBatch {
+            batch_id: 0,
+            transactions: Vec::new(),
+        }
+    }
+}
+
+pub type EsdtSafeTxBatchSplitInFields<BigUint> =
+    MultiResult2<usize, MultiResultVec<TxAsMultiResult<BigUint>>>;
 
 #[elrond_wasm_derive::contract]
 pub trait EsdtSafe {
@@ -22,16 +41,12 @@ pub trait EsdtSafe {
 
         for token in token_whitelist.into_vec() {
             require!(token.is_valid_esdt_identifier(), "Invalid token ID");
-            self.token_whitelist().insert(token.clone());
+            self.token_whitelist().insert(token);
         }
 
-        if self.max_tx_batch_size().is_empty() {
-            self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
-        }
-        if self.max_block_nonce_diff().is_empty() {
-            self.max_block_nonce_diff()
-                .set(&DEFAULT_MAX_BLOCK_NONCE_DIFF);
-        }
+        self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
+        self.min_block_nonce_diff()
+            .set(&DEFAULT_MIN_BLOCK_NONCE_DIFF);
 
         Ok(())
     }
@@ -71,35 +86,32 @@ pub trait EsdtSafe {
         Ok(())
     }
 
-    #[endpoint(setMaxBlockNonceDiff)]
-    fn set_max_block_nonce_diff(&self, new_max_block_nonce_diff: u64) -> SCResult<()> {
+    #[endpoint(setMinBlockNonceDiff)]
+    fn set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
         self.require_caller_owner()?;
         require!(
-            new_max_block_nonce_diff > 0,
+            new_min_block_nonce_diff > 0,
             "Max block nonce diff must be more than 0"
         );
 
-        self.max_block_nonce_diff().set(&new_max_block_nonce_diff);
+        self.min_block_nonce_diff().set(&new_min_block_nonce_diff);
 
         Ok(())
     }
 
     #[endpoint(getNextTransactionBatch)]
-    fn get_next_transaction_batch(&self) -> SCResult<MultiResultVec<Transaction<Self::BigUint>>> {
-        only_owner!(self, "only owner may call this function");
+    fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatch<Self::BigUint>> {
+        self.require_caller_owner()?;
+
+        let current_block_nonce = self.blockchain().get_block_nonce();
+        let min_block_nonce_diff = self.min_block_nonce_diff().get();
 
         let mut tx_batch = Vec::new();
-        let mut first_tx_block_nonce = 0;
         let max_tx_batch_size = self.max_tx_batch_size().get();
-        let max_block_nonce_diff = self.max_block_nonce_diff().get();
 
         while let Some(tx) = self.get_next_pending_transaction() {
-            if tx_batch.is_empty() {
-                first_tx_block_nonce = tx.block_nonce;
-            }
-
-            let block_nonce_diff = tx.block_nonce - first_tx_block_nonce;
-            if block_nonce_diff > max_block_nonce_diff {
+            let block_nonce_diff = current_block_nonce - tx.block_nonce;
+            if block_nonce_diff < min_block_nonce_diff {
                 break;
             }
 
@@ -113,7 +125,19 @@ pub trait EsdtSafe {
             }
         }
 
-        Ok(tx_batch.into())
+        if tx_batch.is_empty() {
+            Ok(EsdtSafeTxBatch::default())
+        } else {
+            let batch_id = self.last_valid_batch_id().update(|batch_id| {
+                *batch_id += 1;
+                *batch_id
+            });
+
+            Ok(EsdtSafeTxBatch {
+                batch_id,
+                transactions: tx_batch,
+            })
+        }
     }
 
     #[endpoint(setTransactionBatchStatus)]
@@ -134,18 +158,12 @@ pub trait EsdtSafe {
 
             match tx_status {
                 TransactionStatus::Executed => {
-                    self.transaction_status(&sender, nonce)
-                        .set(&TransactionStatus::Executed);
-
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
 
                     self.require_local_burn_role_set(&tx.token_identifier)?;
                     self.burn_esdt_token(&tx.token_identifier, &tx.amount);
                 }
                 TransactionStatus::Rejected => {
-                    self.transaction_status(&sender, nonce)
-                        .set(&TransactionStatus::Rejected);
-
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
 
                     self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
@@ -154,6 +172,10 @@ pub trait EsdtSafe {
                     return sc_error!("Transaction status may only be set to Executed or Rejected")
                 }
             }
+
+            // storage cleanup
+            self.transaction_status(&sender, nonce).clear();
+            self.transactions_by_nonce(&sender).clear_entry(nonce);
 
             tx_senders.push((sender, nonce));
         }
@@ -218,8 +240,7 @@ pub trait EsdtSafe {
     }
 
     fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        let _ = self
-            .send()
+        self.send()
             .direct(to, token_id, amount, self.data_or_empty(to, b"refund"));
     }
 
@@ -317,11 +338,14 @@ pub trait EsdtSafe {
         &self,
     ) -> LinkedListMapper<Self::Storage, (Address, TxNonce)>;
 
+    #[storage_mapper("lastValidBatchId")]
+    fn last_valid_batch_id(&self) -> SingleValueMapper<Self::Storage, usize>;
+
     // configurable
 
     #[storage_mapper("maxTxBatchSize")]
     fn max_tx_batch_size(&self) -> SingleValueMapper<Self::Storage, usize>;
 
-    #[storage_mapper("maxBlockNonceDiff")]
-    fn max_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
+    #[storage_mapper("minBlockNonceDiff")]
+    fn min_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
 }
