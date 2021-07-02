@@ -9,6 +9,11 @@ fn create_transaction_ok_go() {
 }
 
 #[test]
+fn create_another_tx_too_late_for_batch_go() {
+    elrond_wasm_debug::mandos_go("mandos/create_another_tx_too_late_for_batch.scen.json");
+}
+
+#[test]
 fn execute_batch_both_rejected_go() {
     elrond_wasm_debug::mandos_go("mandos/execute_batch_both_rejected.scen.json");
 }
