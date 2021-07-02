@@ -88,18 +88,27 @@ pub trait EthereumFeePrepay {
             .accumulated_tx_fees(TxFeePaymentToken::WrappedEth)
             .get();
 
-        self.send().direct(
-            &dest_address,
-            &TokenIdentifier::egld(),
-            &accumulated_egld,
-            &[],
-        );
-        self.send().direct(
-            &dest_address,
-            &self.wrapped_eth_token_id().get(),
-            &accumulated_wrapped_eth,
-            &[],
-        );
+        if accumulated_egld > 0 {
+            self.send().direct(
+                &dest_address,
+                &TokenIdentifier::egld(),
+                &accumulated_egld,
+                &[],
+            );
+        }
+
+        if accumulated_wrapped_eth > 0 {
+            self.send().direct(
+                &dest_address,
+                &self.wrapped_eth_token_id().get(),
+                &accumulated_wrapped_eth,
+                &[],
+            );
+        }
+
+        self.accumulated_tx_fees(TxFeePaymentToken::Egld).clear();
+        self.accumulated_tx_fees(TxFeePaymentToken::WrappedEth)
+            .clear();
 
         Ok(())
     }

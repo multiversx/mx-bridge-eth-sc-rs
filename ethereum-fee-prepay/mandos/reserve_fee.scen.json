@@ -15,7 +15,6 @@
                 "function": "reserveFee",
                 "arguments": [
                     "address:user",
-                    "1",
                     "str:EGLD"
                 ],
                 "gasLimit": "100,000,000",
@@ -45,7 +44,7 @@
                         "str:aggregator": "sc:price_aggregator",
                         "str:whitelist.value|u32:1": "address:owner",
                         "str:deposit|address:user|u8:0": "1,500,000",
-                        "str:txFeePayment|address:user|u32:1": "u8:0|biguint:1,500,000",
+                        "str:accumulatedTxFees|u8:0": "1,500,000",
                         "+": ""
                     },
                     "code": "*"
