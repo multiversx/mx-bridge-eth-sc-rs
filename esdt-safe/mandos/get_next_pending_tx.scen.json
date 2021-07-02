@@ -6,6 +6,12 @@
             "path": "create_transaction_ok.scen.json"
         },
         {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "500"
+            }
+        },
+        {
             "step": "scCall",
             "txId": "get-next-pending-tx",
             "tx": {
