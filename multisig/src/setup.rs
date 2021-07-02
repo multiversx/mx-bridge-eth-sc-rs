@@ -220,13 +220,13 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
-    #[endpoint(esdtSafeSetMaxBlockNonceDiff)]
-    fn esdt_safe_set_max_block_nonce_diff(&self, new_max_block_nonce_diff: u64) -> SCResult<()> {
+    #[endpoint(esdtSafeSetMinBlockNonceDiff)]
+    fn esdt_safe_set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
         self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_max_block_nonce_diff(new_max_block_nonce_diff)
+            .set_min_block_nonce_diff(new_min_block_nonce_diff)
             .execute_on_dest_context();
 
         Ok(())
