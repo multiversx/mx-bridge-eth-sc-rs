@@ -39,6 +39,11 @@ fn get_next_pending_tx_go() {
 }
 
 #[test]
+fn get_next_tx_batch_too_early_go() {
+    elrond_wasm_debug::mandos_go("mandos/get_next_tx_batch_too_early.scen.json");
+}
+
+#[test]
 fn get_next_tx_batch_go() {
     elrond_wasm_debug::mandos_go("mandos/get_next_tx_batch.scen.json");
 }
