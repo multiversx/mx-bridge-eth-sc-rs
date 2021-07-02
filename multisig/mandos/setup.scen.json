@@ -216,7 +216,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:maxTxBatchSize": "10",
-                        "str:minBlockNonceDiff": "100",
+                        "str:minBlockNonceDiff": "5",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:tokenWhitelist.node_idWEGLD-123456": "1",
@@ -326,7 +326,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:maxTxBatchSize": "10",
-                        "str:minBlockNonceDiff": "100",
+                        "str:minBlockNonceDiff": "5",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:tokenWhitelist.node_idWEGLD-123456": "1",

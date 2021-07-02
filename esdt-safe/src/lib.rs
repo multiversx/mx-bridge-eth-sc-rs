@@ -8,7 +8,7 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 100;
+const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 5;
 
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct EsdtSafeTxBatch<BigUint: BigUintApi> {

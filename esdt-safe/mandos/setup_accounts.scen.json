@@ -111,7 +111,7 @@
                         "str:tokenWhitelist.node_links|u32:1": "0x0000000000000000",
 
                         "str:maxTxBatchSize": "10",
-                        "str:minBlockNonceDiff": "100"
+                        "str:minBlockNonceDiff": "5"
                     },
                     "code": "file:../output/esdt-safe.wasm",
                     "owner": "address:owner"
