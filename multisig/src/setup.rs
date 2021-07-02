@@ -247,6 +247,21 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
+    #[endpoint(multiTransferEsdtRemoveTokenFromWhitelist)]
+    fn multi_transfer_esdt_remove_token_from_whitelist(
+        &self,
+        token_id: TokenIdentifier,
+    ) -> SCResult<()> {
+        self.require_caller_owner()?;
+        self.require_multi_transfer_esdt_deployed()?;
+
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+            .remove_token_from_whitelist(token_id)
+            .execute_on_dest_context();
+
+        Ok(())
+    }
+
     #[proxy]
     fn setup_esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe::Proxy<Self::SendApi>;
 
