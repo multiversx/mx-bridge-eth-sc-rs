@@ -104,21 +104,17 @@ pub trait EsdtSafe {
         self.require_caller_owner()?;
 
         let current_block_nonce = self.blockchain().get_block_nonce();
-        let first_tx_block_nonce = match self.get_first_pending_transaction_block_nonce() {
-            Some(block_nonce) => block_nonce,
-            None => return Ok(EsdtSafeTxBatch::default()),
-        };
-        let block_nonce_diff = current_block_nonce - first_tx_block_nonce;
         let min_block_nonce_diff = self.min_block_nonce_diff().get();
-
-        if block_nonce_diff < min_block_nonce_diff {
-            return Ok(EsdtSafeTxBatch::default());
-        }
 
         let mut tx_batch = Vec::new();
         let max_tx_batch_size = self.max_tx_batch_size().get();
 
         while let Some(tx) = self.get_next_pending_transaction() {
+            let block_nonce_diff = current_block_nonce - tx.block_nonce;
+            if block_nonce_diff < min_block_nonce_diff {
+                break;
+            }
+
             self.transaction_status(&tx.from, tx.nonce)
                 .set(&TransactionStatus::InProgress);
             self.clear_next_pending_transaction();
@@ -129,15 +125,19 @@ pub trait EsdtSafe {
             }
         }
 
-        let batch_id = self.last_valid_batch_id().update(|batch_id| {
-            *batch_id += 1;
-            *batch_id
-        });
+        if tx_batch.is_empty() {
+            Ok(EsdtSafeTxBatch::default())
+        } else {
+            let batch_id = self.last_valid_batch_id().update(|batch_id| {
+                *batch_id += 1;
+                *batch_id
+            });
 
-        Ok(EsdtSafeTxBatch {
-            batch_id,
-            transactions: tx_batch,
-        })
+            Ok(EsdtSafeTxBatch {
+                batch_id,
+                transactions: tx_batch,
+            })
+        }
     }
 
     #[endpoint(setTransactionBatchStatus)]
@@ -291,12 +291,6 @@ pub trait EsdtSafe {
 
     fn clear_next_pending_transaction(&self) {
         let _ = self.pending_transaction_address_nonce_list().pop_front();
-    }
-
-    fn get_first_pending_transaction_block_nonce(&self) -> Option<u64> {
-        self.pending_transaction_address_nonce_list()
-            .front()
-            .map(|(address, nonce)| self.transactions_by_nonce(&address).get(nonce).block_nonce)
     }
 
     // proxies
