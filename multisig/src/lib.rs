@@ -6,7 +6,7 @@ mod action;
 mod user_role;
 
 use action::Action;
-use esdt_safe::EsdtSafeTxBatchSplitInFields;
+use esdt_safe::{EsdtSafeTxBatch, EsdtSafeTxBatchSplitInFields};
 use transaction::*;
 use user_role::UserRole;
 
@@ -215,7 +215,11 @@ pub trait Multisig:
 
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> EsdtSafeTxBatchSplitInFields<Self::BigUint> {
-        let esdt_safe_tx_batch = self.current_tx_batch().get();
+        let esdt_safe_tx_batch = if !self.current_tx_batch().is_empty() {
+            self.current_tx_batch().get()
+        } else {
+            EsdtSafeTxBatch::default()
+        };
         let batch_len = esdt_safe_tx_batch.transactions.len();
 
         let mut result_vec = Vec::with_capacity(batch_len);
