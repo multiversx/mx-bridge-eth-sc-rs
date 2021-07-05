@@ -32,14 +32,14 @@ path = "../multi-transfer-esdt"
 path = "../ethereum-fee-prepay"
 
 [dependencies.elrond-wasm]
-version = "0.17.0"
+version = "0.17.4"
 
 [dependencies.elrond-wasm-derive]
-version = "0.17.0"
+version = "0.17.4"
 
 [dependencies.elrond-wasm-node]
-version = "0.17.0"
+version = "0.17.4"
 optional = true
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.17.0"
+version = "0.17.4"
