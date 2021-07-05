@@ -14,11 +14,10 @@
                 "value": "0",
                 "function": "setTransactionBatchStatus",
                 "arguments": [
-                    "address:relayer",
                     "address:user1|u32:1|u8:4",
                     "address:user2|u32:1|u8:4"
                 ],
-                "gasLimit": "15,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -31,13 +30,8 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:owner": {
-                    "nonce": "3",
-                    "balance": "0",
-                    "storage": {}
-                },
                 "address:user1": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "esdt": {
                         "str:BridgeToken": "1000"
@@ -45,7 +39,7 @@
                     "storage": {}
                 },
                 "address:user2": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "esdt": {
                         "str:BridgeToken": "1000"
@@ -64,7 +58,7 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "",
                         "str:pendingTransactionList.value|u32:2": "",

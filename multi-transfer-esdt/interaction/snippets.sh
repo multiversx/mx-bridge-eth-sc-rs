@@ -1,6 +1,6 @@
 ALICE="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/alice.pem"
 BOB="/home/elrond/elrond-sdk/erdpy/testnet/wallets/users/bob.pem"
-ADDRESS=$(erdpy data load --key=address-testnet)
+ADDRESS=$(erdpy data load --key=address-testnet-multi-transfer-esdt)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
 PROXY=https://testnet-gateway.elrond.com
 CHAIN_ID=T
@@ -15,32 +15,44 @@ WRAPPED_EGLD_TOKEN_ID=0x
 WRAPPED_ETH_TOKEN_ID=0x
 
 deploy() {
-    erdpy --verbose contract deploy --project=${PROJECT} --arguments ${WRAPPED_EGLD_TOKEN_ID} ${WRAPPED_ETH_TOKEN_ID} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+    erdpy --verbose contract deploy --project=${PROJECT} \
+    --arguments ${WRAPPED_EGLD_TOKEN_ID} ${WRAPPED_ETH_TOKEN_ID} \
+    --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send \
+    --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
     ADDRESS=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['address']")
 
     erdpy data store --key=address-testnet --value=${ADDRESS}
-    erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
+    erdpy data store --key=deployTransaction-testnet-multi-transfer-esdt --value=${TRANSACTION}
 
     echo ""
     echo "Smart contract address: ${ADDRESS}"
 }
 
 upgrade() {
-    erdpy --verbose contract upgrade ${ADDRESS} --project=${PROJECT} --recall-nonce --pem=${ALICE} --gas-limit=100000000 --send --outfile="upgrade.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+    erdpy --verbose contract upgrade ${ADDRESS} --project=${PROJECT} --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 --send --outfile="upgrade.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
 setLocalRolesWrappedEgld() {
     local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
+    local ADDRESS_HEX = $(erdpy wallet bech32 --decode ${ADDRESS})
 
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments ${WRAPPED_EGLD_TOKEN_ID} ${ADDRESS_HEX} ${LOCAL_MINT_ROLE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setLocalRolesWrappedEth() {
     local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
+    local ADDRESS_HEX = $(erdpy wallet bech32 --decode ${ADDRESS})
 
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=60000000 --function="setSpecialRole" --arguments ${WRAPPED_ETH_TOKEN_ID} ${ADDRESS} ${LOCAL_MINT_ROLE} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments ${WRAPPED_ETH_TOKEN_ID} ${ADDRESS} ${LOCAL_MINT_ROLE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 transferEsdtToken() {
@@ -48,5 +60,7 @@ transferEsdtToken() {
     local TOKEN_ID = WRAPPED_ETH_TOKEN_ID
     local AMOUNT = 0x05
 
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} --gas-limit=10000000 --function="transferEsdtToken" --arguments ${DEST_ADDRESS} ${TOKEN_ID} ${AMOUNT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=10000000 --function="transferEsdtToken" \
+    --arguments ${DEST_ADDRESS} ${TOKEN_ID} ${AMOUNT} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

@@ -2,13 +2,12 @@
     "name": "setup accounts",
     "steps": [
         {
+            "step": "externalSteps",
+            "path": "../../price-aggregator/mandos/oracle_submit.scen.json"
+        },
+        {
             "step": "setState",
             "accounts": {
-                "address:owner": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
-                },
                 "address:relayer1": {
                     "nonce": "0",
                     "balance": "1000",
@@ -21,23 +20,17 @@
                 },
                 "address:user": {
                     "nonce": "0",
-                    "balance": "1000",
+                    "balance": "3,001,000",
                     "esdt": {
                         "str:WETH-123456": "1000"
                     },
                     "storage": {}
-                },
-                "sc:aggregator_mock": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {},
-                    "code": "file:../../aggregator-mock/output/aggregator-mock.wasm"
                 }
             },
             "newAddresses": [
                 {
                     "creatorAddress": "address:owner",
-                    "creatorNonce": "0",
+                    "creatorNonce": "1",
                     "newAddress": "sc:multisig"
                 }
             ]
@@ -95,7 +88,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "storage": {}
                 },
@@ -129,7 +122,7 @@
                     "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm",
                     "file:../../ethereum-fee-prepay/output/ethereum-fee-prepay.wasm",
                     "file:../../esdt-safe/output/esdt-safe.wasm",
-                    "sc:aggregator_mock",
+                    "sc:price_aggregator",
                     "str:WEGLD-123456",
                     "str:WETH-123456"
                 ],
@@ -168,7 +161,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "3",
+                    "nonce": "4",
                     "balance": "0",
                     "storage": {}
                 },
@@ -198,7 +191,8 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:aggregator": "sc:aggregator_mock",
+                        "str:aggregator": "sc:price_aggregator",
+                        "str:wrappedEthTokenId": "str:WETH-123456",
 
                         "str:whitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:whitelist.node_id|sc:multisig": "1",

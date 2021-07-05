@@ -1,0 +1,53 @@
+{
+    "name": "pay fee",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "reserve_fee.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "pay-fee",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:ethereum_fee_prepay",
+                "value": "0",
+                "function": "claimAccumulatedFees",
+                "arguments": [
+                    "address:relayer"
+                ],
+                "gasLimit": "15,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:relayer": {
+                    "nonce": "0",
+                    "balance": "1,500,000",
+                    "storage": {}
+                },
+                "sc:ethereum_fee_prepay": {
+                    "nonce": "0",
+                    "balance": "1,500,000",
+                    "storage": {
+                        "str:aggregator": "sc:price_aggregator",
+                        "str:whitelist.value|u32:1": "address:owner",
+                        "str:deposit|address:user|u8:0": "1,500,000",
+                        "str:accumulatedTxFees|u8:0": "",
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        }
+    ]
+}

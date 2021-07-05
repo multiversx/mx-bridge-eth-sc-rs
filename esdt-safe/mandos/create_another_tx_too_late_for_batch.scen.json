@@ -23,13 +23,21 @@
                 },
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920"
+                    "0x0102030405060708091011121314151617181920",
+                    "str:EGLD"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
+                "out": [
+                    "1",
+                    "str:GWEI",
+                    "str:EGLD",
+                    "10",
+                    "0"
+                ],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -39,7 +47,7 @@
             "step": "checkState",
             "accounts": {
                 "address:user2": {
-                    "nonce": "2",
+                    "nonce": "3",
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": "0"
@@ -58,7 +66,7 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
                         "str:pendingTransactionList.value|u32:2": "address:user2|u32:1",
@@ -102,8 +110,49 @@
             }
         },
         {
-            "step": "externalSteps",
-            "path": "get_next_tx_batch.scen.json"
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "500"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "get-next-tx-batch",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "getNextTransactionBatch",
+                "arguments": [],
+                "gasLimit": "30,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    {
+                        "01-batch_id": "u32:1",
+                        "02-vec_len": "u32:2",
+
+                        "11-block_nonce": "u64:0",
+                        "12-nonce": "u32:1",
+                        "13-from": "address:user1",
+                        "14-to": "0x0102030405060708091011121314151617181920",
+                        "15-token_identifier": "nested:str:BRIDGE-123456",
+                        "16-amount": "biguint:400",
+
+                        "21-block_nonce": "u64:0",
+                        "22-nonce": "u32:1",
+                        "23-from": "address:user2",
+                        "24-to": "0x0102030405060708091011121314151617181920",
+                        "25-token_identifier": "nested:str:BRIDGE-123456",
+                        "26-amount": "biguint:900"
+                    }
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
         }
     ]
 }

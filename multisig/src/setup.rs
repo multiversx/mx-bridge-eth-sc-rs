@@ -50,6 +50,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         esdt_safe_code: BoxedBytes,
         aggregator_address: Address,
         wrapped_egld_token_id: TokenIdentifier,
+        wrapped_eth_token_id: TokenIdentifier,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.require_caller_owner()?;
@@ -58,6 +59,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         let mut arg_buffer_token_whitelist = ArgBuffer::new();
 
         arg_buffer_token_whitelist.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
         for token in token_whitelist.into_vec() {
             arg_buffer_token_whitelist.push_argument_bytes(token.as_esdt_identifier());
         }
@@ -102,6 +104,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         let mut ethereum_fee_prepay_arg_buffer = ArgBuffer::new();
         ethereum_fee_prepay_arg_buffer.push_argument_bytes(aggregator_address.as_bytes());
+        ethereum_fee_prepay_arg_buffer.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
 
         let ethereum_fee_prepay_address = self.send().deploy_contract(
             gas_per_deploy,

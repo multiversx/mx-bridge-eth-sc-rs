@@ -34,7 +34,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "2",
+                    "nonce": "*",
                     "balance": "0",
                     "storage": {}
                 },
@@ -50,7 +50,7 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
                         "str:pendingTransactionList.value|u32:2": "address:user2|u32:1",

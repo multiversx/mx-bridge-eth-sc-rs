@@ -115,7 +115,7 @@
             "accounts": {
                 "address:user": {
                     "nonce": "*",
-                    "balance": "1000",
+                    "balance": "3,001,000",
                     "esdt": {
                         "str:WEGLD-123456": "500",
                         "str:WETH-123456": "1500"

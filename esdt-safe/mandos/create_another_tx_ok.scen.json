@@ -17,13 +17,21 @@
                 },
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920"
+                    "0x0102030405060708091011121314151617181920",
+                    "str:EGLD"
                 ],
-                "gasLimit": "25,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
+                "out": [
+                    "1",
+                    "str:GWEI",
+                    "str:EGLD",
+                    "10",
+                    "0"
+                ],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -33,7 +41,7 @@
             "step": "checkState",
             "accounts": {
                 "address:user2": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": "100"
@@ -52,7 +60,7 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:fee_estimator_contract",
+                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
                         "str:pendingTransactionList.value|u32:2": "address:user2|u32:1",

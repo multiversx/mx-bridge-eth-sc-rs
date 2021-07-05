@@ -91,7 +91,7 @@ pub trait EsdtSafe {
         self.require_caller_owner()?;
         require!(
             new_min_block_nonce_diff > 0,
-            "Max block nonce diff must be more than 0"
+            "Min block nonce diff must be more than 0"
         );
 
         self.min_block_nonce_diff().set(&new_min_block_nonce_diff);
@@ -143,7 +143,6 @@ pub trait EsdtSafe {
     #[endpoint(setTransactionBatchStatus)]
     fn set_transaction_batch_status(
         &self,
-        relayer_reward_address: Address,
         #[var_args] tx_status_batch: VarArgs<(Address, TxNonce, TransactionStatus)>,
     ) -> SCResult<()> {
         only_owner!(self, "only owner may call this function");
@@ -174,9 +173,6 @@ pub trait EsdtSafe {
             // storage cleanup
             self.transaction_status(&sender, nonce).clear();
             self.transactions_by_nonce(&sender).clear_entry(nonce);
-
-            // pay tx fees to the relayer that processed the transaction
-            self.pay_fee(sender, relayer_reward_address.clone());
         }
 
         Ok(())
@@ -191,6 +187,7 @@ pub trait EsdtSafe {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment] payment: Self::BigUint,
         to: EthAddress,
+        token_used_for_fee_payment: TokenIdentifier,
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
@@ -223,7 +220,7 @@ pub trait EsdtSafe {
 
         // reserve transaction fee beforehand
         // used prevent transaction spam
-        self.reserve_fee(caller);
+        self.reserve_fee(caller, token_used_for_fee_payment);
 
         Ok(())
     }
@@ -247,25 +244,10 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(&self, _from: Address) {
-        /* TODO: Uncomment once the integration is complete
+    fn reserve_fee(&self, from: Address, token_used_for_fee_payment: TokenIdentifier) {
         self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .reserve_fee(from, TransactionType::Erc20, Priority::Low)
+            .reserve_fee(from, token_used_for_fee_payment)
             .execute_on_dest_context();
-        */
-    }
-
-    fn pay_fee(&self, _tx_sender: Address, _relayer_reward_address: Address) {
-        /* TODO: Uncomment once the integration is complete
-        self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .pay_fee(
-                tx_sender,
-                relayer_reward_address,
-                TransactionType::Erc20,
-                Priority::Low,
-            )
-            .execute_on_dest_context();
-        */
     }
 
     fn require_caller_owner(&self) -> SCResult<()> {
