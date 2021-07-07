@@ -21,7 +21,7 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "0"
+                    "0x"
                 ],
                 "gas": "*",
                 "refund": "*"
