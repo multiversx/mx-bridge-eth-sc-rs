@@ -6,7 +6,7 @@ mod action;
 mod user_role;
 
 use action::Action;
-use esdt_safe::{EsdtSafeTxBatch, EsdtSafeTxBatchSplitInFields};
+use transaction::esdt_safe_batch::{EsdtSafeTxBatch, EsdtSafeTxBatchSplitInFields};
 use transaction::*;
 use user_role::UserRole;
 
@@ -101,16 +101,28 @@ pub trait Multisig:
             "Only board members can call this function"
         );
 
-        let esdt_safe_tx_batch = self
+        let tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_next_transaction_batch()
             .execute_on_dest_context();
-        let esdt_safe_batch_id = esdt_safe_tx_batch.batch_id;
-        let batch_len = esdt_safe_tx_batch.transactions.len();
+        let batch_len = tx_batch.len();
 
-        if batch_len > 0 {
+        let esdt_safe_tx_batch = if batch_len > 0 {
+            let batch_id = self.last_valid_esdt_safe_batch_id().update(|batch_id| {
+                *batch_id += 1;
+                *batch_id
+            });
+            let esdt_safe_tx_batch = EsdtSafeTxBatch {
+                batch_id,
+                transactions: tx_batch,
+            };
+
             self.current_tx_batch().set(&esdt_safe_tx_batch);
-        }
+
+            esdt_safe_tx_batch
+        } else {
+            EsdtSafeTxBatch::default()
+        };
 
         // convert into MultiResult for easier parsing
         let mut result_vec = Vec::with_capacity(batch_len);
@@ -118,7 +130,7 @@ pub trait Multisig:
             result_vec.push(tx.into_multiresult());
         }
 
-        Ok((esdt_safe_batch_id, result_vec.into()).into())
+        Ok((esdt_safe_tx_batch.batch_id, result_vec.into()).into())
     }
 
     #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
