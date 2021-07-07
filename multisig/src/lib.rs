@@ -389,6 +389,15 @@ pub trait Multisig:
                 let current_tx_batch = &esdt_safe_tx_batch.transactions;
 
                 self.current_tx_batch().clear();
+
+                // clear each individual action
+                for act_id in self
+                    .action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
+                    .values()
+                {
+                    self.clear_action(act_id);
+                }
+
                 self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
                     .clear();
 
@@ -411,6 +420,10 @@ pub trait Multisig:
                     .execute_on_dest_context();
 
                 return_statuses = OptionalResult::Some(statuses);
+
+                for act_id in self.batch_id_to_action_id_mapping(batch_id).values() {
+                    self.clear_action(act_id);
+                }
 
                 self.batch_id_to_action_id_mapping(batch_id).clear();
             }
