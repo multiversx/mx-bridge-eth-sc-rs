@@ -390,16 +390,18 @@ pub trait Multisig:
 
                 self.current_tx_batch().clear();
 
-                // clear each individual action
-                for act_id in self
-                    .action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-                    .values()
-                {
-                    self.clear_action(act_id);
+                let mut action_ids_mapper =
+                    self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id);
+
+                // if there's only one proposed action,
+                // the action was already cleared at the beginning of this function
+                if action_ids_mapper.len() > 1 {
+                    for act_id in action_ids_mapper.values() {
+                        self.clear_action(act_id);
+                    }
                 }
 
-                self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-                    .clear();
+                action_ids_mapper.clear();
 
                 let mut args = Vec::new();
                 for (tx, tx_status) in current_tx_batch.iter().zip(tx_batch_status.iter()) {
@@ -414,18 +416,24 @@ pub trait Multisig:
                 batch_id,
                 transfers,
             } => {
+                let mut action_ids_mapper = self.batch_id_to_action_id_mapping(batch_id);
+
+                // if there's only one proposed action,
+                // the action was already cleared at the beginning of this function
+                if action_ids_mapper.len() > 1 {
+                    for act_id in action_ids_mapper.values() {
+                        self.clear_action(act_id);
+                    }
+                }
+
+                action_ids_mapper.clear();
+
                 let statuses = self
                     .multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
                     .batch_transfer_esdt_token(transfers.into())
                     .execute_on_dest_context();
 
                 return_statuses = OptionalResult::Some(statuses);
-
-                for act_id in self.batch_id_to_action_id_mapping(batch_id).values() {
-                    self.clear_action(act_id);
-                }
-
-                self.batch_id_to_action_id_mapping(batch_id).clear();
             }
         }
 
