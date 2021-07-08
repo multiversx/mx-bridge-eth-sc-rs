@@ -1,9 +1,9 @@
 elrond_wasm::imports!();
 
-use esdt_safe::EsdtSafeTxBatch;
 use eth_address::EthAddress;
 use multi_transfer_esdt::SingleTransferTuple;
 use transaction::TransactionStatus;
+use transaction::esdt_safe_batch::EsdtSafeTxBatch;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
@@ -83,6 +83,9 @@ pub trait StorageModule {
         &self,
         esdt_safe_batch_id: usize,
     ) -> MapMapper<Self::Storage, Vec<TransactionStatus>, usize>;
+
+    #[storage_mapper("lastValidEsdtSafeBatchId")]
+    fn last_valid_esdt_safe_batch_id(&self) -> SingleValueMapper<Self::Storage, usize>;
 
     /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
 

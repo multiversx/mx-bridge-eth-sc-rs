@@ -4,6 +4,8 @@ use elrond_wasm::api::BigUintApi;
 use elrond_wasm::types::{Address, MultiResult6, TokenIdentifier};
 use eth_address::EthAddress;
 
+pub mod esdt_safe_batch;
+
 elrond_wasm::derive_imports!();
 
 pub type TxNonce = usize;

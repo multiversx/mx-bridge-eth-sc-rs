@@ -132,9 +132,6 @@
                 "message": "",
                 "out": [
                     {
-                        "01-batch_id": "u32:1",
-                        "02-vec_len": "u32:2",
-
                         "11-block_nonce": "u64:0",
                         "12-nonce": "u32:1",
                         "13-from": "address:user1",

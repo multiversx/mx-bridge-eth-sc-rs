@@ -20,12 +20,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    {
-                        "01-batch_id": "u32:0",
-                        "02-vec_len": "u32:0"
-                    }
-                ],
+                "out": [ "0x" ],
                 "gas": "*",
                 "refund": "*"
             }
