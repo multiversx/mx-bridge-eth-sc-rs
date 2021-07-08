@@ -87,14 +87,6 @@ pub trait MultiTransferEsdt {
 
     // private
 
-    fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
-        if self.blockchain().is_smart_contract(to) {
-            &[]
-        } else {
-            data
-        }
-    }
-
     fn is_local_mint_role_set(&self, token_id: &TokenIdentifier) -> bool {
         let roles = self.blockchain().get_esdt_local_roles(token_id);
 
