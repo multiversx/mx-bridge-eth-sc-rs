@@ -1,9 +1,6 @@
 elrond_wasm::imports!();
 
-pub const DOLLAR_STRING: &[u8] = b"USD";
-
 pub const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
-pub const DENOMINATION: u64 = 1_000_000_000_000_000_000;
 
 use aggregator_proxy::*;
 
@@ -37,7 +34,7 @@ pub trait FeeEstimatorModule {
     fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> Self::BigUint {
         let eth_gas_unit_cost = self.get_eth_rapid_gas_price_per_unit(token_id);
 
-        eth_gas_unit_cost * ETH_ERC20_TX_GAS_LIMIT.into() / DENOMINATION.into()
+        eth_gas_unit_cost * ETH_ERC20_TX_GAS_LIMIT.into()
     }
 
     // TODO: Call the required endpoint from the gas station SC

@@ -6,8 +6,6 @@ elrond_wasm::derive_imports!();
 
 mod fee_estimator;
 
-pub mod aggregator_proxy;
-
 use eth_address::*;
 use transaction::*;
 
