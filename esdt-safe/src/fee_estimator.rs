@@ -3,12 +3,17 @@ elrond_wasm::imports!();
 pub const DOLLAR_STRING: &[u8] = b"USD";
 
 pub const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
+pub const DENOMINATION: u64 = 1_000_000_000_000_000_000;
 
 use aggregator_proxy::*;
 
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
-    fn get_value_in_dollars(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) -> Self::BigUint {
+    fn get_value_in_dollars(
+        &self,
+        token_id: &TokenIdentifier,
+        amount: &Self::BigUint,
+    ) -> Self::BigUint {
         let fee_estimator_sc_address = self.fee_estimator_contract_address().get();
         if fee_estimator_sc_address.is_zero() {
             return self.default_value_in_dollars(token_id).get();
@@ -23,7 +28,8 @@ pub trait FeeEstimatorModule {
             .into_option()
             .map(|multi_result| AggregatorResult::from(multi_result).price);
 
-        let price_per_token = opt_price.unwrap_or_else(|| self.default_value_in_dollars(token_id).get());
+        let price_per_token =
+            opt_price.unwrap_or_else(|| self.default_value_in_dollars(token_id).get());
 
         &price_per_token * amount
     }
@@ -31,7 +37,7 @@ pub trait FeeEstimatorModule {
     fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> Self::BigUint {
         let eth_gas_unit_cost = self.get_eth_rapid_gas_price_per_unit(token_id);
 
-        eth_gas_unit_cost * ETH_ERC20_TX_GAS_LIMIT.into()
+        eth_gas_unit_cost * ETH_ERC20_TX_GAS_LIMIT.into() / DENOMINATION.into()
     }
 
     // TODO: Call the required endpoint from the gas station SC
