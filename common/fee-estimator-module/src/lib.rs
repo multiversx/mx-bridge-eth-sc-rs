@@ -1,16 +1,30 @@
+#![no_std]
+
 elrond_wasm::imports!();
 
-pub const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
-
+mod aggregator_proxy;
 use aggregator_proxy::*;
+
+pub const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
+pub const DENOMINATION: u64 = 1_000_000_000_000_000_000;
 
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
-    fn get_value_in_dollars(
+    #[endpoint(setDefaultValueInDollars)]
+    fn set_default_value_in_dollars(
         &self,
-        token_id: &TokenIdentifier,
-        amount: &Self::BigUint,
-    ) -> Self::BigUint {
+        token_id: TokenIdentifier,
+        default_value_in_dollars: Self::BigUint,
+    ) -> SCResult<()> {
+        only_owner!(self, "Only owner may call this function");
+
+        self.default_value_in_dollars(&token_id)
+            .set(&default_value_in_dollars);
+
+        Ok(())
+    }
+
+    fn get_value_in_dollars(&self, token_id: &TokenIdentifier) -> Self::BigUint {
         let fee_estimator_sc_address = self.fee_estimator_contract_address().get();
         if fee_estimator_sc_address.is_zero() {
             return self.default_value_in_dollars(token_id).get();
@@ -25,10 +39,7 @@ pub trait FeeEstimatorModule {
             .into_option()
             .map(|multi_result| AggregatorResult::from(multi_result).price);
 
-        let price_per_token =
-            opt_price.unwrap_or_else(|| self.default_value_in_dollars(token_id).get());
-
-        &price_per_token * amount
+        opt_price.unwrap_or_else(|| self.default_value_in_dollars(token_id).get())
     }
 
     fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> Self::BigUint {

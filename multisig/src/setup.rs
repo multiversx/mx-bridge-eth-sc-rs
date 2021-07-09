@@ -209,12 +209,13 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>
     ) -> SCResult<()> {
         self.require_caller_owner()?;
         self.require_multi_transfer_esdt_deployed()?;
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .add_token_to_whitelist(token_id)
+            .add_token_to_whitelist(token_id, opt_default_value_in_dollars)
             .execute_on_dest_context();
 
         Ok(())

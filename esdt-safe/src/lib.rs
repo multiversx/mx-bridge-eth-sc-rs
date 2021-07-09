@@ -4,8 +4,6 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-mod fee_estimator;
-
 use eth_address::*;
 use transaction::*;
 
@@ -13,7 +11,7 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 5;
 
 #[elrond_wasm_derive::contract]
-pub trait EsdtSafe: fee_estimator::FeeEstimatorModule {
+pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
     #[init]
     fn init(
         &self,
@@ -121,24 +119,6 @@ pub trait EsdtSafe: fee_estimator::FeeEstimatorModule {
         Ok(())
     }
 
-    #[endpoint(setDefaultValueInDollars)]
-    fn set_default_value_in_dollars(
-        &self,
-        token_id: TokenIdentifier,
-        default_value_in_dollars: Self::BigUint,
-    ) -> SCResult<()> {
-        self.require_caller_owner()?;
-        require!(
-            self.token_whitelist().contains(&token_id),
-            "Token is not in whitelist"
-        );
-
-        self.default_value_in_dollars(&token_id)
-            .set(&default_value_in_dollars);
-
-        Ok(())
-    }
-
     #[endpoint(getNextTransactionBatch)]
     fn get_next_transaction_batch(&self) -> SCResult<Vec<Transaction<Self::BigUint>>> {
         self.require_caller_owner()?;
@@ -173,7 +153,7 @@ pub trait EsdtSafe: fee_estimator::FeeEstimatorModule {
         &self,
         #[var_args] tx_status_batch: VarArgs<(Address, TxNonce, TransactionStatus)>,
     ) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
+        self.require_caller_owner()?;
 
         for (sender, nonce, tx_status) in tx_status_batch.into_vec() {
             require!(
@@ -226,12 +206,12 @@ pub trait EsdtSafe: fee_estimator::FeeEstimatorModule {
         );
         require!(!to.is_zero(), "Can't transfer to address zero");
 
-        let token_value_in_dollars = self.get_value_in_dollars(&payment_token, &payment_amount);
-        let min_value_bridged_tokens_in_dollars =
-            self.min_value_of_bridged_tokens_in_dollars().get();
+        let token_value_in_dollars = self.get_value_in_dollars(&payment_token);
+        let total_value = &token_value_in_dollars * &payment_amount;
+        let min_bridged_value = self.min_value_of_bridged_tokens_in_dollars().get();
 
         require!(
-            token_value_in_dollars >= min_value_bridged_tokens_in_dollars,
+            total_value >= min_bridged_value,
             "Amount of tokens to bridge is too low"
         );
 

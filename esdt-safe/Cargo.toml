@@ -17,8 +17,8 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
-[dependencies.aggregator-proxy]
-path = "../common/aggregator-proxy"
+[dependencies.fee-estimator-module]
+path = "../common/fee-estimator-module"
 
 [dependencies.elrond-wasm]
 version = "0.17.4"

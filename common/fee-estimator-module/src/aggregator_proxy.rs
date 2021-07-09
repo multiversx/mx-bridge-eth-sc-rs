@@ -1,5 +1,3 @@
-#![no_std]
-
 elrond_wasm::imports!();
 
 pub const DOLLAR_STRING: &[u8] = b"USD";

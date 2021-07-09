@@ -1,21 +1,11 @@
 [package]
-name = "multi-transfer-esdt"
+name = "fee-estimator-module"
 version = "0.0.0"
-authors = [ "you",]
+authors = [ "dorin-iancu <dorin.iancu@elrond.com>",]
 edition = "2018"
-publish = false
-
-[lib]
-path = "src/lib.rs"
 
 [features]
-wasm-output-mode = [ "elrond-wasm-node",]
-
-[dependencies.transaction]
-path = "../common/transaction"
-
-[dependencies.fee-estimator-module]
-path = "../common/fee-estimator-module"
+wasm-output-mode = ["elrond-wasm-node"]
 
 [dependencies.elrond-wasm]
 version = "0.17.4"
