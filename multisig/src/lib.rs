@@ -32,12 +32,12 @@ pub trait Multisig:
     #[endpoint(claimAccumulatedFees)]
     fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
         self.require_caller_owner()?;
-        require!(
-            !self.blockchain().is_smart_contract(&dest_address),
-            "Cannot have SC as destination"
-        );
 
         self.esdt_safe_proxy(self.esdt_safe_address().get())
+            .claim_accumulated_fees(dest_address.clone())
+            .execute_on_dest_context();
+
+        self.multi_transfer_esdt_proxy(self.esdt_safe_address().get())
             .claim_accumulated_fees(dest_address)
             .execute_on_dest_context();
 
