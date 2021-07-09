@@ -28,9 +28,6 @@ path = "../esdt-safe"
 [dependencies.multi-transfer-esdt]
 path = "../multi-transfer-esdt"
 
-[dependencies.ethereum-fee-prepay]
-path = "../ethereum-fee-prepay"
-
 [dependencies.elrond-wasm]
 version = "0.17.4"
 

@@ -17,8 +17,8 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
-[dependencies.ethereum-fee-prepay]
-path = "../ethereum-fee-prepay"
+[dependencies.aggregator-proxy]
+path = "../common/aggregator-proxy"
 
 [dependencies.elrond-wasm]
 version = "0.17.4"
