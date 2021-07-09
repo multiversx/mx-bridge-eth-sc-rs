@@ -49,12 +49,16 @@ pub trait EsdtSafe: fee_estimator::FeeEstimatorModule {
     #[endpoint(claimAccumulatedFees)]
     fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
         self.require_caller_owner()?;
+        require!(
+            !self.blockchain().is_smart_contract(&dest_address),
+            "Cannot transfer to smart contract dest_address"
+        );
 
         for token_id in self.token_whitelist().iter() {
             let accumulated_fees = self.accumulated_transaction_fees(&token_id).get();
             if accumulated_fees > 0 {
                 self.accumulated_transaction_fees(&token_id).clear();
-                
+
                 self.send()
                     .direct(&dest_address, &token_id, &accumulated_fees, &[]);
             }
@@ -67,10 +71,14 @@ pub trait EsdtSafe: fee_estimator::FeeEstimatorModule {
     fn add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        default_value_in_dollars: Self::BigUint,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
         self.require_caller_owner()?;
         self.require_local_burn_role_set(&token_id)?;
+
+        let default_value_in_dollars = opt_default_value_in_dollars
+            .into_option()
+            .unwrap_or_default();
 
         self.default_value_in_dollars(&token_id)
             .set(&default_value_in_dollars);

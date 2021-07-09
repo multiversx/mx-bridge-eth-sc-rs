@@ -37,7 +37,7 @@ pub trait Multisig:
             "Cannot have SC as destination"
         );
 
-        self.ethereum_fee_prepay_proxy(self.ethereum_fee_prepay_address().get())
+        self.esdt_safe_proxy(self.esdt_safe_address().get())
             .claim_accumulated_fees(dest_address)
             .execute_on_dest_context();
 
@@ -465,10 +465,4 @@ pub trait Multisig:
         &self,
         sc_address: Address,
     ) -> multi_transfer_esdt::Proxy<Self::SendApi>;
-
-    #[proxy]
-    fn ethereum_fee_prepay_proxy(
-        &self,
-        sc_address: Address,
-    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
 }

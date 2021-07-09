@@ -46,9 +46,10 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         &self,
         egld_esdt_swap_code: BoxedBytes,
         multi_transfer_esdt_code: BoxedBytes,
-        ethereum_fee_prepay_code: BoxedBytes,
         esdt_safe_code: BoxedBytes,
-        aggregator_address: Address,
+        price_aggregator_contract_address: Address,
+        gas_station_contract_address: Address,
+        min_value_bridged_tokens_in_dollars: Self::BigUint,
         wrapped_egld_token_id: TokenIdentifier,
         wrapped_eth_token_id: TokenIdentifier,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
@@ -100,30 +101,13 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_esdt_address);
 
-        // Ethereum Fee Prepay deploy
-
-        let mut ethereum_fee_prepay_arg_buffer = ArgBuffer::new();
-        ethereum_fee_prepay_arg_buffer.push_argument_bytes(aggregator_address.as_bytes());
-        ethereum_fee_prepay_arg_buffer.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
-
-        let ethereum_fee_prepay_address = self.send().deploy_contract(
-            gas_per_deploy,
-            &Self::BigUint::zero(),
-            &ethereum_fee_prepay_code,
-            CodeMetadata::DEFAULT,
-            &ethereum_fee_prepay_arg_buffer,
-        );
-        require!(
-            ethereum_fee_prepay_address != zero_address,
-            "EthereumFeePrepay deploy failed"
-        );
-        self.ethereum_fee_prepay_address()
-            .set(&ethereum_fee_prepay_address);
-
         // ESDT Safe deploy
 
         let mut esdt_safe_arg_buffer = ArgBuffer::new();
-        esdt_safe_arg_buffer.push_argument_bytes(ethereum_fee_prepay_address.as_bytes());
+        esdt_safe_arg_buffer.push_argument_bytes(price_aggregator_contract_address.as_bytes());
+        esdt_safe_arg_buffer.push_argument_bytes(gas_station_contract_address.as_bytes());
+        esdt_safe_arg_buffer
+            .push_argument_bytes(&min_value_bridged_tokens_in_dollars.to_bytes_be());
         esdt_safe_arg_buffer = esdt_safe_arg_buffer.concat(arg_buffer_token_whitelist);
 
         let esdt_safe_address = self.send().deploy_contract(
@@ -169,31 +153,17 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
-    /// Add ESDT Safe to Ethereum Fee Prepay whitelist
-    /// Can't be done in the previous step, as the contracts only exist after execution has finished
-    #[endpoint(finishSetup)]
-    fn finish_setup(&self) -> SCResult<()> {
-        self.require_caller_owner()?;
-        self.require_ethereum_fee_prepay_deployed()?;
-        self.require_esdt_safe_deployed()?;
-
-        let ethereum_fee_prepay_address = self.ethereum_fee_prepay_address().get();
-        let esdt_safe_address = self.esdt_safe_address().get();
-
-        self.setup_ethereum_fee_prepay_proxy(ethereum_fee_prepay_address)
-            .add_to_whitelist(esdt_safe_address)
-            .execute_on_dest_context();
-
-        Ok(())
-    }
-
     #[endpoint(esdtSafeAddTokenToWhitelist)]
-    fn esdt_safe_add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
+    fn esdt_safe_add_token_to_whitelist(
+        &self,
+        token_id: TokenIdentifier,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
+    ) -> SCResult<()> {
         self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .add_token_to_whitelist(token_id)
+            .add_token_to_whitelist(token_id, opt_default_value_in_dollars)
             .execute_on_dest_context();
 
         Ok(())
@@ -273,10 +243,4 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         &self,
         sc_address: Address,
     ) -> multi_transfer_esdt::Proxy<Self::SendApi>;
-
-    #[proxy]
-    fn setup_ethereum_fee_prepay_proxy(
-        &self,
-        sc_address: Address,
-    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
 }

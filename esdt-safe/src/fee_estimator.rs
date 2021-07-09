@@ -11,7 +11,7 @@ pub trait FeeEstimatorModule {
     fn get_value_in_dollars(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) -> Self::BigUint {
         let fee_estimator_sc_address = self.fee_estimator_contract_address().get();
         if fee_estimator_sc_address.is_zero() {
-            return self.default_value_in_dollars(&token_id).get();
+            return self.default_value_in_dollars(token_id).get();
         }
 
         let result: OptionalResult<AggregatorResultAsMultiResult<Self::BigUint>> = self

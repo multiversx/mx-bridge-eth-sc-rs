@@ -116,8 +116,4 @@ pub trait StorageModule {
     #[view(getMultiTransferEsdtAddress)]
     #[storage_mapper("multiTransferEsdtAddress")]
     fn multi_transfer_esdt_address(&self) -> SingleValueMapper<Self::Storage, Address>;
-
-    #[view(getEthereumFeePrepayAddress)]
-    #[storage_mapper("ethereumFeePrepayAddress")]
-    fn ethereum_fee_prepay_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 }
