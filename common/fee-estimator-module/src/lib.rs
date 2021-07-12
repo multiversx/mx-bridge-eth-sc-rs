@@ -3,7 +3,7 @@
 elrond_wasm::imports!();
 
 mod aggregator_proxy;
-use aggregator_proxy::*;
+pub use aggregator_proxy::*;
 
 pub const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
 pub const DENOMINATION: u64 = 1_000_000_000_000_000_000;
@@ -20,6 +20,24 @@ pub trait FeeEstimatorModule {
 
         self.default_value_in_dollars(&token_id)
             .set(&default_value_in_dollars);
+
+        Ok(())
+    }
+
+    #[endpoint(setFeeEstimatorContractAddress)]
+    fn set_fee_estimator_contract_address(&self, new_address: Address) -> SCResult<()> {
+        only_owner!(self, "Only owner may call this function");
+
+        self.fee_estimator_contract_address().set(&new_address);
+
+        Ok(())
+    }
+
+    #[endpoint(setGasStationContractAddress)]
+    fn set_gas_station_contract_address(&self, new_address: Address) -> SCResult<()> {
+        only_owner!(self, "Only owner may call this function");
+
+        self.gas_station_contract_address().set(&new_address);
 
         Ok(())
     }

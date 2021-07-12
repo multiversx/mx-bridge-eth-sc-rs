@@ -19,6 +19,9 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
+[dependencies.fee-estimator-module]
+path = "../common/fee-estimator-module"
+
 [dependencies.egld-esdt-swap]
 path = "../egld-esdt-swap"
 
