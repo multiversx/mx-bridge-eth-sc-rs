@@ -51,21 +51,29 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         multi_transfer_esdt_code: BoxedBytes,
         esdt_safe_code: BoxedBytes,
         price_aggregator_contract_address: Address,
-        gas_station_contract_address: Address,
-        min_value_bridged_tokens_in_dollars: Self::BigUint,
+        esdt_safe_eth_tx_gas_limit: Self::BigUint,
+        multi_transfer_esdt_eth_tx_gas_limit: Self::BigUint,
         wrapped_egld_token_id: TokenIdentifier,
         wrapped_eth_token_id: TokenIdentifier,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.require_caller_owner()?;
 
-        let zero_address = Address::zero();
-        let mut arg_buffer_token_whitelist = ArgBuffer::new();
+        // must build the token whitelist ArgBuffer twice, as there is no way to clone it
 
-        arg_buffer_token_whitelist.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
-        arg_buffer_token_whitelist.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
-        for token in token_whitelist.into_vec() {
-            arg_buffer_token_whitelist.push_argument_bytes(token.as_esdt_identifier());
+        let mut arg_buffer_token_whitelist_esdt_safe = ArgBuffer::new();
+        let mut arg_buffer_token_whitelist_multi_transfer_esdt = ArgBuffer::new();
+
+        arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
+        for token in &token_whitelist.0 {
+            arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(token.as_esdt_identifier());
+        }
+
+        arg_buffer_token_whitelist_multi_transfer_esdt.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist_multi_transfer_esdt.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
+        for token in &token_whitelist.0 {
+            arg_buffer_token_whitelist_multi_transfer_esdt.push_argument_bytes(token.as_esdt_identifier());
         }
 
         let gas_per_deploy = self.blockchain().get_gas_left() / 4;
@@ -83,22 +91,30 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
             &egld_esdt_swap_arg_buffer,
         );
         require!(
-            egld_esdt_swap_address != zero_address,
+            !egld_esdt_swap_address.is_zero(),
             "EgldEsdtSwap deploy failed"
         );
         self.egld_esdt_swap_address().set(&egld_esdt_swap_address);
 
         // Multi-transfer ESDT deploy
 
+        let mut arg_buffer_multi_transfer_esdt = ArgBuffer::new();
+        arg_buffer_multi_transfer_esdt
+            .push_argument_bytes(price_aggregator_contract_address.as_bytes());
+        arg_buffer_multi_transfer_esdt
+            .push_argument_bytes(&multi_transfer_esdt_eth_tx_gas_limit.to_bytes_be());
+        arg_buffer_multi_transfer_esdt =
+            arg_buffer_multi_transfer_esdt.concat(arg_buffer_token_whitelist_multi_transfer_esdt);
+
         let multi_transfer_esdt_address = self.send().deploy_contract(
             gas_per_deploy,
             &Self::BigUint::zero(),
             &multi_transfer_esdt_code,
             CodeMetadata::DEFAULT,
-            &arg_buffer_token_whitelist,
+            &arg_buffer_multi_transfer_esdt,
         );
         require!(
-            multi_transfer_esdt_address != zero_address,
+            !multi_transfer_esdt_address.is_zero(),
             "MultiTransferEsdt deploy failed"
         );
         self.multi_transfer_esdt_address()
@@ -108,10 +124,8 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         let mut esdt_safe_arg_buffer = ArgBuffer::new();
         esdt_safe_arg_buffer.push_argument_bytes(price_aggregator_contract_address.as_bytes());
-        esdt_safe_arg_buffer.push_argument_bytes(gas_station_contract_address.as_bytes());
-        esdt_safe_arg_buffer
-            .push_argument_bytes(&min_value_bridged_tokens_in_dollars.to_bytes_be());
-        esdt_safe_arg_buffer = esdt_safe_arg_buffer.concat(arg_buffer_token_whitelist);
+        esdt_safe_arg_buffer.push_argument_bytes(&esdt_safe_eth_tx_gas_limit.to_bytes_be());
+        esdt_safe_arg_buffer = esdt_safe_arg_buffer.concat(arg_buffer_token_whitelist_esdt_safe);
 
         let esdt_safe_address = self.send().deploy_contract(
             gas_per_deploy,
@@ -120,7 +134,7 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
             CodeMetadata::DEFAULT,
             &esdt_safe_arg_buffer,
         );
-        require!(esdt_safe_address != zero_address, "EsdtSafe deploy failed");
+        require!(!esdt_safe_address.is_zero(), "EsdtSafe deploy failed");
         self.esdt_safe_address().set(&esdt_safe_address);
 
         Ok(())
