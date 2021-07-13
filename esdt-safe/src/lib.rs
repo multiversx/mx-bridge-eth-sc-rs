@@ -35,6 +35,8 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         Ok(())
     }
 
+    // endpoints - owner-only
+
     #[endpoint(setMaxTxBatchSize)]
     fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
         self.require_caller_owner()?;

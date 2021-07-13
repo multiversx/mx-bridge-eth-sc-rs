@@ -9,7 +9,11 @@ publish = false
 path = "src/lib.rs"
 
 [features]
-wasm-output-mode = [ "elrond-wasm-node",]
+wasm-output-mode = [
+  "elrond-wasm-node",
+  "fee-estimator-module/wasm-output-mode",
+  "token-module/wasm-output-mode",
+]
 
 [dependencies.transaction]
 path = "../common/transaction"
