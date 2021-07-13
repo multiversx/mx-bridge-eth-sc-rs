@@ -12,7 +12,7 @@
                 "function": "latestPriceFeedOptional",
                 "arguments": [
                     "str:GWEI",
-                    "str:EGLD"
+                    "str:BRIDGE"
                 ]
             },
             "expect": {
@@ -21,7 +21,7 @@
                 "out": [
                     "1",
                     "str:GWEI",
-                    "str:EGLD",
+                    "str:BRIDGE",
                     "10",
                     "0"
                 ]
@@ -37,7 +37,7 @@
                 "function": "latestPriceFeedOptional",
                 "arguments": [
                     "str:GWEI",
-                    "str:EGLD"
+                    "str:BRIDGE"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
@@ -46,7 +46,7 @@
                 "out": [
                     "1",
                     "str:GWEI",
-                    "str:EGLD",
+                    "str:BRIDGE",
                     "10",
                     "0"
                 ],

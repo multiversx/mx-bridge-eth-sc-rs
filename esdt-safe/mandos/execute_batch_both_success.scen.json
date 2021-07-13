@@ -31,18 +31,18 @@
             "step": "checkState",
             "accounts": {
                 "address:user1": {
-                    "nonce": "2",
+                    "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BridgeToken": "600"
+                        "str:BridgeToken": "499,600"
                     },
                     "storage": {}
                 },
                 "address:user2": {
-                    "nonce": "2",
+                    "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BridgeToken": "100"
+                        "str:BridgeToken": "499,100"
                     },
                     "storage": {}
                 },
@@ -51,15 +51,13 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
+                            "balance": "3,000,000",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "",
                         "str:pendingTransactionList.value|u32:2": "",
                         
@@ -68,6 +66,8 @@
 
                         "str:transactionStatus|address:user2|u32:1": "",
                         "str:transactionsByNonce|address:user2|str:.item|u32:1": "",
+
+                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "3,000,000",
 
                         "+": ""
                     },

@@ -15,7 +15,7 @@
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
-                    "str:EGLD",
+                    "str:BRIDGE",
                     "10"
                 ],
                 "gasLimit": "40,000,000",

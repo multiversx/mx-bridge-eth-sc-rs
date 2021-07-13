@@ -13,12 +13,11 @@
                 "to": "sc:esdt_safe",
                 "esdt": {
                     "tokenIdentifier": "str:BRIDGE-123456",
-                    "value": "900"
+                    "value": "1,500,900"
                 },
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920",
-                    "str:EGLD"
+                    "0x0102030405060708091011121314151617181920"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -28,7 +27,7 @@
                 "out": [
                     "1",
                     "str:GWEI",
-                    "str:EGLD",
+                    "str:BRIDGE",
                     "10",
                     "0"
                 ],
@@ -41,10 +40,10 @@
             "step": "checkState",
             "accounts": {
                 "address:user2": {
-                    "nonce": "2",
+                    "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "100"
+                        "str:BRIDGE-123456": "499,100"
                     },
                     "storage": {}
                 },
@@ -53,15 +52,13 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "1300",
+                            "balance": "3,001,300",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:ethereum_fee_prepay",
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:pendingTransactionList.value|u32:1": "address:user1|u32:1",
                         "str:pendingTransactionList.value|u32:2": "address:user2|u32:1",
                         
@@ -84,6 +81,8 @@
                             "5-token_identifier": "nested:str:BRIDGE-123456",
                             "6-amount": "biguint:900"
                         },
+
+                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "3,000,000",
 
                         "+": ""
                     },

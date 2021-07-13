@@ -4,7 +4,7 @@
         {
             "step": "setState",
             "accounts": {
-                "address:owner": {
+                "address:aggregator-owner": {
                     "nonce": "0",
                     "balance": "0",
                     "storage": {}
@@ -17,7 +17,7 @@
             },
             "newAddresses": [
                 {
-                    "creatorAddress": "address:owner",
+                    "creatorAddress": "address:aggregator-owner",
                     "creatorNonce": "0",
                     "newAddress": "sc:price_aggregator"
                 }
@@ -27,7 +27,7 @@
             "step": "scDeploy",
             "txId": "deploy",
             "tx": {
-                "from": "address:owner",
+                "from": "address:aggregator-owner",
                 "contractCode": "file:../price-aggregator.wasm",
                 "value": "0",
                 "arguments": [
@@ -50,7 +50,7 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:owner": {
+                "address:aggregator-owner": {
                     "nonce": "1",
                     "balance": "0",
                     "storage": {}
