@@ -36,6 +36,8 @@ pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_mo
         self.require_caller_owner()?;
 
         let mut tx_statuses = Vec::new();
+        let mut cached_token_ids = Vec::new();
+        let mut cached_prices = Vec::new();
 
         for (i, (to, token_id, amount)) in transfers.into_vec().iter().enumerate() {
             if to.is_zero() || self.blockchain().is_smart_contract(to) {
@@ -48,16 +50,27 @@ pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_mo
                 continue;
             }
 
-            let required_fee = self.calculate_required_fee(token_id);
-            if &required_fee >= amount {
+            let queried_fee: Self::BigUint;
+            let required_fee = match cached_token_ids.iter().position(|&id| id == token_id) {
+                Some(index) => &cached_prices[index],
+                None => {
+                    queried_fee = self.calculate_required_fee(token_id);
+                    cached_token_ids.push(token_id);
+                    cached_prices.push(queried_fee.clone());
+
+                    &queried_fee
+                }
+            };
+
+            if required_fee >= amount {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
 
-            let amount_to_send = amount - &required_fee;
+            let amount_to_send = amount - required_fee;
 
             self.accumulated_transaction_fees(token_id)
-                .update(|fees| *fees += &required_fee);
+                .update(|fees| *fees += required_fee);
 
             self.send().esdt_local_mint(token_id, amount);
             self.send()

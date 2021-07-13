@@ -14,10 +14,10 @@
                 "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
-                    "sc:multi_transfer_esdt|nested:str:BRIDGE-123456|biguint:200",
-                    "sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:500"
+                    "sc:multi_transfer_esdt|nested:str:BRIDGE-123456|biguint:100,200",
+                    "sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:100,500"
                 ],
-                "gasLimit": "9,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {

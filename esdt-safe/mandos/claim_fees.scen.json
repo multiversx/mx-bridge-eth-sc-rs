@@ -28,13 +28,16 @@
             }
         },
         {
+            "step": "dumpState"
+        },
+        {
             "step": "checkState",
             "accounts": {
                 "address:owner": {
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BridgeToken": "3,000,000"
+                        "str:BRIDGE-123456": "3,000,000"
                     },
                     "storage": {}
                 },

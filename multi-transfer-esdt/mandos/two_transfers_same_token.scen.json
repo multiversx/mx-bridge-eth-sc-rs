@@ -1,5 +1,5 @@
 {
-    "name": "transfer ok",
+    "name": "two transfers, same token, both executed",
     "steps": [
         {
             "step": "externalSteps",
@@ -7,13 +7,14 @@
         },
         {
             "step": "scCall",
-            "txId": "transfer-ok",
+            "txId": "batch-transfer-both-executed",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
                 "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
+                    "address:user1|nested:str:BRIDGE-123456|biguint:100,200",
                     "address:user1|nested:str:BRIDGE-123456|biguint:100,200"
                 ],
                 "gasLimit": "50,000,000",
@@ -28,6 +29,7 @@
                     "str:BRIDGE",
                     "10",
                     "0",
+                    "3",
                     "3"
                 ],
                 "gas": "*",
@@ -41,7 +43,15 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "200"
+                        "str:BRIDGE-123456": "400"
+                    },
+                    "storage": {}
+                },
+                "address:user2": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WRAPPED-123456": "500"
                     },
                     "storage": {}
                 },
@@ -50,7 +60,7 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "100,000",
+                            "balance": "200,000",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -63,7 +73,7 @@
                         }
                     },
                     "storage": {
-                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "100,000",
+                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "200,000",
                         "+": ""
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"

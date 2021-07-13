@@ -3,11 +3,16 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "../../ethereum-fee-prepay/mandos/setup_accounts.scen.json"
+            "path": "../../price-aggregator/mandos/get_latest_price_feed.scen.json"
         },
         {
             "step": "setState",
             "accounts": {
+                "address:owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
                 "address:user1": {
                     "nonce": "0",
                     "balance": "0",
@@ -22,7 +27,7 @@
             "newAddresses": [
                 {
                     "creatorAddress": "address:owner",
-                    "creatorNonce": "2",
+                    "creatorNonce": "0",
                     "newAddress": "sc:multi_transfer_esdt"
                 }
             ]
@@ -30,16 +35,15 @@
         {
             "step": "scDeploy",
             "txId": "deploy",
-            "comment": "$5 tx fee",
             "tx": {
                 "from": "address:owner",
                 "contractCode": "file:../output/multi-transfer-esdt.wasm",
                 "value": "0",
                 "arguments": [
-                    "5,000,000,000,000,000,000",
-                    "sc:price_aggregator"
+                    "sc:price_aggregator",
+                    "10,000"
                 ],
-                "gasLimit": "10,000,000",
+                "gasLimit": "20,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -71,8 +75,8 @@
                         }
                     },
                     "storage": {
-                        "str:requiredFeePerTransactionInDollars": "5,000,000,000,000,000,000",
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator"
+                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
+                        "str:ethTxGasLimit": "10,000"
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm",
                     "owner": "address:owner"

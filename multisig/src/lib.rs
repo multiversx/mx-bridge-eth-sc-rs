@@ -31,15 +31,15 @@ pub trait Multisig:
     /// Owner claims accumulated fees and distributes them to relayers
     /// Only centralized until we have a finalized fee distribution algorithm in place
     /// Not using get_owner API function, as the owner may also be a multisig SC
-    #[endpoint(claimAccumulatedFees)]
-    fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
+    #[endpoint(claimFees)]
+    fn claim_fees(&self, dest_address: Address) -> SCResult<()> {
         self.require_caller_owner()?;
 
         self.esdt_safe_proxy(self.esdt_safe_address().get())
             .claim_accumulated_fees(dest_address.clone())
             .execute_on_dest_context();
 
-        self.multi_transfer_esdt_proxy(self.esdt_safe_address().get())
+        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .claim_accumulated_fees(dest_address)
             .execute_on_dest_context();
 

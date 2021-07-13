@@ -1,37 +1,28 @@
 {
-    "name": "batch transfer one executed, one failed",
+    "name": "owner claim fees",
     "steps": [
         {
             "step": "externalSteps",
-            "path": "setup_accounts.scen.json"
+            "path": "batch_transfer_both_executed.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "batch-transfer-one-executed-one-failed",
+            "txId": "owner-claim-fees",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
                 "value": "0",
-                "function": "batchTransferEsdtToken",
+                "function": "claimAccumulatedFees",
                 "arguments": [
-                    "address:user1|nested:str:BRIDGE-123456|biguint:100,200",
-                    "sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:500"
+                    "address:owner"
                 ],
-                "gasLimit": "50,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "10",
-                    "0",
-                    "3",
-                    "4"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -39,11 +30,11 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:user1": {
-                    "nonce": "0",
+                "address:owner": {
+                    "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "200"
+                        "str:BRIDGE-123456": "100,000"
                     },
                     "storage": {}
                 },
