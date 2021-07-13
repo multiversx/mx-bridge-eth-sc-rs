@@ -20,6 +20,9 @@ path = "../common/eth-address"
 [dependencies.fee-estimator-module]
 path = "../common/fee-estimator-module"
 
+[dependencies.token-module]
+path = "../common/token-module"
+
 [dependencies.elrond-wasm]
 version = "0.17.4"
 

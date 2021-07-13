@@ -11,19 +11,16 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 5;
 
 #[elrond_wasm_derive::contract]
-pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
+pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
     #[init]
     fn init(
         &self,
         fee_estimator_contract_address: Address,
-        gas_station_contract_address: Address,
-        min_value_of_bridged_tokens_in_dollars: Self::BigUint,
+        eth_tx_gas_limit: Self::BigUint,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
-        self.gas_station_contract_address()
-            .set(&gas_station_contract_address);
 
         for token in token_whitelist.into_vec() {
             require!(token.is_valid_esdt_identifier(), "Invalid token ID");
@@ -33,62 +30,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
         self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.min_block_nonce_diff()
             .set(&DEFAULT_MIN_BLOCK_NONCE_DIFF);
-        self.min_value_of_bridged_tokens_in_dollars()
-            .set(&min_value_of_bridged_tokens_in_dollars);
-
-        Ok(())
-    }
-
-    // endpoints - owner-only
-
-    /// Owner is a multisig SC, so we can't send directly to the owner or caller address here
-    #[endpoint(claimAccumulatedFees)]
-    fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-        require!(
-            !self.blockchain().is_smart_contract(&dest_address),
-            "Cannot transfer to smart contract dest_address"
-        );
-
-        for token_id in self.token_whitelist().iter() {
-            let accumulated_fees = self.accumulated_transaction_fees(&token_id).get();
-            if accumulated_fees > 0 {
-                self.accumulated_transaction_fees(&token_id).clear();
-
-                self.send()
-                    .direct(&dest_address, &token_id, &accumulated_fees, &[]);
-            }
-        }
-
-        Ok(())
-    }
-
-    #[endpoint(addTokenToWhitelist)]
-    fn add_token_to_whitelist(
-        &self,
-        token_id: TokenIdentifier,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
-    ) -> SCResult<()> {
-        self.require_caller_owner()?;
-        self.require_local_burn_role_set(&token_id)?;
-
-        let default_value_in_dollars = opt_default_value_in_dollars
-            .into_option()
-            .unwrap_or_default();
-
-        self.default_value_in_dollars(&token_id)
-            .set(&default_value_in_dollars);
-        self.token_whitelist().insert(token_id);
-
-        Ok(())
-    }
-
-    #[endpoint(removeTokenFromWhitelist)]
-    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
-
-        self.token_whitelist().remove(&token_id);
-        self.default_value_in_dollars(&token_id).clear();
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         Ok(())
     }
@@ -165,8 +107,12 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
                 TransactionStatus::Executed => {
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                    self.require_local_burn_role_set(&tx.token_identifier)?;
-                    self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                    // local burn role might be removed while tx is executed
+                    // tokens will remain locked forever in that case
+                    // otherwise, the whole batch would fail
+                    if self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn) {
+                        self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                    }
                 }
                 TransactionStatus::Rejected => {
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
@@ -178,7 +124,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
                 }
             }
 
-            // storage cleanup
             self.transaction_status(&sender, nonce).clear();
             self.transactions_by_nonce(&sender).clear_entry(nonce);
         }
@@ -205,15 +150,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
             "Payment token is not on whitelist"
         );
         require!(!to.is_zero(), "Can't transfer to address zero");
-
-        let token_value_in_dollars = self.get_value_in_dollars(&payment_token);
-        let total_value = &token_value_in_dollars * &payment_amount;
-        let min_bridged_value = self.min_value_of_bridged_tokens_in_dollars().get();
-
-        require!(
-            total_value >= min_bridged_value,
-            "Amount of tokens to bridge is too low"
-        );
 
         let required_fee = self.calculate_required_fee(&payment_token);
 
@@ -266,21 +202,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
         }
     }
 
-    fn require_caller_owner(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-        Ok(())
-    }
-
-    fn require_local_burn_role_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
-        let roles = self.blockchain().get_esdt_local_roles(token_id);
-        require!(
-            roles.contains(&EsdtLocalRole::Burn),
-            "Must set local burn role first"
-        );
-
-        Ok(())
-    }
-
     fn get_next_pending_transaction(&self) -> Option<Transaction<Self::BigUint>> {
         self.pending_transaction_address_nonce_list()
             .front()
@@ -292,11 +213,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
     }
 
     // storage
-
-    // token whitelist
-
-    #[storage_mapper("tokenWhitelist")]
-    fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 
     // transactions for each address, sorted by nonce
     // due to how VecMapper works internally, nonces will start at 1
@@ -320,12 +236,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
         &self,
     ) -> LinkedListMapper<Self::Storage, (Address, TxNonce)>;
 
-    #[storage_mapper("accumulatedTransactionFees")]
-    fn accumulated_transaction_fees(
-        &self,
-        token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
-
     // configurable
 
     #[storage_mapper("maxTxBatchSize")]
@@ -333,9 +243,4 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule {
 
     #[storage_mapper("minBlockNonceDiff")]
     fn min_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
-
-    #[storage_mapper("minValueOfBridgedTokensInDollars")]
-    fn min_value_of_bridged_tokens_in_dollars(
-        &self,
-    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 }

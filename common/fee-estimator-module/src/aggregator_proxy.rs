@@ -1,6 +1,6 @@
 elrond_wasm::imports!();
 
-pub const DOLLAR_STRING: &[u8] = b"USD";
+pub const GWEI_STRING: &[u8] = b"GWEI";
 
 pub type AggregatorResultAsMultiResult<BigUint> =
     MultiResult5<u32, BoxedBytes, BoxedBytes, BigUint, u8>;

@@ -1,24 +1,14 @@
 [package]
-name = "multi-transfer-esdt"
+name = "token-module"
 version = "0.0.0"
-authors = [ "you",]
+authors = [ "dorin-iancu <dorin.iancu@elrond.com>",]
 edition = "2018"
-publish = false
-
-[lib]
-path = "src/lib.rs"
 
 [features]
-wasm-output-mode = [ "elrond-wasm-node",]
-
-[dependencies.transaction]
-path = "../common/transaction"
+wasm-output-mode = ["elrond-wasm-node"]
 
 [dependencies.fee-estimator-module]
-path = "../common/fee-estimator-module"
-
-[dependencies.token-module]
-path = "../common/token-module"
+path = "../fee-estimator-module"
 
 [dependencies.elrond-wasm]
 version = "0.17.4"

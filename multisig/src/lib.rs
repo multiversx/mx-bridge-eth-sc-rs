@@ -5,6 +5,8 @@
 mod action;
 mod user_role;
 
+use token_module::ProxyTrait as OtherProxyTrait;
+
 use action::Action;
 use transaction::esdt_safe_batch::{EsdtSafeTxBatch, EsdtSafeTxBatchSplitInFields};
 use transaction::*;

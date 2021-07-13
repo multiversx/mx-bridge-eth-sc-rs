@@ -4,6 +4,7 @@ use crate::user_role::UserRole;
 use eth_address::EthAddress;
 
 use fee_estimator_module::ProxyTrait as _;
+use token_module::ProxyTrait as _;
 
 #[elrond_wasm_derive::module]
 pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
@@ -170,19 +171,8 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
-    #[endpoint(changeGasStationContractAddress)]
-    fn change_gas_station_contract_addresss(&self, new_address: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_gas_station_contract_address(new_address)
-            .execute_on_dest_context();
-
-        Ok(())
-    }
-
-    #[endpoint(changeDefaultValueInDollars)]
-    fn change_default_value_in_dollars(
+    #[endpoint(changeDefaultCostPerGwei)]
+    fn change_default_cost_per_gwei(
         &self,
         token_id: TokenIdentifier,
         new_value: Self::BigUint,
@@ -190,11 +180,11 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         self.require_caller_owner()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_default_value_in_dollars(token_id.clone(), new_value.clone())
+            .set_default_cost_per_gwei(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
 
         self.setup_multi_transfer_esdt_proxy(self.esdt_safe_address().get())
-            .set_default_value_in_dollars(token_id, new_value)
+            .set_default_cost_per_gwei(token_id, new_value)
             .execute_on_dest_context();
 
         Ok(())

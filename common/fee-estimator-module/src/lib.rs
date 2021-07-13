@@ -5,21 +5,19 @@ elrond_wasm::imports!();
 mod aggregator_proxy;
 pub use aggregator_proxy::*;
 
-pub const ETH_ERC20_TX_GAS_LIMIT: u64 = 150_000;
-pub const DENOMINATION: u64 = 1_000_000_000_000_000_000;
+const TICKER_SEPARATOR: u8 = b'-';
 
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
-    #[endpoint(setDefaultValueInDollars)]
-    fn set_default_value_in_dollars(
+    #[endpoint(setDefaultCostPerGwei)]
+    fn set_default_cost_per_gwei(
         &self,
         token_id: TokenIdentifier,
-        default_value_in_dollars: Self::BigUint,
+        default_gwei_cost: Self::BigUint,
     ) -> SCResult<()> {
         only_owner!(self, "Only owner may call this function");
 
-        self.default_value_in_dollars(&token_id)
-            .set(&default_value_in_dollars);
+        self.default_cost_per_gwei(&token_id).set(&default_gwei_cost);
 
         Ok(())
     }
@@ -33,42 +31,51 @@ pub trait FeeEstimatorModule {
         Ok(())
     }
 
-    #[endpoint(setGasStationContractAddress)]
-    fn set_gas_station_contract_address(&self, new_address: Address) -> SCResult<()> {
-        only_owner!(self, "Only owner may call this function");
+    #[view(calculateRequiredFee)]
+    fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> Self::BigUint {
+        let cost_per_gwei = self.get_cost_per_gwei(token_id);
+        let gas_limit = self.eth_tx_gas_limit().get();
 
-        self.gas_station_contract_address().set(&new_address);
-
-        Ok(())
+        cost_per_gwei * gas_limit
     }
 
-    fn get_value_in_dollars(&self, token_id: &TokenIdentifier) -> Self::BigUint {
+    fn get_cost_per_gwei(&self, token_id: &TokenIdentifier) -> Self::BigUint {
+        let opt_price = self.get_aggregator_mapping(GWEI_STRING.into(), token_id.clone());
+
+        opt_price.unwrap_or_else(|| self.default_cost_per_gwei(token_id).get())
+    }
+
+    fn get_aggregator_mapping(
+        &self,
+        from: TokenIdentifier,
+        to: TokenIdentifier,
+    ) -> Option<Self::BigUint> {
         let fee_estimator_sc_address = self.fee_estimator_contract_address().get();
         if fee_estimator_sc_address.is_zero() {
-            return self.default_value_in_dollars(token_id).get();
+            return None;
         }
+
+        let from_ticker = self.get_token_ticker(from);
+        let to_ticker = self.get_token_ticker(to);
 
         let result: OptionalResult<AggregatorResultAsMultiResult<Self::BigUint>> = self
             .aggregator_proxy(fee_estimator_sc_address)
-            .latest_price_feed_optional(token_id.clone().into_boxed_bytes(), DOLLAR_STRING.into())
+            .latest_price_feed_optional(from_ticker, to_ticker)
             .execute_on_dest_context();
 
-        let opt_price = result
+        result
             .into_option()
-            .map(|multi_result| AggregatorResult::from(multi_result).price);
-
-        opt_price.unwrap_or_else(|| self.default_value_in_dollars(token_id).get())
+            .map(|multi_result| AggregatorResult::from(multi_result).price)
     }
 
-    fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> Self::BigUint {
-        let eth_gas_unit_cost = self.get_eth_rapid_gas_price_per_unit(token_id);
+    fn get_token_ticker(&self, token_id: TokenIdentifier) -> BoxedBytes {
+        for (i, char) in token_id.as_esdt_identifier().iter().enumerate() {
+            if *char == TICKER_SEPARATOR {
+                return token_id.as_esdt_identifier()[..i].into();
+            }
+        }
 
-        eth_gas_unit_cost * ETH_ERC20_TX_GAS_LIMIT.into()
-    }
-
-    // TODO: Call the required endpoint from the gas station SC
-    fn get_eth_rapid_gas_price_per_unit(&self, _token_id: &TokenIdentifier) -> Self::BigUint {
-        Self::BigUint::zero()
+        token_id.into_boxed_bytes()
     }
 
     // proxies
@@ -82,13 +89,14 @@ pub trait FeeEstimatorModule {
     #[storage_mapper("feeEstimatorContractAddress")]
     fn fee_estimator_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 
-    #[view(getGasStationContractAddress)]
-    #[storage_mapper("gasStationContractAddress")]
-    fn gas_station_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
-
-    #[storage_mapper("defaultValueInDollars")]
-    fn default_value_in_dollars(
+    #[view(getDefaultCostPerGwei)]
+    #[storage_mapper("defaultCostPerGwei")]
+    fn default_cost_per_gwei(
         &self,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+
+    #[view(getEthTxGasLimit)]
+    #[storage_mapper("ethTxGasLimit")]
+    fn eth_tx_gas_limit(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 }
