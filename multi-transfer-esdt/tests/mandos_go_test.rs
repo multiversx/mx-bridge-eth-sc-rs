@@ -14,6 +14,11 @@ fn batch_transfer_one_executed_one_failed_go() {
 }
 
 #[test]
+fn claim_fees_go() {
+    elrond_wasm_debug::mandos_go("mandos/claim_fees.scen.json");
+}
+
+#[test]
 fn setup_accounts_go() {
     elrond_wasm_debug::mandos_go("mandos/setup_accounts.scen.json");
 }
@@ -21,4 +26,9 @@ fn setup_accounts_go() {
 #[test]
 fn transfer_ok_go() {
     elrond_wasm_debug::mandos_go("mandos/transfer_ok.scen.json");
+}
+
+#[test]
+fn two_transfers_same_token_go() {
+    elrond_wasm_debug::mandos_go("mandos/two_transfers_same_token.scen.json");
 }

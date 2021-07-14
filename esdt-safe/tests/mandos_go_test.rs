@@ -1,21 +1,21 @@
 #[test]
+fn claim_fees_go() {
+    elrond_wasm_debug::mandos_go("mandos/claim_fees.scen.json");
+}
+
+#[test]
 fn create_another_tx_ok_go() {
     elrond_wasm_debug::mandos_go("mandos/create_another_tx_ok.scen.json");
 }
 
 #[test]
-fn create_transaction_without_fee_deposit() {
-    elrond_wasm_debug::mandos_go("mandos/create_transaction_without_fee_deposit.scen.json");
+fn create_another_tx_too_late_for_batch_go() {
+    elrond_wasm_debug::mandos_go("mandos/create_another_tx_too_late_for_batch.scen.json");
 }
 
 #[test]
 fn create_transaction_ok_go() {
     elrond_wasm_debug::mandos_go("mandos/create_transaction_ok.scen.json");
-}
-
-#[test]
-fn create_another_tx_too_late_for_batch_go() {
-    elrond_wasm_debug::mandos_go("mandos/create_another_tx_too_late_for_batch.scen.json");
 }
 
 #[test]
@@ -49,16 +49,21 @@ fn get_next_pending_tx_go() {
 }
 
 #[test]
-fn get_next_tx_batch_too_early_go() {
-    elrond_wasm_debug::mandos_go("mandos/get_next_tx_batch_too_early.scen.json");
-}
-
-#[test]
 fn get_next_tx_batch_go() {
     elrond_wasm_debug::mandos_go("mandos/get_next_tx_batch.scen.json");
 }
 
 #[test]
+fn get_next_tx_batch_too_early_go() {
+    elrond_wasm_debug::mandos_go("mandos/get_next_tx_batch_too_early.scen.json");
+}
+
+#[test]
 fn setup_accounts_go() {
     elrond_wasm_debug::mandos_go("mandos/setup_accounts.scen.json");
+}
+
+#[test]
+fn zero_fees_go() {
+    elrond_wasm_debug::mandos_go("mandos/zero_fees.scen.json");
 }
