@@ -152,7 +152,33 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
-    // TODO: Upgrade endpoint for each child SC
+    /* upgrade_contract does not work in the current version
+
+    #[endpoint(upgradeChildContract)]
+    fn upgrade_child_contract(
+        &self,
+        sc_address: Address,
+        new_code: BoxedBytes,
+        #[var_args] init_args: VarArgs<BoxedBytes>,
+    ) -> SCResult<()> {
+        self.require_caller_owner()?;
+
+        let gas = self.blockchain().get_gas_left() / 2;
+        let args = (init_args.into_vec().as_slice()).into();
+
+        self.send().upgrade_contract(
+            &sc_address,
+            gas,
+            &Self::BigUint::zero(),
+            &new_code,
+            CodeMetadata::DEFAULT,
+            &args,
+        );
+
+        Ok(())
+    }
+
+    */
 
     #[endpoint]
     fn pause(&self) -> SCResult<()> {
