@@ -13,7 +13,7 @@
                 "to": "sc:egld_esdt_swap",
                 "value": "0",
                 "esdt": {
-                    "tokenIdentifier": "str:WEGLD-abcdef",
+                    "tokenIdentifier": "str:EGLD-abcdef",
                     "value": "300"
                 },
                 "function": "unwrapEgld",
@@ -35,7 +35,7 @@
                     "nonce": "2",
                     "balance": "800",
                     "esdt": {
-                        "str:WEGLD-abcdef": "200"
+                        "str:EGLD-abcdef": "200"
                     },
                     "storage": {}
                 },
@@ -43,7 +43,7 @@
                     "nonce": "0",
                     "balance": "200",
                     "esdt": {
-                        "str:WEGLD-abcdef": {
+                        "str:EGLD-abcdef": {
                             "balance": "1",
                             "roles": [
                                 "ESDTRoleLocalMint",
@@ -52,7 +52,7 @@
                         }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenId": "str:WEGLD-abcdef"
+                        "str:wrappedEgldTokenId": "str:EGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }

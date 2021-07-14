@@ -13,7 +13,7 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:WEGLD-abcdef": {
+                        "str:EGLD-abcdef": {
                             "balance": "1",
                             "roles": [
                                 "ESDTRoleLocalMint",
@@ -22,7 +22,7 @@
                         }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenId": "str:WEGLD-abcdef"
+                        "str:wrappedEgldTokenId": "str:EGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }
@@ -54,7 +54,7 @@
                     "nonce": "1",
                     "balance": "500",
                     "esdt": {
-                        "str:WEGLD-abcdef": "500"
+                        "str:EGLD-abcdef": "500"
                     },
                     "storage": {}
                 },
@@ -62,7 +62,7 @@
                     "nonce": "0",
                     "balance": "500",
                     "esdt": {
-                        "str:WEGLD-abcdef": {
+                        "str:EGLD-abcdef": {
                             "balance": "1",
                             "roles": [
                                 "ESDTRoleLocalMint",
@@ -71,7 +71,7 @@
                         }
                     },
                     "storage": {
-                        "str:wrappedEgldTokenId": "str:WEGLD-abcdef"
+                        "str:wrappedEgldTokenId": "str:EGLD-abcdef"
                     },
                     "code": "file:../output/egld-esdt-swap.wasm"
                 }

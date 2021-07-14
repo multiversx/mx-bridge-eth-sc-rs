@@ -14,7 +14,7 @@
                 "value": "0",
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
-                    "1",
+                    "u32:1",
                     "4", "4"
                 ],
                 "gasLimit": "40,000,000",
@@ -83,41 +83,41 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "50,000,000",
+                "gasLimit": "75,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
         },
         {
             "step": "checkState",
-            "comment": "the tokens are refunded after rejected transaction",
+            "comment": "the tokens are returned to the user (except the tx fees)",
             "accounts": {
                 "address:user": {
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:WEGLD-123456": "1000",
-                        "str:WETH-123456": "1000"
-                    }
+                        "str:EGLD-123456": "500,000",
+                        "str:ETH-123456": "850,000"
+                    },
+                    "storage": {}
                 },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:WEGLD-123456": {
-                            "balance": "0",
+                        "str:EGLD-123456": {
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         },
-                        "str:WETH-123456": {
-                            "balance": "0",
+                        "str:ETH-123456": {
+                            "balance": "150,000",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
@@ -130,6 +130,9 @@
                         "str:transactionStatus|address:user|u32:2": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": "",
 
+                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
+
                         "+": ""
                     },
                     "code": "*"
@@ -139,14 +142,14 @@
         },
         {
             "step": "scCall",
-            "txId": "owner-send-fees-to-relayer",
+            "txId": "owner-claim-fees",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
                 "function": "claimAccumulatedFees",
                 "arguments": [
-                    "address:relayer1"
+                    "address:owner"
                 ],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
@@ -161,9 +164,17 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:relayer1": {
+                "address:owner": {
                     "nonce": "*",
-                    "balance": "3,000,000",
+                    "balance": "0",
+                    "esdt": {
+                        "str:EGLD-123456": {
+                            "balance": "1,500,000"
+                        },
+                        "str:ETH-123456": {
+                            "balance": "150,000"
+                        }
+                    },
                     "storage": {}
                 },
                 "+": {}

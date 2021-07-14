@@ -59,24 +59,36 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
     ) -> SCResult<()> {
         self.require_caller_owner()?;
 
+        // since contracts can either be all deployed or none,
+        // it's sufficient to check only for one of them
+        require!(
+            self.egld_esdt_swap_address().is_empty(),
+            "This function was called already."
+        );
+
         // must build the token whitelist ArgBuffer twice, as there is no way to clone it
 
         let mut arg_buffer_token_whitelist_esdt_safe = ArgBuffer::new();
         let mut arg_buffer_token_whitelist_multi_transfer_esdt = ArgBuffer::new();
 
-        arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
-        arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist_esdt_safe
+            .push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist_esdt_safe
+            .push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
         for token in &token_whitelist.0 {
             arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(token.as_esdt_identifier());
         }
 
-        arg_buffer_token_whitelist_multi_transfer_esdt.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
-        arg_buffer_token_whitelist_multi_transfer_esdt.push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist_multi_transfer_esdt
+            .push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        arg_buffer_token_whitelist_multi_transfer_esdt
+            .push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
         for token in &token_whitelist.0 {
-            arg_buffer_token_whitelist_multi_transfer_esdt.push_argument_bytes(token.as_esdt_identifier());
+            arg_buffer_token_whitelist_multi_transfer_esdt
+                .push_argument_bytes(token.as_esdt_identifier());
         }
 
-        let gas_per_deploy = self.blockchain().get_gas_left() / 4;
+        let gas_per_deploy = self.blockchain().get_gas_left() / 3;
 
         // eGLD ESDT swap deploy
 
@@ -139,6 +151,8 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         Ok(())
     }
+
+    // TODO: Upgrade endpoint for each child SC
 
     #[endpoint]
     fn pause(&self) -> SCResult<()> {

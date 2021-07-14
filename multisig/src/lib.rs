@@ -442,10 +442,11 @@ pub trait Multisig:
 
                 action_ids_mapper.clear();
 
+                let transfers_len = transfers.len();
                 let statuses = self
                     .multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
                     .batch_transfer_esdt_token(transfers.into())
-                    .execute_on_dest_context();
+                    .execute_on_dest_context_custom_range(|_, after| (after - transfers_len, after));
 
                 return_statuses = OptionalResult::Some(statuses);
             }

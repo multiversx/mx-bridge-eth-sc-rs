@@ -28,9 +28,6 @@
             }
         },
         {
-            "step": "dumpState"
-        },
-        {
             "step": "checkState",
             "accounts": {
                 "address:owner": {

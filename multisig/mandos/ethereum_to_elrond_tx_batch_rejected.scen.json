@@ -15,8 +15,8 @@
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "sc:egld_esdt_swap", "str:WEGLD-123456", "500",
-                    "sc:egld_esdt_swap", "str:WETH-123456", "500"
+                    "sc:egld_esdt_swap", "str:EGLD-123456", "500,000",
+                    "sc:egld_esdt_swap", "str:ETH-123456", "500,000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -45,13 +45,13 @@
                             "4-transfers_vec": [
                                 {
                                     "1-dest": "sc:egld_esdt_swap",
-                                    "2-token_id": "nested:str:WEGLD-123456",
-                                    "3-amount": "biguint:500"
+                                    "2-token_id": "nested:str:EGLD-123456",
+                                    "3-amount": "biguint:500,000"
                                 },
                                 {
                                     "1-dest": "sc:egld_esdt_swap",
-                                    "2-token_id": "nested:str:WETH-123456",
-                                    "3-amount": "biguint:500"
+                                    "2-token_id": "nested:str:ETH-123456",
+                                    "3-amount": "biguint:500,000"
                                 }
                             ]
                         },

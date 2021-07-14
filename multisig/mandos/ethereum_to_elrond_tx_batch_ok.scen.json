@@ -15,8 +15,8 @@
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "address:user", "str:WEGLD-123456", "500",
-                    "address:user", "str:WETH-123456", "500"
+                    "address:user", "str:EGLD-123456", "500,000",
+                    "address:user", "str:ETH-123456", "500,000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -45,13 +45,13 @@
                             "4-transfers_vec": [
                                 {
                                     "1-dest": "address:user",
-                                    "2-token_id": "nested:str:WEGLD-123456",
-                                    "3-amount": "biguint:500"
+                                    "2-token_id": "nested:str:EGLD-123456",
+                                    "3-amount": "biguint:500,000"
                                 },
                                 {
                                     "1-dest": "address:user",
-                                    "2-token_id": "nested:str:WETH-123456",
-                                    "3-amount": "biguint:500"
+                                    "2-token_id": "nested:str:ETH-123456",
+                                    "3-amount": "biguint:500,000"
                                 }
                             ]
                         },
@@ -96,13 +96,15 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "50,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
                 "out": [
+                    "1", "str:GWEI", "str:EGLD", "10", "0",
+                    "1", "str:GWEI", "str:ETH", "1", "0",
                     "3", "3",
                     "3", "3"
                 ],
@@ -115,11 +117,12 @@
             "accounts": {
                 "address:user": {
                     "nonce": "*",
-                    "balance": "3,001,000",
+                    "balance": "2,000,000",
                     "esdt": {
-                        "str:WEGLD-123456": "500",
-                        "str:WETH-123456": "1500"
-                    }
+                        "str:EGLD-123456": "400,000",
+                        "str:ETH-123456": "1,490,000"
+                    },
+                    "storage": {}
                 },
                 "+": {}
             }
