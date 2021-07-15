@@ -32,14 +32,14 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     fn add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        #[var_args] opt_default_cost_per_gwei: OptionalArg<Self::BigUint>,
+        #[var_args] opt_default_price_per_gwei: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
         self.require_caller_owner()?;
 
-        let default_cost_per_gwei = opt_default_cost_per_gwei.into_option().unwrap_or_default();
+        let default_price_per_gwei = opt_default_price_per_gwei.into_option().unwrap_or_default();
 
-        self.default_cost_per_gwei(&token_id)
-            .set(&default_cost_per_gwei);
+        self.default_price_per_gwei(&token_id)
+            .set(&default_price_per_gwei);
         self.token_whitelist().insert(token_id);
 
         Ok(())
@@ -50,7 +50,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         self.require_caller_owner()?;
 
         self.token_whitelist().remove(&token_id);
-        self.default_cost_per_gwei(&token_id).clear();
+        self.default_price_per_gwei(&token_id).clear();
 
         Ok(())
     }

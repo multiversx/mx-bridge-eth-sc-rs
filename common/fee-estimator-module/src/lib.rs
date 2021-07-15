@@ -9,15 +9,15 @@ const TICKER_SEPARATOR: u8 = b'-';
 
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
-    #[endpoint(setDefaultCostPerGwei)]
-    fn set_default_cost_per_gwei(
+    #[endpoint(setDefaultPricePerGwei)]
+    fn set_default_price_per_gwei(
         &self,
         token_id: TokenIdentifier,
-        default_gwei_cost: Self::BigUint,
+        default_gwei_price: Self::BigUint,
     ) -> SCResult<()> {
         only_owner!(self, "Only owner may call this function");
 
-        self.default_cost_per_gwei(&token_id).set(&default_gwei_cost);
+        self.default_price_per_gwei(&token_id).set(&default_gwei_price);
 
         Ok(())
     }
@@ -33,16 +33,16 @@ pub trait FeeEstimatorModule {
 
     #[view(calculateRequiredFee)]
     fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> Self::BigUint {
-        let cost_per_gwei = self.get_cost_per_gwei(token_id);
+        let price_per_gwei = self.get_price_per_gwei(token_id);
         let gas_limit = self.eth_tx_gas_limit().get();
 
-        cost_per_gwei * gas_limit
+        price_per_gwei * gas_limit
     }
 
-    fn get_cost_per_gwei(&self, token_id: &TokenIdentifier) -> Self::BigUint {
+    fn get_price_per_gwei(&self, token_id: &TokenIdentifier) -> Self::BigUint {
         let opt_price = self.get_aggregator_mapping(GWEI_STRING.into(), token_id.clone());
 
-        opt_price.unwrap_or_else(|| self.default_cost_per_gwei(token_id).get())
+        opt_price.unwrap_or_else(|| self.default_price_per_gwei(token_id).get())
     }
 
     fn get_aggregator_mapping(
@@ -89,9 +89,9 @@ pub trait FeeEstimatorModule {
     #[storage_mapper("feeEstimatorContractAddress")]
     fn fee_estimator_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 
-    #[view(getDefaultCostPerGwei)]
-    #[storage_mapper("defaultCostPerGwei")]
-    fn default_cost_per_gwei(
+    #[view(getDefaultPricePerGwei)]
+    #[storage_mapper("defaultPricePerGwei")]
+    fn default_price_per_gwei(
         &self,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
