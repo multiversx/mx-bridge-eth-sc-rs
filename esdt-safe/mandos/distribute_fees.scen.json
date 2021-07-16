@@ -7,14 +7,14 @@
         },
         {
             "step": "scCall",
-            "txId": "owner-claim-fees",
+            "txId": "owner-distribute-fees",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt_safe",
                 "value": "0",
-                "function": "claimAccumulatedFees",
+                "function": "distributeFees",
                 "arguments": [
-                    "address:owner"
+                    "address:owner|u64:10000"
                 ],
                 "gasLimit": "30,000,000",
                 "gasPrice": "0"

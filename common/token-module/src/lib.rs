@@ -2,27 +2,38 @@
 
 elrond_wasm::imports!();
 
+pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
+
 #[elrond_wasm_derive::module]
 pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     // endpoints - owner-only
 
-    /// Owner is a multisig SC, so we can't send directly to the owner or caller address here
-    #[endpoint(claimAccumulatedFees)]
-    fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
+    #[endpoint(distributeFees)]
+    fn distribute_fees(&self, address_percentage_pairs: Vec<(Address, u64)>) -> SCResult<()> {
         self.require_caller_owner()?;
-        require!(
-            !self.blockchain().is_smart_contract(&dest_address),
-            "Cannot transfer to smart contract dest_address"
-        );
+
+        let percentage_total = Self::BigUint::from(PERCENTAGE_TOTAL);
 
         for token_id in self.token_whitelist().iter() {
             let accumulated_fees = self.accumulated_transaction_fees(&token_id).get();
-            if accumulated_fees > 0 {
-                self.accumulated_transaction_fees(&token_id).clear();
+            if accumulated_fees == 0 {
+                continue;
+            }
+
+            let mut remaining_fees = accumulated_fees.clone();
+
+            for (dest_address, percentage) in &address_percentage_pairs {
+                let amount_to_send =
+                    &(&accumulated_fees * &Self::BigUint::from(*percentage)) / &percentage_total;
+
+                remaining_fees -= &amount_to_send;
 
                 self.send()
-                    .direct(&dest_address, &token_id, &accumulated_fees, &[]);
+                    .direct(&dest_address, &token_id, &amount_to_send, &[]);
             }
+
+            self.accumulated_transaction_fees(&token_id)
+                .set(&remaining_fees);
         }
 
         Ok(())
@@ -76,7 +87,11 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         Ok(())
     }
 
-    fn require_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> SCResult<()> {
+    fn require_local_role_set(
+        &self,
+        token_id: &TokenIdentifier,
+        role: &EsdtLocalRole,
+    ) -> SCResult<()> {
         require!(
             self.is_local_role_set(token_id, role),
             "Must set local role first"
@@ -90,7 +105,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
         roles.contains(role)
     }
-    
+
     // storage
 
     #[storage_mapper("tokenWhitelist")]

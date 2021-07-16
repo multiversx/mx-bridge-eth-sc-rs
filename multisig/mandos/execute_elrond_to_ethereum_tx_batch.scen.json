@@ -61,7 +61,7 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "30,000,000",
+                "gasLimit": "35,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -133,14 +133,15 @@
         },
         {
             "step": "scCall",
-            "txId": "owner-claim-fees",
+            "txId": "owner-distribute-fees",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "claimAccumulatedFees",
+                "function": "distributeFeesFromChildContracts",
                 "arguments": [
-                    "address:owner"
+                    "address:relayer1", "4000",
+                    "address:relayer2", "6000"
                 ],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
@@ -155,18 +156,56 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:owner": {
+                "address:relayer1": {
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "1,500,000"
+                            "balance": "600,000"
                         },
                         "str:ETH-123456": {
-                            "balance": "150,000"
+                            "balance": "60,000"
                         }
                     },
                     "storage": {}
+                },
+                "address:relayer2": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "esdt": {
+                        "str:EGLD-123456": {
+                            "balance": "900,000"
+                        },
+                        "str:ETH-123456": {
+                            "balance": "90,000"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:esdt_safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:EGLD-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:ETH-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {                        
+                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
+
+                        "+": ""
+                    },
+                    "code": "*"
                 },
                 "+": {}
             }

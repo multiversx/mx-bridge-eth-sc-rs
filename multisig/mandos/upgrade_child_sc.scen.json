@@ -19,7 +19,7 @@
                     "sc:price_aggregator",
                     "10,000"
                 ],
-                "gasLimit": "100,000,000",
+                "gasLimit": "200,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -36,6 +36,15 @@
                 "sc:egld_esdt_swap": {
                     "nonce": "0",
                     "balance": "0",
+                    "esdt": {
+                        "str:EGLD-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
                     "storage": {
                         "str:wrappedEgldTokenId": "str:EGLD-123456",
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",

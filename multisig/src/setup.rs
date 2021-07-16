@@ -152,8 +152,6 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         Ok(())
     }
 
-    /* upgrade_contract does not work in the current version
-
     #[endpoint(upgradeChildContract)]
     fn upgrade_child_contract(
         &self,
@@ -177,8 +175,6 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
 
         Ok(())
     }
-
-    */
 
     #[endpoint]
     fn pause(&self) -> SCResult<()> {

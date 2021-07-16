@@ -40,6 +40,15 @@
                 "sc:egld_esdt_swap": {
                     "nonce": "0",
                     "balance": "2,000,000",
+                    "esdt": {
+                        "str:EGLD-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
                     "storage": {
                         "str:wrappedEgldTokenId": "str:EGLD-123456"
                     },

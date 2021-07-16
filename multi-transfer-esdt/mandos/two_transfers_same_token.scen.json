@@ -47,14 +47,6 @@
                     },
                     "storage": {}
                 },
-                "address:user2": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": {
-                        "str:WRAPPED-123456": "500"
-                    },
-                    "storage": {}
-                },
                 "sc:multi_transfer_esdt": {
                     "nonce": "0",
                     "balance": "0",

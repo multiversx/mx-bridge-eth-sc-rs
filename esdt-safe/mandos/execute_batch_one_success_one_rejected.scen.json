@@ -34,7 +34,7 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BridgeToken": "499,600"
+                        "str:BRIDGE-123456": "499,600"
                     },
                     "storage": {}
                 },
@@ -42,7 +42,7 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BridgeToken": "500,000"
+                        "str:BRIDGE-123456": "500,000"
                     },
                     "storage": {}
                 },
