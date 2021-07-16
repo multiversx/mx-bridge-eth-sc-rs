@@ -12,7 +12,9 @@ EsdtSafe CreateTransaction: 50M to 60M. ~75M should cover all cases.
 
 `stake/unstake` - 30M
 
-generic `propose` with 1-2 arguments (like changeQuorum, for example): 30M
+generic `propose` with 1-2 arguments (like changeQuorum, for example): 40M
+
+`sign`: 35M
 
 `proposeMultiTransferEsdtBatch`: Base cost, with only batchID argument seems to be around 35M, increasing by approximately 6M per extra pair of (dest_address, tokenId, amount). To cover for most cases, cost should be calculated as 35M base + 15M * nr_transactions_in_batch. (15M might seem a lot, but keep in mind in tests I'm working with numbers in the million range, whereas in real cases, numbers will all be in the ranges of 10^18)
 
@@ -31,7 +33,8 @@ generic `propose` with 1-2 arguments (like changeQuorum, for example): 30M
 | ----------- | ----------- |
 | EsdtSafe CreateTransaction | 75M |
 | stake/unstake   | 30M |
-| simple propose | 30M |
+| simple propose | 40M |
+| sign | 35M |
 | proposeMultiTransferEsdtBatch | 35M + 15M * nr_transactions_in_batch |
 | proposeEsdtSafeSetCurrentTransactionBatchStatus | 50M |
 | performAction(Ethereum to Elrond batch) | 60M + 20M * nr_transactions |

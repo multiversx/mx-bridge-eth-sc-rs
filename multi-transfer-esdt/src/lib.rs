@@ -81,14 +81,4 @@ pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_mo
 
         Ok(tx_statuses.into())
     }
-
-    // private
-
-    fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
-        if self.blockchain().is_smart_contract(to) {
-            &[]
-        } else {
-            data
-        }
-    }
 }
