@@ -1,6 +1,6 @@
 #[test]
 fn claim_fees_go() {
-    elrond_wasm_debug::mandos_go("mandos/claim_fees.scen.json");
+    elrond_wasm_debug::mandos_go("mandos/distribute_fees.scen.json");
 }
 
 #[test]
