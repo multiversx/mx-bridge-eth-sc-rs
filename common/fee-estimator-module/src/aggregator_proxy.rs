@@ -1,16 +1,18 @@
 elrond_wasm::imports!();
 
-type AggregatorResultAsMultiResult<BigUint> =
+pub const GWEI_STRING: &[u8] = b"GWEI";
+
+pub type AggregatorResultAsMultiResult<BigUint> =
     MultiResult5<u32, BoxedBytes, BoxedBytes, BigUint, u8>;
 
 #[elrond_wasm_derive::proxy]
 pub trait Aggregator {
-    #[endpoint(latestPriceFeed)]
-    fn latest_price_feed(
+    #[view(latestPriceFeedOptional)]
+    fn latest_price_feed_optional(
         &self,
-        from_token_name: BoxedBytes,
-        to_token_name: BoxedBytes,
-    ) -> SCResult<AggregatorResultAsMultiResult<Self::BigUint>>;
+        from: BoxedBytes,
+        to: BoxedBytes,
+    ) -> OptionalResult<AggregatorResultAsMultiResult<Self::BigUint>>;
 }
 
 pub struct AggregatorResult<BigUint: BigUintApi> {

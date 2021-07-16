@@ -1,21 +1,22 @@
 #![no_std]
 #![allow(non_snake_case)]
 
-use eth_address::*;
-use transaction::*;
-
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
+
+use eth_address::*;
+use transaction::*;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 5;
 
 #[elrond_wasm_derive::contract]
-pub trait EsdtSafe {
+pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
     #[init]
     fn init(
         &self,
         fee_estimator_contract_address: Address,
+        eth_tx_gas_limit: Self::BigUint,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
@@ -29,31 +30,12 @@ pub trait EsdtSafe {
         self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.min_block_nonce_diff()
             .set(&DEFAULT_MIN_BLOCK_NONCE_DIFF);
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         Ok(())
     }
 
     // endpoints - owner-only
-    // the owner will probably be a multisig SC
-
-    #[endpoint(addTokenToWhitelist)]
-    fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
-        self.require_local_burn_role_set(&token_id)?;
-
-        self.token_whitelist().insert(token_id);
-
-        Ok(())
-    }
-
-    #[endpoint(removeTokenFromWhitelist)]
-    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
-
-        self.token_whitelist().remove(&token_id);
-
-        Ok(())
-    }
 
     #[endpoint(setMaxTxBatchSize)]
     fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
@@ -115,7 +97,7 @@ pub trait EsdtSafe {
         &self,
         #[var_args] tx_status_batch: VarArgs<(Address, TxNonce, TransactionStatus)>,
     ) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
+        self.require_caller_owner()?;
 
         for (sender, nonce, tx_status) in tx_status_batch.into_vec() {
             require!(
@@ -127,8 +109,12 @@ pub trait EsdtSafe {
                 TransactionStatus::Executed => {
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
 
-                    self.require_local_burn_role_set(&tx.token_identifier)?;
-                    self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                    // local burn role might be removed while tx is executed
+                    // tokens will remain locked forever in that case
+                    // otherwise, the whole batch would fail
+                    if self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn) {
+                        self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                    }
                 }
                 TransactionStatus::Rejected => {
                     let tx = self.transactions_by_nonce(&sender).get(nonce);
@@ -140,7 +126,6 @@ pub trait EsdtSafe {
                 }
             }
 
-            // storage cleanup
             self.transaction_status(&sender, nonce).clear();
             self.transactions_by_nonce(&sender).clear_entry(nonce);
         }
@@ -155,9 +140,8 @@ pub trait EsdtSafe {
     fn create_transaction(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
-        #[payment] payment: Self::BigUint,
+        #[payment_amount] payment_amount: Self::BigUint,
         to: EthAddress,
-        token_used_for_fee_payment: TokenIdentifier,
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
@@ -165,11 +149,21 @@ pub trait EsdtSafe {
         );
         require!(
             self.token_whitelist().contains(&payment_token),
-            "Payment token is not on whitelist. Transaction rejected"
+            "Payment token is not on whitelist"
         );
-        require!(payment > 0, "Must transfer more than 0");
         require!(!to.is_zero(), "Can't transfer to address zero");
 
+        let required_fee = self.calculate_required_fee(&payment_token);
+
+        require!(
+            required_fee < payment_amount,
+            "Transaction fees cost more than the entire bridged amount"
+        );
+
+        self.accumulated_transaction_fees(&payment_token)
+            .update(|fees| *fees += &required_fee);
+
+        let actual_bridged_amount = payment_amount - required_fee;
         let caller = self.blockchain().get_caller();
         let sender_nonce = self.transactions_by_nonce(&caller).len() + 1;
         let tx = Transaction {
@@ -178,7 +172,7 @@ pub trait EsdtSafe {
             from: caller.clone(),
             to,
             token_identifier: payment_token,
-            amount: payment,
+            amount: actual_bridged_amount,
         };
 
         self.transactions_by_nonce(&caller).push(&tx);
@@ -186,11 +180,7 @@ pub trait EsdtSafe {
         self.transaction_status(&caller, sender_nonce)
             .set(&TransactionStatus::Pending);
         self.pending_transaction_address_nonce_list()
-            .push_back((caller.clone(), sender_nonce));
-
-        // reserve transaction fee beforehand
-        // used prevent transaction spam
-        self.reserve_fee(caller, token_used_for_fee_payment);
+            .push_back((caller, sender_nonce));
 
         Ok(())
     }
@@ -214,27 +204,6 @@ pub trait EsdtSafe {
         }
     }
 
-    fn reserve_fee(&self, from: Address, token_used_for_fee_payment: TokenIdentifier) {
-        self.ethereum_fee_prepay_proxy(self.fee_estimator_contract_address().get())
-            .reserve_fee(from, token_used_for_fee_payment)
-            .execute_on_dest_context();
-    }
-
-    fn require_caller_owner(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-        Ok(())
-    }
-
-    fn require_local_burn_role_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
-        let roles = self.blockchain().get_esdt_local_roles(token_id);
-        require!(
-            roles.contains(&EsdtLocalRole::Burn),
-            "Must set local burn role first"
-        );
-
-        Ok(())
-    }
-
     fn get_next_pending_transaction(&self) -> Option<Transaction<Self::BigUint>> {
         self.pending_transaction_address_nonce_list()
             .front()
@@ -245,27 +214,7 @@ pub trait EsdtSafe {
         let _ = self.pending_transaction_address_nonce_list().pop_front();
     }
 
-    // proxies
-
-    #[proxy]
-    fn ethereum_fee_prepay_proxy(
-        &self,
-        sc_address: Address,
-    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
-
     // storage
-
-    // the FeeEstimator SC is an aggregator that will query the Oracles and provide an average
-    // used to estimate the cost of an Ethereum tx at any given point in time
-
-    #[view(getFeeEstimatorContractAddress)]
-    #[storage_mapper("feeEstimatorContractAddress")]
-    fn fee_estimator_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
-
-    // token whitelist
-
-    #[storage_mapper("tokenWhitelist")]
-    fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 
     // transactions for each address, sorted by nonce
     // due to how VecMapper works internally, nonces will start at 1

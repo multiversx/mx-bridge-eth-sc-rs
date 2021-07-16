@@ -5,6 +5,8 @@
 mod action;
 mod user_role;
 
+use token_module::{ProxyTrait as OtherProxyTrait, PERCENTAGE_TOTAL};
+
 use action::Action;
 use transaction::esdt_safe_batch::{EsdtSafeTxBatch, EsdtSafeTxBatchSplitInFields};
 use transaction::*;
@@ -26,19 +28,39 @@ pub trait Multisig:
     + storage::StorageModule
     + util::UtilModule
 {
-    /// Owner claims accumulated fees and distributes them to relayers
-    /// Only centralized until we have a finalized fee distribution algorithm in place
-    /// Not using get_owner API function, as the owner may also be a multisig SC
-    #[endpoint(claimAccumulatedFees)]
-    fn claim_accumulated_fees(&self, dest_address: Address) -> SCResult<()> {
+    #[endpoint(distributeFeesFromChildContracts)]
+    fn distribute_fees_from_child_contracts(
+        &self,
+        #[var_args] dest_address_percentage_pairs: VarArgs<MultiArg2<Address, u64>>,
+    ) -> SCResult<()> {
         self.require_caller_owner()?;
+
+        let mut args = Vec::new();
+        let mut total_percentage = 0;
+
+        for pair in dest_address_percentage_pairs.into_vec() {
+            let (dest_address, percentage) = pair.into_tuple();
+
+            require!(
+                !self.blockchain().is_smart_contract(&dest_address),
+                "Cannot transfer to smart contract dest_address"
+            );
+
+            total_percentage += percentage;
+            args.push((dest_address, percentage));
+        }
+
         require!(
-            !self.blockchain().is_smart_contract(&dest_address),
-            "Cannot have SC as destination"
+            total_percentage == PERCENTAGE_TOTAL,
+            "Percentages do not add up to 100%"
         );
 
-        self.ethereum_fee_prepay_proxy(self.ethereum_fee_prepay_address().get())
-            .claim_accumulated_fees(dest_address)
+        self.esdt_safe_proxy(self.esdt_safe_address().get())
+            .distribute_fees(args.clone())
+            .execute_on_dest_context();
+
+        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+            .distribute_fees(args)
             .execute_on_dest_context();
 
         Ok(())
@@ -440,10 +462,13 @@ pub trait Multisig:
 
                 action_ids_mapper.clear();
 
+                let transfers_len = transfers.len();
                 let statuses = self
                     .multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
                     .batch_transfer_esdt_token(transfers.into())
-                    .execute_on_dest_context();
+                    .execute_on_dest_context_custom_range(|_, after| {
+                        (after - transfers_len, after)
+                    });
 
                 return_statuses = OptionalResult::Some(statuses);
             }
@@ -465,10 +490,4 @@ pub trait Multisig:
         &self,
         sc_address: Address,
     ) -> multi_transfer_esdt::Proxy<Self::SendApi>;
-
-    #[proxy]
-    fn ethereum_fee_prepay_proxy(
-        &self,
-        sc_address: Address,
-    ) -> ethereum_fee_prepay::Proxy<Self::SendApi>;
 }

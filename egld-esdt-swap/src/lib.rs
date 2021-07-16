@@ -25,7 +25,7 @@ pub trait EgldEsdtSwap {
 
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
 
-        self.require_local_roles_set(&wrapped_egld_token_id)?;
+        self.require_local_role_set(&wrapped_egld_token_id, &EsdtLocalRole::Mint)?;
         self.send()
             .esdt_local_mint(&wrapped_egld_token_id, &payment);
 
@@ -58,7 +58,7 @@ pub trait EgldEsdtSwap {
             "Contract does not have enough funds"
         );
 
-        self.require_local_roles_set(&wrapped_egld_token_id)?;
+        self.require_local_role_set(&wrapped_egld_token_id, &EsdtLocalRole::Burn)?;
         self.send()
             .esdt_local_burn(&wrapped_egld_token_id, &payment);
 
@@ -90,11 +90,11 @@ pub trait EgldEsdtSwap {
         }
     }
 
-    fn require_local_roles_set(&self, token_id: &TokenIdentifier) -> SCResult<()> {
+    fn require_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> SCResult<()> {
         let roles = self.blockchain().get_esdt_local_roles(token_id);
         require!(
-            roles.contains(&EsdtLocalRole::Mint) && roles.contains(&EsdtLocalRole::Burn),
-            "Must set local roles first"
+            roles.contains(role),
+            "Must set local role first"
         );
 
         Ok(())

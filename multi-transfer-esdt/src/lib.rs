@@ -7,38 +7,23 @@ elrond_wasm::imports!();
 pub type SingleTransferTuple<BigUint> = (Address, TokenIdentifier, BigUint);
 
 #[elrond_wasm_derive::contract]
-pub trait MultiTransferEsdt {
+pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
     #[init]
-    fn init(&self, #[var_args] token_whitelist: VarArgs<TokenIdentifier>) -> SCResult<()> {
+    fn init(
+        &self,
+        fee_estimator_contract_address: Address,
+        eth_tx_gas_limit: Self::BigUint,
+        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
+    ) -> SCResult<()> {
+        self.fee_estimator_contract_address()
+            .set(&fee_estimator_contract_address);
+
         for token in token_whitelist.into_vec() {
             require!(token.is_valid_esdt_identifier(), "Invalid token ID");
             self.token_whitelist().insert(token);
         }
 
-        Ok(())
-    }
-
-    // endpoints - owner-only
-
-    #[endpoint(addTokenToWhitelist)]
-    fn add_token_to_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-        require!(token_id.is_valid_esdt_identifier(), "Invalid token ID");
-        require!(
-            self.is_local_mint_role_set(&token_id),
-            "Must set local mint role first"
-        );
-
-        self.token_whitelist().insert(token_id);
-
-        Ok(())
-    }
-
-    #[endpoint(removeTokenFromWhitelist)]
-    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
-        self.token_whitelist().remove(&token_id);
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         Ok(())
     }
@@ -48,41 +33,53 @@ pub trait MultiTransferEsdt {
         &self,
         #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
     ) -> SCResult<MultiResultVec<TransactionStatus>> {
-        only_owner!(self, "only owner may call this function");
+        self.require_caller_owner()?;
 
         let mut tx_statuses = Vec::new();
+        let mut cached_token_ids = Vec::new();
+        let mut cached_prices = Vec::new();
 
         for (i, (to, token_id, amount)) in transfers.into_vec().iter().enumerate() {
             if to.is_zero() || self.blockchain().is_smart_contract(to) {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
-            if !self.token_whitelist().contains(token_id) || !self.is_local_mint_role_set(token_id)
+            if !self.token_whitelist().contains(token_id) || !self.is_local_role_set(token_id, &EsdtLocalRole::Mint)
             {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
 
+            let queried_fee: Self::BigUint;
+            let required_fee = match cached_token_ids.iter().position(|&id| id == token_id) {
+                Some(index) => &cached_prices[index],
+                None => {
+                    queried_fee = self.calculate_required_fee(token_id);
+                    cached_token_ids.push(token_id);
+                    cached_prices.push(queried_fee.clone());
+
+                    &queried_fee
+                }
+            };
+
+            if required_fee >= amount {
+                tx_statuses.push(TransactionStatus::Rejected);
+                continue;
+            }
+
+            let amount_to_send = amount - required_fee;
+
+            self.accumulated_transaction_fees(token_id)
+                .update(|fees| *fees += required_fee);
+
             self.send().esdt_local_mint(token_id, amount);
-            self.send().direct(to, token_id, amount, &[i as u8]);
+            self.send()
+                .direct(to, token_id, &amount_to_send, &[i as u8]);
 
             tx_statuses.push(TransactionStatus::Executed);
         }
 
         Ok(tx_statuses.into())
-    }
-
-    // views
-
-    #[view(getAllKnownTokens)]
-    fn get_all_known_tokens(&self) -> MultiResultVec<TokenIdentifier> {
-        let mut all_tokens = Vec::new();
-
-        for token_id in self.token_whitelist().iter() {
-            all_tokens.push(token_id);
-        }
-
-        all_tokens.into()
     }
 
     // private
@@ -94,15 +91,4 @@ pub trait MultiTransferEsdt {
             data
         }
     }
-
-    fn is_local_mint_role_set(&self, token_id: &TokenIdentifier) -> bool {
-        let roles = self.blockchain().get_esdt_local_roles(token_id);
-
-        roles.contains(&EsdtLocalRole::Mint)
-    }
-
-    // storage
-
-    #[storage_mapper("tokenWhitelist")]
-    fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 }

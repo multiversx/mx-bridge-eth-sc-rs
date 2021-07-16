@@ -1,27 +1,28 @@
 {
-    "name": "execute transaction rejected",
+    "name": "owner claim fees",
     "steps": [
         {
             "step": "externalSteps",
-            "path": "get_next_pending_tx.scen.json"
+            "path": "execute_batch_one_success_one_rejected.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "set-tx-status-rejected",
+            "txId": "owner-distribute-fees",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt_safe",
                 "value": "0",
-                "function": "setTransactionBatchStatus",
+                "function": "distributeFees",
                 "arguments": [
-                    "address:user1|u32:1|u8:4"
+                    "address:owner|u64:10000"
                 ],
-                "gasLimit": "50,000,000",
+                "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -29,11 +30,11 @@
         {
             "step": "checkState",
             "accounts": {
-                "address:user1": {
+                "address:owner": {
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "500,000"
+                        "str:BRIDGE-123456": "3,000,000"
                     },
                     "storage": {}
                 },
@@ -42,19 +43,14 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "1,500,000",
+                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         }
                     },
                     "storage": {
-                        "str:pendingTransactionList.value|u32:1": "",
-                        
-                        "str:transactionStatus|address:user1|u32:1": "",
-                        "str:transactionsByNonce|address:user1|str:.item|u32:1": "",
-
-                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
+                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
 
                         "+": ""
                     },

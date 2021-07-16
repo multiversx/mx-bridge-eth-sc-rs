@@ -1,5 +1,5 @@
 {
-    "name": "create transaction ok",
+    "name": "test zero fees, by setting fee estimator address to zero, and reading default from storage",
     "steps": [
         {
             "step": "externalSteps",
@@ -7,7 +7,52 @@
         },
         {
             "step": "scCall",
-            "txId": "create-transaction-ok",
+            "txId": "set-fee-estimator-address-to-address-zero",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "setFeeEstimatorContractAddress",
+                "arguments": [
+                    "0x0000000000000000000000000000000000000000000000000000000000000000"
+                ],
+                "gasLimit": "30,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "sc:esdt_safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:feeEstimatorContractAddress": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "+": ""
+                    },
+                    "code": "file:../output/esdt-safe.wasm"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "create-transaction-ok-no-fees",
             "tx": {
                 "from": "address:user1",
                 "to": "sc:esdt_safe",
@@ -24,13 +69,7 @@
             },
             "expect": {
                 "status": "0",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "10",
-                    "0"
-                ],
+                "out": [],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -68,10 +107,10 @@
                             "3-from": "address:user1",
                             "4-to": "0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:BRIDGE-123456",
-                            "6-amount": "biguint:400"
+                            "6-amount": "biguint:1,500,400"
                         },
                         
-                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
+                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
 
                         "+": ""
                     },
@@ -82,3 +121,4 @@
         }
     ]
 }
+

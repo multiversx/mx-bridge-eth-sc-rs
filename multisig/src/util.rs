@@ -169,14 +169,6 @@ pub trait UtilModule: crate::storage::StorageModule {
         Ok(())
     }
 
-    fn require_ethereum_fee_prepay_deployed(&self) -> SCResult<()> {
-        require!(
-            !self.ethereum_fee_prepay_address().is_empty(),
-            "Ethereum Fee Prepay SC has to be deployed first"
-        );
-        Ok(())
-    }
-
     fn has_enough_stake(&self, board_member_address: &Address) -> bool {
         let required_stake = self.required_stake_amount().get();
         let amount_staked = self.amount_staked(board_member_address).get();
