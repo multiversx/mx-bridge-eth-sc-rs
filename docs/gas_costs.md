@@ -33,7 +33,8 @@ generic `propose` with 1-2 arguments (like changeQuorum, for example): 40M
 | ----------- | ----------- |
 | EsdtSafe CreateTransaction | 75M |
 | stake/unstake   | 30M |
-| simple propose | 30M |
+| simple propose | 40M |
+| sign | 35M |
 | proposeMultiTransferEsdtBatch | 35M + 15M * nr_transactions_in_batch |
 | proposeEsdtSafeSetCurrentTransactionBatchStatus | 50M |
 | performAction(Ethereum to Elrond batch) | 60M + 20M * nr_transactions |
