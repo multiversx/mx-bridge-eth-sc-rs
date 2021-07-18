@@ -119,6 +119,7 @@
                     },
                     "storage": {
                         "str:pendingTransactionList.value|u32:1": "address:user|u32:1",
+                        
                         "str:transactionStatus|address:user|u32:1": "1",
                         "str:transactionsByNonce|address:user|str:.item|u32:1": {
                             "1-block_nonce": "u64:0",
@@ -128,7 +129,9 @@
                             "5-token_identifier": "nested:str:EGLD-123456",
                             "6-amount": "biguint:400"
                         },
+
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
+
                         "+": ""
                     },
                     "code": "*"
@@ -199,6 +202,7 @@
                     "storage": {
                         "str:pendingTransactionList.value|u32:1": "address:user|u32:1",
                         "str:pendingTransactionList.value|u32:2": "address:user|u32:2",
+                        
                         "str:transactionStatus|address:user|u32:1": "1",
                         "str:transactionsByNonce|address:user|str:.item|u32:1": {
                             "1-block_nonce": "u64:0",
@@ -208,6 +212,7 @@
                             "5-token_identifier": "nested:str:EGLD-123456",
                             "6-amount": "biguint:400"
                         },
+
                         "str:transactionStatus|address:user|u32:2": "1",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": {
                             "1-block_nonce": "u64:0",
@@ -217,8 +222,11 @@
                             "5-token_identifier": "nested:str:ETH-123456",
                             "6-amount": "biguint:350,000"
                         },
+
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
+
+
                         "+": ""
                     },
                     "code": "*"
@@ -255,6 +263,7 @@
                         "14-to": "0x0102030405060708091011121314151617181920",
                         "15-token_identifier": "nested:str:EGLD-123456",
                         "16-amount": "biguint:400",
+
                         "21-block_nonce": "u64:0",
                         "22-nonce": "u32:2",
                         "23-from": "address:user",
@@ -262,19 +271,14 @@
                         "25-token_identifier": "nested:str:ETH-123456",
                         "26-amount": "biguint:350,000"
                     },
+
                     "1",
-                    "0x",
-                    "1",
-                    "address:user",
-                    "0x0102030405060708091011121314151617181920",
-                    "str:EGLD-123456",
-                    "400",
-                    "0x",
-                    "2",
-                    "address:user",
-                    "0x0102030405060708091011121314151617181920",
-                    "str:ETH-123456",
-                    "350,000"
+
+                    "0x", "1", "address:user", "0x0102030405060708091011121314151617181920", 
+                    "str:EGLD-123456", "400",
+
+                    "0x", "2", "address:user", "0x0102030405060708091011121314151617181920", 
+                    "str:ETH-123456", "350,000"
                 ],
                 "gas": "*",
                 "refund": "*"
@@ -288,15 +292,17 @@
                     "balance": "*",
                     "storage": {
                         "str:currentTxBatch": [
-                            {
+                            {   
                                 "01-batch_id": "u32:1",
                                 "02-vec_len": "u32:2",
+        
                                 "11-block_nonce": "u64:0",
                                 "12-nonce": "u32:1",
                                 "13-from": "address:user",
                                 "14-to": "0x0102030405060708091011121314151617181920",
                                 "15-token_identifier": "nested:str:EGLD-123456",
                                 "16-amount": "biguint:400",
+        
                                 "21-block_nonce": "u64:0",
                                 "22-nonce": "u32:2",
                                 "23-from": "address:user",
@@ -314,3 +320,4 @@
         }
     ]
 }
+
