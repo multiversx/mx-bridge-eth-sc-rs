@@ -37,7 +37,7 @@ pub trait EgldEsdtSwap {
         let caller = self.blockchain().get_caller();
         let function = accept_funds_endpoint_name
             .into_option()
-            .unwrap_or(b""[..].into());
+            .unwrap_or_else(|| b""[..].into());
         let gas_limit = self.gas_limit_with_leftover();
 
         SCResult::from_result(self.send().direct_esdt_execute(
@@ -45,7 +45,7 @@ pub trait EgldEsdtSwap {
             &wrapped_egld_token_id,
             &payment,
             gas_limit,
-            &function.as_slice(),
+            function.as_slice(),
             &ArgBuffer::new(),
         ))
     }
@@ -77,14 +77,14 @@ pub trait EgldEsdtSwap {
         let caller = self.blockchain().get_caller();
         let function = accept_funds_endpoint_name
             .into_option()
-            .unwrap_or(b""[..].into());
+            .unwrap_or_else(|| b""[..].into());
         let gas_limit = self.gas_limit_with_leftover();
 
         SCResult::from_result(self.send().direct_egld_execute(
             &caller,
             &payment,
             gas_limit,
-            &function.as_slice(),
+            function.as_slice(),
             &ArgBuffer::new(),
         ))
     }
