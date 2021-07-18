@@ -35,8 +35,10 @@ pub trait EgldEsdtSwap {
             .esdt_local_mint(&wrapped_egld_token_id, &payment);
 
         let caller = self.blockchain().get_caller();
-        let function = accept_funds_endpoint_name.into_option().unwrap_or(b""[..].into());
-        let gas_limit = self.blockchain().get_gas_left() - DEFAULT_GAS_LEFTOVER;
+        let function = accept_funds_endpoint_name
+            .into_option()
+            .unwrap_or(b""[..].into());
+        let gas_limit = self.gas_limit_with_leftover();
 
         SCResult::from_result(self.send().direct_esdt_execute(
             &caller,
@@ -73,8 +75,10 @@ pub trait EgldEsdtSwap {
 
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
         let caller = self.blockchain().get_caller();
-        let function = accept_funds_endpoint_name.into_option().unwrap_or(b""[..].into());
-        let gas_limit = self.blockchain().get_gas_left() - DEFAULT_GAS_LEFTOVER;
+        let function = accept_funds_endpoint_name
+            .into_option()
+            .unwrap_or(b""[..].into());
+        let gas_limit = self.gas_limit_with_leftover();
 
         SCResult::from_result(self.send().direct_egld_execute(
             &caller,
@@ -83,6 +87,15 @@ pub trait EgldEsdtSwap {
             &function.as_slice(),
             &ArgBuffer::new(),
         ))
+    }
+
+    fn gas_limit_with_leftover(&self) -> u64 {
+        let gas_left = self.blockchain().get_gas_left();
+        if gas_left > DEFAULT_GAS_LEFTOVER {
+            gas_left - DEFAULT_GAS_LEFTOVER
+        } else {
+            gas_left
+        }
     }
 
     // views
