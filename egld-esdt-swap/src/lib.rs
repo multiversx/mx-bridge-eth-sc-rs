@@ -80,17 +80,18 @@ pub trait EgldEsdtSwap {
         let function = accept_funds_endpoint_name
             .into_option()
             .unwrap_or_else(BoxedBytes::empty);
+        let egld_token_id = TokenIdentifier::egld();
 
         if self.needs_execution(&caller, &function) {
             Ok(OptionalResult::Some(self.transfer_and_execute_via_async(
                 &caller,
-                &TokenIdentifier::egld(),
+                &egld_token_id,
                 &payment,
                 &function,
             )))
         } else {
             self.send()
-                .direct(&caller, &TokenIdentifier::egld(), &payment, b"unwrapping");
+                .direct(&caller, &egld_token_id, &payment, b"unwrapping");
             Ok(OptionalResult::None)
         }
     }
@@ -135,6 +136,25 @@ pub trait EgldEsdtSwap {
         Ok(())
     }
 
+    fn revert_operation_and_send(
+        &self,
+        address: &Address,
+        token_id: &TokenIdentifier,
+        amount: &Self::BigUint,
+    ) {
+        let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
+
+        if token_id == &TokenIdentifier::egld() {
+            self.send().esdt_local_mint(&wrapped_egld_token_id, amount);
+            self.send()
+                .direct(address, &wrapped_egld_token_id, amount, &[]);
+        } else {
+            self.send().esdt_local_burn(&wrapped_egld_token_id, amount);
+            self.send()
+                .direct(address, &TokenIdentifier::egld(), amount, &[]);
+        }
+    }
+
     // callbacks
 
     #[callback]
@@ -147,9 +167,8 @@ pub trait EgldEsdtSwap {
             AsyncCallResult::Ok(_) => {}
             AsyncCallResult::Err(_) => {
                 let (returned_tokens, token_identifier) = self.call_value().payment_token_pair();
-                if returned_tokens > 0 {
-                    self.send()
-                        .direct(caller, &token_identifier, &returned_tokens, &[]);
+                if returned_tokens != 0 {
+                    self.revert_operation_and_send(caller, &token_identifier, &returned_tokens);
                 }
             }
         }
