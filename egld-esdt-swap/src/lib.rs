@@ -1,6 +1,7 @@
 #![no_std]
 
 elrond_wasm::imports!();
+const DEFAULT_GAS_LEFTOVER: u64 = 100_000;
 
 #[elrond_wasm_derive::contract]
 pub trait EgldEsdtSwap {
@@ -20,7 +21,11 @@ pub trait EgldEsdtSwap {
 
     #[payable("EGLD")]
     #[endpoint(wrapEgld)]
-    fn wrap_egld(&self, #[payment] payment: Self::BigUint) -> SCResult<()> {
+    fn wrap_egld(
+        &self,
+        #[payment] payment: Self::BigUint,
+        #[var_args] accept_funds_endpoint_name: OptionalArg<BoxedBytes>,
+    ) -> SCResult<()> {
         require!(payment > 0, "Payment must be more than 0");
 
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
@@ -30,14 +35,17 @@ pub trait EgldEsdtSwap {
             .esdt_local_mint(&wrapped_egld_token_id, &payment);
 
         let caller = self.blockchain().get_caller();
-        self.send().direct(
+        let function = accept_funds_endpoint_name.into_option().unwrap_or(b""[..].into());
+        let gas_limit = self.blockchain().get_gas_left() - DEFAULT_GAS_LEFTOVER;
+
+        SCResult::from_result(self.send().direct_esdt_execute(
             &caller,
             &wrapped_egld_token_id,
             &payment,
-            self.data_or_empty(&caller, b"wrapping"),
-        );
-
-        Ok(())
+            gas_limit,
+            &function.as_slice(),
+            &ArgBuffer::new(),
+        ))
     }
 
     #[payable("*")]
@@ -46,6 +54,7 @@ pub trait EgldEsdtSwap {
         &self,
         #[payment] payment: Self::BigUint,
         #[payment_token] token_id: TokenIdentifier,
+        #[var_args] accept_funds_endpoint_name: OptionalArg<BoxedBytes>,
     ) -> SCResult<()> {
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
 
@@ -64,13 +73,16 @@ pub trait EgldEsdtSwap {
 
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
         let caller = self.blockchain().get_caller();
-        self.send().direct_egld(
+        let function = accept_funds_endpoint_name.into_option().unwrap_or(b""[..].into());
+        let gas_limit = self.blockchain().get_gas_left() - DEFAULT_GAS_LEFTOVER;
+
+        SCResult::from_result(self.send().direct_egld_execute(
             &caller,
             &payment,
-            self.data_or_empty(&caller, b"unwrapping"),
-        );
-
-        Ok(())
+            gas_limit,
+            &function.as_slice(),
+            &ArgBuffer::new(),
+        ))
     }
 
     // views
