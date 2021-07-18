@@ -89,15 +89,6 @@ pub trait EgldEsdtSwap {
         ))
     }
 
-    fn gas_limit_with_leftover(&self) -> u64 {
-        let gas_left = self.blockchain().get_gas_left();
-        if gas_left > DEFAULT_GAS_LEFTOVER {
-            gas_left - DEFAULT_GAS_LEFTOVER
-        } else {
-            gas_left
-        }
-    }
-
     // views
 
     #[view(getLockedEgldBalance)]
@@ -106,6 +97,15 @@ pub trait EgldEsdtSwap {
     }
 
     // private
+
+    fn gas_limit_with_leftover(&self) -> u64 {
+        let gas_left = self.blockchain().get_gas_left();
+        if gas_left > DEFAULT_GAS_LEFTOVER {
+            gas_left - DEFAULT_GAS_LEFTOVER
+        } else {
+            gas_left
+        }
+    }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
         if self.blockchain().is_smart_contract(to) {
