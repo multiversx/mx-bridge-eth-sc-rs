@@ -30,7 +30,8 @@ deploy() {
 
 upgrade() {
     erdpy --verbose contract upgrade ${ADDRESS} --project=${PROJECT} --recall-nonce --pem=${ALICE} \
-    --gas-limit=100000000 --send --outfile="upgrade.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+    --arguments ${WRAPPED_EGLD_TOKEN_ID} --gas-limit=100000000 --outfile="upgrade.json" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
 issueWrappedEgld() {
