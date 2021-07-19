@@ -14,7 +14,7 @@
                 "value": "2,000,000",
                 "function": "wrapEgld",
                 "arguments": [],
-                "gasLimit": "5,000,000",
+                "gasLimit": "7,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -320,3 +320,4 @@
         }
     ]
 }
+

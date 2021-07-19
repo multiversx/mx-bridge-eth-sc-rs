@@ -18,7 +18,7 @@
                 },
                 "function": "unwrapEgld",
                 "arguments": [],
-                "gasLimit": "5,000,000",
+                "gasLimit": "8,000,000",
                 "gasPrice": "0"
             },
             "expect": {
