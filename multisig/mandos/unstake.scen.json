@@ -32,82 +32,14 @@
             "txId": "change-quorum",
             "comment": "must change quorum before attempting to remove user",
             "tx": {
-                "from": "address:relayer1",
+                "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "proposeChangeQuorum",
+                "function": "changeQuorum",
                 "arguments": [
                     "1"
                 ],
                 "gasLimit": "35,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [
-                    "1"
-                ],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "first-relayer-sign",
-            "tx": {
-                "from": "address:relayer1",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "sign",
-                "arguments": [
-                    "1"
-                ],
-                "gasLimit": "35,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "second-relayer-sign",
-            "tx": {
-                "from": "address:relayer2",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "sign",
-                "arguments": [
-                    "1"
-                ],
-                "gasLimit": "35,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "execute-action-change-quorum",
-            "tx": {
-                "from": "address:relayer1",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "performAction",
-                "arguments": [
-                    "1"
-                ],
-                "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -135,60 +67,14 @@
         },
         {
             "step": "scCall",
-            "txId": "propose-remove-user",
+            "txId": "remove-user",
             "tx": {
-                "from": "address:relayer2",
+                "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "proposeRemoveUser",
+                "function": "removeUser",
                 "arguments": [
                     "address:relayer2"
-                ],
-                "gasLimit": "40,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [
-                    "2"
-                ],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "second-relayer-sign-2",
-            "tx": {
-                "from": "address:relayer2",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "sign",
-                "arguments": [
-                    "2"
-                ],
-                "gasLimit": "35,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "execute-action-remove-user",
-            "tx": {
-                "from": "address:relayer2",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "performAction",
-                "arguments": [
-                    "2"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
@@ -291,7 +177,7 @@
                 "from": "address:relayer2",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "proposeChangeQuorum",
+                "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "2"
                 ],
