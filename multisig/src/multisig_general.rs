@@ -78,42 +78,6 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         Ok(())
     }
 
-    /// Initiates board member addition process.
-    /// Can also be used to promote a proposer to board member.
-    #[endpoint(proposeAddBoardMember)]
-    fn propose_add_board_member(&self, board_member_address: Address) -> SCResult<usize> {
-        self.propose_action(Action::AddBoardMember(board_member_address))
-    }
-
-    /// Initiates proposer addition process..
-    /// Can also be used to demote a board member to proposer.
-    #[endpoint(proposeAddProposer)]
-    fn propose_add_proposer(&self, proposer_address: Address) -> SCResult<usize> {
-        self.propose_action(Action::AddProposer(proposer_address))
-    }
-
-    /// Removes user regardless of whether it is a board member or proposer.
-    #[endpoint(proposeRemoveUser)]
-    fn propose_remove_user(&self, user_address: Address) -> SCResult<usize> {
-        self.propose_action(Action::RemoveUser(user_address))
-    }
-
-    #[endpoint(proposeChangeQuorum)]
-    fn propose_change_quorum(&self, new_quorum: usize) -> SCResult<usize> {
-        self.propose_action(Action::ChangeQuorum(new_quorum))
-    }
-
-    #[endpoint(proposeSlashUser)]
-    fn propose_slash_user(&self, user_address: Address) -> SCResult<usize> {
-        self.require_caller_owner()?;
-        require!(
-            self.user_role(&user_address) == UserRole::BoardMember,
-            "can only slash board members"
-        );
-
-        self.propose_action(Action::SlashUser(user_address))
-    }
-
     fn propose_action(&self, action: Action<Self::BigUint>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
@@ -121,6 +85,11 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         require!(
             caller_role.can_propose(),
             "only board members and proposers can propose"
+        );
+
+        require!(
+            !self.pause_status().get(),
+            "No actions may be proposed while paused"
         );
 
         let action_id = self.action_mapper().push(&action);

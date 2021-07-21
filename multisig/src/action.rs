@@ -4,14 +4,16 @@ use transaction::TransactionStatus;
 
 elrond_wasm::derive_imports!();
 
+// Actions with _ in front are not used
+// Keeping the actions even if they're not used, for backwards compatibility of action type ID
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum Action<BigUint: BigUintApi> {
     Nothing,
-    AddBoardMember(Address),
-    AddProposer(Address),
-    RemoveUser(Address),
-    SlashUser(Address),
-    ChangeQuorum(usize),
+    _AddBoardMember(Address),
+    _AddProposer(Address),
+    _RemoveUser(Address),
+    _SlashUser(Address),
+    _ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
         esdt_safe_batch_id: usize,
         tx_batch_status: Vec<TransactionStatus>,
@@ -29,10 +31,6 @@ impl<BigUint: BigUintApi> Action<BigUint> {
     pub fn is_pending(&self) -> bool {
         !matches!(*self, Action::Nothing)
     }
-
-    pub fn is_slash_user(&self) -> bool {
-        matches!(*self, Action::SlashUser(_))
-    }
 }
 
 /// Not used internally, just to retrieve results via endpoint.
@@ -46,18 +44,10 @@ pub struct ActionFullInfo<BigUint: BigUintApi> {
 #[cfg(test)]
 mod test {
     use super::Action;
-    use elrond_wasm::types::Address;
     use elrond_wasm_debug::api::RustBigUint;
 
     #[test]
     fn test_is_pending() {
         assert!(!Action::<RustBigUint>::Nothing.is_pending());
-        assert!(Action::<RustBigUint>::ChangeQuorum(5).is_pending());
-    }
-
-    #[test]
-    fn test_is_slash_user() {
-        assert!(!Action::<RustBigUint>::Nothing.is_slash_user());
-        assert!(Action::<RustBigUint>::SlashUser(Address::zero()).is_slash_user());
     }
 }

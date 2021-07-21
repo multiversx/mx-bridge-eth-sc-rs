@@ -7,7 +7,11 @@ use fee_estimator_module::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 
 #[elrond_wasm_derive::module]
-pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
+pub trait SetupModule:
+    crate::multisig_general::MultisigGeneralModule
+    + crate::storage::StorageModule
+    + crate::util::UtilModule
+{
     #[init]
     fn init(
         &self,
@@ -190,6 +194,92 @@ pub trait SetupModule: crate::storage::StorageModule + crate::util::UtilModule {
         self.require_caller_owner()?;
 
         self.pause_status().set(&false);
+
+        Ok(())
+    }
+
+    #[endpoint(addBoardMember)]
+    fn add_board_member(&self, board_member: Address) -> SCResult<()> {
+        self.require_caller_owner()?;
+
+        self.change_user_role(board_member, UserRole::BoardMember);
+
+        Ok(())
+    }
+
+    #[endpoint(addProposer)]
+    fn add_proposer(&self, proposer: Address) -> SCResult<()> {
+        self.require_caller_owner()?;
+
+        self.change_user_role(proposer, UserRole::Proposer);
+
+        // validation required for the scenario when a board member becomes a proposer
+        require!(
+            self.quorum().get() <= self.num_board_members().get(),
+            "quorum cannot exceed board size"
+        );
+
+        Ok(())
+    }
+
+    #[endpoint(removeUser)]
+    fn remove_user(&self, user: Address) -> SCResult<()> {
+        self.require_caller_owner()?;
+
+        self.change_user_role(user, UserRole::None);
+        let num_board_members = self.num_board_members().get();
+        let num_proposers = self.num_proposers().get();
+        require!(
+            num_board_members + num_proposers > 0,
+            "cannot remove all board members and proposers"
+        );
+        require!(
+            self.quorum().get() <= num_board_members,
+            "quorum cannot exceed board size"
+        );
+
+        Ok(())
+    }
+
+    #[endpoint(slashBoardMember)]
+    fn slash_board_member(&self, board_member: Address) -> SCResult<()> {
+        self.require_caller_owner()?;
+
+        self.change_user_role(board_member.clone(), UserRole::None);
+        let num_board_members = self.num_board_members().get();
+        let num_proposers = self.num_proposers().get();
+
+        require!(
+            num_board_members + num_proposers > 0,
+            "cannot remove all board members and proposers"
+        );
+        require!(
+            self.quorum().get() <= num_board_members,
+            "quorum cannot exceed board size"
+        );
+
+        let slash_amount = self.slash_amount().get();
+
+        // remove slashed amount from user stake amountself
+        self.amount_staked(&board_member)
+            .update(|stake| *stake -= &slash_amount);
+
+        // add it to total slashed amount pool
+        self.slashed_tokens_amount()
+            .update(|slashed_amt| *slashed_amt += slash_amount);
+
+        Ok(())
+    }
+
+    #[endpoint(changeQuorum)]
+    fn change_quorum(&self, new_quorum: usize) -> SCResult<()> {
+        self.require_caller_owner()?;
+
+        require!(
+            new_quorum <= self.num_board_members().get(),
+            "quorum cannot exceed board size"
+        );
+        self.quorum().set(&new_quorum);
 
         Ok(())
     }

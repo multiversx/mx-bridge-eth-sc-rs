@@ -340,12 +340,10 @@ pub trait Multisig:
     ) -> SCResult<OptionalResult<MultiResultVec<TransactionStatus>>> {
         let action = self.action_mapper().get(action_id);
 
-        if self.pause_status().get() {
-            require!(
-                action.is_slash_user(),
-                "Only slash user action may be performed while paused"
-            );
-        }
+        require!(
+            !self.pause_status().get(),
+            "No actions may be executed while paused"
+        );
 
         // clean up storage
         // happens before actual execution, because the match provides the return on each branch
@@ -357,64 +355,6 @@ pub trait Multisig:
 
         match action {
             Action::Nothing => {}
-            Action::AddBoardMember(board_member_address) => {
-                self.change_user_role(board_member_address, UserRole::BoardMember);
-            }
-            Action::AddProposer(proposer_address) => {
-                self.change_user_role(proposer_address, UserRole::Proposer);
-
-                // validation required for the scenario when a board member becomes a proposer
-                require!(
-                    self.quorum().get() <= self.num_board_members().get(),
-                    "quorum cannot exceed board size"
-                );
-            }
-            Action::RemoveUser(user_address) => {
-                self.change_user_role(user_address, UserRole::None);
-                let num_board_members = self.num_board_members().get();
-                let num_proposers = self.num_proposers().get();
-                require!(
-                    num_board_members + num_proposers > 0,
-                    "cannot remove all board members and proposers"
-                );
-                require!(
-                    self.quorum().get() <= num_board_members,
-                    "quorum cannot exceed board size"
-                );
-            }
-            Action::SlashUser(user_address) => {
-                self.change_user_role(user_address.clone(), UserRole::None);
-                let num_board_members = self.num_board_members().get();
-                let num_proposers = self.num_proposers().get();
-
-                require!(
-                    num_board_members + num_proposers > 0,
-                    "cannot remove all board members and proposers"
-                );
-                require!(
-                    self.quorum().get() <= num_board_members,
-                    "quorum cannot exceed board size"
-                );
-
-                let slash_amount = self.slash_amount().get();
-
-                // remove slashed amount from user stake amount
-                let mut user_stake = self.amount_staked(&user_address).get();
-                user_stake -= &slash_amount;
-                self.amount_staked(&user_address).set(&user_stake);
-
-                // add it to total slashed amount pool
-                let mut total_slashed_amount = self.slashed_tokens_amount().get();
-                total_slashed_amount += &slash_amount;
-                self.slashed_tokens_amount().set(&total_slashed_amount);
-            }
-            Action::ChangeQuorum(new_quorum) => {
-                require!(
-                    new_quorum <= self.num_board_members().get(),
-                    "quorum cannot exceed board size"
-                );
-                self.quorum().set(&new_quorum);
-            }
             Action::SetCurrentTransactionBatchStatus {
                 esdt_safe_batch_id,
                 tx_batch_status,
@@ -471,7 +411,8 @@ pub trait Multisig:
                     });
 
                 return_statuses = OptionalResult::Some(statuses);
-            }
+            },
+            _ => {}
         }
 
         Ok(return_statuses)
