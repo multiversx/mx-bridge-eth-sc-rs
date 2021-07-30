@@ -148,11 +148,6 @@ pub trait UtilModule: crate::storage::StorageModule {
         result.into()
     }
 
-    fn require_caller_owner(&self) -> SCResult<()> {
-        only_owner!(self, "Only owner may call this function");
-        Ok(())
-    }
-
     fn require_esdt_safe_deployed(&self) -> SCResult<()> {
         require!(
             !self.esdt_safe_address().is_empty(),
