@@ -76,9 +76,6 @@ pub trait SetupModule:
 
         // eGLD ESDT swap deploy
 
-        //let mut egld_esdt_swap_arg_buffer = ArgBuffer::new();
-        //egld_esdt_swap_arg_buffer.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
-
         let opt_egld_esdt_swap_address = self
             .setup_egld_esdt_swap_proxy()
             .init(wrapped_egld_token_id)
