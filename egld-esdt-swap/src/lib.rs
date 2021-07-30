@@ -33,7 +33,7 @@ pub trait EgldEsdtSwap {
 
         self.require_local_role_set(&wrapped_egld_token_id, &EsdtLocalRole::Mint)?;
         self.send()
-            .esdt_local_mint(&wrapped_egld_token_id, &payment);
+            .esdt_local_mint(&wrapped_egld_token_id, 0, &payment);
 
         let caller = self.blockchain().get_caller();
         let function = accept_funds_endpoint_name
@@ -50,7 +50,7 @@ pub trait EgldEsdtSwap {
             )))
         } else {
             self.send()
-                .direct(&caller, &wrapped_egld_token_id, &payment, b"wrapping");
+                .direct(&caller, &wrapped_egld_token_id, 0, &payment, b"wrapping");
             Ok(OptionalResult::None)
         }
     }
@@ -70,13 +70,13 @@ pub trait EgldEsdtSwap {
         require!(payment > 0, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
-            payment <= self.blockchain().get_sc_balance(),
+            payment <= self.get_locked_egld_balance(),
             "Contract does not have enough funds"
         );
 
         self.require_local_role_set(&wrapped_egld_token_id, &EsdtLocalRole::Burn)?;
         self.send()
-            .esdt_local_burn(&wrapped_egld_token_id, &payment);
+            .esdt_local_burn(&wrapped_egld_token_id, 0, &payment);
 
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
         let caller = self.blockchain().get_caller();
@@ -95,7 +95,7 @@ pub trait EgldEsdtSwap {
             )))
         } else {
             self.send()
-                .direct(&caller, &egld_token_id, &payment, b"unwrapping");
+                .direct(&caller, &egld_token_id, 0, &payment, b"unwrapping");
             Ok(OptionalResult::None)
         }
     }
@@ -104,7 +104,8 @@ pub trait EgldEsdtSwap {
 
     #[view(getLockedEgldBalance)]
     fn get_locked_egld_balance(&self) -> Self::BigUint {
-        self.blockchain().get_sc_balance()
+        self.blockchain()
+            .get_sc_balance(&TokenIdentifier::egld(), 0)
     }
 
     // private
@@ -116,9 +117,12 @@ pub trait EgldEsdtSwap {
     fn require_has_enough_gas_for_transfer_via_async(&self) -> SCResult<()> {
         let gas_needed_for_callback = GAS_FOR_CALLBACK;
         let gas_leftover_required = gas_needed_for_callback;
-        let total_gas_needed=  gas_needed_for_callback + gas_leftover_required;
+        let total_gas_needed = gas_needed_for_callback + gas_leftover_required;
 
-        require!(self.blockchain().get_gas_left() > total_gas_needed, "Not enough gas");
+        require!(
+            self.blockchain().get_gas_left() > total_gas_needed,
+            "Not enough gas"
+        );
         Ok(())
     }
 
@@ -163,14 +167,14 @@ pub trait EgldEsdtSwap {
 
         if returned_token_id == egld_token_id {
             self.send()
-                .esdt_local_mint(&wrapped_egld_token_id, &returned_amount);
+                .esdt_local_mint(&wrapped_egld_token_id, 0, &returned_amount);
             self.send()
-                .direct(&address, &wrapped_egld_token_id, &returned_amount, &[]);
+                .direct(&address, &wrapped_egld_token_id, 0, &returned_amount, &[]);
         } else {
             self.send()
-                .esdt_local_burn(&wrapped_egld_token_id, &returned_amount);
+                .esdt_local_burn(&wrapped_egld_token_id, 0, &returned_amount);
             self.send()
-                .direct(&address, &egld_token_id, &returned_amount, &[]);
+                .direct(&address, &egld_token_id, 0, &returned_amount, &[]);
         }
     }
 
