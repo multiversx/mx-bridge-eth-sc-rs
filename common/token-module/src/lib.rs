@@ -29,7 +29,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 remaining_fees -= &amount_to_send;
 
                 self.send()
-                    .direct(&dest_address, &token_id, &amount_to_send, &[]);
+                    .direct(&dest_address, &token_id, 0, &amount_to_send, &[]);
             }
 
             self.accumulated_transaction_fees(&token_id)

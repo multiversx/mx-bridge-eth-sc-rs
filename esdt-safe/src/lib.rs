@@ -188,12 +188,12 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     // private
 
     fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        self.send().esdt_local_burn(token_id, amount);
+        self.send().esdt_local_burn(token_id, 0, amount);
     }
 
     fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
         self.send()
-            .direct(to, token_id, amount, self.data_or_empty(to, b"refund"));
+            .direct(to, token_id, 0, amount, self.data_or_empty(to, b"refund"));
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {

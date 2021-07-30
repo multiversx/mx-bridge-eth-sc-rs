@@ -7,7 +7,9 @@ elrond_wasm::imports!();
 pub type SingleTransferTuple<BigUint> = (Address, TokenIdentifier, BigUint);
 
 #[elrond_wasm_derive::contract]
-pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
+pub trait MultiTransferEsdt:
+    fee_estimator_module::FeeEstimatorModule + token_module::TokenModule
+{
     #[init]
     fn init(
         &self,
@@ -44,7 +46,8 @@ pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_mo
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
-            if !self.token_whitelist().contains(token_id) || !self.is_local_role_set(token_id, &EsdtLocalRole::Mint)
+            if !self.token_whitelist().contains(token_id)
+                || !self.is_local_role_set(token_id, &EsdtLocalRole::Mint)
             {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
@@ -72,9 +75,9 @@ pub trait MultiTransferEsdt: fee_estimator_module::FeeEstimatorModule + token_mo
             self.accumulated_transaction_fees(token_id)
                 .update(|fees| *fees += required_fee);
 
-            self.send().esdt_local_mint(token_id, amount);
+            self.send().esdt_local_mint(token_id, 0, amount);
             self.send()
-                .direct(to, token_id, &amount_to_send, &[i as u8]);
+                .direct(to, token_id, 0, &amount_to_send, &[i as u8]);
 
             tx_statuses.push(TransactionStatus::Executed);
         }
