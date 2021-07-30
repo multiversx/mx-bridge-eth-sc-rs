@@ -58,7 +58,6 @@ pub trait SetupModule:
         esdt_safe_eth_tx_gas_limit: Self::BigUint,
         multi_transfer_esdt_eth_tx_gas_limit: Self::BigUint,
         wrapped_egld_token_id: TokenIdentifier,
-        wrapped_eth_token_id: TokenIdentifier,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.require_caller_owner()?;
@@ -70,87 +69,56 @@ pub trait SetupModule:
             "This function was called already."
         );
 
-        // must build the token whitelist ArgBuffer twice, as there is no way to clone it
-
-        let mut arg_buffer_token_whitelist_esdt_safe = ArgBuffer::new();
-        let mut arg_buffer_token_whitelist_multi_transfer_esdt = ArgBuffer::new();
-
-        arg_buffer_token_whitelist_esdt_safe
-            .push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
-        arg_buffer_token_whitelist_esdt_safe
-            .push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
-        for token in &token_whitelist.0 {
-            arg_buffer_token_whitelist_esdt_safe.push_argument_bytes(token.as_esdt_identifier());
-        }
-
-        arg_buffer_token_whitelist_multi_transfer_esdt
-            .push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
-        arg_buffer_token_whitelist_multi_transfer_esdt
-            .push_argument_bytes(wrapped_eth_token_id.as_esdt_identifier());
-        for token in &token_whitelist.0 {
-            arg_buffer_token_whitelist_multi_transfer_esdt
-                .push_argument_bytes(token.as_esdt_identifier());
-        }
+        let mut all_tokens = token_whitelist.into_vec();
+        all_tokens.push(wrapped_egld_token_id.clone());
 
         let gas_per_deploy = self.blockchain().get_gas_left() / 3;
 
         // eGLD ESDT swap deploy
 
-        let mut egld_esdt_swap_arg_buffer = ArgBuffer::new();
-        egld_esdt_swap_arg_buffer.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
+        //let mut egld_esdt_swap_arg_buffer = ArgBuffer::new();
+        //egld_esdt_swap_arg_buffer.push_argument_bytes(wrapped_egld_token_id.as_esdt_identifier());
 
-        let egld_esdt_swap_address = self.send().deploy_contract(
-            gas_per_deploy,
-            &Self::BigUint::zero(),
-            &egld_esdt_swap_code,
-            CodeMetadata::DEFAULT,
-            &egld_esdt_swap_arg_buffer,
-        );
-        require!(
-            !egld_esdt_swap_address.is_zero(),
-            "EgldEsdtSwap deploy failed"
-        );
+        let opt_egld_esdt_swap_address = self
+            .setup_egld_esdt_swap_proxy()
+            .init(wrapped_egld_token_id)
+            .with_gas_limit(gas_per_deploy)
+            .deploy_contract(&egld_esdt_swap_code, CodeMetadata::DEFAULT);
+
+        let egld_esdt_swap_address =
+            opt_egld_esdt_swap_address.ok_or("EgldEsdtSwap deploy failed")?;
         self.egld_esdt_swap_address().set(&egld_esdt_swap_address);
 
         // Multi-transfer ESDT deploy
 
-        let mut arg_buffer_multi_transfer_esdt = ArgBuffer::new();
-        arg_buffer_multi_transfer_esdt
-            .push_argument_bytes(price_aggregator_contract_address.as_bytes());
-        arg_buffer_multi_transfer_esdt
-            .push_argument_bytes(&multi_transfer_esdt_eth_tx_gas_limit.to_bytes_be());
-        arg_buffer_multi_transfer_esdt =
-            arg_buffer_multi_transfer_esdt.concat(arg_buffer_token_whitelist_multi_transfer_esdt);
+        let opt_multi_transfer_esdt_address = self
+            .setup_multi_transfer_esdt_proxy(Address::zero())
+            .init(
+                price_aggregator_contract_address.clone(),
+                multi_transfer_esdt_eth_tx_gas_limit,
+                all_tokens.clone().into(),
+            )
+            .with_gas_limit(gas_per_deploy)
+            .deploy_contract(&multi_transfer_esdt_code, CodeMetadata::DEFAULT);
 
-        let multi_transfer_esdt_address = self.send().deploy_contract(
-            gas_per_deploy,
-            &Self::BigUint::zero(),
-            &multi_transfer_esdt_code,
-            CodeMetadata::DEFAULT,
-            &arg_buffer_multi_transfer_esdt,
-        );
-        require!(
-            !multi_transfer_esdt_address.is_zero(),
-            "MultiTransferEsdt deploy failed"
-        );
+        let multi_transfer_esdt_address =
+            opt_multi_transfer_esdt_address.ok_or("MultiTransferEsdt deploy failed")?;
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_esdt_address);
 
         // ESDT Safe deploy
 
-        let mut esdt_safe_arg_buffer = ArgBuffer::new();
-        esdt_safe_arg_buffer.push_argument_bytes(price_aggregator_contract_address.as_bytes());
-        esdt_safe_arg_buffer.push_argument_bytes(&esdt_safe_eth_tx_gas_limit.to_bytes_be());
-        esdt_safe_arg_buffer = esdt_safe_arg_buffer.concat(arg_buffer_token_whitelist_esdt_safe);
-
-        let esdt_safe_address = self.send().deploy_contract(
-            gas_per_deploy,
-            &Self::BigUint::zero(),
-            &esdt_safe_code,
-            CodeMetadata::DEFAULT,
-            &esdt_safe_arg_buffer,
-        );
-        require!(!esdt_safe_address.is_zero(), "EsdtSafe deploy failed");
+        let opt_esdt_safe_address = self
+        .setup_esdt_safe_proxy(Address::zero())
+        .init(
+            price_aggregator_contract_address,
+            esdt_safe_eth_tx_gas_limit,
+            all_tokens.into(),
+        )
+        .with_gas_limit(gas_per_deploy)
+        .deploy_contract(&esdt_safe_code, CodeMetadata::DEFAULT);
+        
+        let esdt_safe_address = opt_esdt_safe_address.ok_or("EsdtSafe deploy failed")?;
         self.esdt_safe_address().set(&esdt_safe_address);
 
         Ok(())
@@ -412,6 +380,9 @@ pub trait SetupModule:
 
         Ok(())
     }
+
+    #[proxy]
+    fn setup_egld_esdt_swap_proxy(&self) -> egld_esdt_swap::Proxy<Self::SendApi>;
 
     #[proxy]
     fn setup_esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe::Proxy<Self::SendApi>;
