@@ -30,13 +30,12 @@ pub trait MultiTransferEsdt:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
         #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
     ) -> SCResult<MultiResultVec<TransactionStatus>> {
-        self.require_caller_owner()?;
-
         let mut tx_statuses = Vec::new();
         let mut cached_token_ids = Vec::new();
         let mut cached_prices = Vec::new();

@@ -48,6 +48,7 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(deployChildContracts)]
     fn deploy_child_contracts(
         &self,
@@ -60,8 +61,6 @@ pub trait SetupModule:
         wrapped_egld_token_id: TokenIdentifier,
         #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         // since contracts can either be all deployed or none,
         // it's sufficient to check only for one of them
         require!(
@@ -106,21 +105,22 @@ pub trait SetupModule:
         // ESDT Safe deploy
 
         let opt_esdt_safe_address = self
-        .setup_esdt_safe_proxy(Address::zero())
-        .init(
-            price_aggregator_contract_address,
-            esdt_safe_eth_tx_gas_limit,
-            all_tokens.into(),
-        )
-        .with_gas_limit(gas_per_deploy)
-        .deploy_contract(&esdt_safe_code, CodeMetadata::DEFAULT);
-        
+            .setup_esdt_safe_proxy(Address::zero())
+            .init(
+                price_aggregator_contract_address,
+                esdt_safe_eth_tx_gas_limit,
+                all_tokens.into(),
+            )
+            .with_gas_limit(gas_per_deploy)
+            .deploy_contract(&esdt_safe_code, CodeMetadata::DEFAULT);
+
         let esdt_safe_address = opt_esdt_safe_address.ok_or("EsdtSafe deploy failed")?;
         self.esdt_safe_address().set(&esdt_safe_address);
 
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(upgradeChildContract)]
     fn upgrade_child_contract(
         &self,
@@ -128,8 +128,6 @@ pub trait SetupModule:
         new_code: BoxedBytes,
         #[var_args] init_args: VarArgs<BoxedBytes>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         let gas = self.blockchain().get_gas_left() / 2;
         let args = (init_args.into_vec().as_slice()).into();
 
@@ -145,37 +143,33 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint]
     fn pause(&self) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.pause_status().set(&true);
 
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint]
     fn unpause(&self) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.pause_status().set(&false);
 
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(addBoardMember)]
     fn add_board_member(&self, board_member: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.change_user_role(board_member, UserRole::BoardMember);
 
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(addProposer)]
     fn add_proposer(&self, proposer: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.change_user_role(proposer, UserRole::Proposer);
 
         // validation required for the scenario when a board member becomes a proposer
@@ -187,10 +181,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(removeUser)]
     fn remove_user(&self, user: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
         let num_proposers = self.num_proposers().get();
@@ -206,10 +199,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.change_user_role(board_member.clone(), UserRole::None);
         let num_board_members = self.num_board_members().get();
         let num_proposers = self.num_proposers().get();
@@ -236,10 +228,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(changeQuorum)]
     fn change_quorum(&self, new_quorum: usize) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         require!(
             new_quorum <= self.num_board_members().get(),
             "quorum cannot exceed board size"
@@ -249,10 +240,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(addMapping)]
     fn add_mapping(&self, erc20_address: EthAddress, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.erc20_address_for_token_id(&token_id)
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
@@ -261,10 +251,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: Address) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_fee_estimator_contract_address(new_address.clone())
             .execute_on_dest_context();
@@ -276,14 +265,13 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(changeDefaultPricePerGwei)]
     fn change_default_price_per_gwei(
         &self,
         token_id: TokenIdentifier,
         new_value: Self::BigUint,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_default_price_per_gwei(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
@@ -295,13 +283,13 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(esdtSafeAddTokenToWhitelist)]
     fn esdt_safe_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
         #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
@@ -311,9 +299,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
     fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
@@ -323,9 +311,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
     fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
-        self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
@@ -335,9 +323,9 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(esdtSafeSetMinBlockNonceDiff)]
     fn esdt_safe_set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
-        self.require_caller_owner()?;
         self.require_esdt_safe_deployed()?;
 
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
@@ -347,13 +335,13 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(multiTransferEsdtaddTokenToWhitelist)]
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
         #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
         self.require_multi_transfer_esdt_deployed()?;
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
@@ -363,12 +351,12 @@ pub trait SetupModule:
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(multiTransferEsdtRemoveTokenFromWhitelist)]
     fn multi_transfer_esdt_remove_token_from_whitelist(
         &self,
         token_id: TokenIdentifier,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
         self.require_multi_transfer_esdt_deployed()?;
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())

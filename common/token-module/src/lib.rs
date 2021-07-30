@@ -8,10 +8,9 @@ pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
 pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     // endpoints - owner-only
 
+    #[only_owner]
     #[endpoint(distributeFees)]
     fn distribute_fees(&self, address_percentage_pairs: Vec<(Address, u64)>) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         let percentage_total = Self::BigUint::from(PERCENTAGE_TOTAL);
 
         for token_id in self.token_whitelist().iter() {
@@ -39,14 +38,13 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(addTokenToWhitelist)]
     fn add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
         #[var_args] opt_default_price_per_gwei: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         let default_price_per_gwei = opt_default_price_per_gwei.into_option().unwrap_or_default();
 
         self.default_price_per_gwei(&token_id)
@@ -56,10 +54,9 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(removeTokenFromWhitelist)]
     fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         self.token_whitelist().remove(&token_id);
         self.default_price_per_gwei(&token_id).clear();
 
@@ -80,12 +77,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     }
 
     // private
-
-    fn require_caller_owner(&self) -> SCResult<()> {
-        only_owner!(self, "only owner may call this function");
-
-        Ok(())
-    }
 
     fn require_local_role_set(
         &self,

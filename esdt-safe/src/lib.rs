@@ -37,9 +37,9 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     // endpoints - owner-only
 
+    #[only_owner]
     #[endpoint(setMaxTxBatchSize)]
     fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
-        self.require_caller_owner()?;
         require!(
             new_max_tx_batch_size > 0,
             "Max tx batch size must be more than 0"
@@ -50,9 +50,9 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(setMinBlockNonceDiff)]
     fn set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
-        self.require_caller_owner()?;
         require!(
             new_min_block_nonce_diff > 0,
             "Min block nonce diff must be more than 0"
@@ -63,10 +63,9 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(getNextTransactionBatch)]
     fn get_next_transaction_batch(&self) -> SCResult<Vec<Transaction<Self::BigUint>>> {
-        self.require_caller_owner()?;
-
         let current_block_nonce = self.blockchain().get_block_nonce();
         let min_block_nonce_diff = self.min_block_nonce_diff().get();
 
@@ -92,13 +91,12 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         Ok(tx_batch)
     }
 
+    #[only_owner]
     #[endpoint(setTransactionBatchStatus)]
     fn set_transaction_batch_status(
         &self,
         #[var_args] tx_status_batch: VarArgs<(Address, TxNonce, TransactionStatus)>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         for (sender, nonce, tx_status) in tx_status_batch.into_vec() {
             require!(
                 self.transaction_status(&sender, nonce).get() == TransactionStatus::InProgress,

@@ -9,23 +9,21 @@ const TICKER_SEPARATOR: u8 = b'-';
 
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
+    #[only_owner]
     #[endpoint(setDefaultPricePerGwei)]
     fn set_default_price_per_gwei(
         &self,
         token_id: TokenIdentifier,
         default_gwei_price: Self::BigUint,
     ) -> SCResult<()> {
-        only_owner!(self, "Only owner may call this function");
-
         self.default_price_per_gwei(&token_id).set(&default_gwei_price);
 
         Ok(())
     }
 
+    #[only_owner]
     #[endpoint(setFeeEstimatorContractAddress)]
     fn set_fee_estimator_contract_address(&self, new_address: Address) -> SCResult<()> {
-        only_owner!(self, "Only owner may call this function");
-
         self.fee_estimator_contract_address().set(&new_address);
 
         Ok(())

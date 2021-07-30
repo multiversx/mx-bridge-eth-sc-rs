@@ -28,13 +28,12 @@ pub trait Multisig:
     + storage::StorageModule
     + util::UtilModule
 {
+    #[only_owner]
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
         &self,
         #[var_args] dest_address_percentage_pairs: VarArgs<MultiArg2<Address, u64>>,
     ) -> SCResult<()> {
-        self.require_caller_owner()?;
-
         let mut args = Vec::new();
         let mut total_percentage = 0;
 
@@ -411,7 +410,7 @@ pub trait Multisig:
                     });
 
                 return_statuses = OptionalResult::Some(statuses);
-            },
+            }
             _ => {}
         }
 
