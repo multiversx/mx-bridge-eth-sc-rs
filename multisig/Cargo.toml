@@ -37,14 +37,14 @@ path = "../esdt-safe"
 path = "../multi-transfer-esdt"
 
 [dependencies.elrond-wasm]
-version = "0.17.4"
+version = "0.18"
 
 [dependencies.elrond-wasm-derive]
-version = "0.17.4"
+version = "0.18"
 
 [dependencies.elrond-wasm-node]
-version = "0.17.4"
+version = "0.18"
 optional = true
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.17.4"
+version = "0.18"
