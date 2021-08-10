@@ -22,11 +22,11 @@ One important thing to note is you can never unwrap your WrappedETH while on the
 
 ## Elrond -> Ethereum transaction
 
-To be able to send eGLD to an Ethereum account, we first have to wrap the tokens through the `EgldEsdtSwap` contract. Then, we have to create a transaction through the `EsdtSafe` contract. This is a 2-step process.  
+To be able to send eGLD to an Ethereum account, we first have to wrap the tokens through the `EgldEsdtSwap` contract.   
 
-First, you will have to deposit an appropriate sum of eGLD (NOT your wrapped eGLD) to pay for the transaction fees. Unfortunately, transactions on Ethereum are very expensive. We can't expect the relayers to cover the cost from their pockets, so you'll have to pay for the transaction fees yourself. This is done through the `EthereumFeePrepay` smart contract.  
+Then you can create a transaction by making a smart contract call to the `EsdtSafe` SC with the tokens you want to transfer and the receiver's address. The tokens will be locked in the contract until the transaction is processed. If the transaction is successful, the tokens on the Elrond side will be burned. If the transaction fails for whatever reason, you will get your tokens back.  
 
-After paying the fees, you can create a transaction by making a smart contract call to the `EsdtSafe` SC with the tokens you want to transfer and the receiver's address. The tokens will be locked in the contract until the transaction is processed. If the transaction is successful, the tokens on the Elrond side will be burned. If the transaction fails for whatever reason, you will get your tokens back.  
+Note that not all tokens will be transfered, part of them will be deducet for transaction fees.  
 
 ## Ethereum -> Elrond transaction
 

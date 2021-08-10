@@ -10,7 +10,7 @@ EsdtSafe CreateTransaction: 50M to 60M. ~75M should cover all cases.
 
 ## Relayer actions
 
-`stake/unstake` - 30M
+`stake/unstake` - 35M
 
 generic `propose` with 1-2 arguments (like changeQuorum, for example): 40M
 
@@ -32,7 +32,7 @@ generic `propose` with 1-2 arguments (like changeQuorum, for example): 40M
 | Action      | Recommended Gas limit |
 | ----------- | ----------- |
 | EsdtSafe CreateTransaction | 75M |
-| stake/unstake   | 30M |
+| stake/unstake   | 35M |
 | simple propose | 40M |
 | sign | 35M |
 | proposeMultiTransferEsdtBatch | 35M + 15M * nr_transactions_in_batch |
