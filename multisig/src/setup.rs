@@ -20,11 +20,6 @@ pub trait SetupModule:
         quorum: usize,
         #[var_args] board: VarArgs<Address>,
     ) -> SCResult<()> {
-        require!(
-            !board.is_empty(),
-            "board cannot be empty on init, no-one would be able to propose"
-        );
-        require!(quorum <= board.len(), "quorum cannot exceed board size");
         self.quorum().set(&quorum);
 
         let mut duplicates = false;
@@ -36,7 +31,9 @@ pub trait SetupModule:
                 self.set_user_id_to_role(user_id, UserRole::BoardMember);
             });
         require!(!duplicates, "duplicate board member");
-        self.num_board_members().set(&board.len());
+
+        self.num_board_members()
+            .update(|nr_board_members| *nr_board_members += board.len());
 
         require!(
             slash_amount <= required_stake,
