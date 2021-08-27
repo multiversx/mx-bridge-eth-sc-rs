@@ -76,7 +76,7 @@ pub trait SetupModule:
             .setup_egld_esdt_swap_proxy()
             .init(wrapped_egld_token_id)
             .with_gas_limit(gas_per_deploy)
-            .deploy_contract(&egld_esdt_swap_code, CodeMetadata::DEFAULT);
+            .deploy_contract(&egld_esdt_swap_code, CodeMetadata::UPGRADEABLE);
 
         let egld_esdt_swap_address =
             opt_egld_esdt_swap_address.ok_or("EgldEsdtSwap deploy failed")?;
@@ -92,7 +92,7 @@ pub trait SetupModule:
                 all_tokens.clone().into(),
             )
             .with_gas_limit(gas_per_deploy)
-            .deploy_contract(&multi_transfer_esdt_code, CodeMetadata::DEFAULT);
+            .deploy_contract(&multi_transfer_esdt_code, CodeMetadata::UPGRADEABLE);
 
         let multi_transfer_esdt_address =
             opt_multi_transfer_esdt_address.ok_or("MultiTransferEsdt deploy failed")?;
@@ -109,7 +109,7 @@ pub trait SetupModule:
                 all_tokens.into(),
             )
             .with_gas_limit(gas_per_deploy)
-            .deploy_contract(&esdt_safe_code, CodeMetadata::DEFAULT);
+            .deploy_contract(&esdt_safe_code, CodeMetadata::UPGRADEABLE);
 
         let esdt_safe_address = opt_esdt_safe_address.ok_or("EsdtSafe deploy failed")?;
         self.esdt_safe_address().set(&esdt_safe_address);
@@ -133,7 +133,7 @@ pub trait SetupModule:
             gas,
             &Self::BigUint::zero(),
             &new_code,
-            CodeMetadata::DEFAULT,
+            CodeMetadata::UPGRADEABLE,
             &args,
         );
 
