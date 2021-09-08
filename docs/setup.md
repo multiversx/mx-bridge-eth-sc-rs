@@ -1,8 +1,8 @@
 # Initial Setup
 
-The bridge suite is comprised of multiple smart contracts. First and foremost, you'll need to setup an `Aggregator` smart contract, which will be used to get the approximate cost of transactions on Ethereum at a certain point in time.  
+The bridge suite is comprised of multiple smart contracts. First and foremost, you'll need to set up an `Aggregator` smart contract, which will be used to get the approximate cost of transactions on Ethereum at a certain point in time.  
 
-Additionally, you will have to issue at least two ESDT tokens (suggested parameters in paranthesis):  
+Additionally, you will have to issue at least two ESDT tokens (suggested parameters in parentheses):  
 - Wrapped EGLD (name: "WrappedEgld", ticker: "EGLD", initial supply: 1, decimals: 18)
 - Wrapped ETH (name: "WrappedEth", ticker: "ETH", initial supply: 1, decimals: 18)
 
