@@ -240,10 +240,37 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(addMapping)]
     fn add_mapping(&self, erc20_address: EthAddress, token_id: TokenIdentifier) -> SCResult<()> {
+        require!(
+            self.erc20_address_for_token_id(&token_id).is_empty(),
+            "Mapping already exists for ERC20 token"
+        );
+        require!(
+            self.token_id_for_erc20_address(&erc20_address).is_empty(),
+            "Mapping already exists for token id"
+        );
+
         self.erc20_address_for_token_id(&token_id)
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
+
+        Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(clearMapping)]
+    fn clear_mapping(&self, erc20_address: EthAddress, token_id: TokenIdentifier) -> SCResult<()> {
+        require!(
+            !self.erc20_address_for_token_id(&token_id).is_empty(),
+            "Mapping does not exist for ERC20 token"
+        );
+        require!(
+            !self.token_id_for_erc20_address(&erc20_address).is_empty(),
+            "Mapping does not exist for token id"
+        );
+
+        self.erc20_address_for_token_id(&token_id).clear();
+        self.token_id_for_erc20_address(&erc20_address).clear();
 
         Ok(())
     }
