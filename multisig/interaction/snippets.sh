@@ -3,7 +3,7 @@
 # Quorum size will be 1
 
 # Path towards PEM files
-ALICE="/home/elrond/Downloads/devnetWalletKey.pem"
+ALICE=""
 BOB=""
 
 ADDRESS=erd1qqqqqqqqqqqqqpgq5300tayry6ardyw66azx3tljp3uhl8jq082sluzkm4
