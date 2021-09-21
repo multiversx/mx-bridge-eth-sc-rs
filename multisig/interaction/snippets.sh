@@ -3,10 +3,10 @@
 # Quorum size will be 1
 
 # Path towards PEM files
-ALICE=""
+ALICE="/home/elrond/Downloads/devnetWalletKey.pem"
 BOB=""
 
-ADDRESS=erd1qqqqqqqqqqqqqpgq00y5jjtgfywf0eunqcxfuvkxxxgtknle082szyvnkq
+ADDRESS=erd1qqqqqqqqqqqqqpgq5300tayry6ardyw66azx3tljp3uhl8jq082sluzkm4
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
 PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID=D
@@ -17,7 +17,10 @@ ESDT_ISSUE_COST_DECIMAL=50000000000000000
 
 # Addresses in Hex
 BOB_ADDRESS=0x
-RELAYER_ADDR=0x19c29be4d167c36e20574ee09eec8f37bc0f9a3deaa44368fa95faa851bc3caa
+
+RELAYER_ADDR_1=0x1832cec1c79f80ba75e51d9f1e05a7691b802299d30ea803a5ece42395658f89
+RELAYER_ADDR_2=0xa02c0f0ec7cddf4cb6cd80a7a210e3c3b5905d692bbb6f5deea8c0f2c93b92ca
+RELAYER_ADDR_3=0x5c0601a6949cca981207aaf1accb44d4b7ac1bef74f5d0e33a36c0efdff647ae
 
 ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
 
@@ -35,7 +38,8 @@ deploy() {
 
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 \
-    --arguments ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x01 ${BOB_ADDRESS} ${RELAYER_ADDR} \
+    --arguments ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x02 \
+    ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
@@ -85,11 +89,28 @@ unstake() {
 }
 
 addMapping() {
-    local ERC20_ADDRESS=0x6df7efea5d25b76aeb6a53537390c634faed9aed
+    local WRAPPED_EGLD_ERC20=0xC06606b0248F56aA93DB3236dB0bED97B9Ad1135
+    local WRAPPED_ETH_ERC20=0x1F3ff2dA93DB23be6F73696950701F5cE471D7d4
 
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=35000000 --function="addMapping" \
-    --arguments ${ERC20_ADDRESS} ${WRAPPED_ETH_TOKEN_ID} \
+    --gas-limit=40000000 --function="addMapping" \
+    --arguments ${WRAPPED_EGLD_ERC20} ${WRAPPED_EGLD_TOKEN_ID} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    sleep 10
+
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="addMapping" \
+    --arguments ${WRAPPED_ETH_ERC20} ${WRAPPED_ETH_TOKEN_ID} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+changeQuorum() {
+    local NEW_QUORUM=0x02
+
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="changeQuorum" \
+    --arguments ${NEW_QUORUM} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
