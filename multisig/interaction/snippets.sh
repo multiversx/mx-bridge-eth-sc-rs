@@ -27,9 +27,9 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 # Setup and aggregator first, then put its address hex-encoded in this variable
 AGGREGATOR_ADDRESS=0x0000000000000000050081d0b65d6bd5bd7d5af6df1a26e89513c6f38cd5e3df
 
-#########################################################################
-################## Update after issueing the tokens #####################
-#########################################################################
+########################################################################
+################## Update after issuing the tokens #####################
+########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d316138626639
 WRAPPED_ETH_TOKEN_ID=0x4554482d353063336133
 
