@@ -87,7 +87,7 @@
         {
             "step": "scCall",
             "txId": "perform-action-transfer",
-            "comment": "output is duplicated due to execute_on_dest_context results being propagated to the initial caller",
+            "comment": "output is from execute_on_dest_context results being propagated to the initial caller",
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
@@ -103,11 +103,27 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "4", "4",
                     "4", "4"
                 ],
                 "gas": "*",
                 "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "query-statuses",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getStatusesAfterExecution",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "4",
+                    "4"
+                ]
             }
         }
     ]

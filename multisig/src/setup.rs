@@ -114,6 +114,10 @@ pub trait SetupModule:
         let esdt_safe_address = opt_esdt_safe_address.ok_or("EsdtSafe deploy failed")?;
         self.esdt_safe_address().set(&esdt_safe_address);
 
+        // is set only so we don't have to check for "empty" on the very first call
+        // trying to deserialize a tuple from an empty storage entry would crash
+        self.statuses_after_execution().set(&(0, Vec::new()));
+
         Ok(())
     }
 

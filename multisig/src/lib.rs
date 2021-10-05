@@ -227,10 +227,7 @@ pub trait Multisig:
 
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
-    fn perform_action_endpoint(
-        &self,
-        action_id: usize,
-    ) -> SCResult<OptionalResult<MultiResultVec<TransactionStatus>>> {
+    fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
@@ -242,8 +239,14 @@ pub trait Multisig:
             self.quorum_reached(action_id),
             "quorum has not been reached"
         );
+        require!(
+            !self.pause_status().get(),
+            "No actions may be executed while paused"
+        );
 
-        self.perform_action(action_id)
+        self.perform_action(action_id);
+
+        Ok(())
     }
 
     #[view(getCurrentTxBatch)]
@@ -308,6 +311,16 @@ pub trait Multisig:
             .unwrap_or(0)
     }
 
+    #[view(getStatusesAfterExecution)]
+    fn get_statuses_after_execution(&self, batch_id: u64) -> MultiResultVec<TransactionStatus> {
+        let (actual_batch_id, statuses) = self.statuses_after_execution().get();
+        if batch_id == actual_batch_id {
+            statuses.into()
+        } else {
+            MultiResultVec::new()
+        }
+    }
+
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
     fn was_set_current_transaction_batch_status_action_proposed(
         &self,
@@ -333,24 +346,9 @@ pub trait Multisig:
 
     // private
 
-    fn perform_action(
-        &self,
-        action_id: usize,
-    ) -> SCResult<OptionalResult<MultiResultVec<TransactionStatus>>> {
+    fn perform_action(&self, action_id: usize) {
         let action = self.action_mapper().get(action_id);
-
-        require!(
-            !self.pause_status().get(),
-            "No actions may be executed while paused"
-        );
-
-        // clean up storage
-        // happens before actual execution, because the match provides the return on each branch
-        // syntax aside, the async_call_raw kills contract execution so cleanup cannot happen afterwards
         self.clear_action(action_id);
-
-        // only used when the action is batch transfer from Ethereum -> Elrond
-        let mut return_statuses = OptionalResult::None;
 
         match action {
             Action::Nothing => {}
@@ -409,12 +407,11 @@ pub trait Multisig:
                         (after - transfers_len, after)
                     });
 
-                return_statuses = OptionalResult::Some(statuses);
+                self.statuses_after_execution()
+                    .set(&(batch_id, statuses.into_vec()));
             }
             _ => {}
         }
-
-        Ok(return_statuses)
     }
 
     // proxies

@@ -209,7 +209,9 @@
                         "str:user_address_to_id|address:relayer2": "2",
                         "str:user_count": "2",
                         "str:user_id_to_address|u32:1": "address:relayer1",
-                        "str:user_id_to_address|u32:2": "address:relayer2"
+                        "str:user_id_to_address|u32:2": "address:relayer2",
+
+                        "str:statusesAfterExecution": "u64:0|u32:0"
                     },
                     "code": "file:../output/multisig.wasm"
                 },
