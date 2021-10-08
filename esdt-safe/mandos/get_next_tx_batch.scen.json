@@ -18,7 +18,7 @@
                 "from": "address:owner",
                 "to": "sc:esdt_safe",
                 "value": "0",
-                "function": "getNextTransactionBatch",
+                "function": "fetchNextTransactionBatch",
                 "arguments": [],
                 "gasLimit": "30,000,000",
                 "gasPrice": "0"

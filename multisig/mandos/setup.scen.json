@@ -177,6 +177,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
+                        "str:minTxBatchFetchBlockDiff": "100",
                         "str:minBlockNonceDiff": "5",
                         "str:ethTxGasLimit": "150,000",
 
@@ -292,6 +293,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
+                        "str:minTxBatchFetchBlockDiff": "100",
                         "str:minBlockNonceDiff": "5",
                         "str:ethTxGasLimit": "150,000",
 

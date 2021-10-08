@@ -8,6 +8,7 @@ use eth_address::*;
 use transaction::*;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
+const DEFAULT_MIN_TX_BATCH_FETCH_BLOCK_DIFF: u64 = 100;
 const DEFAULT_MIN_BLOCK_NONCE_DIFF: u64 = 5;
 
 #[elrond_wasm_derive::contract]
@@ -30,6 +31,8 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.min_block_nonce_diff()
             .set(&DEFAULT_MIN_BLOCK_NONCE_DIFF);
+        self.min_tx_batch_fetch_block_diff()
+            .set(&DEFAULT_MIN_TX_BATCH_FETCH_BLOCK_DIFF);
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         Ok(())
@@ -64,8 +67,15 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     }
 
     #[only_owner]
-    #[endpoint(getNextTransactionBatch)]
-    fn get_next_transaction_batch(&self) -> SCResult<Vec<Transaction<Self::BigUint>>> {
+    #[endpoint(setMinTxBatchFetchBlockDiff)]
+    fn set_min_tx_batch_fetch_block_diff(&self, min_tx_batch_fetch_block_diff: u64) {
+        self.min_tx_batch_fetch_block_diff()
+            .set(&min_tx_batch_fetch_block_diff);
+    }
+
+    #[only_owner]
+    #[endpoint(fetchNextTransactionBatch)]
+    fn fetch_next_transaction_batch(&self) -> SCResult<Vec<Transaction<Self::BigUint>>> {
         let current_block_nonce = self.blockchain().get_block_nonce();
         let min_block_nonce_diff = self.min_block_nonce_diff().get();
 
@@ -87,6 +97,20 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
                 break;
             }
         }
+
+        require!(!tx_batch.is_empty(), "Empty batch");
+
+        let min_tx_batch_fetch_block_diff = self.min_tx_batch_fetch_block_diff().get();
+        let last_tx_batch_fetch_block = self.last_tx_batch_fetch_block().get();
+        let fetch_block_diff = current_block_nonce - last_tx_batch_fetch_block;
+
+        require!(
+            tx_batch.len() == max_tx_batch_size
+                || fetch_block_diff >= min_tx_batch_fetch_block_diff,
+            "Empty batch"
+        );
+
+        self.last_tx_batch_fetch_block().set(&current_block_nonce);
 
         Ok(tx_batch)
     }
@@ -236,6 +260,9 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         &self,
     ) -> LinkedListMapper<Self::Storage, (Address, TxNonce)>;
 
+    #[storage_mapper("lastTxBatchFetchBlock")]
+    fn last_tx_batch_fetch_block(&self) -> SingleValueMapper<Self::Storage, u64>;
+
     // configurable
 
     #[storage_mapper("maxTxBatchSize")]
@@ -243,4 +270,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     #[storage_mapper("minBlockNonceDiff")]
     fn min_block_nonce_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
+
+    #[storage_mapper("minTxBatchFetchBlockDiff")]
+    fn min_tx_batch_fetch_block_diff(&self) -> SingleValueMapper<Self::Storage, u64>;
 }

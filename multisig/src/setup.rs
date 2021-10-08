@@ -281,7 +281,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
-    fn change_fee_estimator_contract_address(&self, new_address: Address) -> SCResult<()> {
+    fn change_fee_estimator_contract_address(&self, new_address: Address) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_fee_estimator_contract_address(new_address.clone())
             .execute_on_dest_context();
@@ -289,17 +289,11 @@ pub trait SetupModule:
         self.setup_multi_transfer_esdt_proxy(self.esdt_safe_address().get())
             .set_fee_estimator_contract_address(new_address)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(changeDefaultPricePerGwei)]
-    fn change_default_price_per_gwei(
-        &self,
-        token_id: TokenIdentifier,
-        new_value: Self::BigUint,
-    ) -> SCResult<()> {
+    fn change_default_price_per_gwei(&self, token_id: TokenIdentifier, new_value: Self::BigUint) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_default_price_per_gwei(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
@@ -307,8 +301,6 @@ pub trait SetupModule:
         self.setup_multi_transfer_esdt_proxy(self.esdt_safe_address().get())
             .set_default_price_per_gwei(token_id, new_value)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[only_owner]
@@ -317,50 +309,42 @@ pub trait SetupModule:
         &self,
         token_id: TokenIdentifier,
         #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
-    ) -> SCResult<()> {
-        self.require_esdt_safe_deployed()?;
-
+    ) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .add_token_to_whitelist(token_id, opt_default_value_in_dollars)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
-    fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.require_esdt_safe_deployed()?;
-
+    fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
-    fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
-        self.require_esdt_safe_deployed()?;
-
+    fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(esdtSafeSetMinBlockNonceDiff)]
-    fn esdt_safe_set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) -> SCResult<()> {
-        self.require_esdt_safe_deployed()?;
-
+    fn esdt_safe_set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_min_block_nonce_diff(new_min_block_nonce_diff)
             .execute_on_dest_context();
+    }
 
-        Ok(())
+    #[only_owner]
+    #[endpoint(esdtSafeSetMinTxFetchBlockDiff)]
+    fn esdt_safe_set_min_tx_batch_fetch_block_diff(&self, new_min_tx_batch_fetch_block_diff: u64) {
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+            .set_min_tx_batch_fetch_block_diff(new_min_tx_batch_fetch_block_diff)
+            .execute_on_dest_context();
     }
 
     #[only_owner]
@@ -369,29 +353,18 @@ pub trait SetupModule:
         &self,
         token_id: TokenIdentifier,
         #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
-    ) -> SCResult<()> {
-        self.require_multi_transfer_esdt_deployed()?;
-
+    ) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .add_token_to_whitelist(token_id, opt_default_value_in_dollars)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(multiTransferEsdtRemoveTokenFromWhitelist)]
-    fn multi_transfer_esdt_remove_token_from_whitelist(
-        &self,
-        token_id: TokenIdentifier,
-    ) -> SCResult<()> {
-        self.require_multi_transfer_esdt_deployed()?;
-
+    fn multi_transfer_esdt_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[proxy]
