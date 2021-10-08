@@ -15,7 +15,7 @@ pub enum Action<BigUint: BigUintApi> {
     _SlashUser(Address),
     _ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
-        esdt_safe_batch_id: usize,
+        esdt_safe_batch_id: u64,
         tx_batch_status: Vec<TransactionStatus>,
     },
     BatchTransferEsdtToken {

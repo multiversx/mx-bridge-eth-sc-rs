@@ -10,7 +10,7 @@ use crate::{Transaction, TxAsMultiResult};
 
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct EsdtSafeTxBatch<BigUint: BigUintApi> {
-    pub batch_id: usize,
+    pub batch_id: u64,
     pub transactions: Vec<Transaction<BigUint>>,
 }
 
@@ -24,4 +24,4 @@ impl<BigUint: BigUintApi> Default for EsdtSafeTxBatch<BigUint> {
 }
 
 pub type EsdtSafeTxBatchSplitInFields<BigUint> =
-    MultiResult2<usize, MultiResultVec<TxAsMultiResult<BigUint>>>;
+    MultiResult2<u64, MultiResultVec<TxAsMultiResult<BigUint>>>;

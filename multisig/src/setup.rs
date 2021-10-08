@@ -332,18 +332,10 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(esdtSafeSetMinBlockNonceDiff)]
-    fn esdt_safe_set_min_block_nonce_diff(&self, new_min_block_nonce_diff: u64) {
+    #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
+    fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_min_block_nonce_diff(new_min_block_nonce_diff)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
-    #[endpoint(esdtSafeSetMinTxFetchBlockDiff)]
-    fn esdt_safe_set_min_tx_batch_fetch_block_diff(&self, new_min_tx_batch_fetch_block_diff: u64) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_min_tx_batch_fetch_block_diff(new_min_tx_batch_fetch_block_diff)
+            .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .execute_on_dest_context();
     }
 
