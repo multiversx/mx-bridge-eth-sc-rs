@@ -14,3 +14,10 @@ Cargo.lock
 **/erdpy.data-storage.json
 **/testnet/
 **/deploy-child-sc-spam.json
+
+.DS_STORE
+
+# PEM and sensible files
+**/*.pem
+**/alice.json
+**/bob.json

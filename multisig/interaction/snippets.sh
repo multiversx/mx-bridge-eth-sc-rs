@@ -3,24 +3,36 @@
 # Quorum size will be 1
 
 # Path towards PEM files
+<<<<<<< Updated upstream
 ALICE="/home/elrond/Downloads/devnetWalletKey.pem"
 BOB=""
+=======
+ALICE="./wallets/alice.pem"
+BOB="./wallets/bob.pem"
+>>>>>>> Stashed changes
 
 ADDRESS=erd1qqqqqqqqqqqqqpgq5300tayry6ardyw66azx3tljp3uhl8jq082sluzkm4
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
 PROXY=https://devnet-gateway.elrond.com
 CHAIN_ID=D
 
-RELAYER_REQUIRED_STAKE=0x03e8 # 1000
+RELAYER_REQUIRED_STAKE=0x0a # 1
 ESDT_ISSUE_COST=0xB1A2BC2EC50000 # 0.05 eGLD
 ESDT_ISSUE_COST_DECIMAL=50000000000000000
 
 # Addresses in Hex
 BOB_ADDRESS=0x
 
-RELAYER_ADDR_1=0x1832cec1c79f80ba75e51d9f1e05a7691b802299d30ea803a5ece42395658f89
-RELAYER_ADDR_2=0xa02c0f0ec7cddf4cb6cd80a7a210e3c3b5905d692bbb6f5deea8c0f2c93b92ca
-RELAYER_ADDR_3=0x5c0601a6949cca981207aaf1accb44d4b7ac1bef74f5d0e33a36c0efdff647ae
+RELAYER_ADDR_0=0x5cc00bb6d62665482fb7a98f688de4576908b3d86bb6b905786c50e9a6ca3493
+RELAYER_ADDR_1=0x316df040b2377b904ca7287d72f1445690e399dbacd1e6387bd72fd23f790c03
+RELAYER_ADDR_2=0x861414a440f506b5e728e6367083b9eb78af2707645146d8c387471290b01c55
+RELAYER_ADDR_3=0x15788d4dada25be9aaf8f9db773738ececedd379d94d69ac1773a70a5e969c36
+RELAYER_ADDR_4=0x61d4fea8d1f876dd8f5ce7c12b4d68059798aa639331999b5f130973dfa711e3
+RELAYER_ADDR_5=0xcb56df4813f7db30010fb3b9bc0713785c20738d7bca4028fc3840d9c7fbeb58
+RELAYER_ADDR_6=0xc1d3fb6ee84b9b2ffef639f18cda542dfab5bfa86f1b6e82f6c9bc9283e695f3
+RELAYER_ADDR_7=0xebe11b66f2d641c161ab02fcec75c0d1b5b883c111246d63d3293583d2b15081
+RELAYER_ADDR_8=0x25b9743889b9c6b3ab8409adda606a39183dd6f2e6edf48a43b8c42dfeebb45f
+RELAYER_ADDR_9=0x9b7971db47e3815a669a91c3f1bcb21e0b81f2de04bf11faa7a34b9b10e7cfbb
 
 ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
 
@@ -34,7 +46,7 @@ WRAPPED_EGLD_TOKEN_ID=0x45474c442d316138626639
 WRAPPED_ETH_TOKEN_ID=0x4554482d353063336133
 
 deploy() {
-    local SLASH_AMOUNT=0x01f4 # 500
+    local SLASH_AMOUNT=0x0a # 1
 
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 \
@@ -42,8 +54,8 @@ deploy() {
     ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="deploy-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['address']")
 
     erdpy data store --key=address-testnet-multisig --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
