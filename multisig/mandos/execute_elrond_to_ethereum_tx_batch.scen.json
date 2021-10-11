@@ -14,16 +14,32 @@
                 "value": "0",
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
-                    "u32:1",
+                    "0",
                     "3", "3"
                 ],
-                "gasLimit": "40,000,000",
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
                 "out": [
+                    "0",
+
+                    "0",
+                    "1",
+                    "address:user",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:EGLD-123456",
+                    "400",
+
+                    "0",
+                    "2",
+                    "address:user",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:ETH-123456",
+                    "350,000",
+
                     "1"
                 ],
                 "gas": "*",
@@ -39,7 +55,7 @@
                     "storage": {
                         "str:action_data.item|u32:1": {
                             "1-action_type": "u8:6",
-                            "2-batch_id": "u32:1",
+                            "2-batch_id": "u64:0",
                             "3-tx_batch_status_len": "u32:2",
                             "4-tx_batch_status_vec": "u8:3|u8:3"
                         },

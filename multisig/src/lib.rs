@@ -113,8 +113,11 @@ pub trait Multisig:
         esdt_safe_batch_id: u64,
         #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
-        let (current_batch_id, current_batch_transactions) = self
+        let call_result = self
+            .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_current_tx_batch()
+            .execute_on_dest_context();
+        let (current_batch_id, current_batch_transactions) = call_result
             .into_option()
             .ok_or("Current batch is empty")?
             .into_tuple();
@@ -204,23 +207,14 @@ pub trait Multisig:
 
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
-        let opt_result = self
+        let _ = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_current_tx_batch()
             .execute_on_dest_context();
 
-        let opt_tx_batch = opt_result.into_option();
-        opt_tx_batch
-            .map(|tx_batch| {
-                let batch_len = tx_batch.transactions.len();
-                let mut result_vec = Vec::with_capacity(batch_len);
-                for tx in tx_batch.transactions {
-                    result_vec.push(tx.into_multiresult());
-                }
-
-                (tx_batch.batch_id, result_vec.into()).into()
-            })
-            .into()
+        // result is already returned automatically from the EsdtSafe call,
+        // we only keep this signature for correct ABI generation
+        OptionalResult::None
     }
 
     #[view(isValidActionId)]
@@ -327,7 +321,10 @@ pub trait Multisig:
                 action_ids_mapper.clear();
 
                 self.esdt_safe_proxy(self.esdt_safe_address().get())
-                    .set_transaction_batch_status(esdt_safe_batch_id, VarArgs::from(tx_batch_status))
+                    .set_transaction_batch_status(
+                        esdt_safe_batch_id,
+                        VarArgs::from(tx_batch_status),
+                    )
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {

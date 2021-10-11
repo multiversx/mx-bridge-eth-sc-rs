@@ -20,9 +20,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "0x"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -38,9 +36,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "0"
-                ]
+                "out": []
             }
         }
     ]

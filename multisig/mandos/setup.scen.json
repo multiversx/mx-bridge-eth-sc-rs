@@ -177,8 +177,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
-                        "str:minTxBatchFetchBlockDiff": "100",
-                        "str:minBlockNonceDiff": "5",
+                        "str:maxTxBatchBlockDuration": "100",
                         "str:ethTxGasLimit": "150,000",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
@@ -293,8 +292,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
-                        "str:minTxBatchFetchBlockDiff": "100",
-                        "str:minBlockNonceDiff": "5",
+                        "str:maxTxBatchBlockDuration": "100",
                         "str:ethTxGasLimit": "150,000",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",

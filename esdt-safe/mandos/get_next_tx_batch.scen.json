@@ -21,24 +21,21 @@
             },
             "expect": {
                 "out": [
-                    {
-                        "01-batch_id": "u64:0",
-                        "02-batch_vec_len": "u32:2",
+                    "0",
 
-                        "11-block_nonce": "u64:0",
-                        "12-nonce": "u64:1",
-                        "13-from": "address:user1",
-                        "14-to": "0x0102030405060708091011121314151617181920",
-                        "15-token_identifier": "nested:str:BRIDGE-123456",
-                        "16-amount": "biguint:400",
+                    "0",
+                    "1",
+                    "address:user1",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:BRIDGE-123456",
+                    "400",
 
-                        "21-block_nonce": "u64:0",
-                        "22-nonce": "u64:2",
-                        "23-from": "address:user2",
-                        "24-to": "0x0102030405060708091011121314151617181920",
-                        "25-token_identifier": "nested:str:BRIDGE-123456",
-                        "26-amount": "biguint:900"
-                    }
+                    "0",
+                    "2",
+                    "address:user2",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:BRIDGE-123456",
+                    "900"
                 ]
             }
         }

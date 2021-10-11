@@ -5,7 +5,7 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 use eth_address::*;
-use transaction::esdt_safe_batch::EsdtSafeTxBatch;
+use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
 use transaction::*;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
@@ -174,15 +174,18 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     // views
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatch<Self::BigUint>> {
+    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
         if self.is_batch_full(&first_batch) {
-            return OptionalResult::Some(EsdtSafeTxBatch {
-                batch_id: first_batch_id,
-                transactions: first_batch,
-            });
+            let batch_len = first_batch.len();
+            let mut result_vec = Vec::with_capacity(batch_len);
+            for tx in first_batch {
+                result_vec.push(tx.into_multiresult());
+            }
+
+            return OptionalResult::Some((first_batch_id, result_vec.into()).into());
         }
 
         OptionalResult::None
