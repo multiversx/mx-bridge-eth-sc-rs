@@ -14,7 +14,8 @@
                 "value": "0",
                 "function": "setTransactionBatchStatus",
                 "arguments": [
-                    "address:user1|u32:1|u8:4"
+                    "0",
+                    "4"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -49,10 +50,9 @@
                         }
                     },
                     "storage": {
-                        "str:pendingTransactionList.value|u32:1": "",
-                        
-                        "str:transactionStatus|address:user1|u32:1": "",
-                        "str:transactionsByNonce|address:user1|str:.item|u32:1": "",
+                        "str:pendingBatches|u64:0": "",
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
 
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
 

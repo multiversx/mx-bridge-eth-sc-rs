@@ -22,16 +22,17 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         for token in token_whitelist.into_vec() {
             require!(token.is_valid_esdt_identifier(), "Invalid token ID");
-            self.token_whitelist().insert(token);
+            let _ = self.token_whitelist().insert(token);
         }
 
-        self.max_tx_batch_size().set(&DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_size()
+            .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
+            .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         Ok(())
     }
@@ -106,8 +107,17 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             }
         }
 
+        let new_first_batch_id = first_batch_id + 1;
+
+        // for the case when the last existing batch was processed
+        // otherwise, we'd create a batch with the same ID again
+        self.last_batch_id().update(|last_batch_id| {
+            if *last_batch_id == first_batch_id {
+                *last_batch_id = new_first_batch_id;
+            }
+        });
+        self.first_batch_id().set(&new_first_batch_id);
         self.pending_batches(batch_id).clear();
-        self.first_batch_id().update(|id| *id += 1);
 
         Ok(())
     }
