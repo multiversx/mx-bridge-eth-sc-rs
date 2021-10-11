@@ -205,6 +205,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         }
     }
 
+    #[allow(clippy::vec_init_then_push)]
     fn create_new_batch(&self, transaction: Transaction<Self::BigUint>) {
         let last_batch_id = self.last_batch_id().get();
         let new_batch_id = last_batch_id + 1;
@@ -216,7 +217,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         self.last_batch_id().set(&new_batch_id);
     }
 
-    fn is_batch_full(&self, tx_batch: &Vec<Transaction<Self::BigUint>>) -> bool {
+    fn is_batch_full(&self, tx_batch: &[Transaction<Self::BigUint>]) -> bool {
         if tx_batch.is_empty() {
             return false;
         }
