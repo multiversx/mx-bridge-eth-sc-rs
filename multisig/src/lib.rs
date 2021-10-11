@@ -107,8 +107,10 @@ pub trait Multisig:
 
     // ESDT Safe SC calls
 
-    #[endpoint(getNextTransactionBatch)]
-    fn get_next_transaction_batch(&self) -> SCResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
+    #[endpoint(fetchNextTransactionBatch)]
+    fn fetch_next_transaction_batch(
+        &self,
+    ) -> SCResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
         self.require_esdt_safe_deployed()?;
         require!(
             self.current_tx_batch().is_empty(),
@@ -124,26 +126,19 @@ pub trait Multisig:
 
         let tx_batch = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
-            .get_next_transaction_batch()
+            .fetch_next_transaction_batch()
             .execute_on_dest_context();
         let batch_len = tx_batch.len();
-
-        let esdt_safe_tx_batch = if batch_len > 0 {
-            let batch_id = self.last_valid_esdt_safe_batch_id().update(|batch_id| {
-                *batch_id += 1;
-                *batch_id
-            });
-            let esdt_safe_tx_batch = EsdtSafeTxBatch {
-                batch_id,
-                transactions: tx_batch,
-            };
-
-            self.current_tx_batch().set(&esdt_safe_tx_batch);
-
-            esdt_safe_tx_batch
-        } else {
-            EsdtSafeTxBatch::default()
+        let batch_id = self.last_valid_esdt_safe_batch_id().update(|batch_id| {
+            *batch_id += 1;
+            *batch_id
+        });
+        let esdt_safe_tx_batch = EsdtSafeTxBatch {
+            batch_id,
+            transactions: tx_batch,
         };
+
+        self.current_tx_batch().set(&esdt_safe_tx_batch);
 
         // convert into MultiResult for easier parsing
         let mut result_vec = Vec::with_capacity(batch_len);

@@ -247,7 +247,7 @@
                 "from": "address:relayer1",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "getNextTransactionBatch",
+                "function": "fetchNextTransactionBatch",
                 "arguments": [],
                 "gasLimit": "75,000,000",
                 "gasPrice": "0"

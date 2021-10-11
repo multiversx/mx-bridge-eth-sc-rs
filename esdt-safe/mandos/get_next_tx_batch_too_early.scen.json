@@ -7,20 +7,46 @@
         },
         {
             "step": "scCall",
-            "txId": "get-next-tx-batch",
+            "txId": "get-next-tx-batch-early-tx-just-submitted",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt_safe",
                 "value": "0",
-                "function": "getNextTransactionBatch",
+                "function": "fetchNextTransactionBatch",
                 "arguments": [],
                 "gasLimit": "30,000,000",
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
-                "out": [ "0x" ],
+                "status": "4",
+                "message": "str:Empty batch",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "99"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "get-next-tx-batch-early-get-too-early",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "fetchNextTransactionBatch",
+                "arguments": [],
+                "gasLimit": "30,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Empty batch",
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -70,6 +96,32 @@
                     "code": "file:../output/esdt-safe.wasm"
                 },
                 "+": {}
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "100"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "get-ok",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "fetchNextTransactionBatch",
+                "arguments": [],
+                "gasLimit": "30,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [ "*" ],
+                "gas": "*",
+                "refund": "*"
             }
         }
     ]

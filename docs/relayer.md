@@ -26,7 +26,7 @@ Stake "slashing" will only happen if you're actively being malicious. So play ni
 
 For this kind of transaction, we'll be using the `EsdtSafe` contract. The user will have to submit the transaction through the `EsdtSafe` SC.  
 
-After the user played their part, any relayer may call `getNextTransactionBatch`. There is no risk of overwriting, as the function will return an error if the current batch was not executed yet. `getNextTransactionBatch` will query the `EsdtSafe` contract and, as the name suggests, get the next N pending transactions. 
+After the user played their part, any relayer may call `fetchNextTransactionBatch`. There is no risk of overwriting, as the function will return an error if the current batch was not executed yet. `fetchNextTransactionBatch` will query the `EsdtSafe` contract and, as the name suggests, get the next N pending transactions. 
 
 The batch will not exceed a pre-defined size, and it will also not bundle transactions that have been created too recently. These are configurable constants in the `EsdtSafe` smart contract.  
 
