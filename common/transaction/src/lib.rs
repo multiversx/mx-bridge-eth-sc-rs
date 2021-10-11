@@ -8,7 +8,7 @@ pub mod esdt_safe_batch;
 
 elrond_wasm::derive_imports!();
 
-pub type TxNonce = usize;
+pub type TxNonce = u64;
 pub type BlockNonce = u64;
 pub type TxAsMultiResult<BigUint> =
     MultiResult6<BlockNonce, TxNonce, Address, EthAddress, TokenIdentifier, BigUint>;

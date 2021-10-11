@@ -3,7 +3,7 @@
 # Quorum size will be 1
 
 # Path towards PEM files
-ALICE=""
+ALICE="/home/elrond/Downloads/devnetWalletKey.pem"
 BOB=""
 
 ADDRESS=erd1qqqqqqqqqqqqqpgq5300tayry6ardyw66azx3tljp3uhl8jq082sluzkm4
@@ -27,9 +27,9 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 # Setup and aggregator first, then put its address hex-encoded in this variable
 AGGREGATOR_ADDRESS=0x0000000000000000050081d0b65d6bd5bd7d5af6df1a26e89513c6f38cd5e3df
 
-########################################################################
-################## Update after issuing the tokens #####################
-########################################################################
+#########################################################################
+################## Update after issueing the tokens #####################
+#########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d316138626639
 WRAPPED_ETH_TOKEN_ID=0x4554482d353063336133
 
@@ -231,9 +231,9 @@ transferEsdt() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-getNextTransactionBatch() {
+fetchNextTransactionBatch() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} \
-    --gas-limit=25000000 --function="getNextTransactionBatch" \
+    --gas-limit=25000000 --function="fetchNextTransactionBatch" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -349,6 +349,10 @@ manualQuery() {
     --gas-limit=50000000 --function="latestPriceFeedOptional" \
     --arguments 0x47574549 0x45474c44 \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+getCurrentBatch() {
+    erdpy --verbose contract query ${ADDRESS} --function="getCurrentTxBatch" --proxy=${PROXY}
 }
 
 # helpers
