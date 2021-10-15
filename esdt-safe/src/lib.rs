@@ -191,7 +191,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
-        if self.is_batch_full(&first_batch) {
+        if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
             let batch_len = first_batch.len();
             let mut result_vec = Vec::with_capacity(batch_len);
             for tx in first_batch {
@@ -246,6 +246,15 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
 
         block_diff > max_tx_batch_block_duration
+    }
+
+    fn is_batch_final(&self, tx_batch: &[Transaction<Self::BigUint>]) -> bool {
+        let batch_len = tx_batch.len();
+        let last_tx_in_batch = &tx_batch[batch_len - 1];
+        let current_block = self.blockchain().get_block_nonce();
+        let block_diff = current_block - last_tx_in_batch.block_nonce;
+
+        block_diff > MIN_BLOCKS_FOR_FINALITY
     }
 
     fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
