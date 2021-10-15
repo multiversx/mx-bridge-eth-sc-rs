@@ -110,6 +110,12 @@
             }
         },
         {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "3"
+            }
+        },
+        {
             "step": "scQuery",
             "txId": "query-statuses",
             "tx": {
@@ -121,6 +127,7 @@
             },
             "expect": {
                 "out": [
+                    "0x01",
                     "4",
                     "4"
                 ]
