@@ -99,7 +99,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
                     }
                 }
                 TransactionStatus::Rejected => {
-                    self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+                    self.mark_refund(&tx.from, &tx.token_identifier, &tx.amount);
                 }
                 _ => {
                     return sc_error!("Transaction status may only be set to Executed or Rejected")
@@ -167,6 +167,19 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         };
 
         self.add_to_batch(tx);
+
+        Ok(())
+    }
+
+    #[endpoint(claimRefund)]
+    fn claim_refund(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        let caller = self.blockchain().get_caller();
+        let refund_amount = self.refund_amount(&caller, &token_id).get();
+        require!(refund_amount > 0, "Nothing to refund");
+
+        self.refund_amount(&caller, &token_id).clear();
+        self.send()
+            .direct(&caller, &token_id, 0, &refund_amount, b"refund");
 
         Ok(())
     }
@@ -239,9 +252,9 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         self.send().esdt_local_burn(token_id, 0, amount);
     }
 
-    fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        self.send()
-            .direct(to, token_id, 0, amount, self.data_or_empty(to, b"refund"));
+    fn mark_refund(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+        self.refund_amount(to, token_id)
+            .update(|refund| *refund += amount);
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -268,6 +281,14 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     #[storage_mapper("lastTxNonce")]
     fn last_tx_nonce(&self) -> SingleValueMapper<Self::Storage, u64>;
+
+    #[view(getRefundAmount)]
+    #[storage_mapper("refundAmount")]
+    fn refund_amount(
+        &self,
+        address: &Address,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     // configurable
 
