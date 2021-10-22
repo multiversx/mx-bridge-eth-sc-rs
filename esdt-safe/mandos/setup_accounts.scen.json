@@ -111,7 +111,7 @@
         },
         {
             "step": "scQuery",
-            "txId": "deploy",
+            "txId": "get-all-known-tokens",
             "tx": {
                 "to": "sc:esdt_safe",
                 "function": "getAllKnownTokens"
