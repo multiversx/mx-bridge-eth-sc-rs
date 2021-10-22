@@ -291,7 +291,7 @@ pub trait SetupModule:
             .set_fee_estimator_contract_address(new_address.clone())
             .execute_on_dest_context();
 
-        self.setup_multi_transfer_esdt_proxy(self.esdt_safe_address().get())
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .set_fee_estimator_contract_address(new_address)
             .execute_on_dest_context();
     }
@@ -303,8 +303,20 @@ pub trait SetupModule:
             .set_default_price_per_gwei(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
 
-        self.setup_multi_transfer_esdt_proxy(self.esdt_safe_address().get())
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .set_default_price_per_gwei(token_id, new_value)
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(changeTokenTicker)]
+    fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: BoxedBytes) {
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+            .set_token_ticker(token_id.clone(), new_ticker.clone())
+            .execute_on_dest_context();
+
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+            .set_token_ticker(token_id.clone(), new_ticker.clone())
             .execute_on_dest_context();
     }
 
@@ -313,10 +325,11 @@ pub trait SetupModule:
     fn esdt_safe_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
+        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
         #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
     ) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .add_token_to_whitelist(token_id, opt_default_value_in_dollars)
+            .add_token_to_whitelist(token_id, opt_ticker, opt_default_value_in_dollars)
             .execute_on_dest_context();
     }
 
@@ -349,10 +362,11 @@ pub trait SetupModule:
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
+        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
         #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
     ) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .add_token_to_whitelist(token_id, opt_default_value_in_dollars)
+            .add_token_to_whitelist(token_id, opt_ticker, opt_default_value_in_dollars)
             .execute_on_dest_context();
     }
 

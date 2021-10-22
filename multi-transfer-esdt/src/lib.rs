@@ -21,7 +21,7 @@ pub trait MultiTransferEsdt:
             .set(&fee_estimator_contract_address);
 
         for token in token_whitelist.into_vec() {
-            require!(token.is_valid_esdt_identifier(), "Invalid token ID");
+            self.require_valid_token_id(&token)?;
             self.token_whitelist().insert(token);
         }
 
@@ -35,7 +35,7 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
-    ) -> SCResult<MultiResultVec<TransactionStatus>> {
+    ) -> MultiResultVec<TransactionStatus> {
         let mut tx_statuses = Vec::new();
         let mut cached_token_ids = Vec::new();
         let mut cached_prices = Vec::new();
@@ -64,7 +64,7 @@ pub trait MultiTransferEsdt:
                 }
             };
 
-            if required_fee >= amount {
+            if amount <= required_fee {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
@@ -81,6 +81,6 @@ pub trait MultiTransferEsdt:
             tx_statuses.push(TransactionStatus::Executed);
         }
 
-        Ok(tx_statuses.into())
+        tx_statuses.into()
     }
 }

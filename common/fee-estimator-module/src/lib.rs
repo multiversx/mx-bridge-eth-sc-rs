@@ -10,23 +10,26 @@ const TICKER_SEPARATOR: u8 = b'-';
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
     #[only_owner]
+    #[endpoint(setFeeEstimatorContractAddress)]
+    fn set_fee_estimator_contract_address(&self, new_address: Address) {
+        self.fee_estimator_contract_address().set(&new_address);
+    }
+
+    #[only_owner]
     #[endpoint(setDefaultPricePerGwei)]
     fn set_default_price_per_gwei(
         &self,
         token_id: TokenIdentifier,
         default_gwei_price: Self::BigUint,
-    ) -> SCResult<()> {
-        self.default_price_per_gwei(&token_id).set(&default_gwei_price);
-
-        Ok(())
+    ) {
+        self.default_price_per_gwei(&token_id)
+            .set(&default_gwei_price);
     }
 
     #[only_owner]
-    #[endpoint(setFeeEstimatorContractAddress)]
-    fn set_fee_estimator_contract_address(&self, new_address: Address) -> SCResult<()> {
-        self.fee_estimator_contract_address().set(&new_address);
-
-        Ok(())
+    #[endpoint(setTokenTicker)]
+    fn set_token_ticker(&self, token_id: TokenIdentifier, ticker: BoxedBytes) {
+        self.token_ticker(&token_id).set(&ticker);
     }
 
     #[view(calculateRequiredFee)]
@@ -67,6 +70,11 @@ pub trait FeeEstimatorModule {
     }
 
     fn get_token_ticker(&self, token_id: TokenIdentifier) -> BoxedBytes {
+        let default_ticker = self.token_ticker(&token_id).get();
+        if !default_ticker.is_empty() {
+            return default_ticker;
+        }
+
         for (i, char) in token_id.as_esdt_identifier().iter().enumerate() {
             if *char == TICKER_SEPARATOR {
                 return token_id.as_esdt_identifier()[..i].into();
@@ -93,6 +101,12 @@ pub trait FeeEstimatorModule {
         &self,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+
+    #[storage_mapper("tokenTicker")]
+    fn token_ticker(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<Self::Storage, BoxedBytes>;
 
     #[view(getEthTxGasLimit)]
     #[storage_mapper("ethTxGasLimit")]

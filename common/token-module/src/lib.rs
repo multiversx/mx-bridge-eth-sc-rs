@@ -10,7 +10,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[only_owner]
     #[endpoint(distributeFees)]
-    fn distribute_fees(&self, address_percentage_pairs: Vec<(Address, u64)>) -> SCResult<()> {
+    fn distribute_fees(&self, address_percentage_pairs: Vec<(Address, u64)>) {
         let percentage_total = Self::BigUint::from(PERCENTAGE_TOTAL);
 
         for token_id in self.token_whitelist().iter() {
@@ -34,8 +34,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             self.accumulated_transaction_fees(&token_id)
                 .set(&remaining_fees);
         }
-
-        Ok(())
     }
 
     #[only_owner]
@@ -43,40 +41,47 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     fn add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
+        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
         #[var_args] opt_default_price_per_gwei: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
-        let default_price_per_gwei = opt_default_price_per_gwei.into_option().unwrap_or_default();
+        self.require_valid_token_id(&token_id)?;
 
-        self.default_price_per_gwei(&token_id)
-            .set(&default_price_per_gwei);
-        self.token_whitelist().insert(token_id);
+        if let Some(ticker) = opt_ticker.into_option() {
+            self.token_ticker(&token_id).set(&ticker);
+        }
+        if let Some(default_price_per_gwei) = opt_default_price_per_gwei.into_option() {
+            self.default_price_per_gwei(&token_id)
+                .set(&default_price_per_gwei);
+        }
+
+        let _ = self.token_whitelist().insert(token_id);
 
         Ok(())
     }
 
     #[only_owner]
     #[endpoint(removeTokenFromWhitelist)]
-    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) -> SCResult<()> {
-        self.token_whitelist().remove(&token_id);
+    fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
+        self.token_ticker(&token_id).clear();
         self.default_price_per_gwei(&token_id).clear();
 
-        Ok(())
-    }
-
-    // views
-
-    #[view(getAllKnownTokens)]
-    fn get_all_known_tokens(&self) -> MultiResultVec<TokenIdentifier> {
-        let mut all_tokens = Vec::new();
-
-        for token_id in self.token_whitelist().iter() {
-            all_tokens.push(token_id);
-        }
-
-        all_tokens.into()
+        let _ = self.token_whitelist().remove(&token_id);
     }
 
     // private
+
+    fn require_valid_token_id(&self, token_id: &TokenIdentifier) -> SCResult<()> {
+        require!(token_id.is_valid_esdt_identifier(), "Invalid token ID");
+        Ok(())
+    }
+
+    fn require_token_in_whitelist(&self, token_id: &TokenIdentifier) -> SCResult<()> {
+        require!(
+            self.token_whitelist().contains(token_id),
+            "Token not in whitelist"
+        );
+        Ok(())
+    }
 
     fn require_local_role_set(
         &self,
@@ -87,7 +92,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             self.is_local_role_set(token_id, role),
             "Must set local role first"
         );
-
         Ok(())
     }
 
@@ -99,6 +103,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     // storage
 
+    #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
 
