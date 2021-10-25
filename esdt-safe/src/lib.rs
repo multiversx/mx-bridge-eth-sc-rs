@@ -99,7 +99,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
                     }
                 }
                 TransactionStatus::Rejected => {
-                    self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+                    self.mark_refund(&tx.from, &tx.token_identifier, &tx.amount);
                 }
                 _ => {
                     return sc_error!("Transaction status may only be set to Executed or Rejected")
@@ -171,6 +171,19 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         Ok(())
     }
 
+    #[endpoint(claimRefund)]
+    fn claim_refund(&self, token_id: TokenIdentifier) -> SCResult<()> {
+        let caller = self.blockchain().get_caller();
+        let refund_amount = self.refund_amount(&caller, &token_id).get();
+        require!(refund_amount > 0, "Nothing to refund");
+
+        self.refund_amount(&caller, &token_id).clear();
+        self.send()
+            .direct(&caller, &token_id, 0, &refund_amount, b"refund");
+
+        Ok(())
+    }
+
     // views
 
     #[view(getCurrentTxBatch)]
@@ -178,7 +191,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
-        if self.is_batch_full(&first_batch) {
+        if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
             let batch_len = first_batch.len();
             let mut result_vec = Vec::with_capacity(batch_len);
             for tx in first_batch {
@@ -235,13 +248,22 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         block_diff > max_tx_batch_block_duration
     }
 
+    fn is_batch_final(&self, tx_batch: &[Transaction<Self::BigUint>]) -> bool {
+        let batch_len = tx_batch.len();
+        let last_tx_in_batch = &tx_batch[batch_len - 1];
+        let current_block = self.blockchain().get_block_nonce();
+        let block_diff = current_block - last_tx_in_batch.block_nonce;
+
+        block_diff > MIN_BLOCKS_FOR_FINALITY
+    }
+
     fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
         self.send().esdt_local_burn(token_id, 0, amount);
     }
 
-    fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        self.send()
-            .direct(to, token_id, 0, amount, self.data_or_empty(to, b"refund"));
+    fn mark_refund(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+        self.refund_amount(to, token_id)
+            .update(|refund| *refund += amount);
     }
 
     fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
@@ -268,6 +290,14 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     #[storage_mapper("lastTxNonce")]
     fn last_tx_nonce(&self) -> SingleValueMapper<Self::Storage, u64>;
+
+    #[view(getRefundAmount)]
+    #[storage_mapper("refundAmount")]
+    fn refund_amount(
+        &self,
+        address: &Address,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
 
     // configurable
 

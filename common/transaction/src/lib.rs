@@ -8,6 +8,9 @@ pub mod esdt_safe_batch;
 
 elrond_wasm::derive_imports!();
 
+// revert protection
+pub const MIN_BLOCKS_FOR_FINALITY: u64 = 2;
+
 pub type TxNonce = u64;
 pub type BlockNonce = u64;
 pub type TxAsMultiResult<BigUint> =

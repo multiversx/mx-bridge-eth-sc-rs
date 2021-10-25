@@ -5,6 +5,7 @@
 mod action;
 mod user_role;
 
+use storage::StatusesAfterExecution;
 use token_module::{ProxyTrait as OtherProxyTrait, PERCENTAGE_TOTAL};
 
 use action::Action;
@@ -263,12 +264,19 @@ pub trait Multisig:
     }
 
     #[view(getStatusesAfterExecution)]
-    fn get_statuses_after_execution(&self, batch_id: u64) -> MultiResultVec<TransactionStatus> {
-        let (actual_batch_id, statuses) = self.statuses_after_execution().get();
-        if batch_id == actual_batch_id {
-            statuses.into()
+    fn get_statuses_after_execution(
+        &self,
+        batch_id: u64,
+    ) -> OptionalResult<MultiResult2<bool, MultiResultVec<TransactionStatus>>> {
+        let statuses_after_execution = self.statuses_after_execution().get();
+        if statuses_after_execution.batch_id == batch_id {
+            let current_block = self.blockchain().get_block_nonce();
+            let block_diff = current_block - statuses_after_execution.block_executed;
+            let is_final = block_diff > MIN_BLOCKS_FOR_FINALITY;
+
+            OptionalResult::Some((is_final, statuses_after_execution.statuses.into()).into())
         } else {
-            MultiResultVec::new()
+            OptionalResult::None
         }
     }
 
@@ -352,7 +360,11 @@ pub trait Multisig:
                     });
 
                 self.statuses_after_execution()
-                    .set(&(batch_id, statuses.into_vec()));
+                    .set(&StatusesAfterExecution {
+                        block_executed: self.blockchain().get_block_nonce(),
+                        batch_id,
+                        statuses: statuses.into_vec(),
+                    });
             }
             _ => {}
         }
