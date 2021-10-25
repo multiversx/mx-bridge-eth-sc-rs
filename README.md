@@ -10,7 +10,7 @@ For this to be truly decentralized, we're using a multisig smart contract. More 
 
 To be able to transfer the tokens, we make use of a concept known as "Wrapped Tokens". Basically, you don't transfer native EGLD or ETH tokens, but instead you lock the native tokens in a contract and generate "Wrapped" versions of them. On Elrond, we are going to use ESDT for this purpose. On Ethereum, we're most likely going to use something like ERC20.  
 
-Now you might ask, how is this any different? There already is an ERC20 style contract on Ethereum for EGLD! The main difference is you won't have to go through exchange services at all, and at some point, we'll likely have this integrated fully into out Maiar application. And there's one more important difference: This is decentralized. There isn't a single contract owner doing all the work.  We have a set of trusted accounts that will handle the transactions.  
+Now you might ask, how is this any different? There already is an ERC20 style contract on Ethereum for EGLD! The main difference is you won't have to go through exchange services at all, and at some point, we'll likely have this integrated fully into our Maiar application. And there's one more important difference: This is decentralized. There isn't a single contract owner doing all the work.  We have a set of trusted accounts that will handle the transactions.  
 
 But why should _you_ trust them? We use the "Proof of Stake" concept: each of them will have to stake a certain amount of EGLD to be able to become a relayer, just like validators on the Elrond blockchain. If any of them misbehaves, their stake will be "slashed" and they'll lose quite a bit of money as a result.
 

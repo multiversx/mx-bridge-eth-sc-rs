@@ -126,8 +126,15 @@
             }
         },
         {
+            "step": "setState",
+            "comment": "Block nonce was 0 before",
+            "currentBlockInfo": {
+                "blockNonce": "2"
+            }
+        },
+        {
             "step": "scQuery",
-            "txId": "query-statuses",
+            "txId": "query-statuses-not-final",
             "tx": {
                 "to": "sc:multisig",
                 "function": "getStatusesAfterExecution",
@@ -137,6 +144,31 @@
             },
             "expect": {
                 "out": [
+                    "0x",
+                    "3",
+                    "3"
+                ]
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "3"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "query-statuses-final",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getStatusesAfterExecution",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "0x01",
                     "3",
                     "3"
                 ]

@@ -110,6 +110,48 @@
             }
         },
         {
+            "step": "scCall",
+            "txId": "user-claim-refund-egld",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "claimRefund",
+                "arguments": [
+                    "str:EGLD-123456"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Nothing to refund",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "user-claim-refund-eth",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "claimRefund",
+                "arguments": [
+                    "str:ETH-123456"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Nothing to refund",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
             "step": "checkState",
             "comment": "the tokens are burned after successful tx execution",
             "accounts": {
