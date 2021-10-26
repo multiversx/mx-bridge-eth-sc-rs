@@ -201,6 +201,22 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         OptionalResult::None
     }
 
+    #[view(getRefundAmounts)]
+    fn get_refund_amounts(
+        &self,
+        address: Address,
+    ) -> MultiResultVec<MultiResult2<TokenIdentifier, Self::BigUint>> {
+        let mut refund_amounts = Vec::new();
+        for token_id in self.token_whitelist().iter() {
+            let amount = self.refund_amount(&address, &token_id).get();
+            if amount > 0 {
+                refund_amounts.push((token_id, amount).into());
+            }
+        }
+
+        refund_amounts.into()
+    }
+
     // private
 
     fn add_to_batch(&self, transaction: Transaction<Self::BigUint>) {
@@ -288,7 +304,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     #[storage_mapper("lastTxNonce")]
     fn last_tx_nonce(&self) -> SingleValueMapper<Self::Storage, u64>;
 
-    #[view(getRefundAmount)]
     #[storage_mapper("refundAmount")]
     fn refund_amount(
         &self,

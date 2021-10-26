@@ -110,6 +110,25 @@
             }
         },
         {
+            "step": "scQuery",
+            "txId": "user-query-refund-amounts",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getRefundAmounts",
+                "arguments": [
+                    "address:user"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "str:ETH-123456",
+                    "350,000",
+                    "str:EGLD-123456",
+                    "400"
+                ]
+            }
+        },
+        {
             "step": "scCall",
             "txId": "user-claim-refund-egld",
             "tx": {
