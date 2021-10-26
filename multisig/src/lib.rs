@@ -185,6 +185,11 @@ pub trait Multisig:
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
+        require!(
+            !self.action_mapper().item_is_empty(action_id),
+            "Action was already executed"
+        );
+
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
