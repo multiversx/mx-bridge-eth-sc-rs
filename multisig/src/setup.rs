@@ -316,7 +316,7 @@ pub trait SetupModule:
             .execute_on_dest_context();
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .set_token_ticker(token_id.clone(), new_ticker.clone())
+            .set_token_ticker(token_id, new_ticker)
             .execute_on_dest_context();
     }
 
