@@ -100,7 +100,6 @@
                         "str:maxTxBatchBlockDuration": "100",
                         "str:ethTxGasLimit": "150,000",
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-
                         "str:tokenWhitelist.info": "0x00000001000000010000000100000001",
                         "str:tokenWhitelist.node_idBRIDGE-123456": "0x01",
                         "str:tokenWhitelist.node_links|u32:1": "0x0000000000000000"
@@ -108,6 +107,19 @@
                     "code": "file:../output/esdt-safe.wasm",
                     "owner": "address:owner"
                 }
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-all-known-tokens",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getAllKnownTokens"
+            },
+            "expect": {
+                "out": [
+                    "str:BRIDGE-123456"
+                ]
             }
         }
     ]

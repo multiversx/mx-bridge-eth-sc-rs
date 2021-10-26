@@ -25,7 +25,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         for token in token_whitelist.into_vec() {
-            require!(token.is_valid_esdt_identifier(), "Invalid token ID");
+            self.require_valid_token_id(&token)?;
             let _ = self.token_whitelist().insert(token);
         }
 
@@ -136,10 +136,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             self.call_value().esdt_token_nonce() == 0,
             "Only fungible ESDT tokens accepted"
         );
-        require!(
-            self.token_whitelist().contains(&payment_token),
-            "Payment token is not on whitelist"
-        );
+        self.require_token_in_whitelist(&payment_token)?;
         require!(!to.is_zero(), "Can't transfer to address zero");
 
         let required_fee = self.calculate_required_fee(&payment_token);

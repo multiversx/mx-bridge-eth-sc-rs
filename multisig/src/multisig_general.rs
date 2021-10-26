@@ -57,27 +57,6 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         Ok(())
     }
 
-    /// Clears storage pertaining to an action that is no longer supposed to be executed.
-    /// Any signatures that the action received must first be removed, via `unsign`.
-    /// Otherwise this endpoint would be prone to abuse.
-    #[endpoint(discardAction)]
-    fn discard_action(&self, action_id: usize) -> SCResult<()> {
-        let caller_address = self.blockchain().get_caller();
-        let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
-        require!(
-            caller_role.can_discard_action(),
-            "only board members and proposers can discard actions"
-        );
-        require!(
-            self.get_action_valid_signer_count(action_id) == 0,
-            "cannot discard action with valid signatures"
-        );
-
-        self.clear_action(action_id);
-        Ok(())
-    }
-
     fn propose_action(&self, action: Action<Self::BigUint>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);

@@ -406,6 +406,20 @@
                     "address:relayer2"
                 ]
             }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-all-known-tokens",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getAllKnownTokens"
+            },
+            "expect": {
+                "out": [
+                    "str:ETH-123456",
+                    "str:EGLD-123456"
+                ]
+            }
         }
     ]
 }
