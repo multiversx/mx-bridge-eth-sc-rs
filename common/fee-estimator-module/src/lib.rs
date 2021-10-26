@@ -5,8 +5,6 @@ elrond_wasm::imports!();
 mod aggregator_proxy;
 pub use aggregator_proxy::*;
 
-const TICKER_SEPARATOR: u8 = b'-';
-
 #[elrond_wasm_derive::module]
 pub trait FeeEstimatorModule {
     #[only_owner]
@@ -41,23 +39,23 @@ pub trait FeeEstimatorModule {
     }
 
     fn get_price_per_gwei(&self, token_id: &TokenIdentifier) -> Self::BigUint {
-        let opt_price = self.get_aggregator_mapping(GWEI_STRING.into(), token_id.clone());
+        let opt_price = self.get_aggregator_mapping(&GWEI_STRING.into(), token_id);
 
         opt_price.unwrap_or_else(|| self.default_price_per_gwei(token_id).get())
     }
 
     fn get_aggregator_mapping(
         &self,
-        from: TokenIdentifier,
-        to: TokenIdentifier,
+        from: &TokenIdentifier,
+        to: &TokenIdentifier,
     ) -> Option<Self::BigUint> {
         let fee_estimator_sc_address = self.fee_estimator_contract_address().get();
         if fee_estimator_sc_address.is_zero() {
             return None;
         }
 
-        let from_ticker = self.get_token_ticker(from);
-        let to_ticker = self.get_token_ticker(to);
+        let from_ticker = self.token_ticker(from).get();
+        let to_ticker = self.token_ticker(to).get();
 
         let result: OptionalResult<AggregatorResultAsMultiResult<Self::BigUint>> = self
             .aggregator_proxy(fee_estimator_sc_address)
@@ -67,21 +65,6 @@ pub trait FeeEstimatorModule {
         result
             .into_option()
             .map(|multi_result| AggregatorResult::from(multi_result).price)
-    }
-
-    fn get_token_ticker(&self, token_id: TokenIdentifier) -> BoxedBytes {
-        let default_ticker = self.token_ticker(&token_id).get();
-        if !default_ticker.is_empty() {
-            return default_ticker;
-        }
-
-        for (i, char) in token_id.as_esdt_identifier().iter().enumerate() {
-            if *char == TICKER_SEPARATOR {
-                return token_id.as_esdt_identifier()[..i].into();
-            }
-        }
-
-        token_id.into_boxed_bytes()
     }
 
     // proxies

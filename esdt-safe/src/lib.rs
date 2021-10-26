@@ -5,6 +5,7 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 use eth_address::*;
+use fee_estimator_module::GWEI_STRING;
 use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
 use transaction::*;
 
@@ -26,6 +27,10 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
         for token in token_whitelist.into_vec() {
             self.require_valid_token_id(&token)?;
+
+            let token_ticker = self.ticker_from_token_id(&token);
+            self.token_ticker(&token).set(&token_ticker);
+
             let _ = self.token_whitelist().insert(token);
         }
 
@@ -33,6 +38,10 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+
+        // set ticker for "GWEI"
+        self.token_ticker(&GWEI_STRING.into())
+            .set(&GWEI_STRING.into());
 
         Ok(())
     }

@@ -48,7 +48,8 @@
                     "storage": {
                         "str:wrappedEgldTokenId": "str:EGLD-123456",
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
-                        "str:ethTxGasLimit": "10,000"
+                        "str:ethTxGasLimit": "10,000",
+                        "str:tokenTicker|nested:str:GWEI": "str:GWEI"
                     },
                     "code": "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm"
                 },
