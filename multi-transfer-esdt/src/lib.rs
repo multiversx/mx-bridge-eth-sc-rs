@@ -1,5 +1,6 @@
 #![no_std]
 
+use fee_estimator_module::GWEI_STRING;
 use transaction::TransactionStatus;
 
 elrond_wasm::imports!();
@@ -21,11 +22,19 @@ pub trait MultiTransferEsdt:
             .set(&fee_estimator_contract_address);
 
         for token in token_whitelist.into_vec() {
-            require!(token.is_valid_esdt_identifier(), "Invalid token ID");
+            self.require_valid_token_id(&token)?;
+
+            let token_ticker = self.ticker_from_token_id(&token);
+            self.token_ticker(&token).set(&token_ticker);
+
             self.token_whitelist().insert(token);
         }
 
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
+
+        // set ticker for "GWEI"
+        self.token_ticker(&GWEI_STRING.into())
+            .set(&GWEI_STRING.into());
 
         Ok(())
     }
@@ -35,7 +44,7 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
-    ) -> SCResult<MultiResultVec<TransactionStatus>> {
+    ) -> MultiResultVec<TransactionStatus> {
         let mut tx_statuses = Vec::new();
         let mut cached_token_ids = Vec::new();
         let mut cached_prices = Vec::new();
@@ -64,7 +73,7 @@ pub trait MultiTransferEsdt:
                 }
             };
 
-            if required_fee >= amount {
+            if amount <= required_fee {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
@@ -81,6 +90,6 @@ pub trait MultiTransferEsdt:
             tx_statuses.push(TransactionStatus::Executed);
         }
 
-        Ok(tx_statuses.into())
+        tx_statuses.into()
     }
 }

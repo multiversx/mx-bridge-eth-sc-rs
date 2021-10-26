@@ -3,34 +3,10 @@ elrond_wasm::imports!();
 use multi_transfer_esdt::SingleTransferTuple;
 
 use crate::action::Action;
-use crate::action::ActionFullInfo;
 use crate::user_role::UserRole;
 
 #[elrond_wasm_derive::module]
 pub trait UtilModule: crate::storage::StorageModule {
-    /// Iterates through all actions and retrieves those that are still pending.
-    /// Serialized full action data:
-    /// - the action id
-    /// - the serialized action data
-    /// - (number of signers followed by) list of signer addresses.
-    #[view(getPendingActionFullInfo)]
-    fn get_pending_action_full_info(&self) -> MultiResultVec<ActionFullInfo<Self::BigUint>> {
-        let mut result = Vec::new();
-        let action_last_index = self.get_action_last_index();
-        let action_mapper = self.action_mapper();
-        for action_id in 1..=action_last_index {
-            let action_data = action_mapper.get(action_id);
-            if action_data.is_pending() {
-                result.push(ActionFullInfo {
-                    action_id,
-                    action_data,
-                    signers: self.get_action_signers(action_id),
-                });
-            }
-        }
-        result.into()
-    }
-
     /// Returns `true` (`1`) if the user has signed the action.
     /// Does not check whether or not the user is still a board member and the signature valid.
     #[view]
