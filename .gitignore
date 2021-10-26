@@ -21,3 +21,6 @@ Cargo.lock
 **/*.pem
 **/alice.json
 **/bob.json
+
+# Deploy files
+deploy.json

@@ -48,8 +48,8 @@ AGGREGATOR_ADDRESS=0x0000000000000000050081d0b65d6bd5bd7d5af6df1a26e89513c6f38cd
 #########################################################################
 ################## Update after issueing the tokens #####################
 #########################################################################
-WRAPPED_EGLD_TOKEN_ID=0x45474c442d323237373162
-WRAPPED_ETH_TOKEN_ID=0x4554482d653633623166
+WRAPPED_EGLD_TOKEN_ID=0x45474c442d663466346534
+WRAPPED_ETH_TOKEN_ID=0x4554482d353461396635
 
 deploy() {
     local SLASH_AMOUNT=0x0a # 1
@@ -149,7 +149,7 @@ changeQuorum() {
 issueWrappedEgld() {
     local TOKEN_DISPLAY_NAME=0x5772617070656445676c64  # "WrappedEgld"
     local TOKEN_TICKER=0x45474c44  # "EGLD"
-    local INITIAL_SUPPLY=0x00 # 1
+    local INITIAL_SUPPLY=0x00 # 0
     local NR_DECIMALS=0x12 # 18
     local CAN_ADD_SPECIAL_ROLES=0x63616e4164645370656369616c526f6c6573 # "canAddSpecialRoles"
     local TRUE=0x74727565 # "true"
@@ -163,7 +163,7 @@ issueWrappedEgld() {
 issueWrappedEth() {
     local TOKEN_DISPLAY_NAME=0x57726170706564457468  # "WrappedEth"
     local TOKEN_TICKER=0x455448  # "ETH"
-    local INITIAL_SUPPLY=0x00 # 1
+    local INITIAL_SUPPLY=0x00 # 0
     local NR_DECIMALS=0x12 # 18
     local CAN_ADD_SPECIAL_ROLES=0x63616e4164645370656369616c526f6c6573 # "canAddSpecialRoles"
     local TRUE=0x74727565 # "true"
@@ -186,6 +186,13 @@ setLocalRolesEgldEsdtSwap() {
     erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
     --arguments ${WRAPPED_EGLD_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    sleep 10
+
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments ${WRAPPED_ETH_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
