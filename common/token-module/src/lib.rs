@@ -119,7 +119,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]
-    fn token_whitelist(&self) -> SetMapper<Self::Storage, TokenIdentifier>;
+    fn token_whitelist(&self) -> SafeSetMapper<Self::Storage, TokenIdentifier>;
 
     #[storage_mapper("accumulatedTransactionFees")]
     fn accumulated_transaction_fees(
