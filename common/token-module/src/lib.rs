@@ -3,6 +3,7 @@
 elrond_wasm::imports!();
 
 pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
+const TICKER_SEPARATOR: u8 = b'-';
 
 #[elrond_wasm_derive::module]
 pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
@@ -46,9 +47,12 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     ) -> SCResult<()> {
         self.require_valid_token_id(&token_id)?;
 
-        if let Some(ticker) = opt_ticker.into_option() {
-            self.token_ticker(&token_id).set(&ticker);
-        }
+        let ticker = match opt_ticker.into_option() {
+            Some(t) => t,
+            None => self.ticker_from_token_id(&token_id),
+        };
+        self.token_ticker(&token_id).set(&ticker);
+
         if let Some(default_price_per_gwei) = opt_default_price_per_gwei.into_option() {
             self.default_price_per_gwei(&token_id)
                 .set(&default_price_per_gwei);
@@ -69,6 +73,16 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     }
 
     // private
+
+    fn ticker_from_token_id(&self, token_id: &TokenIdentifier) -> BoxedBytes {
+        for (i, char) in token_id.as_esdt_identifier().iter().enumerate() {
+            if *char == TICKER_SEPARATOR {
+                return token_id.as_esdt_identifier()[..i].into();
+            }
+        }
+
+        token_id.as_esdt_identifier().into()
+    }
 
     fn require_valid_token_id(&self, token_id: &TokenIdentifier) -> SCResult<()> {
         require!(token_id.is_valid_esdt_identifier(), "Invalid token ID");
