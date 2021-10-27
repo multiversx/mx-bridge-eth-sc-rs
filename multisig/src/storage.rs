@@ -79,7 +79,7 @@ pub trait StorageModule {
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> MapMapper<Self::Storage, Vec<SingleTransferTuple<Self::BigUint>>, usize>;
+    ) -> SafeMapMapper<Self::Storage, Vec<SingleTransferTuple<Self::BigUint>>, usize>;
 
     #[storage_mapper("statusesAfterExecution")]
     fn statuses_after_execution(&self) -> SingleValueMapper<Self::Storage, StatusesAfterExecution>;
@@ -88,7 +88,7 @@ pub trait StorageModule {
     fn action_id_for_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-    ) -> MapMapper<Self::Storage, Vec<TransactionStatus>, usize>;
+    ) -> SafeMapMapper<Self::Storage, Vec<TransactionStatus>, usize>;
 
     /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
 
