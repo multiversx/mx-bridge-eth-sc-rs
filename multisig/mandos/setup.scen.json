@@ -166,8 +166,8 @@
                         "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
-                        "str:tokenWhitelist.node_idEGLD-123456": "2",
-                        "str:tokenWhitelist.node_idETH-123456": "1",
+                        "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",
+                        "str:tokenWhitelist.node_id|nested:str:ETH-123456": "1",
                         "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:2",
                         "str:tokenWhitelist.node_links|u32:2": "u32:1|u32:0",
                         "str:tokenWhitelist.value|u32:2": "str:EGLD-123456",
@@ -189,8 +189,8 @@
                         "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
-                        "str:tokenWhitelist.node_idEGLD-123456": "2",
-                        "str:tokenWhitelist.node_idETH-123456": "1",
+                        "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",
+                        "str:tokenWhitelist.node_id|nested:str:ETH-123456": "1",
                         "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:2",
                         "str:tokenWhitelist.node_links|u32:2": "u32:1|u32:0",
                         "str:tokenWhitelist.value|u32:2": "str:EGLD-123456",
@@ -274,8 +274,8 @@
                         "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
-                        "str:tokenWhitelist.node_idEGLD-123456": "2",
-                        "str:tokenWhitelist.node_idETH-123456": "1",
+                        "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",
+                        "str:tokenWhitelist.node_id|nested:str:ETH-123456": "1",
                         "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:2",
                         "str:tokenWhitelist.node_links|u32:2": "u32:1|u32:0",
                         "str:tokenWhitelist.value|u32:2": "str:EGLD-123456",
@@ -312,8 +312,8 @@
                         "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
-                        "str:tokenWhitelist.node_idEGLD-123456": "2",
-                        "str:tokenWhitelist.node_idETH-123456": "1",
+                        "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",
+                        "str:tokenWhitelist.node_id|nested:str:ETH-123456": "1",
                         "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:2",
                         "str:tokenWhitelist.node_links|u32:2": "u32:1|u32:0",
                         "str:tokenWhitelist.value|u32:2": "str:EGLD-123456",
