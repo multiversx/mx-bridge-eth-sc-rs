@@ -2,8 +2,7 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
-use multi_transfer_esdt::SingleTransferTuple;
-use transaction::TransactionStatus;
+use transaction::{SingleTransferTuple, TransactionStatus};
 
 use crate::action::Action;
 use crate::user_role::UserRole;
@@ -12,7 +11,7 @@ use crate::user_role::UserRole;
 pub struct StatusesAfterExecution {
     pub block_executed: u64,
     pub batch_id: u64,
-    pub statuses: Vec<TransactionStatus>
+    pub statuses: Vec<TransactionStatus>,
 }
 
 #[elrond_wasm_derive::module]
@@ -83,9 +82,7 @@ pub trait StorageModule {
     ) -> MapMapper<Self::Storage, Vec<SingleTransferTuple<Self::BigUint>>, usize>;
 
     #[storage_mapper("statusesAfterExecution")]
-    fn statuses_after_execution(
-        &self,
-    ) -> SingleValueMapper<Self::Storage, StatusesAfterExecution>;
+    fn statuses_after_execution(&self) -> SingleValueMapper<Self::Storage, StatusesAfterExecution>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(
