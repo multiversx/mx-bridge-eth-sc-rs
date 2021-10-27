@@ -1,6 +1,6 @@
 elrond_wasm::imports!();
 
-use multi_transfer_esdt::SingleTransferTuple;
+use transaction::SingleTransferTuple;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
