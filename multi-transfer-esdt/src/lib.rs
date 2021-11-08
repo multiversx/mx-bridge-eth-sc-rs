@@ -1,11 +1,9 @@
 #![no_std]
 
 use fee_estimator_module::GWEI_STRING;
-use transaction::TransactionStatus;
+use transaction::{SingleTransferTuple, TransactionStatus};
 
 elrond_wasm::imports!();
-
-pub type SingleTransferTuple<BigUint> = (Address, TokenIdentifier, BigUint);
 
 #[elrond_wasm_derive::contract]
 pub trait MultiTransferEsdt:

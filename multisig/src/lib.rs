@@ -6,9 +6,9 @@ mod action;
 mod user_role;
 
 use storage::StatusesAfterExecution;
-use token_module::{ProxyTrait as OtherProxyTrait, PERCENTAGE_TOTAL};
 
 use action::Action;
+use contract_proxies::*;
 use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
@@ -17,6 +17,8 @@ mod multisig_general;
 mod setup;
 mod storage;
 mod util;
+
+pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
 
 elrond_wasm::imports!();
 
@@ -378,14 +380,17 @@ pub trait Multisig:
     // proxies
 
     #[proxy]
-    fn egld_esdt_swap_proxy(&self, sc_address: Address) -> egld_esdt_swap::Proxy<Self::SendApi>;
+    fn egld_esdt_swap_proxy(
+        &self,
+        sc_address: Address,
+    ) -> egld_esdt_swap_proxy::Proxy<Self::SendApi>;
 
     #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe::Proxy<Self::SendApi>;
+    fn esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe_proxy::Proxy<Self::SendApi>;
 
     #[proxy]
     fn multi_transfer_esdt_proxy(
         &self,
         sc_address: Address,
-    ) -> multi_transfer_esdt::Proxy<Self::SendApi>;
+    ) -> multi_transfer_esdt_proxy::Proxy<Self::SendApi>;
 }
