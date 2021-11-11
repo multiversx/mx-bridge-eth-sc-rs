@@ -162,8 +162,6 @@ pub trait Multisig:
         batch_id: u64,
         #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
     ) -> SCResult<usize> {
-        self.require_multi_transfer_esdt_deployed()?;
-
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
         require!(

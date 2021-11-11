@@ -124,22 +124,6 @@ pub trait UtilModule: crate::storage::StorageModule {
         result.into()
     }
 
-    fn require_esdt_safe_deployed(&self) -> SCResult<()> {
-        require!(
-            !self.esdt_safe_address().is_empty(),
-            "ESDT Safe SC has to be deployed first"
-        );
-        Ok(())
-    }
-
-    fn require_multi_transfer_esdt_deployed(&self) -> SCResult<()> {
-        require!(
-            !self.multi_transfer_esdt_address().is_empty(),
-            "Multi-transfer ESDT SC has to be deployed first"
-        );
-        Ok(())
-    }
-
     fn has_enough_stake(&self, board_member_address: &Address) -> bool {
         let required_stake = self.required_stake_amount().get();
         let amount_staked = self.amount_staked(board_member_address).get();

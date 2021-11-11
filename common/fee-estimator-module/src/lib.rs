@@ -14,7 +14,13 @@ pub trait FeeEstimatorModule {
     }
 
     #[only_owner]
-    #[endpoint(setDefaultPricePerGwei)]
+    #[endpoint(setEthTxGasLimit)]
+    fn set_eth_tx_gas_limit(&self, new_limit: Self::BigUint) {
+        self.eth_tx_gas_limit().set(&new_limit);
+    }
+
+    #[only_owner]
+    #[endpoint(setDefaultPricePerGasUnit)]
     fn set_default_price_per_gas_unit(
         &self,
         token_id: TokenIdentifier,
@@ -78,8 +84,8 @@ pub trait FeeEstimatorModule {
     #[storage_mapper("feeEstimatorContractAddress")]
     fn fee_estimator_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 
-    #[view(getDefaultPricePerGwei)]
-    #[storage_mapper("defaultPricePerGwei")]
+    #[view(getDefaultPricePerGasUnit)]
+    #[storage_mapper("defaultPricePerGasUnit")]
     fn default_price_per_gas_unit(
         &self,
         token_id: &TokenIdentifier,

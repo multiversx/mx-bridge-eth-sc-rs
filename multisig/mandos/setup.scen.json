@@ -7,295 +7,7 @@
         },
         {
             "step": "setState",
-            "accounts": {
-                "address:owner": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
-                },
-                "address:relayer1": {
-                    "nonce": "0",
-                    "balance": "1000",
-                    "storage": {}
-                },
-                "address:relayer2": {
-                    "nonce": "0",
-                    "balance": "1000",
-                    "storage": {}
-                },
-                "address:user": {
-                    "nonce": "0",
-                    "balance": "2,000,000",
-                    "esdt": {
-                        "str:ETH-123456": "1,000,000"
-                    },
-                    "storage": {}
-                }
-            },
-            "newAddresses": [
-                {
-                    "creatorAddress": "address:owner",
-                    "creatorNonce": "0",
-                    "newAddress": "sc:multisig"
-                }
-            ]
-        },
-        {
-            "step": "scDeploy",
-            "txId": "deploy",
-            "tx": {
-                "from": "address:owner",
-                "contractCode": "file:../output/multisig.wasm",
-                "value": "0",
-                "arguments": [
-                    "1000",
-                    "500",
-                    "2",
-                    "address:relayer1",
-                    "address:relayer2"
-                ],
-                "gasLimit": "40,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "setState",
-            "newAddresses": [
-                {
-                    "creatorAddress": "sc:multisig",
-                    "creatorNonce": "0",
-                    "newAddress": "sc:multi_transfer"
-                },
-                {
-                    "creatorAddress": "sc:multisig",
-                    "creatorNonce": "1",
-                    "newAddress": "sc:esdt_safe"
-                }
-            ]
-        },
-        {
-            "step": "checkState",
-            "accounts": {
-                "address:owner": {
-                    "nonce": "*",
-                    "balance": "0",
-                    "storage": {}
-                },
-                "sc:multisig": {
-                    "nonce": "*",
-                    "balance": "0",
-                    "storage": {
-                        "str:num_board_members": "2",
-                        "str:quorum": "2",
-                        "str:requiredStakeAmount": "1000",
-                        "str:slashAmount": "500",
-                        "str:user_id_to_address|u32:1": "address:relayer1",
-                        "str:user_id_to_address|u32:2": "address:relayer2",
-                        "+": ""
-                    },
-                    "code": "file:../output/multisig.wasm"
-                },
-                "+": {}
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "deploy-child-contracts",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "deployChildContracts",
-                "arguments": [
-                    "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm",
-                    "file:../../esdt-safe/output/esdt-safe.wasm",
-                    "sc:price_aggregator",
-                    "150,000",
-                    "10,000"
-                ],
-                "gasLimit": "100,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "add-token-1-safe",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "esdtSafeAddTokenToWhitelist",
-                "arguments": [
-                    "str:ETH-123456"
-                ],
-                "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "add-token-2-safe",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "esdtSafeAddTokenToWhitelist",
-                "arguments": [
-                    "str:EGLD-123456"
-                ],
-                "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "add-token-1-multi",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "multiTransferEsdtaddTokenToWhitelist",
-                "arguments": [
-                    "str:ETH-123456"
-                ],
-                "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "add-token-2-multi",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "multiTransferEsdtaddTokenToWhitelist",
-                "arguments": [
-                    "str:EGLD-123456"
-                ],
-                "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "checkState",
-            "accounts": {
-                "address:owner": {
-                    "nonce": "*",
-                    "balance": "0",
-                    "storage": {}
-                },
-                "sc:multi_transfer": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
-                        "str:ethTxGasLimit": "10,000",
-
-                        "str:tokenTicker|nested:str:GWEI": "str:GWEI",
-                        "str:tokenTicker|nested:str:EGLD-123456": "str:EGLD",
-                        "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
-
-                        "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
-                        "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",
-                        "str:tokenWhitelist.node_id|nested:str:ETH-123456": "1",
-                        "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:2",
-                        "str:tokenWhitelist.node_links|u32:2": "u32:1|u32:0",
-                        "str:tokenWhitelist.value|u32:2": "str:EGLD-123456",
-                        "str:tokenWhitelist.value|u32:1": "str:ETH-123456"
-                    },
-                    "code": "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm"
-                },
-                "sc:esdt_safe": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "storage": {
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
-                        "str:maxTxBatchSize": "10",
-                        "str:maxTxBatchBlockDuration": "100",
-                        "str:ethTxGasLimit": "150,000",
-
-                        "str:tokenTicker|nested:str:GWEI": "str:GWEI",
-                        "str:tokenTicker|nested:str:EGLD-123456": "str:EGLD",
-                        "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
-
-                        "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
-                        "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",
-                        "str:tokenWhitelist.node_id|nested:str:ETH-123456": "1",
-                        "str:tokenWhitelist.node_links|u32:1": "u32:0|u32:2",
-                        "str:tokenWhitelist.node_links|u32:2": "u32:1|u32:0",
-                        "str:tokenWhitelist.value|u32:2": "str:EGLD-123456",
-                        "str:tokenWhitelist.value|u32:1": "str:ETH-123456"
-                    },
-                    "code": "file:../../esdt-safe/output/esdt-safe.wasm"
-                },
-                "sc:multisig": {
-                    "nonce": "*",
-                    "balance": "0",
-                    "storage": {
-                        "str:esdtSafeAddress": "sc:esdt_safe",
-                        "str:multiTransferEsdtAddress": "sc:multi_transfer",
-
-                        "str:num_board_members": "2",
-                        "str:quorum": "2",
-                        "str:requiredStakeAmount": "1000",
-                        "str:slashAmount": "500",
-                        "str:user_role|u32:1": "2",
-                        "str:user_role|u32:2": "2",
-
-                        "str:user_address_to_id|address:relayer1": "1",
-                        "str:user_address_to_id|address:relayer2": "2",
-                        "str:user_count": "2",
-                        "str:user_id_to_address|u32:1": "address:relayer1",
-                        "str:user_id_to_address|u32:2": "address:relayer2",
-
-                        "str:statusesAfterExecution": "0xffffffffffffffff|0xffffffffffffffff|u32:0"
-                    },
-                    "code": "file:../output/multisig.wasm"
-                },
-                "+": {}
-            }
-        },
-        {
-            "step": "setState",
-            "comment": "setting local roles",
+            "comment": "simulate child contracts deploy + setting local roles + change ownership. Changing ownership will be done after the multisig deploy in the real setup, but this is way less verbose in mandos.",
             "accounts": {
                 "sc:egld_esdt_swap": {
                     "nonce": "0",
@@ -388,6 +100,97 @@
                     "owner": "sc:multisig",
                     "code": "file:../../esdt-safe/output/esdt-safe.wasm"
                 }
+            }
+        },
+        {
+            "step": "setState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:relayer1": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "storage": {}
+                },
+                "address:relayer2": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "0",
+                    "balance": "2,000,000",
+                    "esdt": {
+                        "str:ETH-123456": "1,000,000"
+                    },
+                    "storage": {}
+                }
+            },
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "0",
+                    "newAddress": "sc:multisig"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "txId": "deploy",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "file:../output/multisig.wasm",
+                "value": "0",
+                "arguments": [
+                    "sc:esdt_safe",
+                    "sc:multi_transfer",
+                    "1000",
+                    "500",
+                    "2",
+                    "address:relayer1",
+                    "address:relayer2"
+                ],
+                "gasLimit": "40,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "sc:multisig": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "storage": {
+                        "str:esdtSafeAddress": "sc:esdt_safe",
+                        "str:multiTransferEsdtAddress": "sc:multi_transfer",
+
+                        "str:num_board_members": "2",
+                        "str:quorum": "2",
+                        "str:requiredStakeAmount": "1000",
+                        "str:slashAmount": "500",
+                        "str:user_role|u32:1": "2",
+                        "str:user_role|u32:2": "2",
+
+                        "str:user_address_to_id|address:relayer1": "1",
+                        "str:user_address_to_id|address:relayer2": "2",
+                        "str:user_count": "2",
+                        "str:user_id_to_address|u32:1": "address:relayer1",
+                        "str:user_id_to_address|u32:2": "address:relayer2",
+
+                        "str:statusesAfterExecution": "0xffffffffffffffff|0xffffffffffffffff|u32:0"
+                    },
+                    "code": "file:../output/multisig.wasm"
+                },
+                "+": {}
             }
         },
         {
