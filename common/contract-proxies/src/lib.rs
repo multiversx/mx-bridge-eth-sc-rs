@@ -20,12 +20,7 @@ pub mod esdt_safe_proxy {
     #[elrond_wasm_derive::proxy]
     pub trait EsdtSafe {
         #[init]
-        fn init(
-            &self,
-            fee_estimator_contract_address: Address,
-            eth_tx_gas_limit: Self::BigUint,
-            #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
-        );
+        fn init(&self, fee_estimator_contract_address: Address, eth_tx_gas_limit: Self::BigUint);
 
         #[endpoint(setFeeEstimatorContractAddress)]
         fn set_fee_estimator_contract_address(&self, new_address: Address);
@@ -82,12 +77,7 @@ pub mod multi_transfer_esdt_proxy {
     #[elrond_wasm_derive::proxy]
     pub trait MultiTransferEsdt {
         #[init]
-        fn init(
-            &self,
-            fee_estimator_contract_address: Address,
-            eth_tx_gas_limit: Self::BigUint,
-            #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
-        );
+        fn init(&self, fee_estimator_contract_address: Address, eth_tx_gas_limit: Self::BigUint);
 
         #[endpoint(setFeeEstimatorContractAddress)]
         fn set_fee_estimator_contract_address(&self, new_address: Address);

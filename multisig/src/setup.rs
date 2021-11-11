@@ -47,38 +47,20 @@ pub trait SetupModule:
     #[endpoint(deployChildContracts)]
     fn deploy_child_contracts(
         &self,
-        egld_esdt_swap_code: BoxedBytes,
         multi_transfer_esdt_code: BoxedBytes,
         esdt_safe_code: BoxedBytes,
         price_aggregator_contract_address: Address,
         esdt_safe_eth_tx_gas_limit: Self::BigUint,
         multi_transfer_esdt_eth_tx_gas_limit: Self::BigUint,
-        wrapped_egld_token_id: TokenIdentifier,
-        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         // since contracts can either be all deployed or none,
         // it's sufficient to check only for one of them
         require!(
-            self.egld_esdt_swap_address().is_empty(),
+            self.esdt_safe_address().is_empty(),
             "This function was called already."
         );
 
-        let mut all_tokens = token_whitelist.into_vec();
-        all_tokens.push(wrapped_egld_token_id.clone());
-
-        let gas_per_deploy = self.blockchain().get_gas_left() / 3;
-
-        // eGLD ESDT swap deploy
-
-        let opt_egld_esdt_swap_address = self
-            .setup_egld_esdt_swap_proxy()
-            .init(wrapped_egld_token_id)
-            .with_gas_limit(gas_per_deploy)
-            .deploy_contract(&egld_esdt_swap_code, CodeMetadata::UPGRADEABLE);
-
-        let egld_esdt_swap_address =
-            opt_egld_esdt_swap_address.ok_or("EgldEsdtSwap deploy failed")?;
-        self.egld_esdt_swap_address().set(&egld_esdt_swap_address);
+        let gas_per_deploy = self.blockchain().get_gas_left() / 2;
 
         // Multi-transfer ESDT deploy
 
@@ -87,7 +69,6 @@ pub trait SetupModule:
             .init(
                 price_aggregator_contract_address.clone(),
                 multi_transfer_esdt_eth_tx_gas_limit,
-                all_tokens.clone().into(),
             )
             .with_gas_limit(gas_per_deploy)
             .deploy_contract(&multi_transfer_esdt_code, CodeMetadata::UPGRADEABLE);
@@ -104,7 +85,6 @@ pub trait SetupModule:
             .init(
                 price_aggregator_contract_address,
                 esdt_safe_eth_tx_gas_limit,
-                all_tokens.into(),
             )
             .with_gas_limit(gas_per_deploy)
             .deploy_contract(&esdt_safe_code, CodeMetadata::UPGRADEABLE);

@@ -14,19 +14,9 @@ pub trait MultiTransferEsdt:
         &self,
         fee_estimator_contract_address: Address,
         eth_tx_gas_limit: Self::BigUint,
-        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
-
-        for token in token_whitelist.into_vec() {
-            self.require_valid_token_id(&token)?;
-
-            let token_ticker = self.ticker_from_token_id(&token);
-            self.token_ticker(&token).set(&token_ticker);
-
-            self.token_whitelist().insert(token);
-        }
 
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 

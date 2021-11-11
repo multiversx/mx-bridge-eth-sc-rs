@@ -108,10 +108,6 @@ pub trait StorageModule {
 
     // SC addresses
 
-    #[view(getEgldEsdtSwapAddress)]
-    #[storage_mapper("egldEsdtSwapAddress")]
-    fn egld_esdt_swap_address(&self) -> SingleValueMapper<Self::Storage, Address>;
-
     #[view(getEsdtSafeAddress)]
     #[storage_mapper("esdtSafeAddress")]
     fn esdt_safe_address(&self) -> SingleValueMapper<Self::Storage, Address>;

@@ -47,10 +47,30 @@
                 "value": "0",
                 "arguments": [
                     "sc:price_aggregator",
-                    "150,000",
-                    "str:BRIDGE-123456"
+                    "150,000"
                 ],
                 "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-token-1",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "str:BRIDGE-123456"
+                ],
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
