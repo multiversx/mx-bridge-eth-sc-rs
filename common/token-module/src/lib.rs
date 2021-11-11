@@ -43,7 +43,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
-        #[var_args] opt_default_price_per_gwei: OptionalArg<Self::BigUint>,
+        #[var_args] opt_default_price_per_gas_unit: OptionalArg<Self::BigUint>,
     ) -> SCResult<()> {
         self.require_valid_token_id(&token_id)?;
 
@@ -53,9 +53,9 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         };
         self.token_ticker(&token_id).set(&ticker);
 
-        if let Some(default_price_per_gwei) = opt_default_price_per_gwei.into_option() {
-            self.default_price_per_gwei(&token_id)
-                .set(&default_price_per_gwei);
+        if let Some(default_price_per_gas_unit) = opt_default_price_per_gas_unit.into_option() {
+            self.default_price_per_gas_unit(&token_id)
+                .set(&default_price_per_gas_unit);
         }
 
         let _ = self.token_whitelist().insert(token_id);
@@ -67,7 +67,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[endpoint(removeTokenFromWhitelist)]
     fn remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
         self.token_ticker(&token_id).clear();
-        self.default_price_per_gwei(&token_id).clear();
+        self.default_price_per_gas_unit(&token_id).clear();
 
         let _ = self.token_whitelist().remove(&token_id);
     }

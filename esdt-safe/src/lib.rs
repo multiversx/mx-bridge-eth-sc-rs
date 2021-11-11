@@ -19,20 +19,10 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         &self,
         fee_estimator_contract_address: Address,
         eth_tx_gas_limit: Self::BigUint,
-        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
-
-        for token in token_whitelist.into_vec() {
-            self.require_valid_token_id(&token)?;
-
-            let token_ticker = self.ticker_from_token_id(&token);
-            self.token_ticker(&token).set(&token_ticker);
-
-            let _ = self.token_whitelist().insert(token);
-        }
 
         self.max_tx_batch_size()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
