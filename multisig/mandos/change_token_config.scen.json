@@ -60,7 +60,7 @@
                 "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "changeDefaultPricePerGwei",
+                "function": "changeDefaultPricePerGasUnit",
                 "arguments": [
                     "str:ETH-123456",
                     "100"

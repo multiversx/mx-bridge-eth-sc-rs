@@ -260,7 +260,7 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(changeDefaultPricePerGwei)]
+    #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(
         &self,
         token_id: TokenIdentifier,
