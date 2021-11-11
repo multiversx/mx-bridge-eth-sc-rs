@@ -25,6 +25,9 @@ pub mod esdt_safe_proxy {
         #[endpoint(setFeeEstimatorContractAddress)]
         fn set_fee_estimator_contract_address(&self, new_address: Address);
 
+        #[endpoint(setEthTxGasLimit)]
+        fn set_eth_tx_gas_limit(&self, new_limit: Self::BigUint);
+
         #[endpoint(setDefaultPricePerGwei)]
         fn set_default_price_per_gas_unit(
             &self,
@@ -81,6 +84,9 @@ pub mod multi_transfer_esdt_proxy {
 
         #[endpoint(setFeeEstimatorContractAddress)]
         fn set_fee_estimator_contract_address(&self, new_address: Address);
+
+        #[endpoint(setEthTxGasLimit)]
+        fn set_eth_tx_gas_limit(&self, new_limit: Self::BigUint);
 
         #[endpoint(setDefaultPricePerGwei)]
         fn set_default_price_per_gas_unit(

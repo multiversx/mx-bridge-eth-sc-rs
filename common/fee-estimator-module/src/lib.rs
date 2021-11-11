@@ -14,6 +14,12 @@ pub trait FeeEstimatorModule {
     }
 
     #[only_owner]
+    #[endpoint(setEthTxGasLimit)]
+    fn set_eth_tx_gas_limit(&self, new_limit: Self::BigUint) {
+        self.eth_tx_gas_limit().set(&new_limit);
+    }
+
+    #[only_owner]
     #[endpoint(setDefaultPricePerGwei)]
     fn set_default_price_per_gas_unit(
         &self,
