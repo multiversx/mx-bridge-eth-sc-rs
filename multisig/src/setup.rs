@@ -276,13 +276,13 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeDefaultPricePerGwei)]
-    fn change_default_price_per_gwei(&self, token_id: TokenIdentifier, new_value: Self::BigUint) {
+    fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: Self::BigUint) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_default_price_per_gwei(token_id.clone(), new_value.clone())
+            .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
 
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .set_default_price_per_gwei(token_id, new_value)
+            .set_default_price_per_gas_unit(token_id, new_value)
             .execute_on_dest_context();
     }
 
