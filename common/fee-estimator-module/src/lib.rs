@@ -84,8 +84,8 @@ pub trait FeeEstimatorModule {
     #[storage_mapper("feeEstimatorContractAddress")]
     fn fee_estimator_contract_address(&self) -> SingleValueMapper<Self::Storage, Address>;
 
-    #[view(getDefaultPricePerGwei)]
-    #[storage_mapper("defaultPricePerGwei")]
+    #[view(getDefaultPricePerGasUnit)]
+    #[storage_mapper("defaultPricePerGasUnit")]
     fn default_price_per_gas_unit(
         &self,
         token_id: &TokenIdentifier,

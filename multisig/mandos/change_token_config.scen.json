@@ -84,7 +84,7 @@
                     "balance": "0",
                     "esdt": "*",
                     "storage": {
-                        "str:defaultPricePerGwei|nested:str:ETH-123456": "100",
+                        "str:defaultPricePerGasUnit|nested:str:ETH-123456": "100",
                         "+": ""
                     },
                     "code": "*"
@@ -94,7 +94,7 @@
                     "balance": "0",
                     "esdt": "*",
                     "storage": {
-                        "str:defaultPricePerGwei|nested:str:ETH-123456": "100",
+                        "str:defaultPricePerGasUnit|nested:str:ETH-123456": "100",
                         "+": ""
                     },
                     "code": "*"
