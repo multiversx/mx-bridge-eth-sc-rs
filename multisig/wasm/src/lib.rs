@@ -10,13 +10,12 @@ elrond_wasm_node::wasm_endpoints! {
         init
         addBoardMember
         addMapping
-        changeDefaultPricePerGasUnit
-        changeElrondToEthGasLimit
-        changeEthToElrondGasLimit
+        changeDefaultPricePerGwei
         changeFeeEstimatorContractAddress
         changeQuorum
         changeTokenTicker
         clearMapping
+        deployChildContracts
         distributeFeesFromChildContracts
         esdtSafeAddTokenToWhitelist
         esdtSafeRemoveTokenFromWhitelist

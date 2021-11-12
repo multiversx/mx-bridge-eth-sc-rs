@@ -17,8 +17,7 @@ elrond_wasm_node::wasm_endpoints! {
         getEthTxGasLimit
         getFeeEstimatorContractAddress
         removeTokenFromWhitelist
-        setDefaultPricePerGasUnit
-        setEthTxGasLimit
+        setDefaultPricePerGwei
         setFeeEstimatorContractAddress
         setTokenTicker
     )

@@ -27,7 +27,7 @@ fn deploy_child_contracts(
     esdt_safe_eth_tx_gas_limit: BigUint,
     multi_transfer_esdt_eth_tx_gas_limit: BigUint,
     wrapped_egld_token_id: TokenIdentifier,
-    #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
+    #[var_args] token_whitelist: ManagedVarArgs<TokenIdentifier>,
 )
 ```
 

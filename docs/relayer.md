@@ -41,7 +41,7 @@ Once the transaction has been executed, a `SetCurrentTransactionBatchStatus` act
 fn propose_esdt_safe_set_current_transaction_batch_status(
     &self,
     esdt_safe_batch_id: usize,
-    #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
+    #[var_args] tx_batch_status: ManagedVarArgs<TransactionStatus>,
 ) -> SCResult<usize>
 ```
 
@@ -70,7 +70,7 @@ The endpoint returns the assigned Action ID. Other relayers can get this ID by u
 fn get_action_id_for_set_current_transaction_batch_status(
     &self,
     esdt_safe_batch_id: usize,
-    #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
+    #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
 ) -> usize
 ```
 

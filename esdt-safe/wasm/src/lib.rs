@@ -20,8 +20,7 @@ elrond_wasm_node::wasm_endpoints! {
         getFeeEstimatorContractAddress
         getRefundAmounts
         removeTokenFromWhitelist
-        setDefaultPricePerGasUnit
-        setEthTxGasLimit
+        setDefaultPricePerGwei
         setFeeEstimatorContractAddress
         setMaxTxBatchBlockDuration
         setMaxTxBatchSize

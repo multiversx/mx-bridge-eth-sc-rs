@@ -12,9 +12,64 @@ pub trait SetupModule:
     + crate::storage::StorageModule
     + crate::util::UtilModule
 {
-    /*
-    TODO: Use upgrade from source through proxy after upgrade
-    */
+
+    #[only_owner]
+    #[endpoint(deployChildContracts)]
+    fn deploy_child_contracts(
+        &self,
+        multi_transfer_esdt_code: ManagedBuffer,
+        esdt_safe_code: ManagedBuffer,
+        price_aggregator_contract_address: ManagedAddress,
+        esdt_safe_eth_tx_gas_limit: BigUint,
+        multi_transfer_esdt_eth_tx_gas_limit: BigUint,
+    ) -> SCResult<()> {
+        // since contracts can either be all deployed or none,
+        // it's sufficient to check only for one of them
+        require!(
+            self.esdt_safe_address().is_empty(),
+            "This function was called already."
+        );
+
+        let gas_per_deploy = self.blockchain().get_gas_left() / 2;
+
+        // Multi-transfer ESDT deploy
+
+        let (multi_transfer_esdt_address, _) = self
+            .setup_multi_transfer_esdt_proxy(ManagedAddress::zero())
+            .init(
+                price_aggregator_contract_address.clone(),
+                multi_transfer_esdt_eth_tx_gas_limit,
+            )
+            .with_gas_limit(gas_per_deploy)
+            .deploy_contract(&multi_transfer_esdt_code, CodeMetadata::UPGRADEABLE);
+
+        self.multi_transfer_esdt_address()
+            .set(&multi_transfer_esdt_address);
+
+        // ESDT Safe deploy
+
+        let (esdt_safe_address, _) = self
+            .setup_esdt_safe_proxy(ManagedAddress::zero())
+            .init(
+                price_aggregator_contract_address,
+                esdt_safe_eth_tx_gas_limit,
+            )
+            .with_gas_limit(gas_per_deploy)
+            .deploy_contract(&esdt_safe_code, CodeMetadata::UPGRADEABLE);
+
+        self.esdt_safe_address().set(&esdt_safe_address);
+
+        // is set only so we don't have to check for "empty" on the very first call
+        // trying to deserialize a tuple from an empty storage entry would crash
+        self.statuses_after_execution()
+            .set(&crate::storage::StatusesAfterExecution {
+                block_executed: u64::MAX,
+                batch_id: u64::MAX,
+                statuses: ManagedVec::new(),
+            });
+
+        Ok(())
+    }
 
     #[only_owner]
     #[endpoint]
@@ -153,23 +208,7 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(changeElrondToEthGasLimit)]
-    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .set_eth_tx_gas_limit(new_gas_limit)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
-    #[endpoint(changeEthToElrondGasLimit)]
-    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: BigUint) {
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .set_eth_tx_gas_limit(new_gas_limit)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
-    #[endpoint(changeDefaultPricePerGasUnit)]
+    #[endpoint(changeDefaultPricePerGwei)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())

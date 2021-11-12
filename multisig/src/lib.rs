@@ -36,8 +36,6 @@ pub trait Multisig:
     #[init]
     fn init(
         &self,
-        esdt_safe_sc_address: ManagedAddress,
-        multi_transfer_sc_address: ManagedAddress,
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
@@ -66,32 +64,10 @@ pub trait Multisig:
         self.required_stake_amount().set(&required_stake);
         self.slash_amount().set(&slash_amount);
 
-        require!(
-            self.blockchain().is_smart_contract(&esdt_safe_sc_address),
-            "Esdt Safe address is not a Smart Contract address"
-        );
-        self.esdt_safe_address().set(&esdt_safe_sc_address);
-
-        require!(
-            self.blockchain()
-                .is_smart_contract(&multi_transfer_sc_address),
-            "Multi Transfer address is not a Smart Contract address"
-        );
-        self.multi_transfer_esdt_address()
-            .set(&multi_transfer_sc_address);
-
-        // is set only so we don't have to check for "empty" on the very first call
-        // trying to deserialize a tuple from an empty storage entry would crash
-        self.statuses_after_execution()
-            .set_if_empty(&crate::storage::StatusesAfterExecution {
-                block_executed: u64::MAX,
-                batch_id: u64::MAX,
-                statuses: ManagedVec::new(),
-            });
-
         Ok(())
     }
 
+    
     #[only_owner]
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
@@ -228,6 +204,8 @@ pub trait Multisig:
         batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> SCResult<usize> {
+        self.require_multi_transfer_esdt_deployed()?;
+
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
         require!(
