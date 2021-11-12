@@ -8,7 +8,7 @@ mod user_role;
 use storage::StatusesAfterExecution;
 
 use action::Action;
-use contract_proxies::*;
+use token_module::AddressPercentagePair;
 use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
@@ -17,6 +17,8 @@ mod multisig_general;
 mod setup;
 mod storage;
 mod util;
+
+use token_module::ProxyTrait as _;
 
 pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 
@@ -441,11 +443,11 @@ pub trait Multisig:
     // proxies
 
     #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe_proxy::Proxy<Self::Api>;
+    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
 
     #[proxy]
     fn multi_transfer_esdt_proxy(
         &self,
         sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt_proxy::Proxy<Self::Api>;
+    ) -> multi_transfer_esdt::Proxy<Self::Api>;
 }

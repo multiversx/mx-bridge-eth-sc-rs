@@ -1,8 +1,10 @@
 elrond_wasm::imports!();
 
 use crate::user_role::UserRole;
-use contract_proxies::*;
 use eth_address::EthAddress;
+
+use fee_estimator_module::ProxyTrait as _;
+use token_module::ProxyTrait as _;
 
 #[elrond_wasm::module]
 pub trait SetupModule:
@@ -249,14 +251,11 @@ pub trait SetupModule:
     }
 
     #[proxy]
-    fn setup_esdt_safe_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> esdt_safe_proxy::Proxy<Self::Api>;
+    fn setup_esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
 
     #[proxy]
     fn setup_multi_transfer_esdt_proxy(
         &self,
         sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt_proxy::Proxy<Self::Api>;
+    ) -> multi_transfer_esdt::Proxy<Self::Api>;
 }
