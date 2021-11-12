@@ -25,7 +25,7 @@ pub type TxAsMultiResult<M> = MultiResult6<
     BigUint<M>,
 >;
 
-#[derive(TopEncode, TopDecode, TypeAbi, ManagedVecItem)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct SingleTransferTuple<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub token_id: TokenIdentifier<M>,

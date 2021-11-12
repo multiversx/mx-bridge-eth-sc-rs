@@ -19,11 +19,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         require!(caller_role.can_sign(), "only board members can sign");
         require!(self.has_enough_stake(&caller_address), "not enough stake");
 
-        self.action_signer_ids(action_id).update(|signer_ids| {
-            if !signer_ids.contains(&caller_id) {
-                signer_ids.push(caller_id);
-            }
-        });
+        let _ = self.action_signer_ids(action_id).insert(caller_id);
 
         Ok(())
     }
@@ -43,21 +39,12 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         require!(caller_role.can_sign(), "only board members can un-sign");
         require!(self.has_enough_stake(&caller_address), "not enough stake");
 
-        self.action_signer_ids(action_id).update(|signer_ids| {
-            if let Some(signer_pos) = signer_ids
-                .iter()
-                .position(|&signer_id| signer_id == caller_id)
-            {
-                // since we don't care about the order,
-                // it is ok to call swap_remove, which is O(1)
-                signer_ids.swap_remove(signer_pos);
-            }
-        });
+        let _ = self.action_signer_ids(action_id).swap_remove(&caller_id);
 
         Ok(())
     }
 
-    fn propose_action(&self, action: Action<BigUint>) -> SCResult<usize> {
+    fn propose_action(&self, action: Action<Self::Api>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
@@ -73,9 +60,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
 
         let action_id = self.action_mapper().push(&action);
         if caller_role.can_sign() {
-            // also sign
-            // since the action is newly created, the caller can be the only signer
-            self.action_signer_ids(action_id).set(&[caller_id].to_vec());
+            let _ = self.action_signer_ids(action_id).insert(caller_id);
         }
 
         Ok(action_id)

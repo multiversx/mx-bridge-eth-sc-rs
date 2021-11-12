@@ -5,7 +5,7 @@ elrond_wasm::derive_imports!();
 
 pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem)]
+#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub percentage: u32,

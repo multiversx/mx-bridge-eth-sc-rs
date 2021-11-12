@@ -2,6 +2,8 @@
 
 elrond_wasm::imports!();
 
+pub use token_module::AddressPercentagePair;
+
 pub mod egld_esdt_swap_proxy {
     elrond_wasm::imports!();
 

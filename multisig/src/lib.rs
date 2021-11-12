@@ -18,7 +18,7 @@ mod setup;
 mod storage;
 mod util;
 
-pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
+pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 
 elrond_wasm::imports!();
 
@@ -31,16 +31,75 @@ pub trait Multisig:
     + storage::StorageModule
     + util::UtilModule
 {
+    #[init]
+    fn init(
+        &self,
+        esdt_safe_sc_address: ManagedAddress,
+        multi_transfer_sc_address: ManagedAddress,
+        required_stake: BigUint,
+        slash_amount: BigUint,
+        quorum: usize,
+        #[var_args] board: ManagedVarArgs<ManagedAddress>,
+    ) -> SCResult<()> {
+        self.quorum().set(&quorum);
+
+        let mut duplicates = false;
+        let board_len = board.len();
+        self.user_mapper()
+            .get_or_create_users(board.into_iter(), |user_id, new_user| {
+                if !new_user {
+                    duplicates = true;
+                }
+                self.set_user_id_to_role(user_id, UserRole::BoardMember);
+            });
+        require!(!duplicates, "duplicate board member");
+
+        self.num_board_members()
+            .update(|nr_board_members| *nr_board_members += board_len);
+
+        require!(
+            slash_amount <= required_stake,
+            "slash amount must be less than or equal to required stake"
+        );
+        self.required_stake_amount().set(&required_stake);
+        self.slash_amount().set(&slash_amount);
+
+        require!(
+            self.blockchain().is_smart_contract(&esdt_safe_sc_address),
+            "Esdt Safe address is not a Smart Contract address"
+        );
+        self.esdt_safe_address().set(&esdt_safe_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&multi_transfer_sc_address),
+            "Multi Transfer address is not a Smart Contract address"
+        );
+        self.multi_transfer_esdt_address()
+            .set(&multi_transfer_sc_address);
+
+        // is set only so we don't have to check for "empty" on the very first call
+        // trying to deserialize a tuple from an empty storage entry would crash
+        self.statuses_after_execution()
+            .set_if_empty(&crate::storage::StatusesAfterExecution {
+                block_executed: u64::MAX,
+                batch_id: u64::MAX,
+                statuses: ManagedVec::new(),
+            });
+
+        Ok(())
+    }
+
     #[only_owner]
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
         &self,
-        #[var_args] dest_address_percentage_pairs: VarArgs<MultiArg2<ManagedAddress, u64>>,
+        #[var_args] dest_address_percentage_pairs: ManagedVarArgs<MultiArg2<ManagedAddress, u32>>,
     ) -> SCResult<()> {
-        let mut args = Vec::new();
+        let mut args = ManagedVec::new();
         let mut total_percentage = 0;
 
-        for pair in dest_address_percentage_pairs.into_vec() {
+        for pair in dest_address_percentage_pairs {
             let (dest_address, percentage) = pair.into_tuple();
 
             require!(
@@ -49,7 +108,10 @@ pub trait Multisig:
             );
 
             total_percentage += percentage;
-            args.push((dest_address, percentage));
+            args.push(AddressPercentagePair {
+                address: dest_address,
+                percentage,
+            });
         }
 
         require!(
@@ -114,7 +176,7 @@ pub trait Multisig:
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
+        #[var_args] tx_batch_status: ManagedVarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
         let call_result = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
@@ -125,9 +187,11 @@ pub trait Multisig:
             .ok_or("Current batch is empty")?
             .into_tuple();
 
+        let statuses_vec = tx_batch_status.to_vec();
+
         require!(
             self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-                .get(&tx_batch_status.0)
+                .get(&statuses_vec)
                 == None,
             "Action already proposed"
         );
@@ -145,11 +209,11 @@ pub trait Multisig:
 
         let action_id = self.propose_action(Action::SetCurrentTransactionBatchStatus {
             esdt_safe_batch_id,
-            tx_batch_status: tx_batch_status.0.clone(),
+            tx_batch_status: statuses_vec.clone(),
         })?;
 
         self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-            .insert(tx_batch_status.into_vec(), action_id);
+            .insert(statuses_vec, action_id);
 
         Ok(action_id)
     }
@@ -212,7 +276,7 @@ pub trait Multisig:
     }
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<BigUint>> {
+    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
         let _ = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_current_tx_batch()
@@ -272,7 +336,7 @@ pub trait Multisig:
     fn get_statuses_after_execution(
         &self,
         batch_id: u64,
-    ) -> OptionalResult<MultiResult2<bool, MultiResultVec<TransactionStatus>>> {
+    ) -> OptionalResult<MultiResult2<bool, ManagedMultiResultVec<TransactionStatus>>> {
         let statuses_after_execution = self.statuses_after_execution().get();
         if statuses_after_execution.batch_id == batch_id {
             let current_block = self.blockchain().get_block_nonce();
@@ -289,7 +353,7 @@ pub trait Multisig:
     fn was_set_current_transaction_batch_status_action_proposed(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
+        #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
     ) -> bool {
         self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
             esdt_safe_batch_id,
@@ -301,10 +365,10 @@ pub trait Multisig:
     fn get_action_id_for_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
+        #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
     ) -> usize {
         self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-            .get(&expected_tx_batch_status.0)
+            .get(&expected_tx_batch_status.to_vec())
             .unwrap_or(0)
     }
 
@@ -336,7 +400,7 @@ pub trait Multisig:
                 self.esdt_safe_proxy(self.esdt_safe_address().get())
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
-                        VarArgs::from(tx_batch_status),
+                        ManagedVarArgs::from(tx_batch_status),
                     )
                     .execute_on_dest_context();
             }
@@ -368,7 +432,7 @@ pub trait Multisig:
                     .set(&StatusesAfterExecution {
                         block_executed: self.blockchain().get_block_nonce(),
                         batch_id,
-                        statuses: statuses.into_vec(),
+                        statuses: statuses.to_vec(),
                     });
             }
             _ => {}
@@ -378,17 +442,11 @@ pub trait Multisig:
     // proxies
 
     #[proxy]
-    fn egld_esdt_swap_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> egld_esdt_swap_proxy::Proxy<Self::SendApi>;
-
-    #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe_proxy::Proxy<Self::SendApi>;
+    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe_proxy::Proxy<Self::Api>;
 
     #[proxy]
     fn multi_transfer_esdt_proxy(
         &self,
         sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt_proxy::Proxy<Self::SendApi>;
+    ) -> multi_transfer_esdt_proxy::Proxy<Self::Api>;
 }

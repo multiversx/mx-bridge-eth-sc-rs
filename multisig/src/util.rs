@@ -15,8 +15,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         if user_id == 0 {
             false
         } else {
-            let signer_ids = self.action_signer_ids(action_id).get();
-            signer_ids.contains(&user_id)
+            self.action_signer_ids(action_id).contains(&user_id)
         }
     }
 
@@ -36,41 +35,35 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     /// Lists all users that can sign actions.
     #[view(getAllBoardMembers)]
-    fn get_all_board_members(&self) -> MultiResultVec<ManagedAddress> {
+    fn get_all_board_members(&self) -> ManagedMultiResultVec<ManagedAddress> {
         self.get_all_users_with_role(UserRole::BoardMember)
     }
 
     #[view(getAllStakedRelayers)]
-    fn get_all_staked_relayers(&self) -> MultiResultVec<ManagedAddress> {
-        let mut relayers = self.get_all_board_members().into_vec();
-        relayers.retain(|relayer| self.has_enough_stake(relayer));
+    fn get_all_staked_relayers(&self) -> ManagedMultiResultVec<ManagedAddress> {
+        let relayers = self.get_all_board_members().to_vec();
+        let mut staked_relayers = ManagedVec::new();
 
-        relayers.into()
+        for relayer in &relayers {
+            if self.has_enough_stake(&relayer) {
+                staked_relayers.push(relayer);
+            }
+        }
+
+        staked_relayers.into()
     }
 
     /// Lists all proposers that are not board members.
     #[view(getAllProposers)]
-    fn get_all_proposers(&self) -> MultiResultVec<ManagedAddress> {
+    fn get_all_proposers(&self) -> ManagedMultiResultVec<ManagedAddress> {
         self.get_all_users_with_role(UserRole::Proposer)
-    }
-
-    /// Gets addresses of all users who signed an action.
-    /// Does not check if those users are still board members or not,
-    /// so the result may contain invalid signers.
-    #[view(getActionSigners)]
-    fn get_action_signers(&self, action_id: usize) -> Vec<ManagedAddress> {
-        self.action_signer_ids(action_id)
-            .get()
-            .iter()
-            .map(|signer_id| self.user_mapper().get_user_address_unchecked(*signer_id))
-            .collect()
     }
 
     /// Gets addresses of all users who signed an action and are still board members.
     /// All these signatures are currently valid.
     #[view(getActionSignerCount)]
     fn get_action_signer_count(&self, action_id: usize) -> usize {
-        self.action_signer_ids(action_id).get().len()
+        self.action_signer_ids(action_id).len()
     }
 
     /// It is possible for board members to lose their role.
@@ -80,11 +73,10 @@ pub trait UtilModule: crate::storage::StorageModule {
     /// It also makes it easy to check before performing an action.
     #[view(getActionValidSignerCount)]
     fn get_action_valid_signer_count(&self, action_id: usize) -> usize {
-        let signer_ids = self.action_signer_ids(action_id).get();
-        signer_ids
+        self.action_signer_ids(action_id)
             .iter()
             .filter(|signer_id| {
-                let signer_role = self.get_user_id_to_role(**signer_id);
+                let signer_role = self.get_user_id_to_role(*signer_id);
                 signer_role.can_sign()
             })
             .count()
@@ -107,12 +99,12 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     /// Serialized action data of an action with index.
     #[view(getActionData)]
-    fn get_action_data(&self, action_id: usize) -> Action<BigUint> {
+    fn get_action_data(&self, action_id: usize) -> Action<Self::Api> {
         self.action_mapper().get(action_id)
     }
 
-    fn get_all_users_with_role(&self, role: UserRole) -> MultiResultVec<ManagedAddress> {
-        let mut result = Vec::new();
+    fn get_all_users_with_role(&self, role: UserRole) -> ManagedMultiResultVec<ManagedAddress> {
+        let mut result = ManagedVec::new();
         let num_users = self.user_mapper().get_user_count();
         for user_id in 1..=num_users {
             if self.get_user_id_to_role(user_id) == role {
@@ -134,10 +126,16 @@ pub trait UtilModule: crate::storage::StorageModule {
     fn transfers_multiarg_to_tuples_vec(
         &self,
         transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
-    ) -> Vec<SingleTransferTuple<BigUint>> {
-        let mut transfers_as_tuples = Vec::new();
+    ) -> ManagedVec<SingleTransferTuple<Self::Api>> {
+        let mut transfers_as_tuples = ManagedVec::new();
         for transfer in transfers.into_vec() {
-            transfers_as_tuples.push(transfer.into_tuple());
+            let (address, token_id, amount) = transfer.into_tuple();
+
+            transfers_as_tuples.push(SingleTransferTuple {
+                address,
+                token_id,
+                amount,
+            });
         }
 
         transfers_as_tuples

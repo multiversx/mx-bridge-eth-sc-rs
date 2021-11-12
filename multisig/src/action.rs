@@ -1,5 +1,5 @@
 use elrond_wasm::api::ManagedTypeApi;
-use elrond_wasm::types::{ManagedAddress, Vec};
+use elrond_wasm::types::{ManagedAddress, ManagedVec};
 use transaction::{SingleTransferTuple, TransactionStatus};
 
 elrond_wasm::derive_imports!();
@@ -16,11 +16,11 @@ pub enum Action<M: ManagedTypeApi> {
     _ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
         esdt_safe_batch_id: u64,
-        tx_batch_status: Vec<TransactionStatus>,
+        tx_batch_status: ManagedVec<M, TransactionStatus>,
     },
     BatchTransferEsdtToken {
         batch_id: u64,
-        transfers: Vec<SingleTransferTuple<M>>,
+        transfers: ManagedVec<M, SingleTransferTuple<M>>,
     },
 }
 

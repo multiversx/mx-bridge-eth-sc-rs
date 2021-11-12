@@ -46,7 +46,7 @@ pub trait StorageModule {
     fn action_mapper(&self) -> VecMapper<Action<Self::Api>>;
 
     #[storage_mapper("action_signer_ids")]
-    fn action_signer_ids(&self, action_id: usize) -> SingleValueMapper<ManagedVec<usize>>;
+    fn action_signer_ids(&self, action_id: usize) -> UnorderedSetMapper<usize>;
 
     /// The required amount to stake for accepting relayer position
     #[view(getRequiredStakeAmount)]
@@ -76,7 +76,7 @@ pub trait StorageModule {
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> MapMapper<ManagedVec<SingleTransferTuple<BigUint>>, usize>;
+    ) -> MapMapper<ManagedVec<SingleTransferTuple<Self::Api>>, usize>;
 
     #[storage_mapper("statusesAfterExecution")]
     fn statuses_after_execution(&self) -> SingleValueMapper<StatusesAfterExecution<Self::Api>>;
