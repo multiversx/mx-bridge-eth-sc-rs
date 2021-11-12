@@ -40,27 +40,12 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(addProposer)]
-    fn add_proposer(&self, proposer: ManagedAddress) -> SCResult<()> {
-        self.change_user_role(proposer, UserRole::Proposer);
-
-        // validation required for the scenario when a board member becomes a proposer
-        require!(
-            self.quorum().get() <= self.num_board_members().get(),
-            "quorum cannot exceed board size"
-        );
-
-        Ok(())
-    }
-
-    #[only_owner]
     #[endpoint(removeUser)]
     fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
-        let num_proposers = self.num_proposers().get();
         require!(
-            num_board_members + num_proposers > 0,
+            num_board_members > 0,
             "cannot remove all board members and proposers"
         );
         require!(
@@ -76,11 +61,10 @@ pub trait SetupModule:
     fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
         self.change_user_role(board_member.clone(), UserRole::None);
         let num_board_members = self.num_board_members().get();
-        let num_proposers = self.num_proposers().get();
 
         require!(
-            num_board_members + num_proposers > 0,
-            "cannot remove all board members and proposers"
+            num_board_members > 0,
+            "cannot remove all board members"
         );
         require!(
             self.quorum().get() <= num_board_members,

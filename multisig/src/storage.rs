@@ -36,12 +36,6 @@ pub trait StorageModule {
     #[storage_mapper("num_board_members")]
     fn num_board_members(&self) -> SingleValueMapper<usize>;
 
-    /// Denormalized proposer count.
-    /// It is kept in sync with the user list by the contract.
-    #[view(getNumProposers)]
-    #[storage_mapper("num_proposers")]
-    fn num_proposers(&self) -> SingleValueMapper<usize>;
-
     #[storage_mapper("action_data")]
     fn action_mapper(&self) -> VecMapper<Action<Self::Api>>;
 

@@ -53,12 +53,6 @@ pub trait UtilModule: crate::storage::StorageModule {
         staked_relayers.into()
     }
 
-    /// Lists all proposers that are not board members.
-    #[view(getAllProposers)]
-    fn get_all_proposers(&self) -> ManagedMultiResultVec<ManagedAddress> {
-        self.get_all_users_with_role(UserRole::Proposer)
-    }
-
     /// Gets addresses of all users who signed an action and are still board members.
     /// All these signatures are currently valid.
     #[view(getActionSignerCount)]

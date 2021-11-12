@@ -97,17 +97,5 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
                 self.num_board_members().update(|value| *value += 1);
             }
         }
-
-        // update num_proposers
-        #[allow(clippy::collapsible_else_if)]
-        if old_role == UserRole::Proposer {
-            if new_role != UserRole::Proposer {
-                self.num_proposers().update(|value| *value -= 1);
-            }
-        } else {
-            if new_role == UserRole::Proposer {
-                self.num_proposers().update(|value| *value += 1);
-            }
-        }
     }
 }

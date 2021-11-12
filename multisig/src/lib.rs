@@ -287,7 +287,6 @@ pub trait Multisig:
         OptionalResult::None
     }
 
-    #[view(isValidActionId)]
     fn is_valid_action_id(&self, action_id: usize) -> bool {
         let min_id = 1;
         let max_id = self.action_mapper().len();
