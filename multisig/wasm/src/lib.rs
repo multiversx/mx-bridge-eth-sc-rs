@@ -10,7 +10,6 @@ elrond_wasm_node::wasm_endpoints! {
         init
         addBoardMember
         addMapping
-        addProposer
         changeDefaultPricePerGasUnit
         changeElrondToEthGasLimit
         changeEthToElrondGasLimit
@@ -30,7 +29,6 @@ elrond_wasm_node::wasm_endpoints! {
         getActionSignerCount
         getActionValidSignerCount
         getAllBoardMembers
-        getAllProposers
         getAllStakedRelayers
         getAmountStaked
         getCurrentTxBatch
@@ -38,7 +36,6 @@ elrond_wasm_node::wasm_endpoints! {
         getEsdtSafeAddress
         getMultiTransferEsdtAddress
         getNumBoardMembers
-        getNumProposers
         getQuorum
         getRequiredStakeAmount
         getSlashAmount
@@ -46,7 +43,6 @@ elrond_wasm_node::wasm_endpoints! {
         getStatusesAfterExecution
         getTokenIdForErc20Address
         isPaused
-        isValidActionId
         multiTransferEsdtRemoveTokenFromWhitelist
         multiTransferEsdtaddTokenToWhitelist
         pause

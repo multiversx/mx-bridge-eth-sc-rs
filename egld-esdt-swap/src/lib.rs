@@ -7,15 +7,8 @@ const LEFTOVER_GAS: u64 = 10_000u64;
 #[elrond_wasm::contract]
 pub trait EgldEsdtSwap {
     #[init]
-    fn init(&self, wrapped_egld_token_id: TokenIdentifier) -> SCResult<()> {
-        require!(
-            wrapped_egld_token_id.is_valid_esdt_identifier(),
-            "Invalid token id"
-        );
-
+    fn init(&self, wrapped_egld_token_id: TokenIdentifier) {
         self.wrapped_egld_token_id().set(&wrapped_egld_token_id);
-
-        Ok(())
     }
 
     // endpoints

@@ -197,7 +197,7 @@ pub trait Multisig:
         );
 
         let current_batch_len = current_batch_transactions.len();
-        let status_batch_len = tx_batch_status.len();
+        let status_batch_len = statuses_vec.len();
         require!(
             current_batch_len == status_batch_len,
             "Number of statuses provided must be equal to number of transactions in current batch"

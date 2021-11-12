@@ -22,7 +22,7 @@ impl<M: ManagedTypeApi> EthAddress<M> {
 }
 
 impl<M: ManagedTypeApi> ManagedVecItem<M> for EthAddress<M> {
-    const PAYLOAD_SIZE: usize = ETH_ADDRESS_LEN;
+    const PAYLOAD_SIZE: usize = 4;
     const SKIPS_RESERIALIZATION: bool = false;
 
     fn from_byte_reader<Reader: FnMut(&mut [u8])>(api: M, reader: Reader) -> Self {

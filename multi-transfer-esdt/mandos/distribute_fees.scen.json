@@ -14,7 +14,7 @@
                 "value": "0",
                 "function": "distributeFees",
                 "arguments": [
-                    "address:owner|u64:10000"
+                    "address:owner|u32:10000"
                 ],
                 "gasLimit": "30,000,000",
                 "gasPrice": "0"
