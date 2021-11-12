@@ -198,7 +198,7 @@ pub trait Multisig:
             "Action already proposed"
         );
 
-        let current_batch_len = current_batch_transactions.len();
+        let current_batch_len = current_batch_transactions.len() / 6;
         let status_batch_len = statuses_vec.len();
         require!(
             current_batch_len == status_batch_len,
