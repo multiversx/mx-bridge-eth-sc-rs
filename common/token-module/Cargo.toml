@@ -8,7 +8,7 @@ edition = "2018"
 path = "../fee-estimator-module"
 
 [dependencies.elrond-wasm]
-version = "0.22.8"
+version = "0.22.9"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.22.8"
+version = "0.22.9"

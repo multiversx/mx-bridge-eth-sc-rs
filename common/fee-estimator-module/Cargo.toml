@@ -5,7 +5,7 @@ authors = [ "dorin-iancu <dorin.iancu@elrond.com>",]
 edition = "2018"
 
 [dependencies.elrond-wasm]
-version = "0.22.8"
+version = "0.22.9"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.22.8"
+version = "0.22.9"

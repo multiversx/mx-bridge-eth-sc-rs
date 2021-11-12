@@ -12,7 +12,6 @@ pub trait SetupModule:
 {
     /*
     TODO: Use upgrade from source through proxy after upgrade
-    It's not available in 0.22.8
     */
 
     #[only_owner]
