@@ -11,4 +11,4 @@ path = "src/lib.rs"
 path = "../eth-address"
 
 [dependencies.elrond-wasm]
-version = "0.22.9"
+version = "0.22.10"

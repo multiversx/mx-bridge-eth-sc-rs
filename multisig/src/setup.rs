@@ -61,10 +61,7 @@ pub trait SetupModule:
         self.change_user_role(board_member.clone(), UserRole::None);
         let num_board_members = self.num_board_members().get();
 
-        require!(
-            num_board_members > 0,
-            "cannot remove all board members"
-        );
+        require!(num_board_members > 0, "cannot remove all board members");
         require!(
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"

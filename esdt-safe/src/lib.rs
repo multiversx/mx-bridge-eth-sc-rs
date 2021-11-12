@@ -182,32 +182,29 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     // views
 
-    // TODO: Remove manual finish after framework upgrade
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
         if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
-            EndpointResult::finish(&first_batch_id, self.raw_vm_api());
-
-            for tx in &first_batch {
-                EndpointResult::finish(&tx, self.raw_vm_api());
+            let mut result_vec = ManagedMultiResultVec::new();
+            for tx in first_batch.iter() {
+                result_vec.push(tx.into_multiresult());
             }
 
-            // return OptionalResult::Some((first_batch_id, result_vec.into()).into());
+            return OptionalResult::Some((first_batch_id, result_vec).into());
         }
 
         OptionalResult::None
     }
 
-    /* TODO: Fix after framework upgrade
     #[view(getRefundAmounts)]
     fn get_refund_amounts(
         &self,
         address: ManagedAddress,
     ) -> ManagedMultiResultVec<MultiResult2<TokenIdentifier, BigUint>> {
-        let mut refund_amounts = ManagedVec::new();
+        let mut refund_amounts = ManagedMultiResultVec::new();
         for token_id in self.token_whitelist().iter() {
             let amount = self.refund_amount(&address, &token_id).get();
             if amount > 0u32 {
@@ -215,9 +212,8 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             }
         }
 
-        refund_amounts.into()
+        refund_amounts
     }
-    */
 
     // private
 
