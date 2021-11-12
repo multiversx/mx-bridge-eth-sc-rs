@@ -119,10 +119,10 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     fn transfers_multiarg_to_tuples_vec(
         &self,
-        transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> ManagedVec<SingleTransferTuple<Self::Api>> {
         let mut transfers_as_tuples = ManagedVec::new();
-        for transfer in transfers.into_vec() {
+        for transfer in transfers {
             let (address, token_id, amount) = transfer.into_tuple();
 
             transfers_as_tuples.push(SingleTransferTuple {

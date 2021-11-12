@@ -224,7 +224,7 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> SCResult<usize> {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
@@ -311,7 +311,7 @@ pub trait Multisig:
     fn was_transfer_action_proposed(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
 
@@ -322,7 +322,7 @@ pub trait Multisig:
     fn get_action_id_for_transfer_batch(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 

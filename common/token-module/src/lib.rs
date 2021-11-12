@@ -97,6 +97,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         Ok(())
     }
 
+    // TODO: managed
     fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {
         let roles = self.blockchain().get_esdt_local_roles(token_id);
 
