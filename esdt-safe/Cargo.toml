@@ -21,7 +21,7 @@ path = "../common/fee-estimator-module"
 path = "../common/token-module"
 
 [dependencies.elrond-wasm]
-version = "0.22.6"
+version = "0.22.8"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.22.6"
+version = "0.22.8"
