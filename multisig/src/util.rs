@@ -5,12 +5,12 @@ use transaction::SingleTransferTuple;
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[elrond_wasm_derive::module]
+#[elrond_wasm::module]
 pub trait UtilModule: crate::storage::StorageModule {
     /// Returns `true` (`1`) if the user has signed the action.
     /// Does not check whether or not the user is still a board member and the signature valid.
     #[view]
-    fn signed(&self, user: Address, action_id: usize) -> bool {
+    fn signed(&self, user: ManagedAddress, action_id: usize) -> bool {
         let user_id = self.user_mapper().get_user_id(&user);
         if user_id == 0 {
             false
@@ -25,7 +25,7 @@ pub trait UtilModule: crate::storage::StorageModule {
     /// `1` = can propose, but not sign,
     /// `2` = can propose and sign.
     #[view(userRole)]
-    fn user_role(&self, user: &Address) -> UserRole {
+    fn user_role(&self, user: &ManagedAddress) -> UserRole {
         let user_id = self.user_mapper().get_user_id(user);
         if user_id == 0 {
             UserRole::None
@@ -36,12 +36,12 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     /// Lists all users that can sign actions.
     #[view(getAllBoardMembers)]
-    fn get_all_board_members(&self) -> MultiResultVec<Address> {
+    fn get_all_board_members(&self) -> MultiResultVec<ManagedAddress> {
         self.get_all_users_with_role(UserRole::BoardMember)
     }
 
     #[view(getAllStakedRelayers)]
-    fn get_all_staked_relayers(&self) -> MultiResultVec<Address> {
+    fn get_all_staked_relayers(&self) -> MultiResultVec<ManagedAddress> {
         let mut relayers = self.get_all_board_members().into_vec();
         relayers.retain(|relayer| self.has_enough_stake(relayer));
 
@@ -50,7 +50,7 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     /// Lists all proposers that are not board members.
     #[view(getAllProposers)]
-    fn get_all_proposers(&self) -> MultiResultVec<Address> {
+    fn get_all_proposers(&self) -> MultiResultVec<ManagedAddress> {
         self.get_all_users_with_role(UserRole::Proposer)
     }
 
@@ -58,7 +58,7 @@ pub trait UtilModule: crate::storage::StorageModule {
     /// Does not check if those users are still board members or not,
     /// so the result may contain invalid signers.
     #[view(getActionSigners)]
-    fn get_action_signers(&self, action_id: usize) -> Vec<Address> {
+    fn get_action_signers(&self, action_id: usize) -> Vec<ManagedAddress> {
         self.action_signer_ids(action_id)
             .get()
             .iter()
@@ -107,11 +107,11 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     /// Serialized action data of an action with index.
     #[view(getActionData)]
-    fn get_action_data(&self, action_id: usize) -> Action<Self::BigUint> {
+    fn get_action_data(&self, action_id: usize) -> Action<BigUint> {
         self.action_mapper().get(action_id)
     }
 
-    fn get_all_users_with_role(&self, role: UserRole) -> MultiResultVec<Address> {
+    fn get_all_users_with_role(&self, role: UserRole) -> MultiResultVec<ManagedAddress> {
         let mut result = Vec::new();
         let num_users = self.user_mapper().get_user_count();
         for user_id in 1..=num_users {
@@ -124,7 +124,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         result.into()
     }
 
-    fn has_enough_stake(&self, board_member_address: &Address) -> bool {
+    fn has_enough_stake(&self, board_member_address: &ManagedAddress) -> bool {
         let required_stake = self.required_stake_amount().get();
         let amount_staked = self.amount_staked(board_member_address).get();
 
@@ -133,8 +133,8 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     fn transfers_multiarg_to_tuples_vec(
         &self,
-        transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
-    ) -> Vec<SingleTransferTuple<Self::BigUint>> {
+        transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+    ) -> Vec<SingleTransferTuple<BigUint>> {
         let mut transfers_as_tuples = Vec::new();
         for transfer in transfers.into_vec() {
             transfers_as_tuples.push(transfer.into_tuple());

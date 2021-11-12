@@ -8,13 +8,6 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[features]
-wasm-output-mode = [
-  "elrond-wasm-node",
-  "fee-estimator-module/wasm-output-mode",
-  "token-module/wasm-output-mode",
-]
-
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -28,14 +21,7 @@ path = "../common/fee-estimator-module"
 path = "../common/token-module"
 
 [dependencies.elrond-wasm]
-version = "0.18.2"
-
-[dependencies.elrond-wasm-derive]
-version = "0.18.2"
-
-[dependencies.elrond-wasm-node]
-version = "0.18.2"
-optional = true
+version = "0.22.6"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.18.2"
+version = "0.22.6"

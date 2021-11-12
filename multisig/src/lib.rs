@@ -24,7 +24,7 @@ elrond_wasm::imports!();
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
-#[elrond_wasm_derive::contract]
+#[elrond_wasm::contract]
 pub trait Multisig:
     multisig_general::MultisigGeneralModule
     + setup::SetupModule
@@ -35,7 +35,7 @@ pub trait Multisig:
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
         &self,
-        #[var_args] dest_address_percentage_pairs: VarArgs<MultiArg2<Address, u64>>,
+        #[var_args] dest_address_percentage_pairs: VarArgs<MultiArg2<ManagedAddress, u64>>,
     ) -> SCResult<()> {
         let mut args = Vec::new();
         let mut total_percentage = 0;
@@ -70,7 +70,7 @@ pub trait Multisig:
 
     #[payable("EGLD")]
     #[endpoint]
-    fn stake(&self, #[payment] payment: Self::BigUint) -> SCResult<()> {
+    fn stake(&self, #[payment] payment: BigUint) -> SCResult<()> {
         let caller = self.blockchain().get_caller();
         let caller_role = self.user_role(&caller);
         require!(
@@ -85,7 +85,7 @@ pub trait Multisig:
     }
 
     #[endpoint]
-    fn unstake(&self, amount: Self::BigUint) -> SCResult<()> {
+    fn unstake(&self, amount: BigUint) -> SCResult<()> {
         let caller = self.blockchain().get_caller();
         let amount_staked = self.amount_staked(&caller).get();
         require!(
@@ -160,7 +160,7 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+        #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> SCResult<usize> {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
@@ -212,7 +212,7 @@ pub trait Multisig:
     }
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
+    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<BigUint>> {
         let _ = self
             .esdt_safe_proxy(self.esdt_safe_address().get())
             .get_current_tx_batch()
@@ -248,7 +248,7 @@ pub trait Multisig:
     fn was_transfer_action_proposed(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+        #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
 
@@ -259,7 +259,7 @@ pub trait Multisig:
     fn get_action_id_for_transfer_batch(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+        #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
@@ -380,15 +380,15 @@ pub trait Multisig:
     #[proxy]
     fn egld_esdt_swap_proxy(
         &self,
-        sc_address: Address,
+        sc_address: ManagedAddress,
     ) -> egld_esdt_swap_proxy::Proxy<Self::SendApi>;
 
     #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe_proxy::Proxy<Self::SendApi>;
+    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe_proxy::Proxy<Self::SendApi>;
 
     #[proxy]
     fn multi_transfer_esdt_proxy(
         &self,
-        sc_address: Address,
+        sc_address: ManagedAddress,
     ) -> multi_transfer_esdt_proxy::Proxy<Self::SendApi>;
 }

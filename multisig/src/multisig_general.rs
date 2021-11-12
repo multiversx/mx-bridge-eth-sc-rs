@@ -3,7 +3,7 @@ elrond_wasm::imports!();
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[elrond_wasm_derive::module]
+#[elrond_wasm::module]
 pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::StorageModule {
     /// Used by board members to sign actions.
     #[endpoint]
@@ -57,7 +57,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         Ok(())
     }
 
-    fn propose_action(&self, action: Action<Self::BigUint>) -> SCResult<usize> {
+    fn propose_action(&self, action: Action<BigUint>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.get_user_id_to_role(caller_id);
@@ -92,7 +92,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
     /// - reactivate removed user
     /// - convert between board member and proposer
     /// Will keep the board size and proposer count in sync.
-    fn change_user_role(&self, user_address: Address, new_role: UserRole) {
+    fn change_user_role(&self, user_address: ManagedAddress, new_role: UserRole) {
         let user_id = self.user_mapper().get_or_create_user(&user_address);
         let old_role = if user_id == 0 {
             UserRole::None

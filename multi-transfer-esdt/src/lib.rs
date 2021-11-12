@@ -5,15 +5,15 @@ use transaction::{SingleTransferTuple, TransactionStatus};
 
 elrond_wasm::imports!();
 
-#[elrond_wasm_derive::contract]
+#[elrond_wasm::contract]
 pub trait MultiTransferEsdt:
     fee_estimator_module::FeeEstimatorModule + token_module::TokenModule
 {
     #[init]
     fn init(
         &self,
-        fee_estimator_contract_address: Address,
-        eth_tx_gas_limit: Self::BigUint,
+        fee_estimator_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
@@ -31,7 +31,7 @@ pub trait MultiTransferEsdt:
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
-        #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
+        #[var_args] transfers: VarArgs<SingleTransferTuple<BigUint>>,
     ) -> MultiResultVec<TransactionStatus> {
         let mut tx_statuses = Vec::new();
         let mut cached_token_ids = Vec::new();
@@ -49,7 +49,7 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let queried_fee: Self::BigUint;
+            let queried_fee: BigUint;
             let required_fee = match cached_token_ids.iter().position(|&id| id == token_id) {
                 Some(index) => &cached_prices[index],
                 None => {

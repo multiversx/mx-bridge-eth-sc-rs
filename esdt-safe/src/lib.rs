@@ -12,13 +12,13 @@ use transaction::*;
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100;
 
-#[elrond_wasm_derive::contract]
+#[elrond_wasm::contract]
 pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
     #[init]
     fn init(
         &self,
-        fee_estimator_contract_address: Address,
-        eth_tx_gas_limit: Self::BigUint,
+        fee_estimator_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
@@ -30,8 +30,9 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         // set ticker for "GWEI"
-        self.token_ticker(&GWEI_STRING.into())
-            .set(&GWEI_STRING.into());
+        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
+        self.token_ticker(&gwei_token_id)
+            .set(&gwei_token_id.as_managed_buffer());
 
         Ok(())
     }
@@ -73,7 +74,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     fn set_transaction_batch_status(
         &self,
         batch_id: u64,
-        #[var_args] tx_statuses: VarArgs<TransactionStatus>,
+        #[var_args] tx_statuses: ManagedVarArgs<TransactionStatus>,
     ) -> SCResult<()> {
         let first_batch_id = self.first_batch_id().get();
         require!(
@@ -87,8 +88,8 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             "Invalid number of statuses provided"
         );
 
-        for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.into_vec().iter()) {
-            match *tx_status {
+        for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.to_vec().iter()) {
+            match tx_status {
                 TransactionStatus::Executed => {
                     // local burn role might be removed while tx is executed
                     // tokens will remain locked forever in that case
@@ -128,15 +129,14 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     fn create_transaction(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
-        #[payment_amount] payment_amount: Self::BigUint,
-        to: EthAddress,
+        #[payment_amount] payment_amount: BigUint,
+        to: EthAddress<Self::Api>,
     ) -> SCResult<()> {
         require!(
             self.call_value().esdt_token_nonce() == 0,
             "Only fungible ESDT tokens accepted"
         );
         self.require_token_in_whitelist(&payment_token)?;
-        require!(!to.is_zero(), "Can't transfer to address zero");
 
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
@@ -183,18 +183,18 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     // views
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
+    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
         if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
-            let batch_len = first_batch.len();
-            let mut result_vec = Vec::with_capacity(batch_len);
-            for tx in first_batch {
-                result_vec.push(tx.into_multiresult());
+            EndpointResult::finish(&first_batch_id, self.raw_vm_api());
+
+            for tx in &first_batch {
+                EndpointResult::finish(&tx, self.raw_vm_api());
             }
 
-            return OptionalResult::Some((first_batch_id, result_vec.into()).into());
+            // return OptionalResult::Some((first_batch_id, result_vec.into()).into());
         }
 
         OptionalResult::None
@@ -203,8 +203,8 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     #[view(getRefundAmounts)]
     fn get_refund_amounts(
         &self,
-        address: Address,
-    ) -> MultiResultVec<MultiResult2<TokenIdentifier, Self::BigUint>> {
+        address: ManagedAddress,
+    ) -> MultiResultVec<MultiResult2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = Vec::new();
         for token_id in self.token_whitelist().iter() {
             let amount = self.refund_amount(&address, &token_id).get();
@@ -218,7 +218,7 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     // private
 
-    fn add_to_batch(&self, transaction: Transaction<Self::BigUint>) {
+    fn add_to_batch(&self, transaction: Transaction<Self::Api>) {
         let last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id).get();
 
@@ -231,18 +231,18 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     }
 
     #[allow(clippy::vec_init_then_push)]
-    fn create_new_batch(&self, transaction: Transaction<Self::BigUint>) {
+    fn create_new_batch(&self, transaction: Transaction<Self::Api>) {
         let last_batch_id = self.last_batch_id().get();
         let new_batch_id = last_batch_id + 1;
 
-        let mut new_batch = Vec::with_capacity(1);
+        let mut new_batch = ManagedVec::new();
         new_batch.push(transaction);
 
         self.pending_batches(new_batch_id).set(&new_batch);
         self.last_batch_id().set(&new_batch_id);
     }
 
-    fn is_batch_full(&self, tx_batch: &[Transaction<Self::BigUint>]) -> bool {
+    fn is_batch_full(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
         if tx_batch.is_empty() {
             return false;
         }
@@ -253,32 +253,40 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         }
 
         let current_block_nonce = self.blockchain().get_block_nonce();
-        let first_tx_in_batch_block_nonce = tx_batch[0].block_nonce;
+        let first_tx_in_batch_block_nonce = match tx_batch.get(0) {
+            Some(tx) => tx.block_nonce,
+            None => return false,
+        };
+
         let block_diff = current_block_nonce - first_tx_in_batch_block_nonce;
         let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
 
         block_diff > max_tx_batch_block_duration
     }
 
-    fn is_batch_final(&self, tx_batch: &[Transaction<Self::BigUint>]) -> bool {
+    fn is_batch_final(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
         let batch_len = tx_batch.len();
-        let last_tx_in_batch = &tx_batch[batch_len - 1];
+        let last_tx_in_batch = match tx_batch.get(batch_len - 1) {
+            Some(tx) => tx,
+            None => return false,
+        };
+
         let current_block = self.blockchain().get_block_nonce();
         let block_diff = current_block - last_tx_in_batch.block_nonce;
 
         block_diff > MIN_BLOCKS_FOR_FINALITY
     }
 
-    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         self.send().esdt_local_burn(token_id, 0, amount);
     }
 
-    fn mark_refund(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+    fn mark_refund(&self, to: &ManagedAddress, token_id: &TokenIdentifier, amount: &BigUint) {
         self.refund_amount(to, token_id)
             .update(|refund| *refund += amount);
     }
 
-    fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
+    fn data_or_empty(&self, to: &ManagedAddress, data: &'static [u8]) -> &[u8] {
         if self.blockchain().is_smart_contract(to) {
             &[]
         } else {
@@ -289,32 +297,32 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     // storage
 
     #[storage_mapper("firstBatchId")]
-    fn first_batch_id(&self) -> SingleValueMapper<Self::Storage, u64>;
+    fn first_batch_id(&self) -> SingleValueMapper<u64>;
 
     #[storage_mapper("lastBatchId")]
-    fn last_batch_id(&self) -> SingleValueMapper<Self::Storage, u64>;
+    fn last_batch_id(&self) -> SingleValueMapper<u64>;
 
     #[storage_mapper("pendingBatches")]
     fn pending_batches(
         &self,
         batch_id: u64,
-    ) -> SingleValueMapper<Self::Storage, Vec<Transaction<Self::BigUint>>>;
+    ) -> SingleValueMapper<ManagedVec<Transaction<Self::Api>>>;
 
     #[storage_mapper("lastTxNonce")]
-    fn last_tx_nonce(&self) -> SingleValueMapper<Self::Storage, u64>;
+    fn last_tx_nonce(&self) -> SingleValueMapper<u64>;
 
     #[storage_mapper("refundAmount")]
     fn refund_amount(
         &self,
-        address: &Address,
+        address: &ManagedAddress,
         token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    ) -> SingleValueMapper<BigUint>;
 
     // configurable
 
     #[storage_mapper("maxTxBatchSize")]
-    fn max_tx_batch_size(&self) -> SingleValueMapper<Self::Storage, usize>;
+    fn max_tx_batch_size(&self) -> SingleValueMapper<usize>;
 
     #[storage_mapper("maxTxBatchBlockDuration")]
-    fn max_tx_batch_block_duration(&self) -> SingleValueMapper<Self::Storage, u64>;
+    fn max_tx_batch_block_duration(&self) -> SingleValueMapper<u64>;
 }

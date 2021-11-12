@@ -1,5 +1,5 @@
 [package]
-name = "multisig-abi"
+name = "multisig-meta"
 version = "0.0.0"
 authors = ["Andrei Marinica <andrei.marinica@elrond.com>, Dorin Iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
@@ -9,7 +9,7 @@ publish = false
 path = ".."
 
 [dependencies.elrond-wasm]
-version = "0.18.2"
+version = "0.22.6"
 
 [dependencies.elrond-wasm-debug]
-version = "0.18.2"
+version = "0.22.6"

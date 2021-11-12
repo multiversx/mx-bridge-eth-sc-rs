@@ -8,6 +8,7 @@
         {
             "step": "scCall",
             "txId": "create-transaction-ok",
+            "displayLogs": true,
             "tx": {
                 "from": "address:user1",
                 "to": "sc:esdt_safe",

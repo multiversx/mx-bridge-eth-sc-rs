@@ -1,5 +1,5 @@
 use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{Address, TokenIdentifier, Vec};
+use elrond_wasm::types::{ManagedAddress, TokenIdentifier, Vec};
 use transaction::TransactionStatus;
 
 elrond_wasm::derive_imports!();
@@ -7,12 +7,12 @@ elrond_wasm::derive_imports!();
 // Actions with _ in front are not used
 // Keeping the actions even if they're not used, for backwards compatibility of action type ID
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
-pub enum Action<BigUint: BigUintApi> {
+pub enum Action<M: ManagedTypeApi> {
     Nothing,
-    _AddBoardMember(Address),
-    _AddProposer(Address),
-    _RemoveUser(Address),
-    _SlashUser(Address),
+    _AddBoardMember(ManagedAddress),
+    _AddProposer(ManagedAddress),
+    _RemoveUser(ManagedAddress),
+    _SlashUser(ManagedAddress),
     _ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
         esdt_safe_batch_id: u64,
@@ -20,11 +20,11 @@ pub enum Action<BigUint: BigUintApi> {
     },
     BatchTransferEsdtToken {
         batch_id: u64,
-        transfers: Vec<(Address, TokenIdentifier, BigUint)>,
+        transfers: Vec<(ManagedAddress, TokenIdentifier, BigUint)>,
     },
 }
 
-impl<BigUint: BigUintApi> Action<BigUint> {
+impl<M: ManagedTypeApi> Action<BigUint> {
     /// Only pending actions are kept in storage,
     /// both executed and discarded actions are removed (converted to `Nothing`).
     /// So this is equivalent to `action != Action::Nothing`.

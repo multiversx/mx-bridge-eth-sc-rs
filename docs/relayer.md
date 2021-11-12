@@ -87,7 +87,7 @@ This is done through the `proposeMultiTransferEsdtBatch` endpoint:
 fn propose_multi_transfer_esdt_batch(
     &self,
     batch_id: u64,
-    #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
 ) -> SCResult<usize> {
 ```
 
@@ -102,7 +102,7 @@ The endpoint returns the assigned Action ID. Other relayers can get this ID by u
 fn get_action_id_for_transfer_batch(
     &self,
     batch_id: u64,
-    #[var_args] transfers: MultiArgVec<MultiArg3<Address, TokenIdentifier, Self::BigUint>>,
+    #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
 ) -> usize
 ```
 
@@ -115,21 +115,21 @@ fn get_action_id_for_transfer_batch(
 fn erc20_address_for_token_id(
     &self,
     token_id: &TokenIdentifier,
-) -> SingleValueMapper<Self::Storage, EthAddress>;
+) -> SingleValueMapper<EthAddress>;
 
 #[view(getTokenIdForErc20Address)]
 #[storage_mapper("tokenIdForErc20Address")]
 fn token_id_for_erc20_address(
     &self,
     erc20_address: &EthAddress,
-) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
+) -> SingleValueMapper<TokenIdentifier>;
 ```
 
 Returns the mapping between Elrond ESDT token identifier and Ethereum ERC20 contract address. Note that if the mapping returns "EGLD", that means "empty" (Internally, the TokenIdentifier is serialized as "empty" for "EGLD", and as such, "empty" storage is deserialized as "EGLD").  
 
 ```
 #[view(getCurrentTxBatch)]
-fn get_current_tx_batch(&self) -> EsdtSafeTxBatchSplitInFields<Self::BigUint>
+fn get_current_tx_batch(&self) -> EsdtSafeTxBatchSplitInFields<BigUint>
 ```
 
 Returns the current transaction batch, each field of each transaction separated by '@'. The result type is defined as follows:
@@ -138,7 +138,7 @@ Returns the current transaction batch, each field of each transaction separated 
 pub type EsdtSafeTxBatchSplitInFields<BigUint> = MultiResult2<usize, MultiResultVec<TxAsMultiResult<BigUint>>>;
 
 pub type TxAsMultiResult<BigUint> =
-MultiResult6<BlockNonce, TxNonce, Address, EthAddress, TokenIdentifier, BigUint>;
+MultiResult6<BlockNonce, TxNonce, ManagedAddress, EthAddress, TokenIdentifier, BigUint>;
 ```
 
 The first result is the batch ID, followed by pairs of (block nonce, tx nonce, sender address, receiver address, token type, amount), each as a separate result, i.e. delimited by `@`.  

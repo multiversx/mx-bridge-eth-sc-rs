@@ -21,10 +21,11 @@ debug = false
 panic = "abort"
 
 [dependencies.multi-transfer-esdt]
-features = [ "wasm-output-mode",]
-default-features = false
 path = ".."
 
+[dependencies.elrond-wasm-node]
+version = "0.22.6"
+
 [dependencies.elrond-wasm-output]
-version = "0.18.2"
-features = [ "wasm-output-mode",]
+version = "0.22.6"
+features = ["wasm-output-mode"]

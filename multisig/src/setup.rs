@@ -4,7 +4,7 @@ use crate::user_role::UserRole;
 use contract_proxies::*;
 use eth_address::EthAddress;
 
-#[elrond_wasm_derive::module]
+#[elrond_wasm::module]
 pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
     + crate::storage::StorageModule
@@ -13,12 +13,12 @@ pub trait SetupModule:
     #[init]
     fn init(
         &self,
-        esdt_safe_sc_address: Address,
-        multi_transfer_sc_address: Address,
-        required_stake: Self::BigUint,
-        slash_amount: Self::BigUint,
+        esdt_safe_sc_address: ManagedAddress,
+        multi_transfer_sc_address: ManagedAddress,
+        required_stake: BigUint,
+        slash_amount: BigUint,
         quorum: usize,
-        #[var_args] board: VarArgs<Address>,
+        #[var_args] board: VarArgs<ManagedAddress>,
     ) -> SCResult<()> {
         self.quorum().set(&quorum);
 
@@ -70,16 +70,16 @@ pub trait SetupModule:
 
     /*
     TODO: Use upgrade from source through proxy after upgrade
-    It's not available in 0.18.2
+    It's not available in 0.22.6
     */
 
     #[only_owner]
     #[endpoint(upgradeChildContract)]
     fn upgrade_child_contract(
         &self,
-        sc_address: Address,
-        new_code: BoxedBytes,
-        #[var_args] init_args: VarArgs<BoxedBytes>,
+        sc_address: ManagedAddress,
+        new_code: ManagedBuffer,
+        #[var_args] init_args: VarArgs<ManagedBuffer>,
     ) -> SCResult<()> {
         let gas = self.blockchain().get_gas_left() / 2;
         let args = (init_args.into_vec().as_slice()).into();
@@ -87,7 +87,7 @@ pub trait SetupModule:
         self.send().upgrade_contract(
             &sc_address,
             gas,
-            &Self::BigUint::zero(),
+            &BigUint::zero(),
             &new_code,
             CodeMetadata::UPGRADEABLE,
             &args,
@@ -114,7 +114,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(addBoardMember)]
-    fn add_board_member(&self, board_member: Address) -> SCResult<()> {
+    fn add_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
         self.change_user_role(board_member, UserRole::BoardMember);
 
         Ok(())
@@ -122,7 +122,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(addProposer)]
-    fn add_proposer(&self, proposer: Address) -> SCResult<()> {
+    fn add_proposer(&self, proposer: ManagedAddress) -> SCResult<()> {
         self.change_user_role(proposer, UserRole::Proposer);
 
         // validation required for the scenario when a board member becomes a proposer
@@ -136,7 +136,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(removeUser)]
-    fn remove_user(&self, user: Address) -> SCResult<()> {
+    fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
         let num_proposers = self.num_proposers().get();
@@ -154,7 +154,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(slashBoardMember)]
-    fn slash_board_member(&self, board_member: Address) -> SCResult<()> {
+    fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
         self.change_user_role(board_member.clone(), UserRole::None);
         let num_board_members = self.num_board_members().get();
         let num_proposers = self.num_proposers().get();
@@ -233,7 +233,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
-    fn change_fee_estimator_contract_address(&self, new_address: Address) {
+    fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_fee_estimator_contract_address(new_address.clone())
             .execute_on_dest_context();
@@ -245,7 +245,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
-    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: Self::BigUint) {
+    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
@@ -253,7 +253,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeEthToElrondGasLimit)]
-    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: Self::BigUint) {
+    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: BigUint) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
@@ -264,7 +264,7 @@ pub trait SetupModule:
     fn change_default_price_per_gas_unit(
         &self,
         token_id: TokenIdentifier,
-        new_value: Self::BigUint,
+        new_value: BigUint,
     ) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())
@@ -277,7 +277,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeTokenTicker)]
-    fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: BoxedBytes) {
+    fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_token_ticker(token_id.clone(), new_ticker.clone())
             .execute_on_dest_context();
@@ -292,8 +292,8 @@ pub trait SetupModule:
     fn esdt_safe_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
+        #[var_args] opt_ticker: OptionalArg<ManagedBuffer>,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .add_token_to_whitelist(token_id, opt_ticker, opt_default_value_in_dollars)
@@ -329,8 +329,8 @@ pub trait SetupModule:
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
+        #[var_args] opt_ticker: OptionalArg<ManagedBuffer>,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .add_token_to_whitelist(token_id, opt_ticker, opt_default_value_in_dollars)
@@ -349,11 +349,11 @@ pub trait SetupModule:
     fn setup_egld_esdt_swap_proxy(&self) -> egld_esdt_swap_proxy::Proxy<Self::SendApi>;
 
     #[proxy]
-    fn setup_esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe_proxy::Proxy<Self::SendApi>;
+    fn setup_esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe_proxy::Proxy<Self::SendApi>;
 
     #[proxy]
     fn setup_multi_transfer_esdt_proxy(
         &self,
-        sc_address: Address,
+        sc_address: ManagedAddress,
     ) -> multi_transfer_esdt_proxy::Proxy<Self::SendApi>;
 }
