@@ -7,6 +7,9 @@ edition = "2018"
 [dependencies.transaction]
 path = "../transaction"
 
+[dependencies.token-module]
+path = "../token-module"
+
 [dependencies.elrond-wasm]
 version = "0.22.6"
 

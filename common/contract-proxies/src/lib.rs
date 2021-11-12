@@ -13,6 +13,7 @@ pub mod egld_esdt_swap_proxy {
 }
 
 pub mod esdt_safe_proxy {
+    use token_module::AddressPercentagePair;
     use transaction::{esdt_safe_batch::EsdtSafeTxBatchSplitInFields, TransactionStatus};
 
     elrond_wasm::imports!();
@@ -56,7 +57,10 @@ pub mod esdt_safe_proxy {
         fn set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64);
 
         #[endpoint(distributeFees)]
-        fn distribute_fees(&self, address_percentage_pairs: Vec<(ManagedAddress, u64)>);
+        fn distribute_fees(
+            &self,
+            address_percentage_pairs: ManagedVec<AddressPercentagePair<Self::Api>>,
+        );
 
         #[view(getCurrentTxBatch)]
         fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>>;
@@ -65,12 +69,13 @@ pub mod esdt_safe_proxy {
         fn set_transaction_batch_status(
             &self,
             batch_id: u64,
-            #[var_args] tx_statuses: VarArgs<TransactionStatus>,
+            #[var_args] tx_statuses: ManagedVarArgs<TransactionStatus>,
         );
     }
 }
 
 pub mod multi_transfer_esdt_proxy {
+    use token_module::AddressPercentagePair;
     use transaction::{SingleTransferTuple, TransactionStatus};
 
     elrond_wasm::imports!();
@@ -108,12 +113,15 @@ pub mod multi_transfer_esdt_proxy {
         fn remove_token_from_whitelist(&self, token_id: TokenIdentifier);
 
         #[endpoint(distributeFees)]
-        fn distribute_fees(&self, address_percentage_pairs: Vec<(ManagedAddress, u64)>);
+        fn distribute_fees(
+            &self,
+            address_percentage_pairs: ManagedVec<AddressPercentagePair<Self::Api>>,
+        );
 
         #[endpoint(batchTransferEsdtToken)]
         fn batch_transfer_esdt_token(
             &self,
-            #[var_args] transfers: VarArgs<SingleTransferTuple<Self::Api>>,
-        ) -> MultiResultVec<TransactionStatus>;
+            #[var_args] transfers: ManagedVarArgs<SingleTransferTuple<Self::Api>>,
+        ) -> ManagedMultiResultVec<TransactionStatus>;
     }
 }

@@ -1,6 +1,6 @@
-use elrond_wasm::api::BigUintApi;
-use elrond_wasm::types::{ManagedAddress, TokenIdentifier, Vec};
-use transaction::TransactionStatus;
+use elrond_wasm::api::ManagedTypeApi;
+use elrond_wasm::types::{ManagedAddress, Vec};
+use transaction::{SingleTransferTuple, TransactionStatus};
 
 elrond_wasm::derive_imports!();
 
@@ -9,10 +9,10 @@ elrond_wasm::derive_imports!();
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum Action<M: ManagedTypeApi> {
     Nothing,
-    _AddBoardMember(ManagedAddress),
-    _AddProposer(ManagedAddress),
-    _RemoveUser(ManagedAddress),
-    _SlashUser(ManagedAddress),
+    _AddBoardMember(ManagedAddress<M>),
+    _AddProposer(ManagedAddress<M>),
+    _RemoveUser(ManagedAddress<M>),
+    _SlashUser(ManagedAddress<M>),
     _ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
         esdt_safe_batch_id: u64,
@@ -20,26 +20,15 @@ pub enum Action<M: ManagedTypeApi> {
     },
     BatchTransferEsdtToken {
         batch_id: u64,
-        transfers: Vec<(ManagedAddress, TokenIdentifier, BigUint)>,
+        transfers: Vec<SingleTransferTuple<M>>,
     },
 }
 
-impl<M: ManagedTypeApi> Action<BigUint> {
+impl<M: ManagedTypeApi> Action<M> {
     /// Only pending actions are kept in storage,
     /// both executed and discarded actions are removed (converted to `Nothing`).
     /// So this is equivalent to `action != Action::Nothing`.
     pub fn is_pending(&self) -> bool {
         !matches!(*self, Action::Nothing)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::Action;
-    use elrond_wasm_debug::api::RustBigUint;
-
-    #[test]
-    fn test_is_pending() {
-        assert!(!Action::<RustBigUint>::Nothing.is_pending());
     }
 }

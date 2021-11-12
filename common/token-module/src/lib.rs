@@ -1,8 +1,15 @@
 #![no_std]
 
 elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
 
 pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
+
+#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem)]
+pub struct AddressPercentagePair<M: ManagedTypeApi> {
+    pub address: ManagedAddress<M>,
+    pub percentage: u32,
+}
 
 #[elrond_wasm::module]
 pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
@@ -10,7 +17,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[only_owner]
     #[endpoint(distributeFees)]
-    fn distribute_fees(&self, address_percentage_pairs: Vec<(ManagedAddress, u64)>) {
+    fn distribute_fees(
+        &self,
+        address_percentage_pairs: ManagedVec<AddressPercentagePair<Self::Api>>,
+    ) {
         let percentage_total = BigUint::from(PERCENTAGE_TOTAL);
 
         for token_id in self.token_whitelist().iter() {
@@ -21,14 +31,14 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
             let mut remaining_fees = accumulated_fees.clone();
 
-            for (dest_address, percentage) in &address_percentage_pairs {
+            for pair in &address_percentage_pairs {
                 let amount_to_send =
-                    &(&accumulated_fees * &BigUint::from(*percentage)) / &percentage_total;
+                    &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
 
                 remaining_fees -= &amount_to_send;
 
                 self.send()
-                    .direct(dest_address, &token_id, 0, &amount_to_send, &[]);
+                    .direct(&pair.address, &token_id, 0, &amount_to_send, &[]);
             }
 
             self.accumulated_transaction_fees(&token_id)
