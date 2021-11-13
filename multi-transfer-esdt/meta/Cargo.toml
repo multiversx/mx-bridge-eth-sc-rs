@@ -1,5 +1,5 @@
 [package]
-name = "esdt-safe-abi"
+name = "multi-transfer-esdt-meta"
 version = "0.0.0"
 authors = [ "you",]
 edition = "2018"
@@ -7,11 +7,11 @@ publish = false
 
 [dev-dependencies]
 
-[dependencies.esdt-safe]
+[dependencies.multi-transfer-esdt]
 path = ".."
 
 [dependencies.elrond-wasm]
-version = "0.18.2"
+version = "0.22.10"
 
 [dependencies.elrond-wasm-debug]
-version = "0.18.2"
+version = "0.22.10"

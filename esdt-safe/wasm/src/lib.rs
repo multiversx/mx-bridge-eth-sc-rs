@@ -1,4 +1,33 @@
+////////////////////////////////////////////////////
+////////////////// AUTO-GENERATED //////////////////
+////////////////////////////////////////////////////
+
 #![no_std]
 
-pub use esdt_safe::*;
-pub use elrond_wasm_output::*;
+elrond_wasm_node::wasm_endpoints! {
+    esdt_safe
+    (
+        init
+        addTokenToWhitelist
+        calculateRequiredFee
+        claimRefund
+        createTransaction
+        distributeFees
+        getAllKnownTokens
+        getCurrentTxBatch
+        getDefaultPricePerGasUnit
+        getEthTxGasLimit
+        getFeeEstimatorContractAddress
+        getRefundAmounts
+        removeTokenFromWhitelist
+        setDefaultPricePerGasUnit
+        setEthTxGasLimit
+        setFeeEstimatorContractAddress
+        setMaxTxBatchBlockDuration
+        setMaxTxBatchSize
+        setTokenTicker
+        setTransactionBatchStatus
+    )
+}
+
+elrond_wasm_node::wasm_empty_callback! {}

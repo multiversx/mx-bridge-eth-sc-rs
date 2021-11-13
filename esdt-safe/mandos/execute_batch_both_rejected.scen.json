@@ -28,23 +28,6 @@
             }
         },
         {
-            "step": "scQuery",
-            "txId": "user1-query-refund-amounts",
-            "tx": {
-                "to": "sc:esdt_safe",
-                "function": "getRefundAmounts",
-                "arguments": [
-                    "address:user1"
-                ]
-            },
-            "expect": {
-                "out": [
-                    "str:BRIDGE-123456",
-                    "400"
-                ]
-            }
-        },
-        {
             "step": "scCall",
             "txId": "user1-claim-refund",
             "tx": {

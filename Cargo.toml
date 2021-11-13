@@ -1,11 +1,11 @@
 [workspace]
 members = [
   "egld-esdt-swap",
-  "egld-esdt-swap/abi",
+  "egld-esdt-swap/meta",
   "esdt-safe",
-  "esdt-safe/abi",
+  "esdt-safe/meta",
   "multi-transfer-esdt",
-  "multi-transfer-esdt/abi",
+  "multi-transfer-esdt/meta",
   "multisig",
-  "multisig/abi"
+  "multisig/meta"
 ]

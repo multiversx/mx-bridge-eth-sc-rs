@@ -8,21 +8,21 @@ use crate::action::Action;
 use crate::user_role::UserRole;
 
 #[derive(TopEncode, TopDecode)]
-pub struct StatusesAfterExecution {
+pub struct StatusesAfterExecution<M: ManagedTypeApi> {
     pub block_executed: u64,
     pub batch_id: u64,
-    pub statuses: Vec<TransactionStatus>,
+    pub statuses: ManagedVec<M, TransactionStatus>,
 }
 
-#[elrond_wasm_derive::module]
+#[elrond_wasm::module]
 pub trait StorageModule {
     /// Minimum number of signatures needed to perform any action.
     #[view(getQuorum)]
     #[storage_mapper("quorum")]
-    fn quorum(&self) -> SingleValueMapper<Self::Storage, usize>;
+    fn quorum(&self) -> SingleValueMapper<usize>;
 
     #[storage_mapper("user")]
-    fn user_mapper(&self) -> UserMapper<Self::Storage>;
+    fn user_mapper(&self) -> UserMapper;
 
     #[storage_get("user_role")]
     fn get_user_id_to_role(&self, user_id: usize) -> UserRole;
@@ -34,61 +34,52 @@ pub trait StorageModule {
     /// It is kept in sync with the user list by the contract.
     #[view(getNumBoardMembers)]
     #[storage_mapper("num_board_members")]
-    fn num_board_members(&self) -> SingleValueMapper<Self::Storage, usize>;
-
-    /// Denormalized proposer count.
-    /// It is kept in sync with the user list by the contract.
-    #[view(getNumProposers)]
-    #[storage_mapper("num_proposers")]
-    fn num_proposers(&self) -> SingleValueMapper<Self::Storage, usize>;
+    fn num_board_members(&self) -> SingleValueMapper<usize>;
 
     #[storage_mapper("action_data")]
-    fn action_mapper(&self) -> VecMapper<Self::Storage, Action<Self::BigUint>>;
+    fn action_mapper(&self) -> VecMapper<Action<Self::Api>>;
 
     #[storage_mapper("action_signer_ids")]
-    fn action_signer_ids(&self, action_id: usize) -> SingleValueMapper<Self::Storage, Vec<usize>>;
+    fn action_signer_ids(&self, action_id: usize) -> UnorderedSetMapper<usize>;
 
     /// The required amount to stake for accepting relayer position
     #[view(getRequiredStakeAmount)]
     #[storage_mapper("requiredStakeAmount")]
-    fn required_stake_amount(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    fn required_stake_amount(&self) -> SingleValueMapper<BigUint>;
 
     /// Staked amount by each board member.
     #[view(getAmountStaked)]
     #[storage_mapper("amountStaked")]
-    fn amount_staked(
-        &self,
-        board_member_address: &Address,
-    ) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    fn amount_staked(&self, board_member_address: &ManagedAddress) -> SingleValueMapper<BigUint>;
 
     /// Amount of stake slashed if a relayer is misbehaving
     #[view(getSlashAmount)]
     #[storage_mapper("slashAmount")]
-    fn slash_amount(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    fn slash_amount(&self) -> SingleValueMapper<BigUint>;
 
     /// Total slashed tokens accumulated
     #[view(getSlashedTokensAmount)]
     #[storage_mapper("slashedTokensAmount")]
-    fn slashed_tokens_amount(&self) -> SingleValueMapper<Self::Storage, Self::BigUint>;
+    fn slashed_tokens_amount(&self) -> SingleValueMapper<BigUint>;
 
     #[view(isPaused)]
     #[storage_mapper("pauseStatus")]
-    fn pause_status(&self) -> SingleValueMapper<Self::Storage, bool>;
+    fn pause_status(&self) -> SingleValueMapper<bool>;
 
     #[storage_mapper("batchIdToActionIdMapping")]
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> SafeMapMapper<Self::Storage, Vec<SingleTransferTuple<Self::BigUint>>, usize>;
+    ) -> MapMapper<ManagedVec<SingleTransferTuple<Self::Api>>, usize>;
 
     #[storage_mapper("statusesAfterExecution")]
-    fn statuses_after_execution(&self) -> SingleValueMapper<Self::Storage, StatusesAfterExecution>;
+    fn statuses_after_execution(&self) -> SingleValueMapper<StatusesAfterExecution<Self::Api>>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-    ) -> SafeMapMapper<Self::Storage, Vec<TransactionStatus>, usize>;
+    ) -> MapMapper<ManagedVec<TransactionStatus>, usize>;
 
     /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
 
@@ -97,26 +88,22 @@ pub trait StorageModule {
     fn erc20_address_for_token_id(
         &self,
         token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<Self::Storage, EthAddress>;
+    ) -> SingleValueMapper<EthAddress<Self::Api>>;
 
     #[view(getTokenIdForErc20Address)]
     #[storage_mapper("tokenIdForErc20Address")]
     fn token_id_for_erc20_address(
         &self,
-        erc20_address: &EthAddress,
-    ) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
+        erc20_address: &EthAddress<Self::Api>,
+    ) -> SingleValueMapper<TokenIdentifier>;
 
     // SC addresses
 
-    #[view(getEgldEsdtSwapAddress)]
-    #[storage_mapper("egldEsdtSwapAddress")]
-    fn egld_esdt_swap_address(&self) -> SingleValueMapper<Self::Storage, Address>;
-
     #[view(getEsdtSafeAddress)]
     #[storage_mapper("esdtSafeAddress")]
-    fn esdt_safe_address(&self) -> SingleValueMapper<Self::Storage, Address>;
+    fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getMultiTransferEsdtAddress)]
     #[storage_mapper("multiTransferEsdtAddress")]
-    fn multi_transfer_esdt_address(&self) -> SingleValueMapper<Self::Storage, Address>;
+    fn multi_transfer_esdt_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

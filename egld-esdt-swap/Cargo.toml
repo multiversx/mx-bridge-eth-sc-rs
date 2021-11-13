@@ -8,18 +8,8 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[features]
-wasm-output-mode = [ "elrond-wasm-node",]
-
 [dependencies.elrond-wasm]
-version = "0.18.2"
-
-[dependencies.elrond-wasm-derive]
-version = "0.18.2"
-
-[dependencies.elrond-wasm-node]
-version = "0.18.2"
-optional = true
+version = "0.22.10"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.18.2"
+version = "0.22.10"
