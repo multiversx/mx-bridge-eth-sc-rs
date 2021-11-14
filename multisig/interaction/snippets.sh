@@ -1,22 +1,38 @@
-# Alice will be the owner of the multisig
-# Bob will be the single board member
-# Quorum size will be 1
+# First independent steps (considering ./build-wasm.sh was run)
+# 1. Make sure we have the tokens deployed
+# 2. Update WRAPPED_USDC_TOKEN_ID, WRAPPED_USDC_TOKEN_TICKER, WRAPPED_USDC_ERC20
+# 3. Update paths to Alice (Owner, Relayers, and Relayer Keys)
+# 4. Deploy aggregator (compile, copy it) and run deployAggregator
+# 5. Call submitAggregatorBatch to set gas price for eth
+# 6. deploySafe
+# 7. deployMultiTransfer
+# 8. deployMultisig
+# 9. changeChildContractsOwnership # - this changes the owher of the safe and multitransfer to the multisig
+# 10. setLocalRolesEsdtSafe # - keep in mind we need to do this with the token owner
+# 11. setLocalRolesMultiTransferEsdt # - keep in mind we need to do this with the token owner
+# 12. addMapping
+# 13. addTokenToWhitelist
+# 14. stake # foreach relayer
 
-# Path towards PEM files
+
 PROJECT="../"
+PROJECT_SAFE="../../esdt-safe/"
+PROJECT_MULTI_TRANSFER="../../multi-transfer-esdt/"
 ALICE="./wallets/alice.pem"
+
+# We don't care about Bob
 BOB="./wallets/bob.pem"
 
-SHARD0="./walletsRelay/walletKey0.pem"
-SHARD1="./walletsRelay/walletKey1.pem"
-SHARD2="./walletsRelay/walletKey2.pem"
-SHARD3="./walletsRelay/walletKey3.pem"
-SHARD4="./walletsRelay/walletKey4.pem"
-SHARD5="./walletsRelay/walletKey5.pem"
-SHARD6="./walletsRelay/walletKey6.pem"
-SHARD7="./walletsRelay/walletKey7.pem"
-SHARD8="./walletsRelay/walletKey8.pem"
-SHARD9="./walletsRelay/walletKey9.pem"
+RELAYER_WALLET0="./walletsRelay/walletKey0.pem"
+RELAYER_WALLET1="./walletsRelay/walletKey1.pem"
+RELAYER_WALLET2="./walletsRelay/walletKey2.pem"
+RELAYER_WALLET3="./walletsRelay/walletKey3.pem"
+RELAYER_WALLET4="./walletsRelay/walletKey4.pem"
+RELAYER_WALLET5="./walletsRelay/walletKey5.pem"
+RELAYER_WALLET6="./walletsRelay/walletKey6.pem"
+RELAYER_WALLET7="./walletsRelay/walletKey7.pem"
+RELAYER_WALLET8="./walletsRelay/walletKey8.pem"
+RELAYER_WALLET9="./walletsRelay/walletKey9.pem"
 
 ADDRESS=$(erdpy data load --key=address-testnet-multisig)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
@@ -45,22 +61,83 @@ RELAYER_ADDR_9=0xa4c2a2aa3a744e4d77f6af37ef1e3cab10d4f6cf030edd11f73e3eb58a180ee
 
 ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
 
-# Setup and aggregator first, then put its address hex-encoded in this variable
-AGGREGATOR_ADDRESS=0x00000000000000000500364efbe51368b615530a04e1c58b35a5ce0f4ffc69e1 # erd1qqqqqqqqqqqqqpgqxe80hegndzmp25c2qnsutze45h8q7nlud8ssplfp8u
-
 #########################################################################
 ################## Update after issueing the tokens #####################
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
 WRAPPED_USDC_TOKEN_ID=0x57555344432d303637613565
+WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
-deploy() {
+# ETH Tokens
+WRAPPED_USDC_ERC20=0xd1135C0307CEB01FD4728db8e5B8D38fbf984F9a
+
+
+deployAggregator() {
+    erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 --arguments 0x57555344432d303637613565 0x0139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1 0x01 0x02 0x00 \
+    --send --outfile=price-aggregator.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+submitAggregatorBatch() {
+    getAggregatorAddress
+
+    local GWEI_TICKER=0x47574549
+    local GAS_PRICE_ON_ETH=0x11C37937E08000
+
+    erdpy --verbose contract call ${AGGREGATOR_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=15000000 --function="submitBatch" \
+    --arguments ${GWEI_TICKER} ${WRAPPED_USDC_TOKEN_TICKER} ${GAS_PRICE_ON_ETH} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+deploySafe() {
+    getAggregatorAddressHex
+
+    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 100$ for elrond->eth
+
+    erdpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 \
+    --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+
+    erdpy data store --key=address-testnet-safe --value=${ADDRESS}
+    erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
+
+    echo ""
+    echo "Safe contract address: ${ADDRESS}"
+}
+
+deployMultiTransfer() {
+    getAggregatorAddressHex
+
+    local MULTI_TRANSFER_ESDT_TX_GAS_LIMIT=10000 # gives us 50$ fee for eth->elrond
+
+    erdpy --verbose contract deploy --project=${PROJECT_MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 \
+    --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${MULTI_TRANSFER_ESDT_TX_GAS_LIMIT} \
+    --send --outfile="deploy-multitransfer-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    erdpy data store --key=address-testnet-multitransfer --value=${ADDRESS}
+
+    echo ""
+    echo "Multi transfer contract address: ${ADDRESS}"
+}
+
+deployMultisig() {
     local SLASH_AMOUNT=0x0a # 1
 
+    getEsdtSafeAddressHex
+    getMultiTransferEsdtAddressHex
+
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} \
-    --gas-limit=400000000 \
-    --arguments ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
+    --gas-limit=200000000 \
+    --arguments 0x${ESDT_SAFE_ADDRESS_HEX} 0x${MULTI_TRANSFER_ESDT_ADDRESS_HEX} \
+    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
     ${RELAYER_ADDR_0} \
     ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     ${RELAYER_ADDR_4} ${RELAYER_ADDR_5} ${RELAYER_ADDR_6} \
@@ -74,8 +151,83 @@ deploy() {
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
 
     echo ""
-    echo "Smart contract address: ${ADDRESS}"
+    echo "Multisig contract address: ${ADDRESS}"
 }
+
+changeChildContractsOwnership() {
+    getEsdtSafeAddress
+    getMultiTransferEsdtAddress
+
+    bech32ToHex ${ADDRESS}
+
+    erdpy --verbose contract call ${ESDT_SAFE_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=10000000 --function="ChangeOwnerAddress" \
+    --arguments 0x${ADDRESS_HEX} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    sleep 10
+
+    erdpy --verbose contract call ${MULTI_TRANSFER_ESDT_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=10000000 --function="ChangeOwnerAddress" \
+    --arguments 0x${ADDRESS_HEX} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setLocalRolesEsdtSafe() {
+    getEsdtSafeAddress
+    bech32ToHex ${ESDT_SAFE_ADDRESS}
+
+    local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
+
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments ${WRAPPED_USDC_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_BURN_ROLE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setLocalRolesMultiTransferEsdt() {
+    getMultiTransferEsdtAddress
+    bech32ToHex ${MULTI_TRANSFER_ESDT_ADDRESS}
+
+    local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
+
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments ${WRAPPED_USDC_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+addMapping() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="addMapping" \
+    --arguments ${WRAPPED_USDC_ERC20} ${WRAPPED_USDC_TOKEN_ID} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+addTokenToWhitelist() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
+    --arguments ${WRAPPED_USDC_TOKEN_ID} ${WRAPPED_USDC_TOKEN_TICKER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+
+    sleep 10
+
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="multiTransferEsdtaddTokenToWhitelist" \
+    --arguments ${WRAPPED_USDC_TOKEN_ID} ${WRAPPED_USDC_TOKEN_TICKER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+stake() {
+    local RELAYER_REQUIRED_STAKE_DECIMAL=1000
+
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${RELAYER_WALLET9} \
+    --gas-limit=35000000 --function="stake" --value=${RELAYER_REQUIRED_STAKE_DECIMAL} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+
+#==========================
 
 upgrade() {
     erdpy --verbose contract upgrade ${ADDRESS} --project=${PROJECT} --recall-nonce --pem=${ALICE} \
@@ -98,36 +250,11 @@ upgradeSafeContract() {
     --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-deployChildContracts() {
-    local EGLD_ESDT_SWAP_CODE=0x"$(xxd -p ../../egld-esdt-swap/output/egld-esdt-swap.wasm | tr -d '\n')"
-    local ESDT_SAFE_CODE=0x"$(xxd -p ../../esdt-safe/output/esdt-safe.wasm | tr -d '\n')"
-    local MULTI_TRANSFER_ESDT_CODE=0x"$(xxd -p ../../multi-transfer-esdt/output/multi-transfer-esdt.wasm | tr -d '\n')"
-
-    local ESDT_SAFE_ETH_TX_GAS_LIMIT=150000
-    local MULTI_TRANSFER_ESDT_TX_GAS_LIMIT=10000
-
+updateAggregator() {
+    NEW_AGG_ADDR=0x00000000000000000500db2991666072326ef7b69d72b2510a9e192ddfa069e1
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=400000000 --function="deployChildContracts" \
-    --arguments ${EGLD_ESDT_SWAP_CODE} ${MULTI_TRANSFER_ESDT_CODE} ${ESDT_SAFE_CODE} \
-    ${AGGREGATOR_ADDRESS} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} ${MULTI_TRANSFER_ESDT_TX_GAS_LIMIT} \
-    ${WRAPPED_USDC_TOKEN_ID} \
-    --send --outfile="deploy-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-stake() {
-    local RELAYER_REQUIRED_STAKE_DECIMAL=1000
-
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${SHARD9} \
-    --gas-limit=35000000 --function="stake" --value=${RELAYER_REQUIRED_STAKE_DECIMAL} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-addTokenToWhitelist() {
-    local RELAYER_REQUIRED_STAKE_DECIMAL=1000
-
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
-    --arguments ${WRAPPED_EGLD_TOKEN_ID} \
+    --gas-limit=60000000 --function="changeFeeEstimatorContractAddress" \
+    --arguments ${NEW_AGG_ADDR} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -135,31 +262,6 @@ unstake() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${BOB} \
     --gas-limit=35000000 --function="unstake" \
     --arguments ${RELAYER_REQUIRED_STAKE} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-addMapping() {
-    local WRAPPED_EGLD_ERC20=0x64a8bfab8e7ac5d5a3561d95b504542e9e29ce24
-    local WRAPPED_ETH_ERC20=0x4d75EF4411cda0E0C257383054Fe68febB993D37
-    local WRAPPED_USDC_ERC20=0xd1135C0307CEB01FD4728db8e5B8D38fbf984F9a
-
-    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=40000000 --function="addMapping" \
-    # --arguments ${WRAPPED_EGLD_ERC20} ${WRAPPED_EGLD_TOKEN_ID} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    # sleep 10
-
-    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=40000000 --function="addMapping" \
-    # --arguments ${WRAPPED_ETH_ERC20} ${WRAPPED_ETH_TOKEN_ID} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    # sleep 10
-
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=40000000 --function="addMapping" \
-    --arguments ${WRAPPED_USDC_ERC20} ${WRAPPED_USDC_TOKEN_ID} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -226,86 +328,6 @@ issueWrappedUSDC() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-# Set Local Roles
-
-setLocalRolesEgldEsdtSwap() {
-    getEgldEsdtSwapAddress
-    bech32ToHex ${EGLD_ESDT_SWAP_ADDRESS}
-
-    local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
-    local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
-
-    # erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=60000000 --function="setSpecialRole" \
-    # --arguments ${WRAPPED_EGLD_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    # sleep 10
-
-    # erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=60000000 --function="setSpecialRole" \
-    # --arguments ${WRAPPED_ETH_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments ${WRAPPED_USDC_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} ${LOCAL_BURN_ROLE} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-# Note: increase sleep time if needed
-setLocalRolesEsdtSafe() {
-    getEsdtSafeAddress
-    bech32ToHex ${ESDT_SAFE_ADDRESS}
-
-    local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
-
-    # set roles for WrappedEgld
-    # erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=60000000 --function="setSpecialRole" \
-    # --arguments ${WRAPPED_EGLD_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_BURN_ROLE} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    # sleep 10
-
-    # # set roles for WrappedEth
-    # erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=60000000 --function="setSpecialRole" \
-    # --arguments ${WRAPPED_ETH_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_BURN_ROLE} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments ${WRAPPED_USDC_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_BURN_ROLE} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-# Note: increase sleep time if needed
-setLocalRolesMultiTransferEsdt() {
-    getMultiTransferEsdtAddress
-    bech32ToHex ${MULTI_TRANSFER_ESDT_ADDRESS}
-
-    local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
-
-    # set roles for WrappedEgld
-    # erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=60000000 --function="setSpecialRole" \
-    # --arguments ${WRAPPED_EGLD_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    # sleep 10
-
-    # # set roles for WrappedEth
-    # erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=60000000 --function="setSpecialRole" \
-    # --arguments ${WRAPPED_ETH_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} \
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments ${WRAPPED_USDC_TOKEN_ID} 0x${ADDRESS_HEX} ${LOCAL_MINT_ROLE} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
 
 # MultiTransferEsdtCalls
 
@@ -397,21 +419,35 @@ getEgldEsdtSwapAddress() {
 }
 
 getEsdtSafeAddress() {
-    local QUERY_OUTPUT=$(erdpy --verbose contract query ${ADDRESS} --function="getEsdtSafeAddress" --proxy=${PROXY})
-    parseQueryOutput
-    parsedAddressToBech32
-
+    ADDRESS_BECH32=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
     ESDT_SAFE_ADDRESS=${ADDRESS_BECH32}
     echo "EsdtSafe address: ${ESDT_SAFE_ADDRESS}"
 }
 
 getMultiTransferEsdtAddress() {
-    local QUERY_OUTPUT=$(erdpy --verbose contract query ${ADDRESS} --function="getMultiTransferEsdtAddress" --proxy=${PROXY})
-    parseQueryOutput
-    parsedAddressToBech32
-
+    ADDRESS_BECH32=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
     MULTI_TRANSFER_ESDT_ADDRESS=${ADDRESS_BECH32}
     echo "MultiTransferEsdt address: ${MULTI_TRANSFER_ESDT_ADDRESS}"
+}
+
+getAggregatorAddress() {
+    AGGREGATOR_ADDRESS=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    echo "MultiTransferEsdt address: ${AGGREGATOR_ADDRESS}"
+}
+
+getEsdtSafeAddressHex() {
+    getEsdtSafeAddress
+    ESDT_SAFE_ADDRESS_HEX=$(erdpy wallet bech32 --decode $ESDT_SAFE_ADDRESS)  
+}
+
+getMultiTransferEsdtAddressHex() {
+    getMultiTransferEsdtAddress
+    MULTI_TRANSFER_ESDT_ADDRESS_HEX=$(erdpy wallet bech32 --decode $MULTI_TRANSFER_ESDT_ADDRESS)
+}
+
+getAggregatorAddressHex() {
+    getAggregatorAddress
+    AGGREGATOR_ADDRESS_HEX=$(erdpy wallet bech32 --decode $AGGREGATOR_ADDRESS)
 }
 
 getActionLastIndex() {
