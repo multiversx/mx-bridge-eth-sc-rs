@@ -29,7 +29,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         if user_id == 0 {
             UserRole::None
         } else {
-            self.get_user_id_to_role(user_id)
+            self.user_id_to_role(user_id).get()
         }
     }
 
@@ -70,8 +70,8 @@ pub trait UtilModule: crate::storage::StorageModule {
         self.action_signer_ids(action_id)
             .iter()
             .filter(|signer_id| {
-                let signer_role = self.get_user_id_to_role(*signer_id);
-                signer_role.can_sign()
+                let signer_role = self.user_id_to_role(*signer_id).get();
+                signer_role.is_board_member()
             })
             .count()
     }
@@ -101,7 +101,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         let mut result = ManagedVec::new();
         let num_users = self.user_mapper().get_user_count();
         for user_id in 1..=num_users {
-            if self.get_user_id_to_role(user_id) == role {
+            if self.user_id_to_role(user_id).get() == role {
                 if let Some(address) = self.user_mapper().get_user_address(user_id) {
                     result.push(address);
                 }

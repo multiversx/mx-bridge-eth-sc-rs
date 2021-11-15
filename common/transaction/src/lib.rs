@@ -3,7 +3,6 @@
 use elrond_wasm::{
     api::ManagedTypeApi,
     types::{BigUint, ManagedAddress, ManagedVecItem, MultiResult6, TokenIdentifier},
-    EndpointResult,
 };
 use eth_address::EthAddress;
 
@@ -13,6 +12,7 @@ elrond_wasm::derive_imports!();
 
 // revert protection
 pub const MIN_BLOCKS_FOR_FINALITY: u64 = 2;
+pub const TX_MULTIRESULT_NR_FIELDS: usize = 6;
 
 pub type TxNonce = u64;
 pub type BlockNonce = u64;
@@ -40,22 +40,6 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub to: EthAddress<M>,
     pub token_identifier: TokenIdentifier<M>,
     pub amount: BigUint<M>,
-}
-
-impl<M: ManagedTypeApi> EndpointResult for Transaction<M> {
-    type DecodeAs = Transaction<M>;
-
-    fn finish<FA>(&self, api: FA)
-    where
-        FA: ManagedTypeApi + elrond_wasm::api::EndpointFinishApi + Clone + 'static,
-    {
-        self.block_nonce.finish(api.clone());
-        self.nonce.finish(api.clone());
-        self.from.finish(api.clone());
-        self.to.finish(api.clone());
-        self.token_identifier.finish(api.clone());
-        self.amount.finish(api);
-    }
 }
 
 impl<M: ManagedTypeApi> From<TxAsMultiResult<M>> for Transaction<M> {

@@ -1,6 +1,7 @@
 #![no_std]
 #![allow(non_snake_case)]
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::type_complexity)]
 
 mod action;
 mod user_role;
@@ -52,7 +53,7 @@ pub trait Multisig:
                 if !new_user {
                     duplicates = true;
                 }
-                self.set_user_id_to_role(user_id, UserRole::BoardMember);
+                self.user_id_to_role(user_id).set(&UserRole::BoardMember);
             });
         require!(!duplicates, "duplicate board member");
 
@@ -198,7 +199,7 @@ pub trait Multisig:
             "Action already proposed"
         );
 
-        let current_batch_len = current_batch_transactions.len() / 6;
+        let current_batch_len = current_batch_transactions.len() / TX_MULTIRESULT_NR_FIELDS;
         let status_batch_len = statuses_vec.len();
         require!(
             current_batch_len == status_batch_len,
@@ -258,10 +259,10 @@ pub trait Multisig:
 
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
+        let caller_role = self.user_id_to_role(caller_id).get();
         require!(
-            caller_role.can_perform_action(),
-            "only board members and proposers can perform actions"
+            caller_role.is_board_member(),
+            "only board members can perform actions"
         );
         require!(
             self.quorum_reached(action_id),

@@ -8,15 +8,8 @@ pub enum UserRole {
 }
 
 impl UserRole {
-    pub fn can_propose(&self) -> bool {
+    #[inline(always)]
+    pub fn is_board_member(&self) -> bool {
         matches!(*self, UserRole::BoardMember)
-    }
-
-    pub fn can_perform_action(&self) -> bool {
-        self.can_propose()
-    }
-
-    pub fn can_sign(&self) -> bool {
-        self.can_propose()
     }
 }
