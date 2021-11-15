@@ -24,29 +24,6 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         Ok(())
     }
 
-    /// Board members can withdraw their signatures if they no longer desire for the action to be executed.
-    /// Actions that are left with no valid signatures can be then deleted to free up storage.
-    #[endpoint]
-    fn unsign(&self, action_id: usize) -> SCResult<()> {
-        require!(
-            !self.action_mapper().item_is_empty_unchecked(action_id),
-            "action does not exist"
-        );
-
-        let caller_address = self.blockchain().get_caller();
-        let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.user_id_to_role(caller_id).get();
-        require!(
-            caller_role.is_board_member(),
-            "only board members can un-sign"
-        );
-        require!(self.has_enough_stake(&caller_address), "not enough stake");
-
-        let _ = self.action_signer_ids(action_id).swap_remove(&caller_id);
-
-        Ok(())
-    }
-
     fn propose_action(&self, action: Action<Self::Api>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
