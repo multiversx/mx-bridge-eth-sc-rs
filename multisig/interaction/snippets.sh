@@ -72,10 +72,9 @@ WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 # ETH Tokens
 WRAPPED_USDC_ERC20=0xd1135C0307CEB01FD4728db8e5B8D38fbf984F9a
 
-
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
-    --gas-limit=100000000 --arguments 0x57555344432d303637613565 0x0139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1 0x01 0x02 0x00 \
+    --gas-limit=100000000 --arguments ${WRAPPED_USDC_TOKEN_ID} 0x0139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1 0x01 0x02 0x00 \
     --send --outfile=price-aggregator.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
