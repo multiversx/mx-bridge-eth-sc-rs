@@ -12,9 +12,41 @@ pub trait SetupModule:
     + crate::storage::StorageModule
     + crate::util::UtilModule
 {
-    /*
-    TODO: Use upgrade from source through proxy after upgrade
-    */
+    #[endpoint(upgradeChildContractFromSource)]
+    fn upgrade_child_contract_from_source(
+        &self,
+        child_sc_address: ManagedAddress,
+        source_address: ManagedAddress,
+        #[var_args] init_args: ManagedVarArgs<ManagedBuffer>,
+    ) {
+        let gas = self.blockchain().get_gas_left();
+        self.raw_vm_api().upgrade_from_source_contract(
+            &child_sc_address,
+            gas,
+            &BigUint::zero(),
+            &source_address,
+            CodeMetadata::UPGRADEABLE,
+            &init_args.to_arg_buffer(),
+        );
+    }
+
+    #[endpoint(upgradeChildContractRaw)]
+    fn upgrade_child_contract_raw(
+        &self,
+        child_sc_address: ManagedAddress,
+        code: ManagedBuffer,
+        #[var_args] init_args: ManagedVarArgs<ManagedBuffer>,
+    ) {
+        let gas = self.blockchain().get_gas_left();
+        self.raw_vm_api().upgrade_contract(
+            &child_sc_address,
+            gas,
+            &BigUint::zero(),
+            &code,
+            CodeMetadata::UPGRADEABLE,
+            &init_args.to_arg_buffer(),
+        );
+    }
 
     #[only_owner]
     #[endpoint]
@@ -143,11 +175,11 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .set_fee_estimator_contract_address(new_address.clone())
             .execute_on_dest_context();
 
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_fee_estimator_contract_address(new_address)
             .execute_on_dest_context();
     }
@@ -155,7 +187,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
     fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
     }
@@ -163,7 +195,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeEthToElrondGasLimit)]
     fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: BigUint) {
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
     }
@@ -171,11 +203,11 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
 
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_default_price_per_gas_unit(token_id, new_value)
             .execute_on_dest_context();
     }
@@ -183,11 +215,11 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .set_token_ticker(token_id.clone(), new_ticker.clone())
             .execute_on_dest_context();
 
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_token_ticker(token_id, new_ticker)
             .execute_on_dest_context();
     }
@@ -200,7 +232,7 @@ pub trait SetupModule:
         ticker: ManagedBuffer,
         #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)
             .execute_on_dest_context();
     }
@@ -208,7 +240,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
     fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
     }
@@ -216,7 +248,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
     fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .execute_on_dest_context();
     }
@@ -224,7 +256,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
-        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+        self.setup_get_esdt_safe_proxy_instance()
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .execute_on_dest_context();
     }
@@ -237,7 +269,7 @@ pub trait SetupModule:
         ticker: ManagedBuffer,
         #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.setup_get_multi_transfer_esdt_proxy_instance()
             .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)
             .execute_on_dest_context();
     }
@@ -245,10 +277,12 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(multiTransferEsdtRemoveTokenFromWhitelist)]
     fn multi_transfer_esdt_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
-        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.setup_get_multi_transfer_esdt_proxy_instance()
             .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
     }
+
+    // proxies
 
     #[proxy]
     fn setup_esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
@@ -258,4 +292,14 @@ pub trait SetupModule:
         &self,
         sc_address: ManagedAddress,
     ) -> multi_transfer_esdt::Proxy<Self::Api>;
+
+    fn setup_get_esdt_safe_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
+        self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
+    }
+
+    fn setup_get_multi_transfer_esdt_proxy_instance(
+        &self,
+    ) -> multi_transfer_esdt::Proxy<Self::Api> {
+        self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+    }
 }

@@ -56,8 +56,9 @@ elrond_wasm_node::wasm_endpoints! {
         slashBoardMember
         stake
         unpause
-        unsign
         unstake
+        upgradeChildContractFromSource
+        upgradeChildContractRaw
         userRole
         wasActionExecuted
         wasSetCurrentTransactionBatchStatusActionProposed

@@ -122,11 +122,11 @@ pub trait Multisig:
             "Percentages do not add up to 100%"
         );
 
-        self.esdt_safe_proxy(self.esdt_safe_address().get())
+        self.get_esdt_safe_proxy_instance()
             .distribute_fees(args.clone())
             .execute_on_dest_context();
 
-        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+        self.get_multi_transfer_esdt_proxy_instance()
             .distribute_fees(args)
             .execute_on_dest_context();
 
@@ -182,7 +182,7 @@ pub trait Multisig:
         #[var_args] tx_batch_status: ManagedVarArgs<TransactionStatus>,
     ) -> SCResult<usize> {
         let call_result = self
-            .esdt_safe_proxy(self.esdt_safe_address().get())
+            .get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
             .execute_on_dest_context();
         let (current_batch_id, current_batch_transactions) = call_result
@@ -281,7 +281,7 @@ pub trait Multisig:
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
         let _ = self
-            .esdt_safe_proxy(self.esdt_safe_address().get())
+            .get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
             .execute_on_dest_context();
 
@@ -399,7 +399,7 @@ pub trait Multisig:
 
                 action_ids_mapper.clear();
 
-                self.esdt_safe_proxy(self.esdt_safe_address().get())
+                self.get_esdt_safe_proxy_instance()
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
                         ManagedVarArgs::from(tx_batch_status),
@@ -424,7 +424,7 @@ pub trait Multisig:
 
                 let transfers_len = transfers.len();
                 let statuses = self
-                    .multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+                    .get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(transfers.into())
                     .execute_on_dest_context_custom_range(|_, after| {
                         (after - transfers_len, after)
@@ -451,4 +451,12 @@ pub trait Multisig:
         &self,
         sc_address: ManagedAddress,
     ) -> multi_transfer_esdt::Proxy<Self::Api>;
+
+    fn get_esdt_safe_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
+        self.esdt_safe_proxy(self.esdt_safe_address().get())
+    }
+
+    fn get_multi_transfer_esdt_proxy_instance(&self) -> multi_transfer_esdt::Proxy<Self::Api> {
+        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
+    }
 }
