@@ -186,7 +186,7 @@
             },
             "expect": {
                 "status": "4",
-                "message": "str:only board members and proposers can propose",
+                "message": "str:only board members can propose",
                 "out": [],
                 "gas": "*",
                 "refund": "*"

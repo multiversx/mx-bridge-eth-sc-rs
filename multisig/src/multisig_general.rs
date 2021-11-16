@@ -15,8 +15,8 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
 
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
-        require!(caller_role.can_sign(), "only board members can sign");
+        let caller_role = self.user_id_to_role(caller_id).get();
+        require!(caller_role.is_board_member(), "only board members can sign");
         require!(self.has_enough_stake(&caller_address), "not enough stake");
 
         let _ = self.action_signer_ids(action_id).insert(caller_id);
@@ -24,33 +24,13 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         Ok(())
     }
 
-    /// Board members can withdraw their signatures if they no longer desire for the action to be executed.
-    /// Actions that are left with no valid signatures can be then deleted to free up storage.
-    #[endpoint]
-    fn unsign(&self, action_id: usize) -> SCResult<()> {
-        require!(
-            !self.action_mapper().item_is_empty_unchecked(action_id),
-            "action does not exist"
-        );
-
-        let caller_address = self.blockchain().get_caller();
-        let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
-        require!(caller_role.can_sign(), "only board members can un-sign");
-        require!(self.has_enough_stake(&caller_address), "not enough stake");
-
-        let _ = self.action_signer_ids(action_id).swap_remove(&caller_id);
-
-        Ok(())
-    }
-
     fn propose_action(&self, action: Action<Self::Api>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
+        let caller_role = self.user_id_to_role(caller_id).get();
         require!(
-            caller_role.can_propose(),
-            "only board members and proposers can propose"
+            caller_role.is_board_member(),
+            "only board members can propose"
         );
 
         require!(
@@ -59,9 +39,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         );
 
         let action_id = self.action_mapper().push(&action);
-        if caller_role.can_sign() {
-            let _ = self.action_signer_ids(action_id).insert(caller_id);
-        }
+        let _ = self.action_signer_ids(action_id).insert(caller_id);
 
         Ok(action_id)
     }
@@ -79,12 +57,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
     /// Will keep the board size and proposer count in sync.
     fn change_user_role(&self, user_address: ManagedAddress, new_role: UserRole) {
         let user_id = self.user_mapper().get_or_create_user(&user_address);
-        let old_role = if user_id == 0 {
-            UserRole::None
-        } else {
-            self.get_user_id_to_role(user_id)
-        };
-        self.set_user_id_to_role(user_id, new_role);
+        let old_role = self.user_role(&user_address);
 
         // update board size
         #[allow(clippy::collapsible_else_if)]
@@ -97,5 +70,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
                 self.num_board_members().update(|value| *value += 1);
             }
         }
+
+        self.user_id_to_role(user_id).set(&new_role);
     }
 }
