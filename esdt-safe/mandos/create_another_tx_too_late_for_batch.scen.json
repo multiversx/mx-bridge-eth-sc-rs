@@ -116,15 +116,29 @@
         },
         {
             "step": "scQuery",
-            "txId": "query-nr-batches",
+            "txId": "query-first-batch-id",
             "tx": {
                 "to": "sc:esdt_safe",
-                "function": "getNrPendingBatches",
+                "function": "getFirstBatchId",
                 "arguments": []
             },
             "expect": {
                 "out": [
-                    "2"
+                    "0"
+                ]
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "query-last-batch-id",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getLastBatchId",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "1"
                 ]
             }
         }
