@@ -39,7 +39,7 @@ DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
 PROXY=https://testnet-gateway.elrond.com
 CHAIN_ID=T
 
-RELAYER_REQUIRED_STAKE=0x0a
+RELAYER_REQUIRED_STAKE=0x00
 ESDT_ISSUE_COST=0xB1A2BC2EC50000 # 0.05 eGLD
 ESDT_ISSUE_COST_DECIMAL=50000000000000000
 
@@ -67,6 +67,8 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
 WRAPPED_USDC_TOKEN_ID=0x57555344432d303637613565
+
+# Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
@@ -128,7 +130,7 @@ deployMultiTransfer() {
 }
 
 deployMultisig() {
-    local SLASH_AMOUNT=0x0a # 1
+    local SLASH_AMOUNT=0x00 # 1
 
     getEsdtSafeAddressHex
     getMultiTransferEsdtAddressHex
@@ -218,7 +220,7 @@ addTokenToWhitelist() {
 }
 
 stake() {
-    local RELAYER_REQUIRED_STAKE_DECIMAL=1000
+    local RELAYER_REQUIRED_STAKE_DECIMAL=0
 
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${RELAYER_WALLET9} \
     --gas-limit=35000000 --function="stake" --value=${RELAYER_REQUIRED_STAKE_DECIMAL} \
@@ -267,7 +269,7 @@ deployNewSafe() {
 upgradeSafeContract() {
     local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
     local OLD_SAFE_ADDR=0x00000000000000000500e4666522747ef0403cd8405ded02de0aebf12ddc69e1
-    local NEW_SAFE_ADDR=0x00000000000000000500fa49250285d11a492bdda43413a6ba35ce69c1bb69e1
+    local NEW_SAFE_ADDR=0x0000000000000000050083fafa0341518e852ef120e1001da0d9027d96bc69e1
     local AGG_ADDR=0x00000000000000000500db2991666072326ef7b69d72b2510a9e192ddfa069e1
     erdpy --verbose contract call "erd1qqqqqqqqqqqqqpgqeyayz09s2a4gnvcghdh9ma3he3j7cda0d8ss2apk2a" --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 --function="upgradeChildContractFromSource" \
