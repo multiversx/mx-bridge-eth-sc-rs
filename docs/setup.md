@@ -20,12 +20,12 @@ Once the multisig contract is deployed and setup properly, the owner must call t
 #[endpoint(deployChildContracts)]
 fn deploy_child_contracts(
     &self,
-    egld_esdt_swap_code: BoxedBytes,
-    multi_transfer_esdt_code: BoxedBytes,
-    esdt_safe_code: BoxedBytes,
-    price_aggregator_contract_address: Address,
-    esdt_safe_eth_tx_gas_limit: Self::BigUint,
-    multi_transfer_esdt_eth_tx_gas_limit: Self::BigUint,
+    egld_esdt_swap_code: ManagedBuffer,
+    multi_transfer_esdt_code: ManagedBuffer,
+    esdt_safe_code: ManagedBuffer,
+    price_aggregator_contract_address: ManagedAddress,
+    esdt_safe_eth_tx_gas_limit: BigUint,
+    multi_transfer_esdt_eth_tx_gas_limit: BigUint,
     wrapped_egld_token_id: TokenIdentifier,
     #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
 )

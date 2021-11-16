@@ -93,7 +93,8 @@
                 "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
-                    "str:BRIDGE-123456"
+                    "str:BRIDGE-123456",
+                    "str:BRIDGE"
                 ],
                 "gasLimit": "15,000,000",
                 "gasPrice": "0"
@@ -114,7 +115,8 @@
                 "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
-                    "str:WRAPPED-123456"
+                    "str:WRAPPED-123456",
+                    "str:WRAPPED"
                 ],
                 "gasLimit": "15,000,000",
                 "gasPrice": "0"
@@ -231,7 +233,8 @@
                 "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
-                    "str:WRAPPED-123456"
+                    "str:WRAPPED-123456",
+                    "str:WRAPPED"
                 ],
                 "gasLimit": "15,000,000",
                 "gasPrice": "0"
