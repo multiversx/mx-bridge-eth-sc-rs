@@ -58,6 +58,7 @@ elrond_wasm_node::wasm_endpoints! {
         unpause
         unstake
         upgradeChildContractFromSource
+        upgradeChildContractRaw
         userRole
         wasActionExecuted
         wasSetCurrentTransactionBatchStatusActionProposed

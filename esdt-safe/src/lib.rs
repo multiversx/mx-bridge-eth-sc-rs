@@ -215,18 +215,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         refund_amounts
     }
 
-    #[view(getNrPendingBatches)]
-    fn get_nr_pending_batches(&self) -> u64 {
-        let first_batch_id = self.first_batch_id().get();
-        let last_batch_id = self.last_batch_id().get();
-
-        if self.pending_batches(first_batch_id).is_empty() {
-            return 0;
-        }
-
-        last_batch_id - first_batch_id + 1
-    }
-
     // private
 
     fn add_to_batch(&self, transaction: Transaction<Self::Api>) {
@@ -307,9 +295,11 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     // storage
 
+    #[view(getFirstBatchId)]
     #[storage_mapper("firstBatchId")]
     fn first_batch_id(&self) -> SingleValueMapper<u64>;
 
+    #[view(getLastBatchId)]
     #[storage_mapper("lastBatchId")]
     fn last_batch_id(&self) -> SingleValueMapper<u64>;
 
