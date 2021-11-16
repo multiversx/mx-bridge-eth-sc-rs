@@ -30,24 +30,6 @@ pub trait SetupModule:
         );
     }
 
-    #[endpoint(upgradeChildContractRaw)]
-    fn upgrade_child_contract_raw(
-        &self,
-        child_sc_address: ManagedAddress,
-        code: ManagedBuffer,
-        #[var_args] init_args: ManagedVarArgs<ManagedBuffer>,
-    ) {
-        let gas = self.blockchain().get_gas_left();
-        self.raw_vm_api().upgrade_contract(
-            &child_sc_address,
-            gas,
-            &BigUint::zero(),
-            &code,
-            CodeMetadata::UPGRADEABLE,
-            &init_args.to_arg_buffer(),
-        );
-    }
-
     #[only_owner]
     #[endpoint]
     fn pause(&self) -> SCResult<()> {
