@@ -233,19 +233,46 @@ upgrade() {
     --gas-limit=100000000 --send --outfile="upgrade.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
+upgradeMultisig() {
+    local MULTISIG_CURR_ADDR="erd1qqqqqqqqqqqqqpgqeyayz09s2a4gnvcghdh9ma3he3j7cda0d8ss2apk2a"
+    local SLASH_AMOUNT=0x0a # 1
+
+
+    erdpy --verbose contract upgrade ${MULTISIG_CURR_ADDR} --bytecode=../output/multisig.wasm --recall-nonce --pem=${ALICE} \
+    --arguments 0x00000000000000000500e4666522747ef0403cd8405ded02de0aebf12ddc69e1 0x00000000000000000500f91fb98b98bb28f6732a4598d4b2b307657049f869e1 \
+    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
+    --gas-limit=200000000 --send --outfile="upgrade-multisig.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+    
+}
+
+deployNewSafe() {
+
+    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 100$ for elrond->eth
+
+    erdpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 \
+    --arguments 0x00000000000000000500db2991666072326ef7b69d72b2510a9e192ddfa069e1 ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+
+    erdpy data store --key=address-testnet-safe --value=${ADDRESS}
+    erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
+
+    echo ""
+    echo "Safe contract address: ${ADDRESS}"
+}
+
 upgradeSafeContract() {
-    getEsdtSafeAddress
-    bech32ToHex ${ESDT_SAFE_ADDRESS}
-    
-    local ESDT_SAFE_CODE=0x"$(xxd -p ../../esdt-safe/output/esdt-safe.wasm | tr -d '\n')"
     local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
-
-    
-
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=400000000 --function="upgradeChildContract" \
-    --arguments 0x${ADDRESS_HEX} ${ESDT_SAFE_CODE} \
-    ${AGGREGATOR_ADDRESS} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    local OLD_SAFE_ADDR=0x00000000000000000500e4666522747ef0403cd8405ded02de0aebf12ddc69e1
+    local NEW_SAFE_ADDR=0x00000000000000000500fa49250285d11a492bdda43413a6ba35ce69c1bb69e1
+    local AGG_ADDR=0x00000000000000000500db2991666072326ef7b69d72b2510a9e192ddfa069e1
+    erdpy --verbose contract call "erd1qqqqqqqqqqqqqpgqeyayz09s2a4gnvcghdh9ma3he3j7cda0d8ss2apk2a" --recall-nonce --pem=${ALICE} \
+    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
+    --arguments ${OLD_SAFE_ADDR} ${NEW_SAFE_ADDR} \
+    ${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
