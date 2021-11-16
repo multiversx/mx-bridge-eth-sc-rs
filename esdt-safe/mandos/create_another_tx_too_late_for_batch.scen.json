@@ -113,6 +113,20 @@
                 },
                 "+": {}
             }
+        },
+        {
+            "step": "scQuery",
+            "txId": "query-nr-batches",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getNrPendingBatches",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "2"
+                ]
+            }
         }
     ]
 }
