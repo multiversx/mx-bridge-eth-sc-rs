@@ -4,18 +4,11 @@ elrond_wasm::imports!();
 
 const LEFTOVER_GAS: u64 = 10_000u64;
 
-#[elrond_wasm_derive::contract]
+#[elrond_wasm::contract]
 pub trait EgldEsdtSwap {
     #[init]
-    fn init(&self, wrapped_egld_token_id: TokenIdentifier) -> SCResult<()> {
-        require!(
-            wrapped_egld_token_id.is_valid_esdt_identifier(),
-            "Invalid token id"
-        );
-
+    fn init(&self, wrapped_egld_token_id: TokenIdentifier) {
         self.wrapped_egld_token_id().set(&wrapped_egld_token_id);
-
-        Ok(())
     }
 
     // endpoints
@@ -25,11 +18,11 @@ pub trait EgldEsdtSwap {
     fn wrap_egld(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
-        #[payment_amount] payment_amount: Self::BigUint,
-        #[var_args] accept_funds_endpoint_name: OptionalArg<BoxedBytes>,
+        #[payment_amount] payment_amount: BigUint,
+        #[var_args] accept_funds_endpoint_name: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
         require!(payment_token.is_egld(), "Only EGLD accepted");
-        require!(payment_amount > 0, "Payment must be more than 0");
+        require!(payment_amount > 0u32, "Payment must be more than 0");
 
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
         self.send()
@@ -38,19 +31,19 @@ pub trait EgldEsdtSwap {
         let caller = self.blockchain().get_caller();
         let function = match accept_funds_endpoint_name {
             OptionalArg::Some(f) => f,
-            OptionalArg::None => BoxedBytes::empty(),
+            OptionalArg::None => ManagedBuffer::new(),
         };
 
         if self.needs_execution(&caller, &function) {
             let gas_limit = self.blockchain().get_gas_left() - LEFTOVER_GAS;
-            self.send()
+            self.raw_vm_api()
                 .direct_esdt_execute(
                     &caller,
                     &wrapped_egld_token_id,
                     &payment_amount,
                     gas_limit,
-                    function.as_slice(),
-                    &ArgBuffer::new(),
+                    &function,
+                    &ManagedArgBuffer::new_empty(self.raw_vm_api()),
                 )
                 .into()
         } else {
@@ -65,13 +58,13 @@ pub trait EgldEsdtSwap {
     fn unwrap_egld(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
-        #[payment_amount] payment_amount: Self::BigUint,
-        #[var_args] accept_funds_endpoint_name: OptionalArg<BoxedBytes>,
+        #[payment_amount] payment_amount: BigUint,
+        #[var_args] accept_funds_endpoint_name: OptionalArg<ManagedBuffer>,
     ) -> SCResult<()> {
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
 
         require!(payment_token == wrapped_egld_token_id, "Wrong esdt token");
-        require!(payment_amount > 0, "Must pay more than 0 tokens!");
+        require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
             payment_amount <= self.get_locked_egld_balance(),
@@ -85,18 +78,18 @@ pub trait EgldEsdtSwap {
         let caller = self.blockchain().get_caller();
         let function = match accept_funds_endpoint_name {
             OptionalArg::Some(f) => f,
-            OptionalArg::None => BoxedBytes::empty(),
+            OptionalArg::None => ManagedBuffer::new(),
         };
 
         if self.needs_execution(&caller, &function) {
             let gas_limit = self.blockchain().get_gas_left() - LEFTOVER_GAS;
-            self.send()
+            self.raw_vm_api()
                 .direct_egld_execute(
                     &caller,
                     &payment_amount,
                     gas_limit,
-                    function.as_slice(),
-                    &ArgBuffer::new(),
+                    &function,
+                    &ManagedArgBuffer::new_empty(self.raw_vm_api()),
                 )
                 .into()
         } else {
@@ -108,14 +101,14 @@ pub trait EgldEsdtSwap {
     // views
 
     #[view(getLockedEgldBalance)]
-    fn get_locked_egld_balance(&self) -> Self::BigUint {
+    fn get_locked_egld_balance(&self) -> BigUint {
         self.blockchain()
             .get_sc_balance(&TokenIdentifier::egld(), 0)
     }
 
     // private
 
-    fn needs_execution(&self, caller: &Address, function: &BoxedBytes) -> bool {
+    fn needs_execution(&self, caller: &ManagedAddress, function: &ManagedBuffer) -> bool {
         self.blockchain().is_smart_contract(caller) && !function.is_empty()
     }
 
@@ -125,5 +118,5 @@ pub trait EgldEsdtSwap {
 
     #[view(getWrappedEgldTokenId)]
     #[storage_mapper("wrappedEgldTokenId")]
-    fn wrapped_egld_token_id(&self) -> SingleValueMapper<Self::Storage, TokenIdentifier>;
+    fn wrapped_egld_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 }

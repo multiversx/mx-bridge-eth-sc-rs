@@ -1,100 +1,20 @@
 elrond_wasm::imports!();
 
 use crate::user_role::UserRole;
-use contract_proxies::*;
 use eth_address::EthAddress;
 
-#[elrond_wasm_derive::module]
+use fee_estimator_module::ProxyTrait as _;
+use token_module::ProxyTrait as _;
+
+#[elrond_wasm::module]
 pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
     + crate::storage::StorageModule
     + crate::util::UtilModule
 {
-    #[init]
-    fn init(
-        &self,
-        esdt_safe_sc_address: Address,
-        multi_transfer_sc_address: Address,
-        required_stake: Self::BigUint,
-        slash_amount: Self::BigUint,
-        quorum: usize,
-        #[var_args] board: VarArgs<Address>,
-    ) -> SCResult<()> {
-        self.quorum().set(&quorum);
-
-        let mut duplicates = false;
-        self.user_mapper()
-            .get_or_create_users(board.as_slice(), |user_id, new_user| {
-                if !new_user {
-                    duplicates = true;
-                }
-                self.set_user_id_to_role(user_id, UserRole::BoardMember);
-            });
-        require!(!duplicates, "duplicate board member");
-
-        self.num_board_members()
-            .update(|nr_board_members| *nr_board_members += board.len());
-
-        require!(
-            slash_amount <= required_stake,
-            "slash amount must be less than or equal to required stake"
-        );
-        self.required_stake_amount().set(&required_stake);
-        self.slash_amount().set(&slash_amount);
-
-        require!(
-            self.blockchain().is_smart_contract(&esdt_safe_sc_address),
-            "Esdt Safe address is not a Smart Contract address"
-        );
-        self.esdt_safe_address().set(&esdt_safe_sc_address);
-
-        require!(
-            self.blockchain()
-                .is_smart_contract(&multi_transfer_sc_address),
-            "Multi Transfer address is not a Smart Contract address"
-        );
-        self.multi_transfer_esdt_address()
-            .set(&multi_transfer_sc_address);
-
-        // is set only so we don't have to check for "empty" on the very first call
-        // trying to deserialize a tuple from an empty storage entry would crash
-        self.statuses_after_execution()
-            .set_if_empty(&crate::storage::StatusesAfterExecution {
-                block_executed: u64::MAX,
-                batch_id: u64::MAX,
-                statuses: Vec::new(),
-            });
-
-        Ok(())
-    }
-
     /*
     TODO: Use upgrade from source through proxy after upgrade
-    It's not available in 0.18.2
     */
-
-    #[only_owner]
-    #[endpoint(upgradeChildContract)]
-    fn upgrade_child_contract(
-        &self,
-        sc_address: Address,
-        new_code: BoxedBytes,
-        #[var_args] init_args: VarArgs<BoxedBytes>,
-    ) -> SCResult<()> {
-        let gas = self.blockchain().get_gas_left() / 2;
-        let args = (init_args.into_vec().as_slice()).into();
-
-        self.send().upgrade_contract(
-            &sc_address,
-            gas,
-            &Self::BigUint::zero(),
-            &new_code,
-            CodeMetadata::UPGRADEABLE,
-            &args,
-        );
-
-        Ok(())
-    }
 
     #[only_owner]
     #[endpoint]
@@ -114,34 +34,19 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(addBoardMember)]
-    fn add_board_member(&self, board_member: Address) -> SCResult<()> {
+    fn add_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
         self.change_user_role(board_member, UserRole::BoardMember);
 
         Ok(())
     }
 
     #[only_owner]
-    #[endpoint(addProposer)]
-    fn add_proposer(&self, proposer: Address) -> SCResult<()> {
-        self.change_user_role(proposer, UserRole::Proposer);
-
-        // validation required for the scenario when a board member becomes a proposer
-        require!(
-            self.quorum().get() <= self.num_board_members().get(),
-            "quorum cannot exceed board size"
-        );
-
-        Ok(())
-    }
-
-    #[only_owner]
     #[endpoint(removeUser)]
-    fn remove_user(&self, user: Address) -> SCResult<()> {
+    fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
-        let num_proposers = self.num_proposers().get();
         require!(
-            num_board_members + num_proposers > 0,
+            num_board_members > 0,
             "cannot remove all board members and proposers"
         );
         require!(
@@ -154,15 +59,11 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(slashBoardMember)]
-    fn slash_board_member(&self, board_member: Address) -> SCResult<()> {
+    fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
         self.change_user_role(board_member.clone(), UserRole::None);
         let num_board_members = self.num_board_members().get();
-        let num_proposers = self.num_proposers().get();
 
-        require!(
-            num_board_members + num_proposers > 0,
-            "cannot remove all board members and proposers"
-        );
+        require!(num_board_members > 0, "cannot remove all board members");
         require!(
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"
@@ -195,7 +96,11 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(addMapping)]
-    fn add_mapping(&self, erc20_address: EthAddress, token_id: TokenIdentifier) -> SCResult<()> {
+    fn add_mapping(
+        &self,
+        erc20_address: EthAddress<Self::Api>,
+        token_id: TokenIdentifier,
+    ) -> SCResult<()> {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping already exists for ERC20 token"
@@ -215,7 +120,11 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(clearMapping)]
-    fn clear_mapping(&self, erc20_address: EthAddress, token_id: TokenIdentifier) -> SCResult<()> {
+    fn clear_mapping(
+        &self,
+        erc20_address: EthAddress<Self::Api>,
+        token_id: TokenIdentifier,
+    ) -> SCResult<()> {
         require!(
             !self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping does not exist for ERC20 token"
@@ -233,7 +142,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
-    fn change_fee_estimator_contract_address(&self, new_address: Address) {
+    fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_fee_estimator_contract_address(new_address.clone())
             .execute_on_dest_context();
@@ -245,7 +154,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
-    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: Self::BigUint) {
+    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
@@ -253,7 +162,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeEthToElrondGasLimit)]
-    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: Self::BigUint) {
+    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: BigUint) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
@@ -261,11 +170,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
-    fn change_default_price_per_gas_unit(
-        &self,
-        token_id: TokenIdentifier,
-        new_value: Self::BigUint,
-    ) {
+    fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())
             .execute_on_dest_context();
@@ -277,7 +182,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(changeTokenTicker)]
-    fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: BoxedBytes) {
+    fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
             .set_token_ticker(token_id.clone(), new_ticker.clone())
             .execute_on_dest_context();
@@ -292,11 +197,11 @@ pub trait SetupModule:
     fn esdt_safe_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
+        ticker: ManagedBuffer,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
         self.setup_esdt_safe_proxy(self.esdt_safe_address().get())
-            .add_token_to_whitelist(token_id, opt_ticker, opt_default_value_in_dollars)
+            .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)
             .execute_on_dest_context();
     }
 
@@ -329,11 +234,11 @@ pub trait SetupModule:
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        #[var_args] opt_ticker: OptionalArg<BoxedBytes>,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<Self::BigUint>,
+        ticker: ManagedBuffer,
+        #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
         self.setup_multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
-            .add_token_to_whitelist(token_id, opt_ticker, opt_default_value_in_dollars)
+            .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)
             .execute_on_dest_context();
     }
 
@@ -346,14 +251,11 @@ pub trait SetupModule:
     }
 
     #[proxy]
-    fn setup_egld_esdt_swap_proxy(&self) -> egld_esdt_swap_proxy::Proxy<Self::SendApi>;
-
-    #[proxy]
-    fn setup_esdt_safe_proxy(&self, sc_address: Address) -> esdt_safe_proxy::Proxy<Self::SendApi>;
+    fn setup_esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
 
     #[proxy]
     fn setup_multi_transfer_esdt_proxy(
         &self,
-        sc_address: Address,
-    ) -> multi_transfer_esdt_proxy::Proxy<Self::SendApi>;
+        sc_address: ManagedAddress,
+    ) -> multi_transfer_esdt::Proxy<Self::Api>;
 }

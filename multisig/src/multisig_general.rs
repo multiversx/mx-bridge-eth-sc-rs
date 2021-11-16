@@ -3,7 +3,7 @@ elrond_wasm::imports!();
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[elrond_wasm_derive::module]
+#[elrond_wasm::module]
 pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::StorageModule {
     /// Used by board members to sign actions.
     #[endpoint]
@@ -15,55 +15,22 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
 
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
-        require!(caller_role.can_sign(), "only board members can sign");
+        let caller_role = self.user_id_to_role(caller_id).get();
+        require!(caller_role.is_board_member(), "only board members can sign");
         require!(self.has_enough_stake(&caller_address), "not enough stake");
 
-        self.action_signer_ids(action_id).update(|signer_ids| {
-            if !signer_ids.contains(&caller_id) {
-                signer_ids.push(caller_id);
-            }
-        });
+        let _ = self.action_signer_ids(action_id).insert(caller_id);
 
         Ok(())
     }
 
-    /// Board members can withdraw their signatures if they no longer desire for the action to be executed.
-    /// Actions that are left with no valid signatures can be then deleted to free up storage.
-    #[endpoint]
-    fn unsign(&self, action_id: usize) -> SCResult<()> {
-        require!(
-            !self.action_mapper().item_is_empty_unchecked(action_id),
-            "action does not exist"
-        );
-
+    fn propose_action(&self, action: Action<Self::Api>) -> SCResult<usize> {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
-        require!(caller_role.can_sign(), "only board members can un-sign");
-        require!(self.has_enough_stake(&caller_address), "not enough stake");
-
-        self.action_signer_ids(action_id).update(|signer_ids| {
-            if let Some(signer_pos) = signer_ids
-                .iter()
-                .position(|&signer_id| signer_id == caller_id)
-            {
-                // since we don't care about the order,
-                // it is ok to call swap_remove, which is O(1)
-                signer_ids.swap_remove(signer_pos);
-            }
-        });
-
-        Ok(())
-    }
-
-    fn propose_action(&self, action: Action<Self::BigUint>) -> SCResult<usize> {
-        let caller_address = self.blockchain().get_caller();
-        let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.get_user_id_to_role(caller_id);
+        let caller_role = self.user_id_to_role(caller_id).get();
         require!(
-            caller_role.can_propose(),
-            "only board members and proposers can propose"
+            caller_role.is_board_member(),
+            "only board members can propose"
         );
 
         require!(
@@ -72,11 +39,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         );
 
         let action_id = self.action_mapper().push(&action);
-        if caller_role.can_sign() {
-            // also sign
-            // since the action is newly created, the caller can be the only signer
-            self.action_signer_ids(action_id).set(&[caller_id].to_vec());
-        }
+        let _ = self.action_signer_ids(action_id).insert(caller_id);
 
         Ok(action_id)
     }
@@ -92,14 +55,9 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
     /// - reactivate removed user
     /// - convert between board member and proposer
     /// Will keep the board size and proposer count in sync.
-    fn change_user_role(&self, user_address: Address, new_role: UserRole) {
+    fn change_user_role(&self, user_address: ManagedAddress, new_role: UserRole) {
         let user_id = self.user_mapper().get_or_create_user(&user_address);
-        let old_role = if user_id == 0 {
-            UserRole::None
-        } else {
-            self.get_user_id_to_role(user_id)
-        };
-        self.set_user_id_to_role(user_id, new_role);
+        let old_role = self.user_role(&user_address);
 
         // update board size
         #[allow(clippy::collapsible_else_if)]
@@ -113,16 +71,6 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
             }
         }
 
-        // update num_proposers
-        #[allow(clippy::collapsible_else_if)]
-        if old_role == UserRole::Proposer {
-            if new_role != UserRole::Proposer {
-                self.num_proposers().update(|value| *value -= 1);
-            }
-        } else {
-            if new_role == UserRole::Proposer {
-                self.num_proposers().update(|value| *value += 1);
-            }
-        }
+        self.user_id_to_role(user_id).set(&new_role);
     }
 }

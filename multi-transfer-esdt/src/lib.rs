@@ -5,15 +5,15 @@ use transaction::{SingleTransferTuple, TransactionStatus};
 
 elrond_wasm::imports!();
 
-#[elrond_wasm_derive::contract]
+#[elrond_wasm::contract]
 pub trait MultiTransferEsdt:
     fee_estimator_module::FeeEstimatorModule + token_module::TokenModule
 {
     #[init]
     fn init(
         &self,
-        fee_estimator_contract_address: Address,
-        eth_tx_gas_limit: Self::BigUint,
+        fee_estimator_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
     ) -> SCResult<()> {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
@@ -21,8 +21,9 @@ pub trait MultiTransferEsdt:
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         // set ticker for "GWEI"
-        self.token_ticker(&GWEI_STRING.into())
-            .set(&GWEI_STRING.into());
+        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
+        self.token_ticker(&gwei_token_id)
+            .set(&gwei_token_id.as_managed_buffer());
 
         Ok(())
     }
@@ -31,13 +32,17 @@ pub trait MultiTransferEsdt:
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
-        #[var_args] transfers: VarArgs<SingleTransferTuple<Self::BigUint>>,
-    ) -> MultiResultVec<TransactionStatus> {
-        let mut tx_statuses = Vec::new();
-        let mut cached_token_ids = Vec::new();
-        let mut cached_prices = Vec::new();
+        #[var_args] transfers: ManagedVarArgs<SingleTransferTuple<Self::Api>>,
+    ) -> ManagedMultiResultVec<TransactionStatus> {
+        let mut tx_statuses = ManagedVec::new();
+        let mut cached_token_ids = ManagedVec::new();
+        let mut cached_prices = ManagedVec::new();
 
-        for (i, (to, token_id, amount)) in transfers.into_vec().iter().enumerate() {
+        for transfer in transfers {
+            let to = &transfer.address;
+            let token_id = &transfer.token_id;
+            let amount = &transfer.amount;
+
             if to.is_zero() || self.blockchain().is_smart_contract(to) {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
@@ -49,31 +54,30 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let queried_fee: Self::BigUint;
-            let required_fee = match cached_token_ids.iter().position(|&id| id == token_id) {
-                Some(index) => &cached_prices[index],
+            let queried_fee: BigUint;
+            let required_fee = match cached_token_ids.iter().position(|id| &id == token_id) {
+                Some(index) => cached_prices.get(index).unwrap_or_else(|| BigUint::zero()),
                 None => {
                     queried_fee = self.calculate_required_fee(token_id);
-                    cached_token_ids.push(token_id);
+                    cached_token_ids.push(token_id.clone());
                     cached_prices.push(queried_fee.clone());
 
-                    &queried_fee
+                    queried_fee
                 }
             };
 
-            if amount <= required_fee {
+            if amount <= &required_fee {
                 tx_statuses.push(TransactionStatus::Rejected);
                 continue;
             }
 
-            let amount_to_send = amount - required_fee;
+            let amount_to_send = amount - &required_fee;
 
             self.accumulated_transaction_fees(token_id)
                 .update(|fees| *fees += required_fee);
 
             self.send().esdt_local_mint(token_id, 0, amount);
-            self.send()
-                .direct(to, token_id, 0, &amount_to_send, &[i as u8]);
+            self.send().direct(to, token_id, 0, &amount_to_send, &[]);
 
             tx_statuses.push(TransactionStatus::Executed);
         }

@@ -1,4 +1,68 @@
+////////////////////////////////////////////////////
+////////////////// AUTO-GENERATED //////////////////
+////////////////////////////////////////////////////
+
 #![no_std]
 
-pub use multisig::*;
-pub use elrond_wasm_output::*;
+elrond_wasm_node::wasm_endpoints! {
+    multisig
+    (
+        init
+        addBoardMember
+        addMapping
+        changeDefaultPricePerGasUnit
+        changeElrondToEthGasLimit
+        changeEthToElrondGasLimit
+        changeFeeEstimatorContractAddress
+        changeQuorum
+        changeTokenTicker
+        clearMapping
+        distributeFeesFromChildContracts
+        esdtSafeAddTokenToWhitelist
+        esdtSafeRemoveTokenFromWhitelist
+        esdtSafeSetMaxTxBatchBlockDuration
+        esdtSafeSetMaxTxBatchSize
+        getActionData
+        getActionIdForSetCurrentTransactionBatchStatus
+        getActionIdForTransferBatch
+        getActionLastIndex
+        getActionSignerCount
+        getActionValidSignerCount
+        getAllBoardMembers
+        getAllStakedRelayers
+        getAmountStaked
+        getCurrentTxBatch
+        getErc20AddressForTokenId
+        getEsdtSafeAddress
+        getMultiTransferEsdtAddress
+        getNumBoardMembers
+        getQuorum
+        getRequiredStakeAmount
+        getSlashAmount
+        getSlashedTokensAmount
+        getStatusesAfterExecution
+        getTokenIdForErc20Address
+        isPaused
+        multiTransferEsdtRemoveTokenFromWhitelist
+        multiTransferEsdtaddTokenToWhitelist
+        pause
+        performAction
+        proposeEsdtSafeSetCurrentTransactionBatchStatus
+        proposeMultiTransferEsdtBatch
+        quorumReached
+        removeUser
+        sign
+        signed
+        slashBoardMember
+        stake
+        unpause
+        unsign
+        unstake
+        userRole
+        wasActionExecuted
+        wasSetCurrentTransactionBatchStatusActionProposed
+        wasTransferActionProposed
+    )
+}
+
+elrond_wasm_node::wasm_empty_callback! {}
