@@ -27,7 +27,7 @@ path = "../esdt-safe"
 path = "../multi-transfer-esdt"
 
 [dependencies.elrond-wasm]
-version = "0.22.10"
+version = "0.22.11"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.22.10"
+version = "0.22.11"
