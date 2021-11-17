@@ -1,9 +1,4 @@
 #[test]
-fn claim_fees_go() {
-    elrond_wasm_debug::mandos_go("mandos/distribute_fees.scen.json");
-}
-
-#[test]
 fn create_another_tx_ok_go() {
     elrond_wasm_debug::mandos_go("mandos/create_another_tx_ok.scen.json");
 }
@@ -16,6 +11,11 @@ fn create_another_tx_too_late_for_batch_go() {
 #[test]
 fn create_transaction_ok_go() {
     elrond_wasm_debug::mandos_go("mandos/create_transaction_ok.scen.json");
+}
+
+#[test]
+fn distribute_fees_go() {
+    elrond_wasm_debug::mandos_go("mandos/distribute_fees.scen.json");
 }
 
 #[test]

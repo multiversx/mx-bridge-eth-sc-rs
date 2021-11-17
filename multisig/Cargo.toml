@@ -31,3 +31,16 @@ version = "0.22.11"
 
 [dev-dependencies.elrond-wasm-debug]
 version = "0.22.11"
+
+[dev-dependencies.egld-esdt-swap]
+path = "../egld-esdt-swap"
+
+[dev-dependencies.esdt-safe]
+path = "../esdt-safe"
+
+[dev-dependencies.multi-transfer-esdt]
+path = "../multi-transfer-esdt"
+
+
+[dev-dependencies.price-aggregator]
+git = "https://github.com/ElrondNetwork/sc-chainlink-rs"

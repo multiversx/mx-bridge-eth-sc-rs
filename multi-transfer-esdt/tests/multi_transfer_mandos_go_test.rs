@@ -14,7 +14,7 @@ fn batch_transfer_one_executed_one_failed_go() {
 }
 
 #[test]
-fn claim_fees_go() {
+fn distribute_fees_go() {
     elrond_wasm_debug::mandos_go("mandos/distribute_fees.scen.json");
 }
 

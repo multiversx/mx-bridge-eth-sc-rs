@@ -1,4 +1,9 @@
 #[test]
+fn change_token_config_go() {
+    elrond_wasm_debug::mandos_go("mandos/change_token_config.scen.json");
+}
+
+#[test]
 fn create_elrond_to_ethereum_tx_batch_go() {
     elrond_wasm_debug::mandos_go("mandos/create_elrond_to_ethereum_tx_batch.scen.json");
 }
@@ -38,9 +43,7 @@ fn unstake_go() {
     elrond_wasm_debug::mandos_go("mandos/unstake.scen.json");
 }
 
-/*
-#[test]
-fn upgrade_child_sc_go() {
-    elrond_wasm_debug::mandos_go("mandos/upgrade_child_sc.scen.json");
-}
-*/
+// #[test]
+// fn upgrade_child_sc_go() {
+//     elrond_wasm_debug::mandos_go("mandos/upgrade_child_sc.scen.json");
+// }

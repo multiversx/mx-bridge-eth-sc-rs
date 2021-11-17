@@ -25,3 +25,6 @@ version = "0.22.11"
 
 [dev-dependencies.elrond-wasm-debug]
 version = "0.22.11"
+
+[dev-dependencies.price-aggregator]
+git = "https://github.com/ElrondNetwork/sc-chainlink-rs"
