@@ -272,18 +272,18 @@ upgrade() {
 }
 
 upgradeMultisig() {
-    local MULTISIG_CURR_ADDR=""
+    local MULTISIG_CURR_ADDR="erd1qqqqqqqqqqqqqpgq4tnqwskv4h3r2czks22n84rnsn8g9u6dd8ss0ktnjn"
     local SLASH_AMOUNT=0x00 # 0
 
-    local ESDTSAFE_SAFE_BECH=""
+    local ESDTSAFE_SAFE_BECH="erd1qqqqqqqqqqqqqpgqyfdvlr6lex6q3se0fec2vf4tuk4m3wwsd8sswpnsqt"
     local ESDTSAFE_SAFE_ADDR=$(erdpy wallet bech32 --decode $ESDTSAFE_SAFE_BECH)
 
-    local MULTITRANSFER_SAFE_BECH=""
+    local MULTITRANSFER_SAFE_BECH="erd1qqqqqqqqqqqqqpgqh65zll772cfwt63ftlv6wwc8tlg3alq4d8ssflw6z3"
     local MULTITRANSFER_SAFE_ADDR=$(erdpy wallet bech32 --decode $MULTITRANSFER_SAFE_BECH)
 
     erdpy --verbose contract upgrade ${MULTISIG_CURR_ADDR} --bytecode=../output/multisig.wasm --recall-nonce --pem=${ALICE} \
     --arguments 0x${ESDTSAFE_SAFE_ADDR} 0x${MULTITRANSFER_SAFE_ADDR} \
-    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
+    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x07 \
     --gas-limit=200000000 --send --outfile="upgrade-multisig.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
     
 }
