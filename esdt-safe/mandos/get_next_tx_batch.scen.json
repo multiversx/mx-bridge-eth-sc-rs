@@ -13,11 +13,13 @@
         },
         {
             "step": "scQuery",
-            "txId": "get-current-tx-batch",
+            "txId": "get-tx-batch",
             "tx": {
                 "to": "sc:esdt_safe",
-                "function": "getCurrentTxBatch",
-                "arguments": []
+                "function": "getBatch",
+                "arguments": [
+                    "0"
+                ]
             },
             "expect": {
                 "out": [
