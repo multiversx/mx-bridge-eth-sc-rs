@@ -66,13 +66,13 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
-WRAPPED_USDC_TOKEN_ID=0x57555344432d303637613565
+WRAPPED_USDC_TOKEN_ID=0x57555344432d393137376336
 
 # Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
-WRAPPED_USDC_ERC20=0xd1135C0307CEB01FD4728db8e5B8D38fbf984F9a
+WRAPPED_USDC_ERC20=0xba3b1bF0b572aA6555718A12Af7CC63e0D103A26
 
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
@@ -84,7 +84,7 @@ submitAggregatorBatch() {
     getAggregatorAddress
 
     local GWEI_TICKER=0x47574549
-    local GAS_PRICE_ON_ETH=0x11C37937E08000
+    local GAS_PRICE_ON_ETH=0x2710
 
     erdpy --verbose contract call ${AGGREGATOR_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
@@ -95,7 +95,7 @@ submitAggregatorBatch() {
 deploySafe() {
     getAggregatorAddressHex
 
-    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 100$ for elrond->eth
+    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 200$ for elrond->eth
 
     erdpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
     --gas-limit=100000000 \
@@ -115,7 +115,7 @@ deploySafe() {
 deployMultiTransfer() {
     getAggregatorAddressHex
 
-    local MULTI_TRANSFER_ESDT_TX_GAS_LIMIT=10000 # gives us 50$ fee for eth->elrond
+    local MULTI_TRANSFER_ESDT_TX_GAS_LIMIT=10000 # gives us 100$ fee for eth->elrond
 
     erdpy --verbose contract deploy --project=${PROJECT_MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
     --gas-limit=100000000 \
@@ -229,6 +229,42 @@ stake() {
 
 
 #==========================
+deploySafeForUpgrade() {
+    getAggregatorAddressHex
+
+    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 200$ for elrond->eth
+
+    erdpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 \
+    --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --send --outfile="deploy-safe-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
+
+    echo ""
+    echo "Safe contract address: ${ADDRESS}"
+}
+
+
+upgradeSafeContract() {
+    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
+
+    local OLD_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    local OLD_SAFE_ADDR=$(erdpy wallet bech32 --decode $OLD_SAFE_BECH)
+
+    local NEW_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
+    local NEW_SAFE_ADDR=$(erdpy wallet bech32 --decode $NEW_SAFE_BECH)
+
+    local AGG_ADDR_BECH=$(erdpy data parse --file="./deploy-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    local AGG_ADDR=$(erdpy wallet bech32 --decode $AGG_ADDR_BECH)
+
+
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
+    --arguments ${OLD_SAFE_ADDR} ${NEW_SAFE_ADDR} \
+    ${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
+}
 
 upgrade() {
     erdpy --verbose contract upgrade ${ADDRESS} --project=${PROJECT} --recall-nonce --pem=${ALICE} \
@@ -246,6 +282,8 @@ upgradeMultisig() {
     --gas-limit=200000000 --send --outfile="upgrade-multisig.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
     
 }
+
+# ====================================================================================================
 
 deployNewSafe() {
 
@@ -266,17 +304,7 @@ deployNewSafe() {
     echo "Safe contract address: ${ADDRESS}"
 }
 
-upgradeSafeContract() {
-    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
-    local OLD_SAFE_ADDR=0x00000000000000000500e4666522747ef0403cd8405ded02de0aebf12ddc69e1
-    local NEW_SAFE_ADDR=0x0000000000000000050083fafa0341518e852ef120e1001da0d9027d96bc69e1
-    local AGG_ADDR=0x00000000000000000500db2991666072326ef7b69d72b2510a9e192ddfa069e1
-    erdpy --verbose contract call "erd1qqqqqqqqqqqqqpgqeyayz09s2a4gnvcghdh9ma3he3j7cda0d8ss2apk2a" --recall-nonce --pem=${ALICE} \
-    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
-    --arguments ${OLD_SAFE_ADDR} ${NEW_SAFE_ADDR} \
-    ${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
-    --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
-}
+
 
 updateAggregator() {
     NEW_AGG_ADDR=0x00000000000000000500db2991666072326ef7b69d72b2510a9e192ddfa069e1
@@ -346,7 +374,7 @@ issueWrappedUSDC() {
     local TOKEN_DISPLAY_NAME=0x5772617070656455534443  # "WrappedUSDC"
     local TOKEN_TICKER=0x5755534443  # "WUSDC"
     local INITIAL_SUPPLY=0x00 # 0
-    local NR_DECIMALS=0x12 # 18
+    local NR_DECIMALS=0x06 # 6
     local CAN_ADD_SPECIAL_ROLES=0x63616e4164645370656369616c526f6c6573 # "canAddSpecialRoles"
     local TRUE=0x74727565 # "true"
 
