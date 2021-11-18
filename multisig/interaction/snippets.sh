@@ -66,13 +66,13 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
-WRAPPED_USDC_TOKEN_ID=0x57555344432d393137376336
+WRAPPED_USDC_TOKEN_ID=0x57555344432d656464333133
 
 # Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
-WRAPPED_USDC_ERC20=0xba3b1bF0b572aA6555718A12Af7CC63e0D103A26
+WRAPPED_USDC_ERC20=0x1A49c6550A93d0b24417D154D2B062258dEDEd79
 
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
@@ -138,7 +138,7 @@ deployMultisig() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
     --arguments 0x${ESDT_SAFE_ADDRESS_HEX} 0x${MULTI_TRANSFER_ESDT_ADDRESS_HEX} \
-    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
+    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x07 \
     ${RELAYER_ADDR_0} \
     ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     ${RELAYER_ADDR_4} ${RELAYER_ADDR_5} ${RELAYER_ADDR_6} \
@@ -255,14 +255,14 @@ upgradeSafeContract() {
     local NEW_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
     local NEW_SAFE_ADDR=$(erdpy wallet bech32 --decode $NEW_SAFE_BECH)
 
-    local AGG_ADDR_BECH=$(erdpy data parse --file="./deploy-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    local AGG_ADDR_BECH=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
     local AGG_ADDR=$(erdpy wallet bech32 --decode $AGG_ADDR_BECH)
 
 
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 --function="upgradeChildContractFromSource" \
-    --arguments ${OLD_SAFE_ADDR} ${NEW_SAFE_ADDR} \
-    ${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --arguments 0x${OLD_SAFE_ADDR} 0x${NEW_SAFE_ADDR} \
+    0x${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
