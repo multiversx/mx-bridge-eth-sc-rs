@@ -12,6 +12,7 @@ pub trait SetupModule:
     + crate::storage::StorageModule
     + crate::util::UtilModule
 {
+    #[only_owner]
     #[endpoint(upgradeChildContractFromSource)]
     fn upgrade_child_contract_from_source(
         &self,
