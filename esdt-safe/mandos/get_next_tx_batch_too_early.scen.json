@@ -28,8 +28,10 @@
             "txId": "get-first-tx-batch",
             "tx": {
                 "to": "sc:esdt_safe",
-                "function": "getFirstBatch",
-                "arguments": []
+                "function": "getBatch",
+                "arguments": [
+                    "0"
+                ]
             },
             "expect": {
                 "out": [
@@ -49,6 +51,20 @@
                     "str:BRIDGE-123456",
                     "900"
                 ]
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-batch-invalid-id",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatch",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": []
             }
         }
     ]

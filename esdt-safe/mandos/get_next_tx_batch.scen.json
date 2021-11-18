@@ -13,13 +13,11 @@
         },
         {
             "step": "scQuery",
-            "txId": "get-tx-batch",
+            "txId": "get-current-tx-batch",
             "tx": {
                 "to": "sc:esdt_safe",
-                "function": "getBatch",
-                "arguments": [
-                    "0"
-                ]
+                "function": "getCurrentTxBatch",
+                "arguments": []
             },
             "expect": {
                 "out": [
@@ -39,20 +37,6 @@
                     "str:BRIDGE-123456",
                     "900"
                 ]
-            }
-        },
-        {
-            "step": "scQuery",
-            "txId": "get-tx-batch-invalid-id",
-            "tx": {
-                "to": "sc:esdt_safe",
-                "function": "getBatch",
-                "arguments": [
-                    "1"
-                ]
-            },
-            "expect": {
-                "out": []
             }
         }
     ]
