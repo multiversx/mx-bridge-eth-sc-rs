@@ -40,6 +40,20 @@
                     "900"
                 ]
             }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-tx-batch-invalid-id",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatch",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": []
+            }
         }
     ]
 }
