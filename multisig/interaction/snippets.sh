@@ -66,13 +66,13 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
-WRAPPED_USDC_TOKEN_ID=0x57555344432d656464333133
+WRAPPED_USDC_TOKEN_ID=0x57555344432d373334616662
 
 # Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
-WRAPPED_USDC_ERC20=0x1A49c6550A93d0b24417D154D2B062258dEDEd79
+WRAPPED_USDC_ERC20=0x4CD17Deff83bA7ebAA7D841Dc415F12882c98dD1
 
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
@@ -272,12 +272,17 @@ upgrade() {
 }
 
 upgradeMultisig() {
-    local MULTISIG_CURR_ADDR="erd1qqqqqqqqqqqqqpgqeyayz09s2a4gnvcghdh9ma3he3j7cda0d8ss2apk2a"
-    local SLASH_AMOUNT=0x0a # 1
+    local MULTISIG_CURR_ADDR=""
+    local SLASH_AMOUNT=0x00 # 0
 
+    local ESDTSAFE_SAFE_BECH=""
+    local ESDTSAFE_SAFE_ADDR=$(erdpy wallet bech32 --decode $ESDTSAFE_SAFE_BECH)
+
+    local MULTITRANSFER_SAFE_BECH=""
+    local MULTITRANSFER_SAFE_ADDR=$(erdpy wallet bech32 --decode $MULTITRANSFER_SAFE_BECH)
 
     erdpy --verbose contract upgrade ${MULTISIG_CURR_ADDR} --bytecode=../output/multisig.wasm --recall-nonce --pem=${ALICE} \
-    --arguments 0x00000000000000000500e4666522747ef0403cd8405ded02de0aebf12ddc69e1 0x00000000000000000500f91fb98b98bb28f6732a4598d4b2b307657049f869e1 \
+    --arguments 0x${ESDTSAFE_SAFE_ADDR} 0x${MULTITRANSFER_SAFE_ADDR} \
     ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
     --gas-limit=200000000 --send --outfile="upgrade-multisig.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
     
