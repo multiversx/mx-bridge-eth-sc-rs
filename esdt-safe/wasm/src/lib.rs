@@ -14,6 +14,7 @@ elrond_wasm_node::wasm_endpoints! {
         createTransaction
         distributeFees
         getAllKnownTokens
+        getBatch
         getCurrentTxBatch
         getDefaultPricePerGasUnit
         getEthTxGasLimit

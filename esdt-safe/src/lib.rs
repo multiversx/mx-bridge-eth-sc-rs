@@ -199,6 +199,21 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         OptionalResult::None
     }
 
+    #[view(getBatch)]
+    fn get_batch(&self, batch_id: u64) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
+        let tx_batch = self.pending_batches(batch_id).get();
+        if tx_batch.is_empty() {
+            return OptionalResult::None;
+        }
+
+        let mut result_vec = ManagedMultiResultVec::new();
+        for tx in tx_batch.iter() {
+            result_vec.push(tx.into_multiresult());
+        }
+
+        return OptionalResult::Some((batch_id, result_vec).into());
+    }
+
     #[view(getRefundAmounts)]
     fn get_refund_amounts(
         &self,
