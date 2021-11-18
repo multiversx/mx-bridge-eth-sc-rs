@@ -39,7 +39,9 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         );
 
         let action_id = self.action_mapper().push(&action);
-        let _ = self.action_signer_ids(action_id).insert(caller_id);
+        if self.has_enough_stake(&caller_address) {
+            let _ = self.action_signer_ids(action_id).insert(caller_id);
+        }
 
         Ok(action_id)
     }
