@@ -139,6 +139,14 @@ pub trait SetupModule:
             "Mapping does not exist for token id"
         );
 
+        let mapper_erc_20 = self.erc20_address_for_token_id(&token_id).get();
+        let mapped_token_id = self.token_id_for_erc20_address(&erc20_address).get();
+
+        require!(
+            erc20_address.raw_addr == mapper_erc_20.raw_addr && token_id == mapped_token_id,
+            "Invalid mapping"
+        );
+
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
 
