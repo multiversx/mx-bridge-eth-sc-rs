@@ -10,18 +10,15 @@
             "accounts": {
                 "address:owner": {
                     "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
+                    "balance": "0"
                 },
                 "address:user1": {
                     "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
+                    "balance": "0"
                 },
                 "address:user2": {
                     "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
+                    "balance": "0"
                 }
             },
             "newAddresses": [
@@ -38,7 +35,6 @@
             "tx": {
                 "from": "address:owner",
                 "contractCode": "file:../output/multi-transfer-esdt.wasm",
-                "value": "0",
                 "arguments": [
                     "sc:price_aggregator",
                     "10,000"
@@ -47,6 +43,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -62,13 +59,11 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:WRAPPED-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -90,7 +85,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
-                "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
                     "str:BRIDGE-123456",
@@ -100,6 +94,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -112,7 +107,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
-                "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
                     "str:WRAPPED-123456",
@@ -122,6 +116,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -141,13 +136,11 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:WRAPPED-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -156,16 +149,14 @@
                     "storage": {
                         "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
                         "str:tokenWhitelist.value|u32:2": "str:WRAPPED-123456",
-
                         "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
                         "str:tokenTicker|nested:str:WRAPPED-123456": "str:WRAPPED",
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
-
                         "+": ""
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -174,7 +165,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
-                "value": "0",
                 "function": "removeTokenFromWhitelist",
                 "arguments": [
                     "str:WRAPPED-123456"
@@ -183,6 +173,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -202,13 +193,11 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:WRAPPED-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -221,7 +210,7 @@
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -230,7 +219,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
-                "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
                     "str:WRAPPED-123456",
@@ -240,6 +228,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -259,13 +248,11 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:WRAPPED-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -278,7 +265,7 @@
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

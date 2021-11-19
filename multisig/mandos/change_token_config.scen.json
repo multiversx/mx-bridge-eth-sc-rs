@@ -11,7 +11,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "changeFeeEstimatorContractAddress",
                 "arguments": [
                     "sc:egld_esdt_swap"
@@ -20,9 +19,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -50,7 +49,7 @@
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -59,7 +58,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "changeDefaultPricePerGasUnit",
                 "arguments": [
                     "str:ETH-123456",
@@ -69,9 +67,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -99,7 +97,7 @@
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -108,7 +106,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "changeTokenTicker",
                 "arguments": [
                     "str:ETH-123456",
@@ -118,9 +115,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -148,7 +145,7 @@
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

@@ -12,7 +12,6 @@ fn world() -> BlockchainMock {
     blockchain
 }
 
-
 #[test]
 fn unwrap_egld_rs() {
     elrond_wasm_debug::mandos_rs("mandos/unwrap_egld.scen.json", world());

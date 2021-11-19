@@ -7,5 +7,6 @@ members = [
   "multi-transfer-esdt",
   "multi-transfer-esdt/meta",
   "multisig",
-  "multisig/meta"
+  "multisig/meta",
+  "price-aggregator",
 ]

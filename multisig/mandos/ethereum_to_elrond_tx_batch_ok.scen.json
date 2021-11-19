@@ -11,22 +11,25 @@
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "address:user", "str:EGLD-123456", "500,000",
-                    "address:user", "str:ETH-123456", "500,000"
+                    "address:user",
+                    "str:EGLD-123456",
+                    "500,000",
+                    "address:user",
+                    "str:ETH-123456",
+                    "500,000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
                 "out": [
                     "1"
                 ],
+                "status": "0",
+                "message": "",
                 "gas": "*",
                 "refund": "*"
             }
@@ -59,7 +62,7 @@
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -68,7 +71,6 @@
             "tx": {
                 "from": "address:relayer2",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "sign",
                 "arguments": [
                     "1"
@@ -77,9 +79,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -105,7 +107,6 @@
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "performAction",
                 "arguments": [
                     "1"
@@ -114,13 +115,22 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [
+                    "1",
+                    "str:GWEI",
+                    "str:EGLD",
+                    "10",
+                    "0",
+                    "1",
+                    "str:GWEI",
+                    "str:ETH",
+                    "1",
+                    "0",
+                    "3",
+                    "3"
+                ],
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1", "str:GWEI", "str:EGLD", "10", "0",
-                    "1", "str:GWEI", "str:ETH", "1", "0",
-                    "3", "3"
-                ],
                 "gas": "*",
                 "refund": "*"
             }
@@ -191,13 +201,23 @@
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "100,000",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "100,000"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "10,000",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "10,000"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -206,12 +226,11 @@
                     "storage": {
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "100,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "10,000",
-                        
                         "+": ""
                     },
                     "code": "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -220,16 +239,18 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "distributeFeesFromChildContracts",
                 "arguments": [
-                    "address:relayer1", "4000",
-                    "address:relayer2", "6000"
+                    "address:relayer1",
+                    "4000",
+                    "address:relayer2",
+                    "6000"
                 ],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -243,12 +264,8 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "40,000"
-                        },
-                        "str:ETH-123456": {
-                            "balance": "4,000"
-                        }
+                        "str:EGLD-123456": "40,000",
+                        "str:ETH-123456": "4,000"
                     },
                     "storage": {}
                 },
@@ -256,12 +273,8 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "60,000"
-                        },
-                        "str:ETH-123456": {
-                            "balance": "6,000"
-                        }
+                        "str:EGLD-123456": "60,000",
+                        "str:ETH-123456": "6,000"
                     },
                     "storage": {}
                 },
@@ -270,13 +283,11 @@
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -285,12 +296,11 @@
                     "storage": {
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
-                        
                         "+": ""
                     },
                     "code": "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

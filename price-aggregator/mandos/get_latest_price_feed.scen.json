@@ -16,15 +16,15 @@
                 ]
             },
             "expect": {
-                "status": "0",
-                "message": "",
                 "out": [
                     "1",
                     "str:GWEI",
                     "str:BRIDGE",
                     "10",
                     "0"
-                ]
+                ],
+                "status": "0",
+                "message": ""
             }
         },
         {
@@ -33,7 +33,6 @@
             "tx": {
                 "from": "address:oracle",
                 "to": "sc:price_aggregator",
-                "value": "0",
                 "function": "latestPriceFeedOptional",
                 "arguments": [
                     "str:GWEI",
@@ -62,7 +61,6 @@
             "tx": {
                 "from": "address:oracle",
                 "to": "sc:price_aggregator",
-                "value": "0",
                 "function": "latestPriceFeedOptional",
                 "arguments": [
                     "str:RAND-TOKEN",

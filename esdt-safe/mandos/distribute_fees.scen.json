@@ -11,7 +11,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt_safe",
-                "value": "0",
                 "function": "distributeFees",
                 "arguments": [
                     "address:owner|u32:10000"
@@ -20,9 +19,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -43,7 +42,6 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
@@ -51,12 +49,11 @@
                     },
                     "storage": {
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

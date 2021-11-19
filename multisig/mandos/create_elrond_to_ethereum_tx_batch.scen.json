@@ -11,16 +11,16 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:egld_esdt_swap",
-                "value": "2,000,000",
+                "egldValue": "2,000,000",
                 "function": "wrapEgld",
                 "arguments": [],
                 "gasLimit": "10,000,000",
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -42,7 +42,6 @@
                     "balance": "2,000,000",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
@@ -54,7 +53,7 @@
                     },
                     "code": "file:../../egld-esdt-swap/output/egld-esdt-swap.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -63,10 +62,12 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:EGLD-123456",
-                    "value": "1,500,400"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:EGLD-123456",
+                        "value": "1,500,400"
+                    }
+                ],
                 "function": "createTransaction",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
@@ -75,7 +76,6 @@
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
                 "out": [
                     "1",
                     "str:GWEI",
@@ -83,6 +83,7 @@
                     "10",
                     "0"
                 ],
+                "status": "0",
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -105,13 +106,17 @@
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "1,500,400",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "1,500,400"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
@@ -128,14 +133,12 @@
                         },
                         "str:firstBatchId": "0",
                         "str:lastBatchId": "0",
-
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
-
                         "+": ""
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -144,10 +147,12 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:ETH-123456",
-                    "value": "500,000"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:ETH-123456",
+                        "value": "500,000"
+                    }
+                ],
                 "function": "createTransaction",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
@@ -156,7 +161,6 @@
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
                 "out": [
                     "1",
                     "str:GWEI",
@@ -164,6 +168,7 @@
                     "1",
                     "0"
                 ],
+                "status": "0",
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -186,13 +191,23 @@
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "1,500,400",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "1,500,400"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "500,000",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "500,000"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
@@ -219,16 +234,13 @@
                         ],
                         "str:firstBatchId": "0",
                         "str:lastBatchId": "0",
-
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
-
-
                         "+": ""
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -248,14 +260,12 @@
             "expect": {
                 "out": [
                     "0",
-
                     "0",
                     "1",
                     "address:user",
                     "0x0102030405060708091011121314151617181920",
                     "str:EGLD-123456",
                     "400",
-
                     "0",
                     "2",
                     "address:user",
@@ -267,4 +277,3 @@
         }
     ]
 }
-

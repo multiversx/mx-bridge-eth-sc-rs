@@ -11,22 +11,25 @@
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "sc:egld_esdt_swap", "str:EGLD-123456", "500,000",
-                    "sc:egld_esdt_swap", "str:ETH-123456", "500,000"
+                    "sc:egld_esdt_swap",
+                    "str:EGLD-123456",
+                    "500,000",
+                    "sc:egld_esdt_swap",
+                    "str:ETH-123456",
+                    "500,000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
                 "out": [
                     "1"
                 ],
+                "status": "0",
+                "message": "",
                 "gas": "*",
                 "refund": "*"
             }
@@ -59,7 +62,7 @@
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -68,7 +71,6 @@
             "tx": {
                 "from": "address:relayer2",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "sign",
                 "arguments": [
                     "1"
@@ -77,9 +79,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -91,7 +93,6 @@
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "performAction",
                 "arguments": [
                     "1"
@@ -100,11 +101,12 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [
+                    "4",
+                    "4"
+                ],
                 "status": "0",
                 "message": "",
-                "out": [
-                    "4", "4"
-                ],
                 "gas": "*",
                 "refund": "*"
             }

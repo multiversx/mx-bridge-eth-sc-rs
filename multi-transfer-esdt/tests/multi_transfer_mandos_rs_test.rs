@@ -8,7 +8,7 @@ fn world() -> BlockchainMock {
     blockchain.register_contract(
         "file:output/multi-transfer-esdt.wasm",
         Box::new(|context| Box::new(multi_transfer_esdt::contract_obj(context))),
-    );    
+    );
     blockchain.register_contract(
         "file:../price-aggregator/price-aggregator.wasm",
         Box::new(|context| Box::new(price_aggregator::contract_obj(context))),

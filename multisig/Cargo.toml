@@ -41,6 +41,5 @@ path = "../esdt-safe"
 [dev-dependencies.multi-transfer-esdt]
 path = "../multi-transfer-esdt"
 
-
 [dev-dependencies.price-aggregator]
 git = "https://github.com/ElrondNetwork/sc-chainlink-rs"

@@ -11,37 +11,34 @@
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
                     "0",
-                    "3", "3"
+                    "3",
+                    "3"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
                 "out": [
                     "0",
-
                     "0",
                     "1",
                     "address:user",
                     "0x0102030405060708091011121314151617181920",
                     "str:EGLD-123456",
                     "400",
-
                     "0",
                     "2",
                     "address:user",
                     "0x0102030405060708091011121314151617181920",
                     "str:ETH-123456",
                     "350,000",
-
                     "1"
                 ],
+                "status": "0",
+                "message": "",
                 "gas": "*",
                 "refund": "*"
             }
@@ -63,7 +60,7 @@
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -72,7 +69,6 @@
             "tx": {
                 "from": "address:relayer2",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "sign",
                 "arguments": [
                     "1"
@@ -81,9 +77,9 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
-                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -94,7 +90,6 @@
             "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "performAction",
                 "arguments": [
                     "1"
@@ -103,6 +98,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -115,7 +111,6 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:esdt_safe",
-                "value": "0",
                 "function": "claimRefund",
                 "arguments": [
                     "str:EGLD-123456"
@@ -124,6 +119,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "4",
                 "message": "str:Nothing to refund",
                 "gas": "*",
@@ -136,7 +132,6 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:esdt_safe",
-                "value": "0",
                 "function": "claimRefund",
                 "arguments": [
                     "str:ETH-123456"
@@ -145,6 +140,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "4",
                 "message": "str:Nothing to refund",
                 "gas": "*",
@@ -160,33 +156,40 @@
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "1,500,000",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "1,500,000"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "150,000",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "150,000"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         }
                     },
-                    "storage": {                        
+                    "storage": {
                         "str:transactionStatus|address:user|u32:1": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:1": "",
-
                         "str:transactionStatus|address:user|u32:2": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": "",
-
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
-
                         "+": ""
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -195,16 +198,18 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
-                "value": "0",
                 "function": "distributeFeesFromChildContracts",
                 "arguments": [
-                    "address:relayer1", "4000",
-                    "address:relayer2", "6000"
+                    "address:relayer1",
+                    "4000",
+                    "address:relayer2",
+                    "6000"
                 ],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -218,12 +223,8 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "600,000"
-                        },
-                        "str:ETH-123456": {
-                            "balance": "60,000"
-                        }
+                        "str:EGLD-123456": "600,000",
+                        "str:ETH-123456": "60,000"
                     },
                     "storage": {}
                 },
@@ -231,12 +232,8 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "900,000"
-                        },
-                        "str:ETH-123456": {
-                            "balance": "90,000"
-                        }
+                        "str:EGLD-123456": "900,000",
+                        "str:ETH-123456": "90,000"
                     },
                     "storage": {}
                 },
@@ -245,27 +242,24 @@
                     "balance": "0",
                     "esdt": {
                         "str:EGLD-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
                         }
                     },
-                    "storage": {                        
+                    "storage": {
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
-
                         "+": ""
                     },
                     "code": "*"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

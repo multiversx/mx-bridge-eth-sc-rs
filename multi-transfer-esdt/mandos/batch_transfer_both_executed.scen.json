@@ -11,7 +11,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
-                "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
                     "address:user1|nested:str:BRIDGE-123456|biguint:100,200",
@@ -21,8 +20,6 @@
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
                 "out": [
                     "1",
                     "str:GWEI",
@@ -30,8 +27,11 @@
                     "10",
                     "0",
                     "3",
-                    "3"
+                    "3",
+                    "0"
                 ],
+                "status": "0",
+                "message": "",
                 "gas": "*",
                 "refund": "*"
             }
@@ -60,13 +60,17 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "100,000",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "100,000"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
                         },
                         "str:WRAPPED-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalMint"
                             ]
@@ -78,7 +82,7 @@
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

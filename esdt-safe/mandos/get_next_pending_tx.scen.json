@@ -22,7 +22,6 @@
             "expect": {
                 "out": [
                     "0",
-
                     "0",
                     "1",
                     "address:user1",

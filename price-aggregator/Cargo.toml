@@ -1,0 +1,17 @@
+[package]
+name = "price-aggegator-test"
+version = "0.0.0"
+edition = "2018"
+publish = false
+
+[dependencies.elrond-wasm]
+version = "0.22.11"
+
+[dev-dependencies.elrond-wasm-debug]
+version = "0.22.11"
+
+[dev-dependencies.egld-esdt-swap]
+path = "../egld-esdt-swap"
+
+[dev-dependencies.price-aggregator]
+git = "https://github.com/ElrondNetwork/sc-chainlink-rs"

@@ -10,24 +10,21 @@
             "accounts": {
                 "address:owner": {
                     "nonce": "0",
-                    "balance": "0",
-                    "storage": {}
+                    "balance": "0"
                 },
                 "address:user1": {
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": "2,000,000"
-                    },
-                    "storage": {}
+                    }
                 },
                 "address:user2": {
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": "2,000,000"
-                    },
-                    "storage": {}
+                    }
                 }
             },
             "newAddresses": [
@@ -44,7 +41,6 @@
             "tx": {
                 "from": "address:owner",
                 "contractCode": "file:../output/esdt-safe.wasm",
-                "value": "0",
                 "arguments": [
                     "sc:price_aggregator",
                     "150,000"
@@ -53,6 +49,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -65,7 +62,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt_safe",
-                "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
                     "str:BRIDGE-123456",
@@ -75,6 +71,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -99,7 +96,7 @@
                     },
                     "code": "file:../output/esdt-safe.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         },
         {
@@ -111,7 +108,6 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "0",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
@@ -139,7 +135,8 @@
             "txId": "get-all-known-tokens",
             "tx": {
                 "to": "sc:esdt_safe",
-                "function": "getAllKnownTokens"
+                "function": "getAllKnownTokens",
+                "arguments": []
             },
             "expect": {
                 "out": [

@@ -11,7 +11,6 @@
             "tx": {
                 "from": "address:oracle",
                 "to": "sc:price_aggregator",
-                "value": "0",
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
@@ -22,6 +21,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",
@@ -34,7 +34,6 @@
             "tx": {
                 "from": "address:oracle",
                 "to": "sc:price_aggregator",
-                "value": "0",
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
@@ -45,6 +44,7 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "out": [],
                 "status": "0",
                 "message": "",
                 "gas": "*",

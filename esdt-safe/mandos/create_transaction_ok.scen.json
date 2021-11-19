@@ -11,10 +11,12 @@
             "tx": {
                 "from": "address:user1",
                 "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:BRIDGE-123456",
-                    "value": "1,500,400"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:BRIDGE-123456",
+                        "value": "1,500,400"
+                    }
+                ],
                 "function": "createTransaction",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
@@ -23,7 +25,6 @@
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
                 "out": [
                     "1",
                     "str:GWEI",
@@ -31,6 +32,7 @@
                     "10",
                     "0"
                 ],
+                "status": "0",
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -52,7 +54,12 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "1,500,400",
+                            "instances": [
+                                {
+                                    "nonce": "",
+                                    "balance": "1,500,400"
+                                }
+                            ],
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
@@ -69,14 +76,12 @@
                         },
                         "str:firstBatchId": "0",
                         "str:lastBatchId": "0",
-                        
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
                 },
-                "+": {}
+                "+": ""
             }
         }
     ]

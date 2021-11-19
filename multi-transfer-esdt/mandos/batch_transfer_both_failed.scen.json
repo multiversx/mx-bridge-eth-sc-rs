@@ -11,7 +11,6 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
-                "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
                     "sc:multi_transfer_esdt|nested:str:BRIDGE-123456|biguint:100,200",
@@ -21,12 +20,12 @@
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
                 "out": [
                     "4",
                     "4"
                 ],
+                "status": "0",
+                "message": "",
                 "gas": "*",
                 "refund": "*"
             }
