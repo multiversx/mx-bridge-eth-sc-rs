@@ -342,8 +342,14 @@ pub trait Multisig:
         let statuses_after_execution = self.statuses_after_execution().get();
         if statuses_after_execution.batch_id == batch_id {
             let current_block = self.blockchain().get_block_nonce();
-            let block_diff = current_block - statuses_after_execution.block_executed;
-            let is_final = block_diff > MIN_BLOCKS_FOR_FINALITY;
+
+            let is_final = if current_block < statuses_after_execution.block_executed {
+                false
+            } else {
+                let block_diff = current_block - statuses_after_execution.block_executed;
+
+                block_diff > MIN_BLOCKS_FOR_FINALITY
+            };
 
             OptionalResult::Some((is_final, statuses_after_execution.statuses.into()).into())
         } else {
