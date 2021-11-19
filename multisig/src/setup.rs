@@ -60,10 +60,7 @@ pub trait SetupModule:
     fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
-        require!(
-            num_board_members > 0,
-            "cannot remove all board members and proposers"
-        );
+        require!(num_board_members > 0, "cannot remove all board members");
         require!(
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"
@@ -75,14 +72,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
-        self.change_user_role(board_member.clone(), UserRole::None);
-        let num_board_members = self.num_board_members().get();
-
-        require!(num_board_members > 0, "cannot remove all board members");
-        require!(
-            self.quorum().get() <= num_board_members,
-            "quorum cannot exceed board size"
-        );
+        self.remove_user(board_member.clone())?;
 
         let slash_amount = self.slash_amount().get();
 
