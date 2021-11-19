@@ -272,6 +272,11 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             None => return false,
         };
 
+        // reorg protection
+        if current_block_nonce < first_tx_in_batch_block_nonce {
+            return false;
+        }
+
         let block_diff = current_block_nonce - first_tx_in_batch_block_nonce;
         let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
 
@@ -286,6 +291,12 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         };
 
         let current_block = self.blockchain().get_block_nonce();
+
+        // reorg protection
+        if current_block < last_tx_in_batch.block_nonce {
+            return false;
+        }
+
         let block_diff = current_block - last_tx_in_batch.block_nonce;
 
         block_diff > MIN_BLOCKS_FOR_FINALITY
