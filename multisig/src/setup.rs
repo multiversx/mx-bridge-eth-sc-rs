@@ -108,11 +108,11 @@ pub trait SetupModule:
     ) -> SCResult<()> {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
-            "Mapping already exists for ERC20 token"
+            "Mapping already exists for token ID"
         );
         require!(
             self.token_id_for_erc20_address(&erc20_address).is_empty(),
-            "Mapping already exists for token id"
+            "Mapping already exists for ERC20 token"
         );
 
         self.erc20_address_for_token_id(&token_id)
