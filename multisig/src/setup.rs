@@ -60,10 +60,7 @@ pub trait SetupModule:
     fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
-        require!(
-            num_board_members > 0,
-            "cannot remove all board members and proposers"
-        );
+        require!(num_board_members > 0, "cannot remove all board members");
         require!(
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"
@@ -75,14 +72,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
-        self.change_user_role(board_member.clone(), UserRole::None);
-        let num_board_members = self.num_board_members().get();
-
-        require!(num_board_members > 0, "cannot remove all board members");
-        require!(
-            self.quorum().get() <= num_board_members,
-            "quorum cannot exceed board size"
-        );
+        self.remove_user(board_member.clone())?;
 
         let slash_amount = self.slash_amount().get();
 
@@ -118,11 +108,11 @@ pub trait SetupModule:
     ) -> SCResult<()> {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
-            "Mapping already exists for ERC20 token"
+            "Mapping already exists for token ID"
         );
         require!(
             self.token_id_for_erc20_address(&erc20_address).is_empty(),
-            "Mapping already exists for token id"
+            "Mapping already exists for ERC20 token"
         );
 
         self.erc20_address_for_token_id(&token_id)
@@ -147,6 +137,14 @@ pub trait SetupModule:
         require!(
             !self.token_id_for_erc20_address(&erc20_address).is_empty(),
             "Mapping does not exist for token id"
+        );
+
+        let mapped_erc_20 = self.erc20_address_for_token_id(&token_id).get();
+        let mapped_token_id = self.token_id_for_erc20_address(&erc20_address).get();
+
+        require!(
+            erc20_address.raw_addr == mapped_erc_20.raw_addr && token_id == mapped_token_id,
+            "Invalid mapping"
         );
 
         self.erc20_address_for_token_id(&token_id).clear();
