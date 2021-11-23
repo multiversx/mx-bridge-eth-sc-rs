@@ -31,6 +31,7 @@ elrond_wasm_node::wasm_endpoints! {
         getAllBoardMembers
         getAllStakedRelayers
         getAmountStaked
+        getCurrentRefundBatch
         getCurrentTxBatch
         getErc20AddressForTokenId
         getEsdtSafeAddress
@@ -40,7 +41,6 @@ elrond_wasm_node::wasm_endpoints! {
         getRequiredStakeAmount
         getSlashAmount
         getSlashedTokensAmount
-        getStatusesAfterExecution
         getTokenIdForErc20Address
         isPaused
         multiTransferEsdtRemoveTokenFromWhitelist

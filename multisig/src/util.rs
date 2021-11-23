@@ -1,5 +1,6 @@
 elrond_wasm::imports!();
 
+use eth_address::EthAddress;
 use transaction::SingleTransferTuple;
 
 use crate::action::Action;
@@ -119,14 +120,17 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     fn transfers_multiarg_to_tuples_vec(
         &self,
-        transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        transfers: ManagedVarArgs<
+            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
+        >,
     ) -> ManagedVec<SingleTransferTuple<Self::Api>> {
         let mut transfers_as_tuples = ManagedVec::new();
         for transfer in transfers {
-            let (address, token_id, amount) = transfer.into_tuple();
+            let (from, to, token_id, amount) = transfer.into_tuple();
 
             transfers_as_tuples.push(SingleTransferTuple {
-                address,
+                from,
+                to,
                 token_id,
                 amount,
             });

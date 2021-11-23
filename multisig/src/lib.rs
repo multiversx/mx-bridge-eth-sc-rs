@@ -6,11 +6,10 @@
 mod action;
 mod user_role;
 
-use storage::StatusesAfterExecution;
-
 use action::Action;
+use eth_address::EthAddress;
 use token_module::AddressPercentagePair;
-use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
+use transaction::esdt_safe_batch::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
@@ -20,6 +19,7 @@ mod storage;
 mod util;
 
 use token_module::ProxyTrait as _;
+use tx_batch_module::ProxyTrait as _;
 
 pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 
@@ -80,15 +80,6 @@ pub trait Multisig:
         );
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_sc_address);
-
-        // is set only so we don't have to check for "empty" on the very first call
-        // trying to deserialize a tuple from an empty storage entry would crash
-        self.statuses_after_execution()
-            .set_if_empty(&crate::storage::StatusesAfterExecution {
-                block_executed: u64::MAX,
-                batch_id: u64::MAX,
-                statuses: ManagedVec::new(),
-            });
 
         Ok(())
     }
@@ -227,7 +218,9 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        #[var_args] transfers: ManagedVarArgs<
+            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
+        >,
     ) -> SCResult<usize> {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
@@ -279,9 +272,22 @@ pub trait Multisig:
     }
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
+    fn get_current_tx_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
         let _ = self
             .get_esdt_safe_proxy_instance()
+            .get_current_tx_batch()
+            .execute_on_dest_context();
+
+        // result is already returned automatically from the EsdtSafe call,
+        // we only keep this signature for correct ABI generation
+        OptionalResult::None
+    }
+
+    // For failed Ethereum -> Elrond transactions
+    #[view(getCurrentRefundBatch)]
+    fn get_current_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+        let _ = self
+            .get_multi_transfer_esdt_proxy_instance()
             .get_current_tx_batch()
             .execute_on_dest_context();
 
@@ -314,7 +320,9 @@ pub trait Multisig:
     fn was_transfer_action_proposed(
         &self,
         batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        #[var_args] transfers: ManagedVarArgs<
+            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
+        >,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
 
@@ -325,36 +333,15 @@ pub trait Multisig:
     fn get_action_id_for_transfer_batch(
         &self,
         batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
+        #[var_args] transfers: ManagedVarArgs<
+            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
+        >,
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
         self.batch_id_to_action_id_mapping(batch_id)
             .get(&transfers_as_tuples)
             .unwrap_or(0)
-    }
-
-    #[view(getStatusesAfterExecution)]
-    fn get_statuses_after_execution(
-        &self,
-        batch_id: u64,
-    ) -> OptionalResult<MultiResult2<bool, ManagedMultiResultVec<TransactionStatus>>> {
-        let statuses_after_execution = self.statuses_after_execution().get();
-        if statuses_after_execution.batch_id == batch_id {
-            let current_block = self.blockchain().get_block_nonce();
-
-            let is_final = if current_block < statuses_after_execution.block_executed {
-                false
-            } else {
-                let block_diff = current_block - statuses_after_execution.block_executed;
-
-                block_diff > MIN_BLOCKS_FOR_FINALITY
-            };
-
-            OptionalResult::Some((is_final, statuses_after_execution.statuses.into()).into())
-        } else {
-            OptionalResult::None
-        }
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
@@ -428,20 +415,9 @@ pub trait Multisig:
 
                 action_ids_mapper.clear();
 
-                let transfers_len = transfers.len();
-                let statuses = self
-                    .get_multi_transfer_esdt_proxy_instance()
+                self.get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(transfers.into())
-                    .execute_on_dest_context_custom_range(|_, after| {
-                        (after - transfers_len, after)
-                    });
-
-                self.statuses_after_execution()
-                    .set(&StatusesAfterExecution {
-                        block_executed: self.blockchain().get_block_nonce(),
-                        batch_id,
-                        statuses: statuses.to_vec(),
-                    });
+                    .execute_on_dest_context();
             }
             _ => {}
         }

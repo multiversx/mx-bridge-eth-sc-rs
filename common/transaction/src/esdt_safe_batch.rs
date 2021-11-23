@@ -22,5 +22,5 @@ impl<M: ManagedTypeApi> ManagedDefault<M> for EsdtSafeTxBatch<M> {
     }
 }
 
-pub type EsdtSafeTxBatchSplitInFields<M> =
+pub type TxBatchSplitInFields<M> =
     MultiResult2<u64, ManagedMultiResultVec<M, TxAsMultiResult<M>>>;

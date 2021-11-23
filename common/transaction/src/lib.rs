@@ -2,7 +2,9 @@
 
 use elrond_wasm::{
     api::ManagedTypeApi,
-    types::{BigUint, ManagedAddress, ManagedVecItem, MultiResult6, TokenIdentifier},
+    types::{
+        BigUint, ManagedAddress, ManagedBuffer, ManagedVecItem, MultiResult6, TokenIdentifier,
+    },
 };
 use eth_address::EthAddress;
 
@@ -16,18 +18,21 @@ pub const TX_MULTIRESULT_NR_FIELDS: usize = 6;
 
 pub type TxNonce = u64;
 pub type BlockNonce = u64;
+pub type SenderAddressRaw<M> = ManagedBuffer<M>;
+pub type ReceiverAddressRaw<M> = ManagedBuffer<M>;
 pub type TxAsMultiResult<M> = MultiResult6<
     BlockNonce,
     TxNonce,
-    ManagedAddress<M>,
-    EthAddress<M>,
+    SenderAddressRaw<M>,
+    ReceiverAddressRaw<M>,
     TokenIdentifier<M>,
     BigUint<M>,
 >;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct SingleTransferTuple<M: ManagedTypeApi> {
-    pub address: ManagedAddress<M>,
+    pub from: EthAddress<M>,
+    pub to: ManagedAddress<M>,
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
 }
@@ -36,8 +41,8 @@ pub struct SingleTransferTuple<M: ManagedTypeApi> {
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
-    pub from: ManagedAddress<M>,
-    pub to: EthAddress<M>,
+    pub from: ManagedBuffer<M>,
+    pub to: ManagedBuffer<M>,
     pub token_identifier: TokenIdentifier<M>,
     pub amount: BigUint<M>,
 }
@@ -116,4 +121,26 @@ impl<M: ManagedTypeApi> ManagedVecItem<M> for TransactionStatus {
     fn to_byte_writer<R, Writer: FnMut(&[u8]) -> R>(&self, writer: Writer) -> R {
         <u8 as ManagedVecItem<M>>::to_byte_writer(&self.as_u8(), writer)
     }
+}
+
+// TODO: Remove in next framework version
+pub fn managed_address_to_managed_buffer<M: ManagedTypeApi>(
+    managed_addr: &ManagedAddress<M>,
+) -> ManagedBuffer<M> {
+    ManagedBuffer::new_from_bytes(
+        elrond_wasm::types::ManagedType::type_manager(managed_addr),
+        managed_addr.to_address().as_bytes(),
+    )
+}
+
+pub fn managed_buffer_to_managed_address<M: ManagedTypeApi>(
+    managed_buffer: &ManagedBuffer<M>,
+) -> ManagedAddress<M> {
+    let mut raw_bytes = [0u8; 32];
+    let _ = managed_buffer.load_slice(0, &mut raw_bytes);
+
+    ManagedAddress::new_from_bytes(
+        elrond_wasm::types::ManagedType::type_manager(managed_buffer),
+        &raw_bytes,
+    )
 }

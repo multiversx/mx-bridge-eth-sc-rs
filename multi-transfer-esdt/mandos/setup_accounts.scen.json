@@ -77,7 +77,9 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:ethTxGasLimit": "10,000",
-                        "str:tokenTicker|nested:str:GWEI": "str:GWEI"
+                        "str:tokenTicker|nested:str:GWEI": "str:GWEI",
+                        "str:maxTxBatchSize": "10",
+                        "str:maxTxBatchBlockDuration": "3,600"
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm",
                     "owner": "address:owner"
