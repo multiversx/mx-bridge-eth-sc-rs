@@ -6,7 +6,10 @@ elrond_wasm::derive_imports!();
 
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
-use transaction::*;
+use transaction::{
+    managed_address_to_managed_buffer, managed_buffer_to_managed_address, Transaction,
+    TransactionStatus,
+};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
@@ -60,6 +63,12 @@ pub trait EsdtSafe:
         );
 
         for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.to_vec().iter()) {
+            // Since tokens don't exist in the EsdtSafe in the case of a refund transaction
+            // we have no tokens to burn, nor to refund
+            if tx.is_refund_tx {
+                continue;
+            }
+
             match tx_status {
                 TransactionStatus::Executed => {
                     // local burn role might be removed while tx is executed
@@ -85,6 +94,53 @@ pub trait EsdtSafe:
         self.clear_first_batch();
 
         Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(addRefundBatch)]
+    fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
+        let block_nonce = self.blockchain().get_block_nonce();
+        let mut cached_token_ids = ManagedVec::new();
+        let mut cached_prices = ManagedVec::new();
+
+        for refund_tx in &refund_transactions {
+            let required_fee = match cached_token_ids
+                .iter()
+                .position(|id| id == refund_tx.token_identifier)
+            {
+                Some(index) => cached_prices.get(index).unwrap_or_else(|| BigUint::zero()),
+                None => {
+                    let queried_fee = self.calculate_required_fee(&refund_tx.token_identifier);
+                    cached_token_ids.push(refund_tx.token_identifier.clone());
+                    cached_prices.push(queried_fee.clone());
+
+                    queried_fee
+                }
+            };
+
+            if refund_tx.amount <= required_fee {
+                continue;
+            }
+
+            self.accumulated_transaction_fees(&refund_tx.token_identifier)
+                .update(|fees| *fees += &required_fee);
+
+            let actual_bridged_amount = refund_tx.amount - required_fee;
+            let tx_nonce = self.get_and_save_next_tx_id();
+
+            // "from" and "to" are inverted, since this was initially an Ethereum -> Elrond tx
+            let new_tx = Transaction {
+                block_nonce,
+                nonce: tx_nonce,
+                from: refund_tx.to,
+                to: refund_tx.from,
+                token_identifier: refund_tx.token_identifier,
+                amount: actual_bridged_amount,
+                is_refund_tx: true,
+            };
+
+            self.add_to_batch(new_tx);
+        }
     }
 
     // endpoints
@@ -122,6 +178,7 @@ pub trait EsdtSafe:
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token,
             amount: actual_bridged_amount,
+            is_refund_tx: false,
         };
 
         self.add_to_batch(tx);

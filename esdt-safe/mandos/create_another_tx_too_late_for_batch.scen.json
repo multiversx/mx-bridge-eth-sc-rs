@@ -82,7 +82,8 @@
                                 "3-from": "u32:32|address:user1",
                                 "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                                 "5-token_identifier": "nested:str:BRIDGE-123456",
-                                "6-amount": "biguint:400"
+                                "6-amount": "biguint:400",
+                                "7-is_refund_tx": "u8:0"
                             },
                             {
                                 "1-block_nonce": "u64:0",
@@ -90,7 +91,8 @@
                                 "3-from": "u32:32|address:user2",
                                 "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                                 "5-token_identifier": "nested:str:BRIDGE-123456",
-                                "6-amount": "biguint:900"
+                                "6-amount": "biguint:900",
+                                "7-is_refund_tx": "u8:0"
                             }
                         ],
                         "str:pendingBatches|u64:1": {
@@ -99,7 +101,8 @@
                             "3-from": "u32:32|address:user2",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:BRIDGE-123456",
-                            "6-amount": "biguint:100"
+                            "6-amount": "biguint:100",
+                            "7-is_refund_tx": "u8:0"
                         },
 
                         "str:firstBatchId": "0",

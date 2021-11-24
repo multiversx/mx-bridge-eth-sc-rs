@@ -3,7 +3,10 @@
 elrond_wasm::imports!();
 
 use fee_estimator_module::GWEI_STRING;
-use transaction::{managed_address_to_managed_buffer, SingleTransferTuple, Transaction};
+use transaction::{
+    esdt_safe_batch::TxBatchSplitInFields, managed_address_to_managed_buffer, SingleTransferTuple,
+    Transaction,
+};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 3_600; // ~6 hours
@@ -58,14 +61,13 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let queried_fee: BigUint;
             let required_fee = match cached_token_ids
                 .iter()
                 .position(|id| id == transfer.token_id)
             {
                 Some(index) => cached_prices.get(index).unwrap_or_else(|| BigUint::zero()),
                 None => {
-                    queried_fee = self.calculate_required_fee(&transfer.token_id);
+                    let queried_fee = self.calculate_required_fee(&transfer.token_id);
                     cached_token_ids.push(transfer.token_id.clone());
                     cached_prices.push(queried_fee.clone());
 
@@ -90,6 +92,20 @@ pub trait MultiTransferEsdt:
         }
     }
 
+    #[only_owner]
+    #[endpoint(getAndClearFirstRefundBatch)]
+    fn get_and_clear_first_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+        let opt_current_batch = self.get_current_tx_batch();
+
+        if matches!(opt_current_batch, OptionalResult::Some(_)) {
+            self.clear_first_batch();
+        }
+
+        opt_current_batch
+    }
+
+    // private
+
     fn add_refund_tx_to_batch(&self, tx_tuple: SingleTransferTuple<Self::Api>) {
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
@@ -98,6 +114,7 @@ pub trait MultiTransferEsdt:
             to: managed_address_to_managed_buffer(&tx_tuple.to),
             token_identifier: tx_tuple.token_id,
             amount: tx_tuple.amount,
+            is_refund_tx: true,
         };
 
         self.add_to_batch(tx);
