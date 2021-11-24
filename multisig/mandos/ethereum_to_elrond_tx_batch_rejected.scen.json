@@ -24,9 +24,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }

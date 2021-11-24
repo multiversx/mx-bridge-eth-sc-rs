@@ -171,7 +171,7 @@ pub trait Multisig:
         &self,
         esdt_safe_batch_id: u64,
         #[var_args] tx_batch_status: ManagedVarArgs<TransactionStatus>,
-    ) -> SCResult<usize> {
+    ) -> SCResult<()> {
         let call_result = self
             .get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
@@ -211,7 +211,7 @@ pub trait Multisig:
         self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id, &statuses_vec)
             .set(&action_id);
 
-        Ok(action_id)
+        Ok(())
     }
 
     // Multi-transfer ESDT SC calls
@@ -223,7 +223,7 @@ pub trait Multisig:
         #[var_args] transfers: ManagedVarArgs<
             MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
         >,
-    ) -> SCResult<usize> {
+    ) -> SCResult<()> {
         let current_eth_batch_id = self.current_eth_batch_id().get();
         require!(
             eth_batch_id == current_eth_batch_id,
@@ -245,7 +245,7 @@ pub trait Multisig:
         self.eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers_as_tuples)
             .set(&action_id);
 
-        Ok(action_id)
+        Ok(())
     }
 
     #[only_owner]
