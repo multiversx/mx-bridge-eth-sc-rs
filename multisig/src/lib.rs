@@ -184,9 +184,11 @@ pub trait Multisig:
         let statuses_vec = tx_batch_status.to_vec();
 
         require!(
-            self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-                .get(&statuses_vec)
-                == None,
+            self.action_id_for_set_current_transaction_batch_status(
+                esdt_safe_batch_id,
+                &statuses_vec
+            )
+            .is_empty(),
             "Action already proposed"
         );
 
@@ -206,8 +208,8 @@ pub trait Multisig:
             tx_batch_status: statuses_vec.clone(),
         })?;
 
-        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-            .insert(statuses_vec, action_id);
+        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id, &statuses_vec)
+            .set(&action_id);
 
         Ok(action_id)
     }
@@ -217,7 +219,7 @@ pub trait Multisig:
     #[endpoint(proposeMultiTransferEsdtBatch)]
     fn propose_multi_transfer_esdt_batch(
         &self,
-        batch_id: u64,
+        eth_batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<
             MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
         >,
@@ -225,19 +227,18 @@ pub trait Multisig:
         let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
 
         require!(
-            self.batch_id_to_action_id_mapping(batch_id)
-                .get(&transfers_as_tuples)
-                == None,
+            self.eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers_as_tuples)
+                .is_empty(),
             "This batch was already proposed"
         );
 
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
-            batch_id,
+            eth_batch_id,
             transfers: transfers_as_tuples.clone(),
         })?;
 
-        self.batch_id_to_action_id_mapping(batch_id)
-            .insert(transfers_as_tuples, action_id);
+        self.eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers_as_tuples)
+            .set(&action_id);
 
         Ok(action_id)
     }
@@ -341,29 +342,17 @@ pub trait Multisig:
     #[view(wasTransferActionProposed)]
     fn was_transfer_action_proposed(
         &self,
-        batch_id: u64,
+        eth_batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<
             MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
         >,
     ) -> bool {
-        let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
+        let transfers_vec = self.transfers_multiarg_to_tuples_vec(transfers);
+        let action_id = self
+            .eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers_vec)
+            .get();
 
         self.is_valid_action_id(action_id)
-    }
-
-    #[view(getActionIdForTransferBatch)]
-    fn get_action_id_for_transfer_batch(
-        &self,
-        batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<
-            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
-        >,
-    ) -> usize {
-        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
-
-        self.batch_id_to_action_id_mapping(batch_id)
-            .get(&transfers_as_tuples)
-            .unwrap_or(0)
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
@@ -372,21 +361,12 @@ pub trait Multisig:
         esdt_safe_batch_id: u64,
         #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
     ) -> bool {
-        self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
-            esdt_safe_batch_id,
-            expected_tx_batch_status,
-        ))
-    }
+        let statuses_vec = expected_tx_batch_status.to_vec();
+        let action_id = self
+            .action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id, &statuses_vec)
+            .get();
 
-    #[view(getActionIdForSetCurrentTransactionBatchStatus)]
-    fn get_action_id_for_set_current_transaction_batch_status(
-        &self,
-        esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
-    ) -> usize {
-        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-            .get(&expected_tx_batch_status.to_vec())
-            .unwrap_or(0)
+        self.is_valid_action_id(action_id)
     }
 
     // private
@@ -401,41 +381,22 @@ pub trait Multisig:
                 esdt_safe_batch_id,
                 tx_batch_status,
             } => {
-                let mut action_ids_mapper =
-                    self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id);
-
-                // if there's only one proposed action,
-                // the action was already cleared at the beginning of this function
-                if action_ids_mapper.len() > 1 {
-                    for act_id in action_ids_mapper.values() {
-                        self.clear_action(act_id);
-                    }
-                }
-
-                action_ids_mapper.clear();
+                self.action_id_for_set_current_transaction_batch_status(
+                    esdt_safe_batch_id,
+                    &tx_batch_status,
+                )
+                .clear();
 
                 self.get_esdt_safe_proxy_instance()
-                    .set_transaction_batch_status(
-                        esdt_safe_batch_id,
-                        ManagedVarArgs::from(tx_batch_status),
-                    )
+                    .set_transaction_batch_status(esdt_safe_batch_id, tx_batch_status.into())
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
-                batch_id,
+                eth_batch_id,
                 transfers,
             } => {
-                let mut action_ids_mapper = self.batch_id_to_action_id_mapping(batch_id);
-
-                // if there's only one proposed action,
-                // the action was already cleared at the beginning of this function
-                if action_ids_mapper.len() > 1 {
-                    for act_id in action_ids_mapper.values() {
-                        self.clear_action(act_id);
-                    }
-                }
-
-                action_ids_mapper.clear();
+                self.eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers)
+                    .clear();
 
                 self.get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(transfers.into())

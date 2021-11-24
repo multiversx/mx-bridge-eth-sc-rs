@@ -71,9 +71,11 @@
                 "from": "address:relayer2",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "sign",
+                "function": "signEthToElrondBatch",
                 "arguments": [
-                    "1"
+                    "1",
+                    "0x0102030405060708091011121314151617181920", "address:user", "str:EGLD-123456", "500,000",
+                    "0x0102030405060708091011121314151617181920", "address:user", "str:ETH-123456", "500,000"
                 ],
                 "gasLimit": "35,000,000",
                 "gasPrice": "0"

@@ -19,7 +19,7 @@ pub enum Action<M: ManagedTypeApi> {
         tx_batch_status: ManagedVec<M, TransactionStatus>,
     },
     BatchTransferEsdtToken {
-        batch_id: u64,
+        eth_batch_id: u64,
         transfers: ManagedVec<M, SingleTransferTuple<M>>,
     },
 }

@@ -73,9 +73,10 @@
                 "from": "address:relayer2",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "sign",
+                "function": "signEsdtSafeSetBatchStatus",
                 "arguments": [
-                    "1"
+                    "0",
+                    "3", "3"
                 ],
                 "gasLimit": "35,000,000",
                 "gasPrice": "0"

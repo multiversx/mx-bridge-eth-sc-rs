@@ -23,8 +23,6 @@ elrond_wasm_node::wasm_endpoints! {
         esdtSafeSetMaxTxBatchBlockDuration
         esdtSafeSetMaxTxBatchSize
         getActionData
-        getActionIdForSetCurrentTransactionBatchStatus
-        getActionIdForTransferBatch
         getActionLastIndex
         getActionSignerCount
         getActionValidSignerCount
@@ -54,7 +52,8 @@ elrond_wasm_node::wasm_endpoints! {
         proposeMultiTransferEsdtBatch
         quorumReached
         removeUser
-        sign
+        signEsdtSafeSetBatchStatus
+        signEthToElrondBatch
         signed
         slashBoardMember
         stake
