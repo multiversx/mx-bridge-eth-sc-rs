@@ -37,7 +37,7 @@ pub struct SingleTransferTuple<M: ManagedTypeApi> {
     pub amount: BigUint<M>,
 }
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem)]
+#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,

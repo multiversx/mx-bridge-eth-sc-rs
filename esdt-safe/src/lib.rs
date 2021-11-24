@@ -102,6 +102,7 @@ pub trait EsdtSafe:
         let block_nonce = self.blockchain().get_block_nonce();
         let mut cached_token_ids = ManagedVec::new();
         let mut cached_prices = ManagedVec::new();
+        let mut new_transactions = ManagedVec::new();
 
         for refund_tx in &refund_transactions {
             let required_fee = match cached_token_ids
@@ -138,9 +139,10 @@ pub trait EsdtSafe:
                 amount: actual_bridged_amount,
                 is_refund_tx: true,
             };
-
-            self.add_to_batch(new_tx);
+            new_transactions.push(new_tx);
         }
+
+        self.add_multiple_tx_to_batch(new_transactions);
     }
 
     // endpoints
