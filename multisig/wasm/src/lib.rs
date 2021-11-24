@@ -29,6 +29,7 @@ elrond_wasm_node::wasm_endpoints! {
         getAllBoardMembers
         getAllStakedRelayers
         getAmountStaked
+        getCurrentEthBatchId
         getCurrentRefundBatch
         getCurrentTxBatch
         getErc20AddressForTokenId

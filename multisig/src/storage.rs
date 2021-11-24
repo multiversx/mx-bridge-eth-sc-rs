@@ -56,6 +56,10 @@ pub trait StorageModule {
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<bool>;
 
+    #[view(getCurrentEthBatchId)]
+    #[storage_mapper("currentEthBatchId")]
+    fn current_eth_batch_id(&self) -> SingleValueMapper<u64>;
+
     #[storage_mapper("batchIdToActionIdMapping")]
     fn eth_batch_id_to_action_id_mapping(
         &self,

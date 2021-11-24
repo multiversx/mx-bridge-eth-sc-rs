@@ -224,8 +224,13 @@ pub trait Multisig:
             MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
         >,
     ) -> SCResult<usize> {
-        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+        let current_eth_batch_id = self.current_eth_batch_id().get();
+        require!(
+            eth_batch_id == current_eth_batch_id,
+            "Can only propose for the current batch"
+        );
 
+        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
         require!(
             self.eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers_as_tuples)
                 .is_empty(),
@@ -397,6 +402,7 @@ pub trait Multisig:
             } => {
                 self.eth_batch_id_to_action_id_mapping(eth_batch_id, &transfers)
                     .clear();
+                self.current_eth_batch_id().update(|id| *id += 1);
 
                 self.get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(transfers.into())

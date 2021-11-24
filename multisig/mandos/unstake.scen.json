@@ -179,7 +179,7 @@
                 "value": "0",
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
-                    "2"
+                    "0"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"

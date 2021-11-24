@@ -14,7 +14,7 @@
                 "value": "0",
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
-                    "1",
+                    "0",
                     "0x0102030405060708091011121314151617181920", "address:user", "str:EGLD-123456", "500,000",
                     "0x0102030405060708091011121314151617181920", "address:user", "str:ETH-123456", "500,000"
                 ],
@@ -40,7 +40,7 @@
                     "storage": {
                         "str:action_data.item|u32:1": {
                             "1-action_type": "u8:7",
-                            "2-batch_id": "u64:1",
+                            "2-batch_id": "u64:0",
                             "3-transfers_len": "u32:2",
                             "4-transfers_vec": [
                                 {
@@ -73,7 +73,7 @@
                 "value": "0",
                 "function": "signEthToElrondBatch",
                 "arguments": [
-                    "1",
+                    "0",
                     "0x0102030405060708091011121314151617181920", "address:user", "str:EGLD-123456", "500,000",
                     "0x0102030405060708091011121314151617181920", "address:user", "str:ETH-123456", "500,000"
                 ],
