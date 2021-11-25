@@ -15,8 +15,8 @@
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "0x0102030405060708091011121314151617181920", "address:user", "str:EGLD-123456", "500,000",
-                    "0x0102030405060708091011121314151617181920", "address:user", "str:ETH-123456", "500,000"
+                    "0x0102030405060708091011121314151617181920", "address:user", "str:EGLD-123456", "500,000", "1",
+                    "0x0102030405060708091011121314151617181920", "address:user", "str:ETH-123456", "500,000", "2"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -47,13 +47,15 @@
                                     "1-from": "0x0102030405060708091011121314151617181920",
                                     "2-to": "address:user",
                                     "3-token_id": "nested:str:EGLD-123456",
-                                    "4-amount": "biguint:500,000"
+                                    "4-amount": "biguint:500,000",
+                                    "5-tx_nonce": "u64:1"
                                 },
                                 {
                                     "1-from": "0x0102030405060708091011121314151617181920",
                                     "2-to": "address:user",
                                     "3-token_id": "nested:str:ETH-123456",
-                                    "4-amount": "biguint:500,000"
+                                    "4-amount": "biguint:500,000",
+                                    "5-tx_nonce": "u64:2"
                                 }
                             ]
                         },

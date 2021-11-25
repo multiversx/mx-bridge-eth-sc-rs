@@ -7,8 +7,8 @@ elrond_wasm::derive_imports!();
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
 use transaction::{
-    managed_address_to_managed_buffer, managed_buffer_to_managed_address, Transaction,
-    TransactionStatus,
+    managed_address_to_managed_buffer, managed_buffer_to_managed_address,
+    transaction_status::TransactionStatus, Transaction,
 };
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
@@ -34,6 +34,10 @@ pub trait EsdtSafe:
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(&1);
+        self.last_batch_id().set_if_empty(&1);
 
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);

@@ -98,7 +98,7 @@
                         }
                     },
                     "storage": {
-                        "str:pendingBatches|u64:0": {
+                        "str:pendingBatches|u64:1": {
                             "1-block_nonce": "u64:0",
                             "2-nonce": "u64:1",
                             "3-from": "u32:32|address:user1",
@@ -107,8 +107,8 @@
                             "6-amount": "biguint:1,500,400",
                             "7-is_refund_tx": "u8:0"
                         },
-                        "str:firstBatchId": "0",
-                        "str:lastBatchId": "0",
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
                         
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
 

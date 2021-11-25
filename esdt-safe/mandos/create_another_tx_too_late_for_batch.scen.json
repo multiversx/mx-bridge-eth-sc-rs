@@ -75,7 +75,7 @@
                         }
                     },
                     "storage": {
-                        "str:pendingBatches|u64:0": [
+                        "str:pendingBatches|u64:1": [
                             {
                                 "1-block_nonce": "u64:0",
                                 "2-nonce": "u64:1",
@@ -95,7 +95,7 @@
                                 "7-is_refund_tx": "u8:0"
                             }
                         ],
-                        "str:pendingBatches|u64:1": {
+                        "str:pendingBatches|u64:2": {
                             "1-block_nonce": "u64:101",
                             "2-nonce": "u64:3",
                             "3-from": "u32:32|address:user2",
@@ -105,8 +105,8 @@
                             "7-is_refund_tx": "u8:0"
                         },
 
-                        "str:firstBatchId": "0",
-                        "str:lastBatchId": "1",
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "2",
 
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "4,500,000",
 
@@ -127,7 +127,7 @@
             },
             "expect": {
                 "out": [
-                    "0"
+                    "1"
                 ]
             }
         },
@@ -141,7 +141,7 @@
             },
             "expect": {
                 "out": [
-                    "1"
+                    "2"
                 ]
             }
         }

@@ -2,7 +2,8 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
-use transaction::{SingleTransferTuple, TransactionStatus};
+use transaction::transaction_status::TransactionStatus;
+use transaction::EthTransaction;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
@@ -56,11 +57,19 @@ pub trait StorageModule {
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<bool>;
 
+    #[view(getLastExecutedEthBatchId)]
+    #[storage_mapper("lastExecutedEthBatchId")]
+    fn last_executed_eth_batch_id(&self) -> SingleValueMapper<u64>;
+
+    #[view(getLastExecutedEthTxId)]
+    #[storage_mapper("lastExecutedEthTxId")]
+    fn last_executed_eth_tx_id(&self) -> SingleValueMapper<u64>;
+
     #[storage_mapper("batchIdToActionIdMapping")]
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> MapMapper<ManagedVec<SingleTransferTuple<Self::Api>>, usize>;
+    ) -> MapMapper<ManagedVec<EthTransaction<Self::Api>>, usize>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(

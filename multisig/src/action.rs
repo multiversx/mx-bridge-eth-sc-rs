@@ -1,6 +1,7 @@
 use elrond_wasm::api::ManagedTypeApi;
 use elrond_wasm::types::{ManagedAddress, ManagedVec};
-use transaction::{SingleTransferTuple, TransactionStatus};
+use transaction::transaction_status::TransactionStatus;
+use transaction::EthTransaction;
 
 elrond_wasm::derive_imports!();
 
@@ -19,8 +20,8 @@ pub enum Action<M: ManagedTypeApi> {
         tx_batch_status: ManagedVec<M, TransactionStatus>,
     },
     BatchTransferEsdtToken {
-        batch_id: u64,
-        transfers: ManagedVec<M, SingleTransferTuple<M>>,
+        eth_batch_id: u64,
+        transfers: ManagedVec<M, EthTransaction<M>>,
     },
 }
 

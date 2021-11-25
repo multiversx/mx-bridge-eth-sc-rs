@@ -7,9 +7,9 @@ mod action;
 mod user_role;
 
 use action::Action;
-use eth_address::EthAddress;
 use token_module::AddressPercentagePair;
 use transaction::esdt_safe_batch::TxBatchSplitInFields;
+use transaction::transaction_status::TransactionStatus;
 use transaction::*;
 use user_role::UserRole;
 
@@ -217,27 +217,32 @@ pub trait Multisig:
     #[endpoint(proposeMultiTransferEsdtBatch)]
     fn propose_multi_transfer_esdt_batch(
         &self,
-        batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<
-            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
-        >,
+        eth_batch_id: u64,
+        #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> SCResult<usize> {
-        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+        let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
+        require!(
+            eth_batch_id == next_eth_batch_id,
+            "Can only propose for next batch ID"
+        );
+
+        let transfers_as_eth_tx = self.transfers_multiarg_to_eth_tx_vec(transfers);
+        self.require_valid_eth_tx_ids(&transfers_as_eth_tx)?;
 
         require!(
-            self.batch_id_to_action_id_mapping(batch_id)
-                .get(&transfers_as_tuples)
+            self.batch_id_to_action_id_mapping(eth_batch_id)
+                .get(&transfers_as_eth_tx)
                 == None,
             "This batch was already proposed"
         );
 
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
-            batch_id,
-            transfers: transfers_as_tuples.clone(),
+            eth_batch_id,
+            transfers: transfers_as_eth_tx.clone(),
         })?;
 
-        self.batch_id_to_action_id_mapping(batch_id)
-            .insert(transfers_as_tuples, action_id);
+        self.batch_id_to_action_id_mapping(eth_batch_id)
+            .insert(transfers_as_eth_tx, action_id);
 
         Ok(action_id)
     }
@@ -341,12 +346,10 @@ pub trait Multisig:
     #[view(wasTransferActionProposed)]
     fn was_transfer_action_proposed(
         &self,
-        batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<
-            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
-        >,
+        eth_batch_id: u64,
+        #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> bool {
-        let action_id = self.get_action_id_for_transfer_batch(batch_id, transfers);
+        let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
 
         self.is_valid_action_id(action_id)
     }
@@ -354,14 +357,12 @@ pub trait Multisig:
     #[view(getActionIdForTransferBatch)]
     fn get_action_id_for_transfer_batch(
         &self,
-        batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<
-            MultiArg4<EthAddress<Self::Api>, ManagedAddress, TokenIdentifier, BigUint>,
-        >,
+        eth_batch_id: u64,
+        #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> usize {
-        let transfers_as_tuples = self.transfers_multiarg_to_tuples_vec(transfers);
+        let transfers_as_tuples = self.transfers_multiarg_to_eth_tx_vec(transfers);
 
-        self.batch_id_to_action_id_mapping(batch_id)
+        self.batch_id_to_action_id_mapping(eth_batch_id)
             .get(&transfers_as_tuples)
             .unwrap_or(0)
     }
@@ -422,10 +423,10 @@ pub trait Multisig:
                     .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
-                batch_id,
+                eth_batch_id,
                 transfers,
             } => {
-                let mut action_ids_mapper = self.batch_id_to_action_id_mapping(batch_id);
+                let mut action_ids_mapper = self.batch_id_to_action_id_mapping(eth_batch_id);
 
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
@@ -436,6 +437,13 @@ pub trait Multisig:
                 }
 
                 action_ids_mapper.clear();
+                self.last_executed_eth_batch_id().update(|id| *id += 1);
+
+                // The "if" is not really needed, but this is more efficient than unwrap()
+                let last_tx_index = transfers.len() - 1;
+                if let Some(last_tx) = transfers.get(last_tx_index) {
+                    self.last_executed_eth_tx_id().set(&last_tx.tx_nonce);
+                }
 
                 self.get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(transfers.into())
