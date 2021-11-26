@@ -11,6 +11,8 @@ elrond_wasm_node::wasm_endpoints! {
         getLockedEgldBalance
         getWrappedEgldTokenId
         unwrapEgld
+        withdrawEgldTo
+        withdrawWrappedEgldTo
         wrapEgld
     )
 }

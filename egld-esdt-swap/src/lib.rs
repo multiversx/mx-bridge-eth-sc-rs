@@ -98,6 +98,28 @@ pub trait EgldEsdtSwap {
         }
     }
 
+    #[only_owner]
+    #[endpoint(withdrawEgldTo)]
+    fn withdraw_egld_to(&self, #[var_args] args: MultiArgVec<MultiArg2<ManagedAddress, BigUint>>) {
+        for item in args.iter() {
+            let (address, amount) = item.clone().into_tuple();
+            self.send().direct_egld(&address, &amount, &[]);
+        }
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawWrappedEgldTo)]
+    fn withdraw_wrapped_egld_to(
+        &self,
+        #[var_args] args: MultiArgVec<MultiArg2<ManagedAddress, BigUint>>,
+    ) {
+        let wegld_id = self.wrapped_egld_token_id().get();
+        for item in args.iter() {
+            let (address, amount) = item.clone().into_tuple();
+            self.send().direct(&address, &wegld_id, 0, &amount, &[]);
+        }
+    }
+
     // views
 
     #[view(getLockedEgldBalance)]
