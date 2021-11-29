@@ -37,7 +37,7 @@ pub struct SingleTransferTuple<M: ManagedTypeApi> {
     pub amount: BigUint<M>,
 }
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem)]
+#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
@@ -45,6 +45,7 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub to: ManagedBuffer<M>,
     pub token_identifier: TokenIdentifier<M>,
     pub amount: BigUint<M>,
+    pub is_refund_tx: bool,
 }
 
 impl<M: ManagedTypeApi> From<TxAsMultiResult<M>> for Transaction<M> {
@@ -59,6 +60,7 @@ impl<M: ManagedTypeApi> From<TxAsMultiResult<M>> for Transaction<M> {
             to,
             token_identifier,
             amount,
+            is_refund_tx: false,
         }
     }
 }

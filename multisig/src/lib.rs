@@ -242,6 +242,28 @@ pub trait Multisig:
         Ok(action_id)
     }
 
+    #[only_owner]
+    #[endpoint(moveRefundBatchToSafe)]
+    fn move_refund_batch_to_safe(&self) {
+        let opt_refund_batch_fields: OptionalResult<TxBatchSplitInFields<Self::Api>> = self
+            .get_multi_transfer_esdt_proxy_instance()
+            .get_and_clear_first_refund_batch()
+            .execute_on_dest_context();
+
+        if let OptionalResult::Some(refund_batch_fields) = opt_refund_batch_fields {
+            let (_batch_id, all_tx_fields) = refund_batch_fields.into_tuple();
+            let mut refund_batch = ManagedVec::new();
+
+            for tx_fields in all_tx_fields {
+                refund_batch.push(Transaction::from(tx_fields));
+            }
+
+            self.get_esdt_safe_proxy_instance()
+                .add_refund_batch(refund_batch)
+                .execute_on_dest_context();
+        }
+    }
+
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
@@ -291,7 +313,7 @@ pub trait Multisig:
             .get_current_tx_batch()
             .execute_on_dest_context();
 
-        // result is already returned automatically from the EsdtSafe call,
+        // result is already returned automatically from the MultiTransferEsdt call,
         // we only keep this signature for correct ABI generation
         OptionalResult::None
     }

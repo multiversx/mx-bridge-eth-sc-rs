@@ -87,6 +87,27 @@ pub trait TxBatchModule {
         }
     }
 
+    // optimized to prevent reading/storing the batch over and over
+    fn add_multiple_tx_to_batch(&self, transactions: ManagedVec<Transaction<Self::Api>>) {
+        let mut last_batch_id = self.last_batch_id().get();
+        let mut last_batch = self.pending_batches(last_batch_id).get();
+
+        for tx in &transactions {
+            if self.is_batch_full(&last_batch) {
+                self.pending_batches(last_batch_id).set(&last_batch);
+
+                last_batch.overwrite_with_single_item(tx.clone());
+
+                self.create_new_batch(tx);
+                last_batch_id += 1;
+            } else {
+                last_batch.push(tx);
+            }
+        }
+
+        self.pending_batches(last_batch_id).set(&last_batch);
+    }
+
     #[allow(clippy::vec_init_then_push)]
     fn create_new_batch(&self, transaction: Transaction<Self::Api>) {
         let last_batch_id = self.last_batch_id().get();

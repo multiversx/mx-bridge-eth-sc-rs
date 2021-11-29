@@ -43,7 +43,10 @@ elrond_wasm_node::wasm_endpoints! {
         getSlashedTokensAmount
         getTokenIdForErc20Address
         isPaused
+        moveRefundBatchToSafe
         multiTransferEsdtRemoveTokenFromWhitelist
+        multiTransferEsdtSetMaxRefundTxBatchBlockDuration
+        multiTransferEsdtSetMaxRefundTxBatchSize
         multiTransferEsdtaddTokenToWhitelist
         pause
         performAction

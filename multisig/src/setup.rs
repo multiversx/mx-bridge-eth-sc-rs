@@ -264,6 +264,25 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    #[only_owner]
+    #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]
+    fn multi_transfer_esdt_set_max_refund_tx_batch_size(&self, new_max_tx_batch_size: usize) {
+        self.setup_get_multi_transfer_esdt_proxy_instance()
+            .set_max_tx_batch_size(new_max_tx_batch_size)
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(multiTransferEsdtSetMaxRefundTxBatchBlockDuration)]
+    fn multi_transfer_esdt_set_max_refund_tx_batch_block_duration(
+        &self,
+        new_max_tx_batch_block_duration: u64,
+    ) {
+        self.setup_get_multi_transfer_esdt_proxy_instance()
+            .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
+            .execute_on_dest_context();
+    }
+
     // proxies
 
     #[proxy]
