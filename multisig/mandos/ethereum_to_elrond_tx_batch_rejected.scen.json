@@ -15,8 +15,8 @@
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "sc:egld_esdt_swap", "str:EGLD-123456", "500,000",
-                    "sc:egld_esdt_swap", "str:ETH-123456", "500,000"
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:EGLD-123456", "500,000",
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:ETH-123456", "500,000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -44,14 +44,16 @@
                             "3-transfers_len": "u32:2",
                             "4-transfers_vec": [
                                 {
-                                    "1-dest": "sc:egld_esdt_swap",
-                                    "2-token_id": "nested:str:EGLD-123456",
-                                    "3-amount": "biguint:500,000"
+                                    "1-from": "0x0102030405060708091011121314151617181920",
+                                    "2-to": "sc:egld_esdt_swap",
+                                    "3-token_id": "nested:str:EGLD-123456",
+                                    "4-amount": "biguint:500,000"
                                 },
                                 {
-                                    "1-dest": "sc:egld_esdt_swap",
-                                    "2-token_id": "nested:str:ETH-123456",
-                                    "3-amount": "biguint:500,000"
+                                    "1-from": "0x0102030405060708091011121314151617181920",
+                                    "2-to": "sc:egld_esdt_swap",
+                                    "3-token_id": "nested:str:ETH-123456",
+                                    "4-amount": "biguint:500,000"
                                 }
                             ]
                         },
@@ -96,15 +98,13 @@
                 "arguments": [
                     "1"
                 ],
-                "gasLimit": "50,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "4", "4"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -112,24 +112,34 @@
         {
             "step": "setState",
             "currentBlockInfo": {
-                "blockNonce": "3"
+                "blockNonce": "4,000"
             }
         },
         {
             "step": "scQuery",
-            "txId": "query-statuses",
+            "txId": "get-current-refund-tx-batch",
             "tx": {
                 "to": "sc:multisig",
-                "function": "getStatusesAfterExecution",
-                "arguments": [
-                    "1"
-                ]
+                "function": "getCurrentRefundBatch",
+                "arguments": []
             },
             "expect": {
                 "out": [
-                    "0x01",
-                    "4",
-                    "4"
+                    "0",
+
+                    "0",
+                    "1",
+                    "0x0102030405060708091011121314151617181920",
+                    "sc:egld_esdt_swap",
+                    "str:EGLD-123456",
+                    "500,000",
+
+                    "0",
+                    "2",
+                    "0x0102030405060708091011121314151617181920",
+                    "sc:egld_esdt_swap",
+                    "str:ETH-123456",
+                    "500,000"
                 ]
             }
         }

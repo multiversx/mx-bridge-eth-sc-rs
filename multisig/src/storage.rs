@@ -7,13 +7,6 @@ use transaction::{SingleTransferTuple, TransactionStatus};
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[derive(TopEncode, TopDecode)]
-pub struct StatusesAfterExecution<M: ManagedTypeApi> {
-    pub block_executed: u64,
-    pub batch_id: u64,
-    pub statuses: ManagedVec<M, TransactionStatus>,
-}
-
 #[elrond_wasm::module]
 pub trait StorageModule {
     /// Minimum number of signatures needed to perform any action.
@@ -68,9 +61,6 @@ pub trait StorageModule {
         &self,
         batch_id: u64,
     ) -> MapMapper<ManagedVec<SingleTransferTuple<Self::Api>>, usize>;
-
-    #[storage_mapper("statusesAfterExecution")]
-    fn statuses_after_execution(&self) -> SingleValueMapper<StatusesAfterExecution<Self::Api>>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(

@@ -14,11 +14,14 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
+[dependencies.fee-estimator-module]
+path = "../common/fee-estimator-module"
+
 [dependencies.token-module]
 path = "../common/token-module"
 
-[dependencies.fee-estimator-module]
-path = "../common/fee-estimator-module"
+[dependencies.tx-batch-module]
+path = "../common/tx-batch-module"
 
 [dependencies.esdt-safe]
 path = "../esdt-safe"

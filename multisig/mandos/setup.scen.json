@@ -45,6 +45,8 @@
                     },
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
+                        "str:maxTxBatchSize": "10",
+                        "str:maxTxBatchBlockDuration": "3,600",
                         "str:ethTxGasLimit": "10,000",
 
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
@@ -184,9 +186,7 @@
                         "str:user_address_to_id|address:relayer2": "2",
                         "str:user_count": "2",
                         "str:user_id_to_address|u32:1": "address:relayer1",
-                        "str:user_id_to_address|u32:2": "address:relayer2",
-
-                        "str:statusesAfterExecution": "0xffffffffffffffff|0xffffffffffffffff|u32:0"
+                        "str:user_id_to_address|u32:2": "address:relayer2"
                     },
                     "code": "file:../output/multisig.wasm"
                 },

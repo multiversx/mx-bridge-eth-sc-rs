@@ -5,6 +5,7 @@ use eth_address::EthAddress;
 
 use fee_estimator_module::ProxyTrait as _;
 use token_module::ProxyTrait as _;
+use tx_batch_module::ProxyTrait as _;
 
 #[elrond_wasm::module]
 pub trait SetupModule:
