@@ -14,8 +14,8 @@
                 "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200",
-                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200"
+                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200|u64:1",
+                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200|u64:2"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"

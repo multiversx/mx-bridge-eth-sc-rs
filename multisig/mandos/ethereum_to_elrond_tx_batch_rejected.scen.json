@@ -7,6 +7,54 @@
         },
         {
             "step": "scCall",
+            "txId": "try-propose-wrong-batch-id",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "proposeMultiTransferEsdtBatch",
+                "arguments": [
+                    "2",
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:EGLD-123456", "2,000,000", "u64:1",
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:ETH-123456", "2,000,000", "u64:2"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Can only propose for next batch ID",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "try-propose-wrong-tx-id",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "proposeMultiTransferEsdtBatch",
+                "arguments": [
+                    "1",
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:EGLD-123456", "2,000,000", "u64:2",
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:ETH-123456", "2,000,000", "u64:3"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Invalid Tx ID",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
             "txId": "propose-transfer-to-smart-contract",
             "tx": {
                 "from": "address:relayer1",
@@ -15,8 +63,8 @@
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:EGLD-123456", "2,000,000",
-                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:ETH-123456", "2,000,000"
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:EGLD-123456", "2,000,000", "u64:1",
+                    "0x0102030405060708091011121314151617181920", "sc:egld_esdt_swap", "str:ETH-123456", "2,000,000", "u64:2"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -47,13 +95,15 @@
                                     "1-from": "0x0102030405060708091011121314151617181920",
                                     "2-to": "sc:egld_esdt_swap",
                                     "3-token_id": "nested:str:EGLD-123456",
-                                    "4-amount": "biguint:2,000,000"
+                                    "4-amount": "biguint:2,000,000",
+                                    "5-tx_id": "u64:1"
                                 },
                                 {
                                     "1-from": "0x0102030405060708091011121314151617181920",
                                     "2-to": "sc:egld_esdt_swap",
                                     "3-token_id": "nested:str:ETH-123456",
-                                    "4-amount": "biguint:2,000,000"
+                                    "4-amount": "biguint:2,000,000",
+                                    "5-tx_id": "u64:2"
                                 }
                             ]
                         },
@@ -125,7 +175,7 @@
             },
             "expect": {
                 "out": [
-                    "0",
+                    "1",
 
                     "0",
                     "1",
@@ -160,7 +210,7 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "0",
+                    "1",
 
                     "0",
                     "1",
@@ -216,7 +266,7 @@
                         }
                     },
                     "storage": {
-                        "str:pendingBatches|u64:0": [
+                        "str:pendingBatches|u64:1": [
                             {
                                 "1-block_nonce": "u64:4,000",
                                 "2-nonce": "u64:1",
@@ -236,8 +286,8 @@
                                 "7-is_refund_tx": "u8:1"
                             }
                         ],
-                        "str:firstBatchId": "0",
-                        "str:lastBatchId": "0",
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
 
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",

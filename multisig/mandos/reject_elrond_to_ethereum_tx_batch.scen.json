@@ -14,7 +14,7 @@
                 "value": "0",
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
-                    "0",
+                    "1",
                     "4", "4"
                 ],
                 "gasLimit": "50,000,000",
@@ -24,7 +24,7 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "0",
+                    "1",
 
                     "0",
                     "1",
@@ -55,7 +55,7 @@
                     "storage": {
                         "str:action_data.item|u32:1": {
                             "1-action_type": "u8:6",
-                            "2-batch_id": "u64:0",
+                            "2-batch_id": "u64:1",
                             "3-tx_batch_status_len": "u32:2",
                             "4-tx_batch_status_vec": "u8:4|u8:4"
                         },

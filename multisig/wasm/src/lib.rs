@@ -35,6 +35,8 @@ elrond_wasm_node::wasm_endpoints! {
         getCurrentTxBatch
         getErc20AddressForTokenId
         getEsdtSafeAddress
+        getLastExecutedEthBatchId
+        getLastExecutedEthTxId
         getMultiTransferEsdtAddress
         getNumBoardMembers
         getQuorum
