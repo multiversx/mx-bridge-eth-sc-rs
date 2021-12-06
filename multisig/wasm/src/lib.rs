@@ -12,7 +12,6 @@ elrond_wasm_node::wasm_endpoints! {
         addMapping
         changeDefaultPricePerGasUnit
         changeElrondToEthGasLimit
-        changeEthToElrondGasLimit
         changeFeeEstimatorContractAddress
         changeQuorum
         changeTokenTicker
