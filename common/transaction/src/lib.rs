@@ -78,25 +78,3 @@ impl<M: ManagedTypeApi> Transaction<M> {
             .into()
     }
 }
-
-// TODO: Remove in next framework version
-pub fn managed_address_to_managed_buffer<M: ManagedTypeApi>(
-    managed_addr: &ManagedAddress<M>,
-) -> ManagedBuffer<M> {
-    ManagedBuffer::new_from_bytes(
-        elrond_wasm::types::ManagedType::type_manager(managed_addr),
-        managed_addr.to_address().as_bytes(),
-    )
-}
-
-pub fn managed_buffer_to_managed_address<M: ManagedTypeApi>(
-    managed_buffer: &ManagedBuffer<M>,
-) -> ManagedAddress<M> {
-    let mut raw_bytes = [0u8; 32];
-    let _ = managed_buffer.load_slice(0, &mut raw_bytes);
-
-    ManagedAddress::new_from_bytes(
-        elrond_wasm::types::ManagedType::type_manager(managed_buffer),
-        &raw_bytes,
-    )
-}

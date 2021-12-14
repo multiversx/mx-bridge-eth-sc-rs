@@ -36,15 +36,15 @@ impl TransactionStatus {
     }
 }
 
-impl<M: ManagedTypeApi> ManagedVecItem<M> for TransactionStatus {
+impl ManagedVecItem for TransactionStatus {
     const PAYLOAD_SIZE: usize = 1;
     const SKIPS_RESERIALIZATION: bool = true;
 
-    fn from_byte_reader<Reader: FnMut(&mut [u8])>(api: M, reader: Reader) -> Self {
-        u8::from_byte_reader(api, reader).into()
+    fn from_byte_reader<Reader: FnMut(&mut [u8])>(reader: Reader) -> Self {
+        u8::from_byte_reader(reader).into()
     }
 
     fn to_byte_writer<R, Writer: FnMut(&[u8]) -> R>(&self, writer: Writer) -> R {
-        <u8 as ManagedVecItem<M>>::to_byte_writer(&self.as_u8(), writer)
+        <u8 as ManagedVecItem>::to_byte_writer(&self.as_u8(), writer)
     }
 }
