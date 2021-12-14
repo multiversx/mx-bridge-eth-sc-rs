@@ -23,13 +23,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "10",
-                    "0"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -41,32 +35,9 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "400"
+                        "str:BRIDGE-123456": "200,400"
                     },
                     "storage": {}
-                },
-                "sc:multi_transfer_esdt": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": {
-                        "str:BRIDGE-123456": {
-                            "balance": "200,000",
-                            "roles": [
-                                "ESDTRoleLocalMint"
-                            ]
-                        },
-                        "str:WRAPPED-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalMint"
-                            ]
-                        }
-                    },
-                    "storage": {
-                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "200,000",
-                        "+": ""
-                    },
-                    "code": "file:../output/multi-transfer-esdt.wasm"
                 },
                 "+": {}
             }

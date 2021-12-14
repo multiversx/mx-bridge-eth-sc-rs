@@ -158,10 +158,6 @@ pub trait SetupModule:
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
         self.setup_get_esdt_safe_proxy_instance()
-            .set_fee_estimator_contract_address(new_address.clone())
-            .execute_on_dest_context();
-
-        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_fee_estimator_contract_address(new_address)
             .execute_on_dest_context();
     }
@@ -175,21 +171,9 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(changeEthToElrondGasLimit)]
-    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: BigUint) {
-        self.setup_get_multi_transfer_esdt_proxy_instance()
-            .set_eth_tx_gas_limit(new_gas_limit)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
         self.setup_get_esdt_safe_proxy_instance()
-            .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())
-            .execute_on_dest_context();
-
-        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_default_price_per_gas_unit(token_id, new_value)
             .execute_on_dest_context();
     }
@@ -198,10 +182,6 @@ pub trait SetupModule:
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
         self.setup_get_esdt_safe_proxy_instance()
-            .set_token_ticker(token_id.clone(), new_ticker.clone())
-            .execute_on_dest_context();
-
-        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_token_ticker(token_id, new_ticker)
             .execute_on_dest_context();
     }

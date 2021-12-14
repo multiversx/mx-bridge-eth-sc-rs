@@ -114,10 +114,6 @@ pub trait Multisig:
         );
 
         self.get_esdt_safe_proxy_instance()
-            .distribute_fees(args.clone())
-            .execute_on_dest_context();
-
-        self.get_multi_transfer_esdt_proxy_instance()
             .distribute_fees(args)
             .execute_on_dest_context();
 

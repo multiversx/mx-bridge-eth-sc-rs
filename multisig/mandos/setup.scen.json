@@ -44,17 +44,11 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
-                        "str:ethTxGasLimit": "10,000",
 
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-
-                        "str:tokenTicker|nested:str:GWEI": "str:GWEI",
-                        "str:tokenTicker|nested:str:EGLD-123456": "str:EGLD",
-                        "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
 
                         "str:tokenWhitelist.info": "u32:2|u32:1|u32:2|u32:2",
                         "str:tokenWhitelist.node_id|nested:str:EGLD-123456": "2",

@@ -30,16 +30,6 @@
         {
             "step": "checkState",
             "accounts": {
-                "sc:multi_transfer": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": "*",
-                    "storage": {
-                        "str:feeEstimatorContractAddress": "sc:egld_esdt_swap",
-                        "+": ""
-                    },
-                    "code": "*"
-                },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
@@ -79,16 +69,6 @@
         {
             "step": "checkState",
             "accounts": {
-                "sc:multi_transfer": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": "*",
-                    "storage": {
-                        "str:defaultPricePerGasUnit|nested:str:ETH-123456": "100",
-                        "+": ""
-                    },
-                    "code": "*"
-                },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
@@ -128,16 +108,6 @@
         {
             "step": "checkState",
             "accounts": {
-                "sc:multi_transfer": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": "*",
-                    "storage": {
-                        "str:tokenTicker|nested:str:ETH-123456": "str:WETH",
-                        "+": ""
-                    },
-                    "code": "*"
-                },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
