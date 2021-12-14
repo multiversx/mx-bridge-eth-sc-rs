@@ -357,8 +357,8 @@ pub trait Multisig:
         eth_batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> usize {
-        let transfers_as_tuples = self.transfers_multiarg_to_eth_tx_vec(transfers);
-        let result_batch_hash = self.hash_eth_tx_batch(&transfers_as_tuples);
+        let transfers_as_struct = self.transfers_multiarg_to_eth_tx_vec(transfers);
+        let result_batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
 
         match result_batch_hash {
             Ok(batch_hash) => self
