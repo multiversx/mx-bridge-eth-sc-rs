@@ -3,10 +3,11 @@ elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
 use transaction::transaction_status::TransactionStatus;
-use transaction::EthTransaction;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
+
+pub type EthBatchHash<M> = ManagedByteArray<M, 32>; // keccak256(ManagedVec<EthTransaction<Self::Api>)
 
 #[elrond_wasm::module]
 pub trait StorageModule {
@@ -69,7 +70,7 @@ pub trait StorageModule {
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> MapMapper<ManagedVec<EthTransaction<Self::Api>>, usize>;
+    ) -> MapMapper<EthBatchHash<Self::Api>, usize>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(
