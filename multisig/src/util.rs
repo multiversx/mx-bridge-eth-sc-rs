@@ -157,10 +157,10 @@ pub trait UtilModule: crate::storage::StorageModule {
     fn hash_eth_tx_batch(
         &self,
         eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
-    ) -> EthBatchHash<Self::Api> {
+    ) -> SCResult<EthBatchHash<Self::Api>> {
         let mut serialized = ManagedBuffer::new();
-        let _ = eth_tx_batch.top_encode(&mut serialized);
+        eth_tx_batch.top_encode(&mut serialized)?;
 
-        self.raw_vm_api().keccak256(&serialized)
+        Ok(self.raw_vm_api().keccak256(&serialized))
     }
 }

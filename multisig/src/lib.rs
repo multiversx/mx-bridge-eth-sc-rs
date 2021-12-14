@@ -225,7 +225,7 @@ pub trait Multisig:
         let transfers_as_eth_tx = self.transfers_multiarg_to_eth_tx_vec(transfers);
         self.require_valid_eth_tx_ids(&transfers_as_eth_tx)?;
 
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
+        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx)?;
         require!(
             self.batch_id_to_action_id_mapping(eth_batch_id)
                 .get(&batch_hash)
@@ -358,11 +358,15 @@ pub trait Multisig:
         #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> usize {
         let transfers_as_tuples = self.transfers_multiarg_to_eth_tx_vec(transfers);
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_tuples);
+        let result_batch_hash = self.hash_eth_tx_batch(&transfers_as_tuples);
 
-        self.batch_id_to_action_id_mapping(eth_batch_id)
-            .get(&batch_hash)
-            .unwrap_or(0)
+        match result_batch_hash {
+            Ok(batch_hash) => self
+                .batch_id_to_action_id_mapping(eth_batch_id)
+                .get(&batch_hash)
+                .unwrap_or(0),
+            Err(_) => 0,
+        }
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
