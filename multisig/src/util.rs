@@ -1,8 +1,10 @@
 elrond_wasm::imports!();
+use elrond_wasm::elrond_codec::TopEncode;
 
 use transaction::{EthTransaction, EthTxAsMultiArg};
 
 use crate::action::Action;
+use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
 
 #[elrond_wasm::module]
@@ -150,5 +152,15 @@ pub trait UtilModule: crate::storage::StorageModule {
         }
 
         Ok(())
+    }
+
+    fn hash_eth_tx_batch(
+        &self,
+        eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
+    ) -> SCResult<EthBatchHash<Self::Api>> {
+        let mut serialized = ManagedBuffer::new();
+        eth_tx_batch.top_encode(&mut serialized)?;
+
+        Ok(self.raw_vm_api().keccak256(&serialized))
     }
 }

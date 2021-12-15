@@ -225,20 +225,21 @@ pub trait Multisig:
         let transfers_as_eth_tx = self.transfers_multiarg_to_eth_tx_vec(transfers);
         self.require_valid_eth_tx_ids(&transfers_as_eth_tx)?;
 
+        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx)?;
         require!(
             self.batch_id_to_action_id_mapping(eth_batch_id)
-                .get(&transfers_as_eth_tx)
+                .get(&batch_hash)
                 == None,
             "This batch was already proposed"
         );
 
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
             eth_batch_id,
-            transfers: transfers_as_eth_tx.clone(),
+            transfers: transfers_as_eth_tx,
         })?;
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
-            .insert(transfers_as_eth_tx, action_id);
+            .insert(batch_hash, action_id);
 
         Ok(action_id)
     }
@@ -356,11 +357,16 @@ pub trait Multisig:
         eth_batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> usize {
-        let transfers_as_tuples = self.transfers_multiarg_to_eth_tx_vec(transfers);
+        let transfers_as_struct = self.transfers_multiarg_to_eth_tx_vec(transfers);
+        let result_batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
 
-        self.batch_id_to_action_id_mapping(eth_batch_id)
-            .get(&transfers_as_tuples)
-            .unwrap_or(0)
+        match result_batch_hash {
+            Ok(batch_hash) => self
+                .batch_id_to_action_id_mapping(eth_batch_id)
+                .get(&batch_hash)
+                .unwrap_or(0),
+            Err(_) => 0,
+        }
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
