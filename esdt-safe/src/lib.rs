@@ -4,12 +4,11 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+use core::convert::TryFrom;
+
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
-use transaction::{
-    managed_address_to_managed_buffer, managed_buffer_to_managed_address,
-    transaction_status::TransactionStatus, Transaction,
-};
+use transaction::{transaction_status::TransactionStatus, Transaction};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
@@ -84,7 +83,7 @@ pub trait EsdtSafe:
                 }
                 TransactionStatus::Rejected => {
                     self.mark_refund(
-                        &managed_buffer_to_managed_address(&tx.from),
+                        &ManagedAddress::try_from(tx.from)?,
                         &tx.token_identifier,
                         &tx.amount,
                     );
@@ -104,8 +103,8 @@ pub trait EsdtSafe:
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
         let block_nonce = self.blockchain().get_block_nonce();
-        let mut cached_token_ids = ManagedVec::new();
-        let mut cached_prices = ManagedVec::new();
+        let mut cached_token_ids = ManagedVec::<Self::Api, TokenIdentifier>::new();
+        let mut cached_prices = ManagedVec::<Self::Api, BigUint>::new();
         let mut new_transactions = ManagedVec::new();
 
         for refund_tx in &refund_transactions {
@@ -180,7 +179,7 @@ pub trait EsdtSafe:
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: managed_address_to_managed_buffer(&caller),
+            from: caller.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token,
             amount: actual_bridged_amount,

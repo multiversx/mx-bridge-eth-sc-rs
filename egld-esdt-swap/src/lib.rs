@@ -43,7 +43,7 @@ pub trait EgldEsdtSwap {
                     &payment_amount,
                     gas_limit,
                     &function,
-                    &ManagedArgBuffer::new_empty(self.raw_vm_api()),
+                    &ManagedArgBuffer::new_empty(),
                 )
                 .into()
         } else {
@@ -89,7 +89,7 @@ pub trait EgldEsdtSwap {
                     &payment_amount,
                     gas_limit,
                     &function,
-                    &ManagedArgBuffer::new_empty(self.raw_vm_api()),
+                    &ManagedArgBuffer::new_empty(),
                 )
                 .into()
         } else {

@@ -2,10 +2,7 @@
 
 elrond_wasm::imports!();
 
-use transaction::{
-    esdt_safe_batch::TxBatchSplitInFields, managed_address_to_managed_buffer, EthTransaction,
-    Transaction,
-};
+use transaction::{esdt_safe_batch::TxBatchSplitInFields, EthTransaction, Transaction};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 3_600; // ~6 hours
@@ -74,7 +71,7 @@ pub trait MultiTransferEsdt:
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: eth_tx.tx_nonce,
             from: eth_tx.from.as_managed_buffer().clone(),
-            to: managed_address_to_managed_buffer(&eth_tx.to),
+            to: eth_tx.to.as_managed_buffer().clone(),
             token_identifier: eth_tx.token_id,
             amount: eth_tx.amount,
             is_refund_tx: true,
