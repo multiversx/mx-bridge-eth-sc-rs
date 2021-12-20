@@ -5,6 +5,7 @@ use eth_address::EthAddress;
 
 use fee_estimator_module::ProxyTrait as _;
 use token_module::ProxyTrait as _;
+use tx_batch_module::ProxyTrait as _;
 
 #[elrond_wasm::module]
 pub trait SetupModule:
@@ -60,10 +61,7 @@ pub trait SetupModule:
     fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
-        require!(
-            num_board_members > 0,
-            "cannot remove all board members and proposers"
-        );
+        require!(num_board_members > 0, "cannot remove all board members");
         require!(
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"
@@ -75,14 +73,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
-        self.change_user_role(board_member.clone(), UserRole::None);
-        let num_board_members = self.num_board_members().get();
-
-        require!(num_board_members > 0, "cannot remove all board members");
-        require!(
-            self.quorum().get() <= num_board_members,
-            "quorum cannot exceed board size"
-        );
+        self.remove_user(board_member.clone())?;
 
         let slash_amount = self.slash_amount().get();
 
@@ -118,11 +109,11 @@ pub trait SetupModule:
     ) -> SCResult<()> {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
-            "Mapping already exists for ERC20 token"
+            "Mapping already exists for token ID"
         );
         require!(
             self.token_id_for_erc20_address(&erc20_address).is_empty(),
-            "Mapping already exists for token id"
+            "Mapping already exists for ERC20 token"
         );
 
         self.erc20_address_for_token_id(&token_id)
@@ -149,6 +140,14 @@ pub trait SetupModule:
             "Mapping does not exist for token id"
         );
 
+        let mapped_erc_20 = self.erc20_address_for_token_id(&token_id).get();
+        let mapped_token_id = self.token_id_for_erc20_address(&erc20_address).get();
+
+        require!(
+            erc20_address.raw_addr == mapped_erc_20.raw_addr && token_id == mapped_token_id,
+            "Invalid mapping"
+        );
+
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
 
@@ -159,10 +158,6 @@ pub trait SetupModule:
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
         self.setup_get_esdt_safe_proxy_instance()
-            .set_fee_estimator_contract_address(new_address.clone())
-            .execute_on_dest_context();
-
-        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_fee_estimator_contract_address(new_address)
             .execute_on_dest_context();
     }
@@ -176,21 +171,9 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(changeEthToElrondGasLimit)]
-    fn change_eth_to_elrond_gas_limit(&self, new_gas_limit: BigUint) {
-        self.setup_get_multi_transfer_esdt_proxy_instance()
-            .set_eth_tx_gas_limit(new_gas_limit)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
         self.setup_get_esdt_safe_proxy_instance()
-            .set_default_price_per_gas_unit(token_id.clone(), new_value.clone())
-            .execute_on_dest_context();
-
-        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_default_price_per_gas_unit(token_id, new_value)
             .execute_on_dest_context();
     }
@@ -199,10 +182,6 @@ pub trait SetupModule:
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
         self.setup_get_esdt_safe_proxy_instance()
-            .set_token_ticker(token_id.clone(), new_ticker.clone())
-            .execute_on_dest_context();
-
-        self.setup_get_multi_transfer_esdt_proxy_instance()
             .set_token_ticker(token_id, new_ticker)
             .execute_on_dest_context();
     }
@@ -262,6 +241,25 @@ pub trait SetupModule:
     fn multi_transfer_esdt_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
         self.setup_get_multi_transfer_esdt_proxy_instance()
             .remove_token_from_whitelist(token_id)
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]
+    fn multi_transfer_esdt_set_max_refund_tx_batch_size(&self, new_max_tx_batch_size: usize) {
+        self.setup_get_multi_transfer_esdt_proxy_instance()
+            .set_max_tx_batch_size(new_max_tx_batch_size)
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(multiTransferEsdtSetMaxRefundTxBatchBlockDuration)]
+    fn multi_transfer_esdt_set_max_refund_tx_batch_block_duration(
+        &self,
+        new_max_tx_batch_block_duration: u64,
+    ) {
+        self.setup_get_multi_transfer_esdt_proxy_instance()
+            .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .execute_on_dest_context();
     }
 

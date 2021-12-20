@@ -14,8 +14,8 @@
                 "value": "0",
                 "function": "batchTransferEsdtToken",
                 "arguments": [
-                    "address:user1|nested:str:BRIDGE-123456|biguint:100,200",
-                    "sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:500"
+                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200|u64:1",
+                    "0x0102030405060708091011121314151617181920|sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:500|u64:2"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -23,15 +23,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "10",
-                    "0",
-                    "3",
-                    "4"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -43,11 +35,38 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:BRIDGE-123456": "200"
+                        "str:BRIDGE-123456": "100,200"
                     },
                     "storage": {}
                 },
                 "+": {}
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "4,000"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-current-refund-tx-batch",
+            "tx": {
+                "to": "sc:multi_transfer_esdt",
+                "function": "getCurrentTxBatch",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "1",
+
+                    "0",
+                    "2",
+                    "0x0102030405060708091011121314151617181920",
+                    "sc:multi_transfer_esdt",
+                    "str:WRAPPED-123456",
+                    "500"
+                ]
             }
         }
     ]

@@ -8,6 +8,7 @@ elrond_wasm_node::wasm_endpoints! {
     esdt_safe
     (
         init
+        addRefundBatch
         addTokenToWhitelist
         calculateRequiredFee
         claimRefund

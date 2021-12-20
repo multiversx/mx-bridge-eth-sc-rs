@@ -13,13 +13,20 @@ elrond_wasm_node::wasm_endpoints! {
         calculateRequiredFee
         distributeFees
         getAllKnownTokens
+        getAndClearFirstRefundBatch
+        getBatch
+        getCurrentTxBatch
         getDefaultPricePerGasUnit
         getEthTxGasLimit
         getFeeEstimatorContractAddress
+        getFirstBatchId
+        getLastBatchId
         removeTokenFromWhitelist
         setDefaultPricePerGasUnit
         setEthTxGasLimit
         setFeeEstimatorContractAddress
+        setMaxTxBatchBlockDuration
+        setMaxTxBatchSize
         setTokenTicker
     )
 }

@@ -1,8 +1,10 @@
 elrond_wasm::imports!();
+use elrond_wasm::elrond_codec::TopEncode;
 
-use transaction::SingleTransferTuple;
+use transaction::{EthTransaction, EthTxAsMultiArg};
 
 use crate::action::Action;
+use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
 
 #[elrond_wasm::module]
@@ -117,21 +119,48 @@ pub trait UtilModule: crate::storage::StorageModule {
         amount_staked >= required_stake
     }
 
-    fn transfers_multiarg_to_tuples_vec(
+    fn transfers_multiarg_to_eth_tx_vec(
         &self,
-        transfers: ManagedVarArgs<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
-    ) -> ManagedVec<SingleTransferTuple<Self::Api>> {
-        let mut transfers_as_tuples = ManagedVec::new();
+        transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
+    ) -> ManagedVec<EthTransaction<Self::Api>> {
+        let mut transfers_as_eth_tx = ManagedVec::new();
         for transfer in transfers {
-            let (address, token_id, amount) = transfer.into_tuple();
+            let (from, to, token_id, amount, tx_nonce) = transfer.into_tuple();
 
-            transfers_as_tuples.push(SingleTransferTuple {
-                address,
+            transfers_as_eth_tx.push(EthTransaction {
+                from,
+                to,
                 token_id,
                 amount,
+                tx_nonce,
             });
         }
 
-        transfers_as_tuples
+        transfers_as_eth_tx
+    }
+
+    fn require_valid_eth_tx_ids(
+        &self,
+        eth_tx_vec: &ManagedVec<EthTransaction<Self::Api>>,
+    ) -> SCResult<()> {
+        let last_executed_eth_tx_id = self.last_executed_eth_tx_id().get();
+        let mut current_expected_tx_id = last_executed_eth_tx_id + 1;
+
+        for eth_tx in eth_tx_vec {
+            require!(eth_tx.tx_nonce == current_expected_tx_id, "Invalid Tx ID");
+            current_expected_tx_id += 1;
+        }
+
+        Ok(())
+    }
+
+    fn hash_eth_tx_batch(
+        &self,
+        eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
+    ) -> SCResult<EthBatchHash<Self::Api>> {
+        let mut serialized = ManagedBuffer::new();
+        eth_tx_batch.top_encode(&mut serialized)?;
+
+        Ok(self.raw_vm_api().keccak256(&serialized))
     }
 }

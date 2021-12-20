@@ -4,16 +4,21 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+use core::convert::TryFrom;
+
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
-use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
-use transaction::*;
+use transaction::{transaction_status::TransactionStatus, Transaction};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100;
+const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
 #[elrond_wasm::contract]
-pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
+pub trait EsdtSafe:
+    fee_estimator_module::FeeEstimatorModule
+    + token_module::TokenModule
+    + tx_batch_module::TxBatchModule
+{
     #[init]
     fn init(
         &self,
@@ -29,42 +34,14 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         self.max_tx_batch_block_duration()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(&1);
+        self.last_batch_id().set_if_empty(&1);
+
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
         self.token_ticker(&gwei_token_id)
             .set(&gwei_token_id.as_managed_buffer());
-
-        Ok(())
-    }
-
-    // endpoints - owner-only
-
-    #[only_owner]
-    #[endpoint(setMaxTxBatchSize)]
-    fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
-        require!(
-            new_max_tx_batch_size > 0,
-            "Max tx batch size must be more than 0"
-        );
-
-        self.max_tx_batch_size().set(&new_max_tx_batch_size);
-
-        Ok(())
-    }
-
-    #[only_owner]
-    #[endpoint(setMaxTxBatchBlockDuration)]
-    fn set_max_tx_batch_block_duration(
-        &self,
-        new_max_tx_batch_block_duration: u64,
-    ) -> SCResult<()> {
-        require!(
-            new_max_tx_batch_block_duration > 0,
-            "Max tx batch block duration must be more than 0"
-        );
-
-        self.max_tx_batch_block_duration()
-            .set(&new_max_tx_batch_block_duration);
 
         Ok(())
     }
@@ -89,6 +66,12 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         );
 
         for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.to_vec().iter()) {
+            // Since tokens don't exist in the EsdtSafe in the case of a refund transaction
+            // we have no tokens to burn, nor to refund
+            if tx.is_refund_tx {
+                continue;
+            }
+
             match tx_status {
                 TransactionStatus::Executed => {
                     // local burn role might be removed while tx is executed
@@ -99,7 +82,11 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
                     }
                 }
                 TransactionStatus::Rejected => {
-                    self.mark_refund(&tx.from, &tx.token_identifier, &tx.amount);
+                    self.mark_refund(
+                        &ManagedAddress::try_from(tx.from)?,
+                        &tx.token_identifier,
+                        &tx.amount,
+                    );
                 }
                 _ => {
                     return sc_error!("Transaction status may only be set to Executed or Rejected")
@@ -107,19 +94,58 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             }
         }
 
-        let new_first_batch_id = first_batch_id + 1;
-
-        // for the case when the last existing batch was processed
-        // otherwise, we'd create a batch with the same ID again
-        self.last_batch_id().update(|last_batch_id| {
-            if *last_batch_id == first_batch_id {
-                *last_batch_id = new_first_batch_id;
-            }
-        });
-        self.first_batch_id().set(&new_first_batch_id);
-        self.pending_batches(batch_id).clear();
+        self.clear_first_batch();
 
         Ok(())
+    }
+
+    #[only_owner]
+    #[endpoint(addRefundBatch)]
+    fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
+        let block_nonce = self.blockchain().get_block_nonce();
+        let mut cached_token_ids = ManagedVec::<Self::Api, TokenIdentifier>::new();
+        let mut cached_prices = ManagedVec::<Self::Api, BigUint>::new();
+        let mut new_transactions = ManagedVec::new();
+
+        for refund_tx in &refund_transactions {
+            let required_fee = match cached_token_ids
+                .iter()
+                .position(|id| id == refund_tx.token_identifier)
+            {
+                Some(index) => cached_prices.get(index).unwrap_or_else(|| BigUint::zero()),
+                None => {
+                    let queried_fee = self.calculate_required_fee(&refund_tx.token_identifier);
+                    cached_token_ids.push(refund_tx.token_identifier.clone());
+                    cached_prices.push(queried_fee.clone());
+
+                    queried_fee
+                }
+            };
+
+            if refund_tx.amount <= required_fee {
+                continue;
+            }
+
+            self.accumulated_transaction_fees(&refund_tx.token_identifier)
+                .update(|fees| *fees += &required_fee);
+
+            let actual_bridged_amount = refund_tx.amount - required_fee;
+            let tx_nonce = self.get_and_save_next_tx_id();
+
+            // "from" and "to" are inverted, since this was initially an Ethereum -> Elrond tx
+            let new_tx = Transaction {
+                block_nonce,
+                nonce: tx_nonce,
+                from: refund_tx.to,
+                to: refund_tx.from,
+                token_identifier: refund_tx.token_identifier,
+                amount: actual_bridged_amount,
+                is_refund_tx: true,
+            };
+            new_transactions.push(new_tx);
+        }
+
+        self.add_multiple_tx_to_batch(new_transactions);
     }
 
     // endpoints
@@ -149,17 +175,15 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
         let actual_bridged_amount = payment_amount - required_fee;
         let caller = self.blockchain().get_caller();
-        let tx_nonce = self.last_tx_nonce().update(|last_tx_nonce| {
-            *last_tx_nonce += 1;
-            *last_tx_nonce
-        });
+        let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: caller,
-            to,
+            from: caller.as_managed_buffer().clone(),
+            to: to.as_managed_buffer().clone(),
             token_identifier: payment_token,
             amount: actual_bridged_amount,
+            is_refund_tx: false,
         };
 
         self.add_to_batch(tx);
@@ -180,40 +204,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
         Ok(())
     }
 
-    // views
-
-    #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
-        let first_batch_id = self.first_batch_id().get();
-        let first_batch = self.pending_batches(first_batch_id).get();
-
-        if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
-            let mut result_vec = ManagedMultiResultVec::new();
-            for tx in first_batch.iter() {
-                result_vec.push(tx.into_multiresult());
-            }
-
-            return OptionalResult::Some((first_batch_id, result_vec).into());
-        }
-
-        OptionalResult::None
-    }
-
-    #[view(getBatch)]
-    fn get_batch(&self, batch_id: u64) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::Api>> {
-        let tx_batch = self.pending_batches(batch_id).get();
-        if tx_batch.is_empty() {
-            return OptionalResult::None;
-        }
-
-        let mut result_vec = ManagedMultiResultVec::new();
-        for tx in tx_batch.iter() {
-            result_vec.push(tx.into_multiresult());
-        }
-
-        return OptionalResult::Some((batch_id, result_vec).into());
-    }
-
     #[view(getRefundAmounts)]
     fn get_refund_amounts(
         &self,
@@ -231,76 +221,6 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
     }
 
     // private
-
-    fn add_to_batch(&self, transaction: Transaction<Self::Api>) {
-        let last_batch_id = self.last_batch_id().get();
-        let mut last_batch = self.pending_batches(last_batch_id).get();
-
-        if self.is_batch_full(&last_batch) {
-            self.create_new_batch(transaction);
-        } else {
-            last_batch.push(transaction);
-            self.pending_batches(last_batch_id).set(&last_batch);
-        }
-    }
-
-    #[allow(clippy::vec_init_then_push)]
-    fn create_new_batch(&self, transaction: Transaction<Self::Api>) {
-        let last_batch_id = self.last_batch_id().get();
-        let new_batch_id = last_batch_id + 1;
-
-        let mut new_batch = ManagedVec::new();
-        new_batch.push(transaction);
-
-        self.pending_batches(new_batch_id).set(&new_batch);
-        self.last_batch_id().set(&new_batch_id);
-    }
-
-    fn is_batch_full(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
-        if tx_batch.is_empty() {
-            return false;
-        }
-
-        let max_batch_size = self.max_tx_batch_size().get();
-        if tx_batch.len() == max_batch_size {
-            return true;
-        }
-
-        let current_block_nonce = self.blockchain().get_block_nonce();
-        let first_tx_in_batch_block_nonce = match tx_batch.get(0) {
-            Some(tx) => tx.block_nonce,
-            None => return false,
-        };
-
-        // reorg protection
-        if current_block_nonce < first_tx_in_batch_block_nonce {
-            return false;
-        }
-
-        let block_diff = current_block_nonce - first_tx_in_batch_block_nonce;
-        let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
-
-        block_diff > max_tx_batch_block_duration
-    }
-
-    fn is_batch_final(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
-        let batch_len = tx_batch.len();
-        let last_tx_in_batch = match tx_batch.get(batch_len - 1) {
-            Some(tx) => tx,
-            None => return false,
-        };
-
-        let current_block = self.blockchain().get_block_nonce();
-
-        // reorg protection
-        if current_block < last_tx_in_batch.block_nonce {
-            return false;
-        }
-
-        let block_diff = current_block - last_tx_in_batch.block_nonce;
-
-        block_diff > MIN_BLOCKS_FOR_FINALITY
-    }
 
     fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         self.send().esdt_local_burn(token_id, 0, amount);
@@ -321,35 +241,10 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
 
     // storage
 
-    #[view(getFirstBatchId)]
-    #[storage_mapper("firstBatchId")]
-    fn first_batch_id(&self) -> SingleValueMapper<u64>;
-
-    #[view(getLastBatchId)]
-    #[storage_mapper("lastBatchId")]
-    fn last_batch_id(&self) -> SingleValueMapper<u64>;
-
-    #[storage_mapper("pendingBatches")]
-    fn pending_batches(
-        &self,
-        batch_id: u64,
-    ) -> SingleValueMapper<ManagedVec<Transaction<Self::Api>>>;
-
-    #[storage_mapper("lastTxNonce")]
-    fn last_tx_nonce(&self) -> SingleValueMapper<u64>;
-
     #[storage_mapper("refundAmount")]
     fn refund_amount(
         &self,
         address: &ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
-
-    // configurable
-
-    #[storage_mapper("maxTxBatchSize")]
-    fn max_tx_batch_size(&self) -> SingleValueMapper<usize>;
-
-    #[storage_mapper("maxTxBatchBlockDuration")]
-    fn max_tx_batch_block_duration(&self) -> SingleValueMapper<u64>;
 }

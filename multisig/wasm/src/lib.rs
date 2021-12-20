@@ -12,7 +12,6 @@ elrond_wasm_node::wasm_endpoints! {
         addMapping
         changeDefaultPricePerGasUnit
         changeElrondToEthGasLimit
-        changeEthToElrondGasLimit
         changeFeeEstimatorContractAddress
         changeQuorum
         changeTokenTicker
@@ -31,19 +30,24 @@ elrond_wasm_node::wasm_endpoints! {
         getAllBoardMembers
         getAllStakedRelayers
         getAmountStaked
+        getCurrentRefundBatch
         getCurrentTxBatch
         getErc20AddressForTokenId
         getEsdtSafeAddress
+        getLastExecutedEthBatchId
+        getLastExecutedEthTxId
         getMultiTransferEsdtAddress
         getNumBoardMembers
         getQuorum
         getRequiredStakeAmount
         getSlashAmount
         getSlashedTokensAmount
-        getStatusesAfterExecution
         getTokenIdForErc20Address
         isPaused
+        moveRefundBatchToSafe
         multiTransferEsdtRemoveTokenFromWhitelist
+        multiTransferEsdtSetMaxRefundTxBatchBlockDuration
+        multiTransferEsdtSetMaxRefundTxBatchSize
         multiTransferEsdtaddTokenToWhitelist
         pause
         performAction

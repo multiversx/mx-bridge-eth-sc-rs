@@ -24,10 +24,10 @@ pub trait FeeEstimatorModule {
     fn set_default_price_per_gas_unit(
         &self,
         token_id: TokenIdentifier,
-        default_gwei_price: BigUint,
+        default_price_per_gas_unit: BigUint,
     ) {
         self.default_price_per_gas_unit(&token_id)
-            .set(&default_gwei_price);
+            .set(&default_price_per_gas_unit);
     }
 
     #[only_owner]

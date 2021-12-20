@@ -2,17 +2,12 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
-use transaction::{SingleTransferTuple, TransactionStatus};
+use transaction::transaction_status::TransactionStatus;
 
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[derive(TopEncode, TopDecode)]
-pub struct StatusesAfterExecution<M: ManagedTypeApi> {
-    pub block_executed: u64,
-    pub batch_id: u64,
-    pub statuses: ManagedVec<M, TransactionStatus>,
-}
+pub type EthBatchHash<M> = ManagedByteArray<M, 32>; // keccak256(ManagedVec<EthTransaction<Self::Api>)
 
 #[elrond_wasm::module]
 pub trait StorageModule {
@@ -63,14 +58,19 @@ pub trait StorageModule {
     #[storage_mapper("pauseStatus")]
     fn pause_status(&self) -> SingleValueMapper<bool>;
 
+    #[view(getLastExecutedEthBatchId)]
+    #[storage_mapper("lastExecutedEthBatchId")]
+    fn last_executed_eth_batch_id(&self) -> SingleValueMapper<u64>;
+
+    #[view(getLastExecutedEthTxId)]
+    #[storage_mapper("lastExecutedEthTxId")]
+    fn last_executed_eth_tx_id(&self) -> SingleValueMapper<u64>;
+
     #[storage_mapper("batchIdToActionIdMapping")]
     fn batch_id_to_action_id_mapping(
         &self,
         batch_id: u64,
-    ) -> MapMapper<ManagedVec<SingleTransferTuple<Self::Api>>, usize>;
-
-    #[storage_mapper("statusesAfterExecution")]
-    fn statuses_after_execution(&self) -> SingleValueMapper<StatusesAfterExecution<Self::Api>>;
+    ) -> MapMapper<EthBatchHash<Self::Api>, usize>;
 
     #[storage_mapper("actionIdForSetCurrentTransactionBatchStatus")]
     fn action_id_for_set_current_transaction_batch_status(

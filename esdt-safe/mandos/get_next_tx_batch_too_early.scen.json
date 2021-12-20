@@ -30,12 +30,12 @@
                 "to": "sc:esdt_safe",
                 "function": "getBatch",
                 "arguments": [
-                    "0"
+                    "1"
                 ]
             },
             "expect": {
                 "out": [
-                    "0",
+                    "1",
 
                     "0",
                     "1",
@@ -60,7 +60,7 @@
                 "to": "sc:esdt_safe",
                 "function": "getBatch",
                 "arguments": [
-                    "1"
+                    "2"
                 ]
             },
             "expect": {
