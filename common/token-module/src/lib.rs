@@ -72,7 +72,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         self.token_ticker(&token_id).clear();
         self.default_price_per_gas_unit(&token_id).clear();
 
-        let _ = self.token_whitelist().remove(&token_id);
+        let _ = self.token_whitelist().swap_remove(&token_id);
     }
 
     // private
@@ -107,7 +107,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]
-    fn token_whitelist(&self) -> SetMapper<TokenIdentifier>;
+    fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
 
     #[storage_mapper("accumulatedTransactionFees")]
     fn accumulated_transaction_fees(
