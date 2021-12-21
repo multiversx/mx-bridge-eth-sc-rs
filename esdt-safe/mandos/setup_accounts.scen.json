@@ -96,7 +96,7 @@
                         "str:ethTxGasLimit": "150,000",
                         "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
@@ -128,10 +128,9 @@
                         "str:ethTxGasLimit": "150,000",
                         "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-                        "str:tokenWhitelist.info": "0x00000001000000010000000100000001",
-                        "str:tokenWhitelist.node_id|nested:str:BRIDGE-123456": "0x01",
-                        "str:tokenWhitelist.node_links|u32:1": "0x0000000000000000"
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:tokenWhitelist.item|u32:1": "str:BRIDGE-123456",
+                        "str:tokenWhitelist.len": "1"
                     },
                     "code": "file:../output/esdt-safe.wasm",
                     "owner": "address:owner"
