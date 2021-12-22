@@ -7,6 +7,8 @@ use crate::action::Action;
 use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
 
+use core::convert::TryFrom;
+
 #[elrond_wasm::module]
 pub trait UtilModule: crate::storage::StorageModule {
     /// Returns `true` (`1`) if the user has signed the action.
@@ -154,6 +156,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         Ok(())
     }
 
+    // Only for backwards compatibility
     fn hash_eth_tx_batch(
         &self,
         eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
@@ -161,6 +164,11 @@ pub trait UtilModule: crate::storage::StorageModule {
         let mut serialized = ManagedBuffer::new();
         eth_tx_batch.top_encode(&mut serialized)?;
 
-        Ok(self.raw_vm_api().keccak256(&serialized))
+        let raw_hash: H256 = self
+            .crypto()
+            .keccak256(&serialized.to_boxed_bytes().as_slice());
+        let buffer = ManagedBuffer::new_from_bytes(raw_hash.as_bytes());
+        
+        EthBatchHash::try_from(buffer).into()
     }
 }
