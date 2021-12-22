@@ -4,6 +4,7 @@ use crate::user_role::UserRole;
 use eth_address::EthAddress;
 
 use fee_estimator_module::ProxyTrait as _;
+use multi_transfer_esdt::token_whitelist_module::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
 
@@ -228,11 +229,11 @@ pub trait SetupModule:
     fn multi_transfer_esdt_add_token_to_whitelist(
         &self,
         token_id: TokenIdentifier,
-        ticker: ManagedBuffer,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
+        _ticker: ManagedBuffer,
+        #[var_args] _opt_default_value_in_dollars: OptionalArg<BigUint>,
     ) {
         self.setup_get_multi_transfer_esdt_proxy_instance()
-            .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)
+            .add_token_to_whitelist(token_id)
             .execute_on_dest_context();
     }
 

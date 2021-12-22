@@ -87,8 +87,7 @@
                 "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
-                    "str:BRIDGE-123456",
-                    "str:BRIDGE"
+                    "str:BRIDGE-123456"
                 ],
                 "gasLimit": "15,000,000",
                 "gasPrice": "0"
@@ -109,8 +108,7 @@
                 "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
-                    "str:WRAPPED-123456",
-                    "str:WRAPPED"
+                    "str:WRAPPED-123456"
                 ],
                 "gasLimit": "15,000,000",
                 "gasPrice": "0"
@@ -148,11 +146,8 @@
                         }
                     },
                     "storage": {
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-                        "str:tokenWhitelist.value|u32:2": "str:WRAPPED-123456",
-
-                        "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
-                        "str:tokenTicker|nested:str:WRAPPED-123456": "str:WRAPPED",
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:tokenWhitelist.index|nested:str:WRAPPED-123456": "2",
 
                         "+": ""
                     },
@@ -208,8 +203,8 @@
                         }
                     },
                     "storage": {
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-                        "str:tokenWhitelist.value|u32:2": "",
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:tokenWhitelist.index|nested:str:WRAPPED-123456": "",
                         "+": ""
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"
@@ -226,8 +221,7 @@
                 "value": "0",
                 "function": "addTokenToWhitelist",
                 "arguments": [
-                    "str:WRAPPED-123456",
-                    "str:WRAPPED"
+                    "str:WRAPPED-123456"
                 ],
                 "gasLimit": "15,000,000",
                 "gasPrice": "0"
@@ -265,8 +259,8 @@
                         }
                     },
                     "storage": {
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-                        "str:tokenWhitelist.value|u32:3": "str:WRAPPED-123456",
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:tokenWhitelist.index|nested:str:WRAPPED-123456": "2",
                         "+": ""
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm"
