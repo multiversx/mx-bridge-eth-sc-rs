@@ -37,6 +37,27 @@
             }
         },
         {
+            "step": "scQuery",
+            "txId": "get-batch-status-after-second-add",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatchStatus",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    {
+                        "1-enum-variant": "u8:2",
+                        "2-end_block_nonce": "u64:100",
+                        "3-vec_len": "u32:2",
+                        "4-tx_ids": "u64:1|u64:2"
+                    }
+                ]
+            }
+        },
+        {
             "step": "checkState",
             "accounts": {
                 "address:user2": {
