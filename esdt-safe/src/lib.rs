@@ -92,6 +92,8 @@ pub trait EsdtSafe:
                     return sc_error!("Transaction status may only be set to Executed or Rejected")
                 }
             }
+
+            self.set_status_event(batch_id, tx.nonce, tx_status);
         }
 
         self.clear_first_batch();
@@ -250,6 +252,14 @@ pub trait EsdtSafe:
 
     #[event("addRefundTransactionEvent")]
     fn add_refund_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("setStatusEvent")]
+    fn set_status_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] tx_status: TransactionStatus,
+    );
 
     // storage
 
