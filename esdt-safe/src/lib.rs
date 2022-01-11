@@ -145,7 +145,10 @@ pub trait EsdtSafe:
             new_transactions.push(new_tx);
         }
 
-        self.add_multiple_tx_to_batch(new_transactions);
+        let batch_ids = self.add_multiple_tx_to_batch(&new_transactions);
+        for (batch_id, tx) in batch_ids.iter().zip(new_transactions.iter()) {
+            self.add_refund_transaction_event(batch_id, tx.nonce);
+        }
     }
 
     // endpoints
@@ -186,7 +189,8 @@ pub trait EsdtSafe:
             is_refund_tx: false,
         };
 
-        self.add_to_batch(tx);
+        let batch_id = self.add_to_batch(tx);
+        self.create_transaction_event(batch_id, tx_nonce);
 
         Ok(())
     }
@@ -238,6 +242,14 @@ pub trait EsdtSafe:
             data
         }
     }
+
+    // events
+
+    #[event("createTransactionEvent")]
+    fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("addRefundTransactionEvent")]
+    fn add_refund_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     // storage
 
