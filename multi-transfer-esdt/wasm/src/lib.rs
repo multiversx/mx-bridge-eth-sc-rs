@@ -13,6 +13,7 @@ elrond_wasm_node::wasm_endpoints! {
         getAllKnownTokens
         getAndClearFirstRefundBatch
         getBatch
+        getBatchStatus
         getCurrentTxBatch
         getFirstBatchId
         getLastBatchId

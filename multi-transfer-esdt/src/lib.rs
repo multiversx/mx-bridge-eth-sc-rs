@@ -31,6 +31,7 @@ pub trait MultiTransferEsdt:
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
+        batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<EthTransaction<Self::Api>>,
     ) {
         for eth_tx in transfers {
@@ -49,6 +50,8 @@ pub trait MultiTransferEsdt:
                 .esdt_local_mint(&eth_tx.token_id, 0, &eth_tx.amount);
             self.send()
                 .direct(&eth_tx.to, &eth_tx.token_id, 0, &eth_tx.amount, &[]);
+
+            self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
         }
     }
 
@@ -79,4 +82,9 @@ pub trait MultiTransferEsdt:
 
         self.add_to_batch(tx);
     }
+
+    // events
+
+    #[event("transferPerformedEvent")]
+    fn transfer_performed_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 }
