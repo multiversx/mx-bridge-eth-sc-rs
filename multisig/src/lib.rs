@@ -448,7 +448,7 @@ pub trait Multisig:
                 }
 
                 self.get_multi_transfer_esdt_proxy_instance()
-                    .batch_transfer_esdt_token(transfers.into())
+                    .batch_transfer_esdt_token(eth_batch_id, transfers.into())
                     .execute_on_dest_context();
             }
             _ => {}

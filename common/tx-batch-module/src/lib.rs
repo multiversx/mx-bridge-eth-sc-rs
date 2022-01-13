@@ -5,6 +5,9 @@ use transaction::{esdt_safe_batch::TxBatchSplitInFields, Transaction, MIN_BLOCKS
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+pub mod batch_status;
+pub use batch_status::BatchStatus;
+
 #[elrond_wasm::module]
 pub trait TxBatchModule {
     // endpoints - owner-only
@@ -73,43 +76,90 @@ pub trait TxBatchModule {
         return OptionalResult::Some((batch_id, result_vec).into());
     }
 
+    #[view(getBatchStatus)]
+    fn get_batch_status(&self, batch_id: u64) -> BatchStatus<Self::Api> {
+        let first_batch_id = self.first_batch_id().get();
+        if batch_id < first_batch_id {
+            return BatchStatus::AlreadyProcessed;
+        }
+
+        let tx_batch = self.pending_batches(batch_id).get();
+        if tx_batch.is_empty() {
+            return BatchStatus::Empty;
+        }
+
+        if self.is_batch_full(&tx_batch) {
+            if batch_id == first_batch_id {
+                return BatchStatus::WaitingForSignatures;
+            } else {
+                return BatchStatus::Full;
+            }
+        }
+
+        let mut tx_ids = ManagedVec::new();
+        for tx in &tx_batch {
+            tx_ids.push(tx.nonce);
+        }
+
+        let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
+        let first_tx_in_batch_block_nonce = match tx_batch.get(0) {
+            Some(tx) => tx.block_nonce,
+            None => 0, // this case should never happen
+        };
+
+        BatchStatus::PartiallyFull {
+            end_block_nonce: first_tx_in_batch_block_nonce + max_tx_batch_block_duration,
+            tx_ids,
+        }
+    }
+
     // private
 
-    fn add_to_batch(&self, transaction: Transaction<Self::Api>) {
+    fn add_to_batch(&self, transaction: Transaction<Self::Api>) -> u64 {
         let last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id).get();
 
         if self.is_batch_full(&last_batch) {
-            self.create_new_batch(transaction);
+            let new_batch_id = self.create_new_batch(transaction);
+
+            new_batch_id
         } else {
             last_batch.push(transaction);
             self.pending_batches(last_batch_id).set(&last_batch);
+
+            last_batch_id
         }
     }
 
     // optimized to prevent reading/storing the batch over and over
-    fn add_multiple_tx_to_batch(&self, transactions: ManagedVec<Transaction<Self::Api>>) {
+    fn add_multiple_tx_to_batch(
+        &self,
+        transactions: &ManagedVec<Transaction<Self::Api>>,
+    ) -> ManagedVec<u64> {
         let mut last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id).get();
+        let mut batch_ids = ManagedVec::new();
 
-        for tx in &transactions {
+        for tx in transactions {
             if self.is_batch_full(&last_batch) {
                 self.pending_batches(last_batch_id).set(&last_batch);
 
                 last_batch.overwrite_with_single_item(tx.clone());
 
-                self.create_new_batch(tx);
-                last_batch_id += 1;
+                last_batch_id = self.create_new_batch(tx);
             } else {
                 last_batch.push(tx);
             }
+
+            batch_ids.push(last_batch_id);
         }
 
         self.pending_batches(last_batch_id).set(&last_batch);
+
+        batch_ids
     }
 
-    #[allow(clippy::vec_init_then_push)]
-    fn create_new_batch(&self, transaction: Transaction<Self::Api>) {
+    fn create_new_batch(&self, transaction: Transaction<Self::Api>) -> u64 {
         let last_batch_id = self.last_batch_id().get();
         let new_batch_id = last_batch_id + 1;
 
@@ -118,6 +168,8 @@ pub trait TxBatchModule {
 
         self.pending_batches(new_batch_id).set(&new_batch);
         self.last_batch_id().set(&new_batch_id);
+
+        new_batch_id
     }
 
     fn is_batch_full(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
@@ -144,7 +196,7 @@ pub trait TxBatchModule {
         let block_diff = current_block_nonce - first_tx_in_batch_block_nonce;
         let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
 
-        block_diff > max_tx_batch_block_duration
+        block_diff >= max_tx_batch_block_duration
     }
 
     fn is_batch_final(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
