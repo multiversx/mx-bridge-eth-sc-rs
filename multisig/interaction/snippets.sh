@@ -66,13 +66,13 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
-WRAPPED_USDC_TOKEN_ID=0x57555344432d663639633534
+WRAPPED_USDC_TOKEN_ID=0x57555344432d346432313231
 
 # Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
-WRAPPED_USDC_ERC20=0xCd111aa29ECb881d18AC25cF9b669B3e2d3e72D5
+WRAPPED_USDC_ERC20=0x388c9e22ba1a95C4A627f9d5265948a5De037338
 
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
@@ -84,7 +84,7 @@ submitAggregatorBatch() {
     getAggregatorAddress
 
     local GWEI_TICKER=0x47574549
-    local GAS_PRICE_ON_ETH=0x2710
+    local GAS_PRICE_ON_ETH=0x03E8
 
     erdpy --verbose contract call ${AGGREGATOR_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
@@ -137,7 +137,7 @@ deployMultisig() {
     erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
     --arguments 0x${ESDT_SAFE_ADDRESS_HEX} 0x${MULTI_TRANSFER_ESDT_ADDRESS_HEX} \
-    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x07 \
+    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x03 \
     ${RELAYER_ADDR_0} \
     ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     ${RELAYER_ADDR_4} ${RELAYER_ADDR_5} ${RELAYER_ADDR_6} \
