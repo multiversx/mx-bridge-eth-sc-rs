@@ -66,13 +66,13 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
-WRAPPED_USDC_TOKEN_ID=0x57555344432d346432313231
+WRAPPED_USDC_TOKEN_ID=0x57555344432d343332366337
 
 # Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
-WRAPPED_USDC_ERC20=0x388c9e22ba1a95C4A627f9d5265948a5De037338
+WRAPPED_USDC_ERC20=0x6fbA6c5086AEbCF604d3462239292F97FFeAB4F9
 
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
