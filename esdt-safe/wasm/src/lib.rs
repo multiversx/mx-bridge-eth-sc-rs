@@ -20,6 +20,7 @@ elrond_wasm_node::wasm_endpoints! {
         getDefaultPricePerGasUnit
         getEthTxGasLimit
         getFeeEstimatorContractAddress
+        getFirstBatchAnyStatus
         getFirstBatchId
         getLastBatchId
         getRefundAmounts

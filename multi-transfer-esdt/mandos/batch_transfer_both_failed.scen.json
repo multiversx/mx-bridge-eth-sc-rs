@@ -30,28 +30,10 @@
         },
         {
             "step": "scQuery",
-            "txId": "get-current-refund-tx-batch-too-early",
-            "tx": {
-                "to": "sc:multi_transfer_esdt",
-                "function": "getCurrentTxBatch",
-                "arguments": []
-            },
-            "expect": {
-                "out": []
-            }
-        },
-        {
-            "step": "setState",
-            "currentBlockInfo": {
-                "blockNonce": "4,000"
-            }
-        },
-        {
-            "step": "scQuery",
             "txId": "get-current-refund-tx-batch",
             "tx": {
                 "to": "sc:multi_transfer_esdt",
-                "function": "getCurrentTxBatch",
+                "function": "getFirstBatchAnyStatus",
                 "arguments": []
             },
             "expect": {
@@ -115,7 +97,7 @@
             "txId": "get-current-refund-tx-batch-after-clear",
             "tx": {
                 "to": "sc:multi_transfer_esdt",
-                "function": "getCurrentTxBatch",
+                "function": "getFirstBatchAnyStatus",
                 "arguments": []
             },
             "expect": {
