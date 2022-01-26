@@ -14,6 +14,7 @@ elrond_wasm_node::wasm_endpoints! {
         getAndClearFirstRefundBatch
         getBatch
         getCurrentTxBatch
+        getFirstBatchAnyStatus
         getFirstBatchId
         getLastBatchId
         removeTokenFromWhitelist
