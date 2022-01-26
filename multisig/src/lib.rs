@@ -312,7 +312,7 @@ pub trait Multisig:
     fn get_current_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
         let _ = self
             .get_multi_transfer_esdt_proxy_instance()
-            .get_current_tx_batch()
+            .get_first_batch_any_status()
             .execute_on_dest_context();
 
         // result is already returned automatically from the MultiTransferEsdt call,

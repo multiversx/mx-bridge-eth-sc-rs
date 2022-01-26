@@ -61,6 +61,12 @@ pub trait TxBatchModule {
         OptionalResult::None
     }
 
+    #[view(getFirstBatchAnyStatus)]
+    fn get_first_batch_any_status(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+        let first_batch_id = self.first_batch_id().get();
+        self.get_batch(first_batch_id)
+    }
+
     #[view(getBatch)]
     fn get_batch(&self, batch_id: u64) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
         let tx_batch = self.pending_batches(batch_id).get();

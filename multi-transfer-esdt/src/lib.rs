@@ -7,7 +7,7 @@ use transaction::{esdt_safe_batch::TxBatchSplitInFields, EthTransaction, Transac
 pub mod token_whitelist_module;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 3_600; // ~6 hours
+const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 
 #[elrond_wasm::contract]
 pub trait MultiTransferEsdt:
@@ -62,8 +62,7 @@ pub trait MultiTransferEsdt:
     #[only_owner]
     #[endpoint(getAndClearFirstRefundBatch)]
     fn get_and_clear_first_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
-        let opt_current_batch = self.get_current_tx_batch();
-
+        let opt_current_batch = self.get_first_batch_any_status();
         if matches!(opt_current_batch, OptionalResult::Some(_)) {
             self.clear_first_batch();
         }
