@@ -42,7 +42,7 @@ fn propose_esdt_safe_set_current_transaction_batch_status(
     &self,
     esdt_safe_batch_id: usize,
     #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
-) -> SCResult<usize>
+) -> usize
 ```
 
 `esdt_safe_batch_id` is the ID of the current batch. Each batch will have an assigned ID to make sure relayers always sign the expected batch.  
@@ -88,7 +88,7 @@ fn propose_multi_transfer_esdt_batch(
     &self,
     batch_id: u64,
     #[var_args] transfers: MultiArgVec<MultiArg3<ManagedAddress, TokenIdentifier, BigUint>>,
-) -> SCResult<usize> {
+) -> usize {
 ```
 
 `batch_id` is an id provided by the relayers. It is used internally to know if an action was proposed for that specific batch.  
