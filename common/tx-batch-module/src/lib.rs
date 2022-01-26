@@ -72,7 +72,7 @@ pub trait TxBatchModule {
             result_vec.push(tx.into_multiresult());
         }
 
-        return OptionalResult::Some((batch_id, result_vec).into());
+        OptionalResult::Some((batch_id, result_vec).into())
     }
 
     #[view(getBatchStatus)]
@@ -116,9 +116,7 @@ pub trait TxBatchModule {
         let mut last_batch = self.pending_batches(last_batch_id).get();
 
         if self.is_batch_full(&last_batch) {
-            let new_batch_id = self.create_new_batch(transaction);
-
-            new_batch_id
+            self.create_new_batch(transaction)
         } else {
             last_batch.push(transaction);
             self.pending_batches(last_batch_id).set(&last_batch);
