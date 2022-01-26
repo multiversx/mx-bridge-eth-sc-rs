@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(generic_associated_types)]
 
 elrond_wasm::derive_imports!();
 use elrond_wasm::{

@@ -14,23 +14,18 @@ pub trait TxBatchModule {
 
     #[only_owner]
     #[endpoint(setMaxTxBatchSize)]
-    fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
+    fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
         require!(
             new_max_tx_batch_size > 0,
             "Max tx batch size must be more than 0"
         );
 
         self.max_tx_batch_size().set(&new_max_tx_batch_size);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(setMaxTxBatchBlockDuration)]
-    fn set_max_tx_batch_block_duration(
-        &self,
-        new_max_tx_batch_block_duration: u64,
-    ) -> SCResult<()> {
+    fn set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
         require!(
             new_max_tx_batch_block_duration > 0,
             "Max tx batch block duration must be more than 0"
@@ -38,8 +33,6 @@ pub trait TxBatchModule {
 
         self.max_tx_batch_block_duration()
             .set(&new_max_tx_batch_block_duration);
-
-        Ok(())
     }
 
     // views
@@ -108,10 +101,7 @@ pub trait TxBatchModule {
         }
 
         let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
-        let first_tx_in_batch_block_nonce = match tx_batch.get(0) {
-            Some(tx) => tx.block_nonce,
-            None => 0, // this case should never happen
-        };
+        let first_tx_in_batch_block_nonce = tx_batch.get(0).block_nonce;
 
         BatchStatus::PartiallyFull {
             end_block_nonce: first_tx_in_batch_block_nonce + max_tx_batch_block_duration,
@@ -189,10 +179,7 @@ pub trait TxBatchModule {
         }
 
         let current_block_nonce = self.blockchain().get_block_nonce();
-        let first_tx_in_batch_block_nonce = match tx_batch.get(0) {
-            Some(tx) => tx.block_nonce,
-            None => return false,
-        };
+        let first_tx_in_batch_block_nonce = tx_batch.get(0).block_nonce;
 
         // reorg protection
         if current_block_nonce < first_tx_in_batch_block_nonce {
@@ -206,12 +193,12 @@ pub trait TxBatchModule {
     }
 
     fn is_batch_final(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
-        let batch_len = tx_batch.len();
-        let last_tx_in_batch = match tx_batch.get(batch_len - 1) {
-            Some(tx) => tx,
-            None => return false,
-        };
+        if tx_batch.is_empty() {
+            return false;
+        }
 
+        let batch_len = tx_batch.len();
+        let last_tx_in_batch = tx_batch.get(batch_len - 1);
         let current_block = self.blockchain().get_block_nonce();
 
         // reorg protection

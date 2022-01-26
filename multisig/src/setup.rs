@@ -22,7 +22,7 @@ pub trait SetupModule:
         #[var_args] init_args: ManagedVarArgs<ManagedBuffer>,
     ) {
         let gas = self.blockchain().get_gas_left();
-        self.raw_vm_api().upgrade_from_source_contract(
+        Self::Api::send_api_impl().upgrade_from_source_contract(
             &child_sc_address,
             gas,
             &BigUint::zero(),
@@ -34,31 +34,25 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint]
-    fn pause(&self) -> SCResult<()> {
+    fn pause(&self) {
         self.pause_status().set(&true);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint]
-    fn unpause(&self) -> SCResult<()> {
+    fn unpause(&self) {
         self.pause_status().set(&false);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(addBoardMember)]
-    fn add_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
+    fn add_board_member(&self, board_member: ManagedAddress) {
         self.change_user_role(board_member, UserRole::BoardMember);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(removeUser)]
-    fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
+    fn remove_user(&self, user: ManagedAddress) {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
         require!(num_board_members > 0, "cannot remove all board members");
@@ -66,14 +60,12 @@ pub trait SetupModule:
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"
         );
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(slashBoardMember)]
-    fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
-        self.remove_user(board_member.clone())?;
+    fn slash_board_member(&self, board_member: ManagedAddress) {
+        self.remove_user(board_member.clone());
 
         let slash_amount = self.slash_amount().get();
 
@@ -84,29 +76,21 @@ pub trait SetupModule:
         // add it to total slashed amount pool
         self.slashed_tokens_amount()
             .update(|slashed_amt| *slashed_amt += slash_amount);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(changeQuorum)]
-    fn change_quorum(&self, new_quorum: usize) -> SCResult<()> {
+    fn change_quorum(&self, new_quorum: usize) {
         require!(
             new_quorum <= self.num_board_members().get(),
             "quorum cannot exceed board size"
         );
         self.quorum().set(&new_quorum);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(addMapping)]
-    fn add_mapping(
-        &self,
-        erc20_address: EthAddress<Self::Api>,
-        token_id: TokenIdentifier,
-    ) -> SCResult<()> {
+    fn add_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping already exists for token ID"
@@ -120,17 +104,11 @@ pub trait SetupModule:
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(clearMapping)]
-    fn clear_mapping(
-        &self,
-        erc20_address: EthAddress<Self::Api>,
-        token_id: TokenIdentifier,
-    ) -> SCResult<()> {
+    fn clear_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
             !self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping does not exist for ERC20 token"
@@ -150,8 +128,6 @@ pub trait SetupModule:
 
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
-
-        Ok(())
     }
 
     #[only_owner]
