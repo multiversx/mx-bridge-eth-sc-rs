@@ -10,9 +10,7 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 
 #[elrond_wasm::contract]
-pub trait MultiTransferEsdt:
-    token_whitelist_module::TokenWhitelistModule + tx_batch_module::TxBatchModule
-{
+pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
     #[init]
     fn init(&self) -> SCResult<()> {
         self.max_tx_batch_size()
@@ -41,9 +39,7 @@ pub trait MultiTransferEsdt:
 
                 continue;
             }
-            if !self.token_whitelist().contains(&eth_tx.token_id)
-                || !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint)
-            {
+            if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
                 self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
                 self.add_refund_tx_to_batch(eth_tx);
 
@@ -84,6 +80,12 @@ pub trait MultiTransferEsdt:
         };
 
         self.add_to_batch(tx);
+    }
+
+    fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {
+        let roles = self.blockchain().get_esdt_local_roles(token_id);
+
+        roles.has_role(role)
     }
 
     // events

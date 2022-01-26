@@ -8,9 +8,7 @@ elrond_wasm_node::wasm_endpoints! {
     multi_transfer_esdt
     (
         init
-        addTokenToWhitelist
         batchTransferEsdtToken
-        getAllKnownTokens
         getAndClearFirstRefundBatch
         getBatch
         getBatchStatus
@@ -18,7 +16,6 @@ elrond_wasm_node::wasm_endpoints! {
         getFirstBatchAnyStatus
         getFirstBatchId
         getLastBatchId
-        removeTokenFromWhitelist
         setMaxTxBatchBlockDuration
         setMaxTxBatchSize
     )
