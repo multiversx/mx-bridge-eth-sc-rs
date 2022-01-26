@@ -31,17 +31,22 @@ pub trait MultiTransferEsdt:
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(
         &self,
+        batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<EthTransaction<Self::Api>>,
     ) {
         for eth_tx in transfers {
             if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
+                self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
                 self.add_refund_tx_to_batch(eth_tx);
+
                 continue;
             }
             if !self.token_whitelist().contains(&eth_tx.token_id)
                 || !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint)
             {
+                self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
                 self.add_refund_tx_to_batch(eth_tx);
+
                 continue;
             }
 
@@ -49,6 +54,8 @@ pub trait MultiTransferEsdt:
                 .esdt_local_mint(&eth_tx.token_id, 0, &eth_tx.amount);
             self.send()
                 .direct(&eth_tx.to, &eth_tx.token_id, 0, &eth_tx.amount, &[]);
+
+            self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
         }
     }
 
@@ -78,4 +85,15 @@ pub trait MultiTransferEsdt:
 
         self.add_to_batch(tx);
     }
+
+    // events
+
+    #[event("transferPerformedEvent")]
+    fn transfer_performed_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("transferFailedInvalidDestination")]
+    fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("transferFailedInvalidToken")]
+    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 }
