@@ -66,13 +66,13 @@ ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8
 #########################################################################
 WRAPPED_EGLD_TOKEN_ID=0x45474c442d373166643366
 WRAPPED_ETH_TOKEN_ID=0x4554482d386562613330
-WRAPPED_USDC_TOKEN_ID=0x57555344432d343332366337
+WRAPPED_USDC_TOKEN_ID=0x57555344432d643065666366
 
 # Token ticker - needed for mainnet
 WRAPPED_USDC_TOKEN_TICKER=0x5755534443
 
 # ETH Tokens
-WRAPPED_USDC_ERC20=0x6fbA6c5086AEbCF604d3462239292F97FFeAB4F9
+WRAPPED_USDC_ERC20=0x0a2e4c4E6C2afedF4a953a90EDD2aB161aF96C17
 
 deployAggregator() {
     erdpy --verbose contract deploy --bytecode=../../price-aggregator/price-aggregator.wasm --recall-nonce --pem=${ALICE} \
@@ -98,7 +98,7 @@ deploySafe() {
     local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 200$ for elrond->eth
 
     erdpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
-    --gas-limit=100000000 \
+    --gas-limit=150000000 \
     --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
