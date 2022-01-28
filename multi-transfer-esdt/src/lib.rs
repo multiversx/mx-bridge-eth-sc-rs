@@ -28,16 +28,21 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<EthTransaction<Self::Api>>,
     ) {
+        let mut refund_tx_list = ManagedVec::new();
         for eth_tx in transfers {
             if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                self.add_refund_tx_to_batch(eth_tx);
+
+                let refund_tx = self.convert_to_refund_tx(eth_tx);
+                refund_tx_list.push(refund_tx);
 
                 continue;
             }
             if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
                 self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
-                self.add_refund_tx_to_batch(eth_tx);
+
+                let refund_tx = self.convert_to_refund_tx(eth_tx);
+                refund_tx_list.push(refund_tx);
 
                 continue;
             }
@@ -49,6 +54,8 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
         }
+
+        self.add_multiple_tx_to_batch(&refund_tx_list);
     }
 
     #[only_owner]
@@ -64,8 +71,8 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
     // private
 
-    fn add_refund_tx_to_batch(&self, eth_tx: EthTransaction<Self::Api>) {
-        let tx = Transaction {
+    fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
+        Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: eth_tx.tx_nonce,
             from: eth_tx.from.as_managed_buffer().clone(),
@@ -73,9 +80,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
             token_identifier: eth_tx.token_id,
             amount: eth_tx.amount,
             is_refund_tx: true,
-        };
-
-        self.add_to_batch(tx);
+        }
     }
 
     fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {
