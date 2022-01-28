@@ -139,10 +139,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         transfers_as_eth_tx
     }
 
-    fn require_valid_eth_tx_ids(
-        &self,
-        eth_tx_vec: &ManagedVec<EthTransaction<Self::Api>>,
-    ) -> SCResult<()> {
+    fn require_valid_eth_tx_ids(&self, eth_tx_vec: &ManagedVec<EthTransaction<Self::Api>>) {
         let last_executed_eth_tx_id = self.last_executed_eth_tx_id().get();
         let mut current_expected_tx_id = last_executed_eth_tx_id + 1;
 
@@ -150,17 +147,17 @@ pub trait UtilModule: crate::storage::StorageModule {
             require!(eth_tx.tx_nonce == current_expected_tx_id, "Invalid Tx ID");
             current_expected_tx_id += 1;
         }
-
-        Ok(())
     }
 
     fn hash_eth_tx_batch(
         &self,
         eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
-    ) -> SCResult<EthBatchHash<Self::Api>> {
+    ) -> EthBatchHash<Self::Api> {
         let mut serialized = ManagedBuffer::new();
-        eth_tx_batch.top_encode(&mut serialized)?;
+        if eth_tx_batch.top_encode(&mut serialized).is_err() {
+            sc_panic!("Failed to serialized batch");
+        }
 
-        Ok(self.raw_vm_api().keccak256(&serialized))
+        self.crypto().keccak256(&serialized)
     }
 }

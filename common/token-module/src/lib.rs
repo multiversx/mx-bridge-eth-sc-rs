@@ -1,4 +1,5 @@
 #![no_std]
+#![feature(generic_associated_types)]
 
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
@@ -53,7 +54,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
         #[var_args] opt_default_price_per_gas_unit: OptionalArg<BigUint>,
-    ) -> SCResult<()> {
+    ) {
         self.token_ticker(&token_id).set(&ticker);
 
         if let OptionalArg::Some(default_price_per_gas_unit) = opt_default_price_per_gas_unit {
@@ -62,8 +63,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         }
 
         let _ = self.token_whitelist().insert(token_id);
-
-        Ok(())
     }
 
     #[only_owner]
@@ -77,24 +76,18 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     // private
 
-    fn require_token_in_whitelist(&self, token_id: &TokenIdentifier) -> SCResult<()> {
+    fn require_token_in_whitelist(&self, token_id: &TokenIdentifier) {
         require!(
             self.token_whitelist().contains(token_id),
             "Token not in whitelist"
         );
-        Ok(())
     }
 
-    fn require_local_role_set(
-        &self,
-        token_id: &TokenIdentifier,
-        role: &EsdtLocalRole,
-    ) -> SCResult<()> {
+    fn require_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) {
         require!(
             self.is_local_role_set(token_id, role),
             "Must set local role first"
         );
-        Ok(())
     }
 
     fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {

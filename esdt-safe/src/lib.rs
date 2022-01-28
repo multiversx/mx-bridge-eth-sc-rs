@@ -20,11 +20,7 @@ pub trait EsdtSafe:
     + tx_batch_module::TxBatchModule
 {
     #[init]
-    fn init(
-        &self,
-        fee_estimator_contract_address: ManagedAddress,
-        eth_tx_gas_limit: BigUint,
-    ) -> SCResult<()> {
+    fn init(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
@@ -41,9 +37,7 @@ pub trait EsdtSafe:
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
         self.token_ticker(&gwei_token_id)
-            .set(&gwei_token_id.as_managed_buffer());
-
-        Ok(())
+            .set(gwei_token_id.as_managed_buffer());
     }
 
     #[only_owner]
@@ -52,7 +46,7 @@ pub trait EsdtSafe:
         &self,
         batch_id: u64,
         #[var_args] tx_statuses: ManagedVarArgs<TransactionStatus>,
-    ) -> SCResult<()> {
+    ) {
         let first_batch_id = self.first_batch_id().get();
         require!(
             batch_id == first_batch_id,
@@ -82,14 +76,11 @@ pub trait EsdtSafe:
                     }
                 }
                 TransactionStatus::Rejected => {
-                    self.mark_refund(
-                        &ManagedAddress::try_from(tx.from)?,
-                        &tx.token_identifier,
-                        &tx.amount,
-                    );
+                    let addr = ManagedAddress::try_from(tx.from).unwrap();
+                    self.mark_refund(&addr, &tx.token_identifier, &tx.amount);
                 }
                 _ => {
-                    return sc_error!("Transaction status may only be set to Executed or Rejected")
+                    sc_panic!("Transaction status may only be set to Executed or Rejected");
                 }
             }
 
@@ -97,8 +88,6 @@ pub trait EsdtSafe:
         }
 
         self.clear_first_batch();
-
-        Ok(())
     }
 
     #[only_owner]
@@ -112,9 +101,9 @@ pub trait EsdtSafe:
         for refund_tx in &refund_transactions {
             let required_fee = match cached_token_ids
                 .iter()
-                .position(|id| id == refund_tx.token_identifier)
+                .position(|id| *id == refund_tx.token_identifier)
             {
-                Some(index) => cached_prices.get(index).unwrap_or_else(|| BigUint::zero()),
+                Some(index) => (*cached_prices.get(index)).clone(),
                 None => {
                     let queried_fee = self.calculate_required_fee(&refund_tx.token_identifier);
                     cached_token_ids.push(refund_tx.token_identifier.clone());
@@ -162,12 +151,12 @@ pub trait EsdtSafe:
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
         to: EthAddress<Self::Api>,
-    ) -> SCResult<()> {
+    ) {
         require!(
             self.call_value().esdt_token_nonce() == 0,
             "Only fungible ESDT tokens accepted"
         );
-        self.require_token_in_whitelist(&payment_token)?;
+        self.require_token_in_whitelist(&payment_token);
 
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
@@ -193,21 +182,17 @@ pub trait EsdtSafe:
 
         let batch_id = self.add_to_batch(tx);
         self.create_transaction_event(batch_id, tx_nonce);
-
-        Ok(())
     }
 
     #[endpoint(claimRefund)]
-    fn claim_refund(&self, token_id: TokenIdentifier) -> SCResult<()> {
+    fn claim_refund(&self, token_id: TokenIdentifier) {
         let caller = self.blockchain().get_caller();
         let refund_amount = self.refund_amount(&caller, &token_id).get();
         require!(refund_amount > 0, "Nothing to refund");
 
         self.refund_amount(&caller, &token_id).clear();
         self.send()
-            .direct(&caller, &token_id, 0, &refund_amount, b"refund");
-
-        Ok(())
+            .direct(&caller, &token_id, 0, &refund_amount, &[]);
     }
 
     #[view(getRefundAmounts)]

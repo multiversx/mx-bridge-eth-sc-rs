@@ -4,15 +4,13 @@ elrond_wasm::imports!();
 
 use transaction::{esdt_safe_batch::TxBatchSplitInFields, EthTransaction, Transaction};
 
-pub mod token_whitelist_module;
-
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 
 #[elrond_wasm::contract]
 pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
     #[init]
-    fn init(&self) -> SCResult<()> {
+    fn init(&self) {
         self.max_tx_batch_size()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
@@ -21,8 +19,6 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         // batch ID 0 is considered invalid
         self.first_batch_id().set_if_empty(&1);
         self.last_batch_id().set_if_empty(&1);
-
-        Ok(())
     }
 
     #[only_owner]
