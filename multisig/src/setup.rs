@@ -4,7 +4,6 @@ use crate::user_role::UserRole;
 use eth_address::EthAddress;
 
 use fee_estimator_module::ProxyTrait as _;
-use multi_transfer_esdt::token_whitelist_module::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
 
@@ -23,7 +22,7 @@ pub trait SetupModule:
         #[var_args] init_args: ManagedVarArgs<ManagedBuffer>,
     ) {
         let gas = self.blockchain().get_gas_left();
-        self.raw_vm_api().upgrade_from_source_contract(
+        Self::Api::send_api_impl().upgrade_from_source_contract(
             &child_sc_address,
             gas,
             &BigUint::zero(),
@@ -35,31 +34,25 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint]
-    fn pause(&self) -> SCResult<()> {
+    fn pause(&self) {
         self.pause_status().set(&true);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint]
-    fn unpause(&self) -> SCResult<()> {
+    fn unpause(&self) {
         self.pause_status().set(&false);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(addBoardMember)]
-    fn add_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
+    fn add_board_member(&self, board_member: ManagedAddress) {
         self.change_user_role(board_member, UserRole::BoardMember);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(removeUser)]
-    fn remove_user(&self, user: ManagedAddress) -> SCResult<()> {
+    fn remove_user(&self, user: ManagedAddress) {
         self.change_user_role(user, UserRole::None);
         let num_board_members = self.num_board_members().get();
         require!(num_board_members > 0, "cannot remove all board members");
@@ -67,14 +60,12 @@ pub trait SetupModule:
             self.quorum().get() <= num_board_members,
             "quorum cannot exceed board size"
         );
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(slashBoardMember)]
-    fn slash_board_member(&self, board_member: ManagedAddress) -> SCResult<()> {
-        self.remove_user(board_member.clone())?;
+    fn slash_board_member(&self, board_member: ManagedAddress) {
+        self.remove_user(board_member.clone());
 
         let slash_amount = self.slash_amount().get();
 
@@ -85,29 +76,21 @@ pub trait SetupModule:
         // add it to total slashed amount pool
         self.slashed_tokens_amount()
             .update(|slashed_amt| *slashed_amt += slash_amount);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(changeQuorum)]
-    fn change_quorum(&self, new_quorum: usize) -> SCResult<()> {
+    fn change_quorum(&self, new_quorum: usize) {
         require!(
             new_quorum <= self.num_board_members().get(),
             "quorum cannot exceed board size"
         );
         self.quorum().set(&new_quorum);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(addMapping)]
-    fn add_mapping(
-        &self,
-        erc20_address: EthAddress<Self::Api>,
-        token_id: TokenIdentifier,
-    ) -> SCResult<()> {
+    fn add_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping already exists for token ID"
@@ -121,17 +104,11 @@ pub trait SetupModule:
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
-
-        Ok(())
     }
 
     #[only_owner]
     #[endpoint(clearMapping)]
-    fn clear_mapping(
-        &self,
-        erc20_address: EthAddress<Self::Api>,
-        token_id: TokenIdentifier,
-    ) -> SCResult<()> {
+    fn clear_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
             !self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping does not exist for ERC20 token"
@@ -151,8 +128,6 @@ pub trait SetupModule:
 
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
-
-        Ok(())
     }
 
     #[only_owner]
@@ -221,27 +196,6 @@ pub trait SetupModule:
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
         self.setup_get_esdt_safe_proxy_instance()
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
-    #[endpoint(multiTransferEsdtaddTokenToWhitelist)]
-    fn multi_transfer_esdt_add_token_to_whitelist(
-        &self,
-        token_id: TokenIdentifier,
-        _ticker: ManagedBuffer,
-        #[var_args] _opt_default_value_in_dollars: OptionalArg<BigUint>,
-    ) {
-        self.setup_get_multi_transfer_esdt_proxy_instance()
-            .add_token_to_whitelist(token_id)
-            .execute_on_dest_context();
-    }
-
-    #[only_owner]
-    #[endpoint(multiTransferEsdtRemoveTokenFromWhitelist)]
-    fn multi_transfer_esdt_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
-        self.setup_get_multi_transfer_esdt_proxy_instance()
-            .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
     }
 

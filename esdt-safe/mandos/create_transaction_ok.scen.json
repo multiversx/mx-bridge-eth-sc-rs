@@ -6,6 +6,24 @@
             "path": "setup_accounts.scen.json"
         },
         {
+            "step": "scQuery",
+            "txId": "get-batch-status-before",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatchStatus",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    {
+                        "1-enum-variant": "u8:1"
+                    }
+                ]
+            }
+        },
+        {
             "step": "scCall",
             "txId": "create-transaction-ok",
             "tx": {
@@ -34,6 +52,27 @@
                 "message": "",
                 "gas": "*",
                 "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-batch-status-after",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatchStatus",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    {
+                        "1-enum-variant": "u8:2",
+                        "2-end_block_nonce": "u64:100",
+                        "3-vec_len": "u32:1",
+                        "4-tx_ids": "u64:1"
+                    }
+                ]
             }
         },
         {

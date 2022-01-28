@@ -43,7 +43,7 @@ pub trait Multisig:
         slash_amount: BigUint,
         quorum: usize,
         #[var_args] board: ManagedVarArgs<ManagedAddress>,
-    ) -> SCResult<()> {
+    ) {
         self.quorum().set(&quorum);
 
         let mut duplicates = false;
@@ -80,8 +80,6 @@ pub trait Multisig:
         );
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_sc_address);
-
-        Ok(())
     }
 
     #[only_owner]
@@ -89,7 +87,7 @@ pub trait Multisig:
     fn distribute_fees_from_child_contracts(
         &self,
         #[var_args] dest_address_percentage_pairs: ManagedVarArgs<MultiArg2<ManagedAddress, u32>>,
-    ) -> SCResult<()> {
+    ) {
         let mut args = ManagedVec::new();
         let mut total_percentage = 0;
 
@@ -116,13 +114,11 @@ pub trait Multisig:
         self.get_esdt_safe_proxy_instance()
             .distribute_fees(args)
             .execute_on_dest_context();
-
-        Ok(())
     }
 
     #[payable("EGLD")]
     #[endpoint]
-    fn stake(&self, #[payment] payment: BigUint) -> SCResult<()> {
+    fn stake(&self, #[payment] payment: BigUint) {
         let caller = self.blockchain().get_caller();
         let caller_role = self.user_role(&caller);
         require!(
@@ -132,12 +128,10 @@ pub trait Multisig:
 
         self.amount_staked(&caller)
             .update(|amount_staked| *amount_staked += payment);
-
-        Ok(())
     }
 
     #[endpoint]
-    fn unstake(&self, amount: BigUint) -> SCResult<()> {
+    fn unstake(&self, amount: BigUint) {
         let caller = self.blockchain().get_caller();
         let amount_staked = self.amount_staked(&caller).get();
         require!(
@@ -156,8 +150,6 @@ pub trait Multisig:
 
         self.amount_staked(&caller).set(&remaining_stake);
         self.send().direct_egld(&caller, &amount, &[]);
-
-        Ok(())
     }
 
     // ESDT Safe SC calls
@@ -167,16 +159,15 @@ pub trait Multisig:
         &self,
         esdt_safe_batch_id: u64,
         #[var_args] tx_batch_status: ManagedVarArgs<TransactionStatus>,
-    ) -> SCResult<usize> {
+    ) -> usize {
         let call_result = self
             .get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
             .execute_on_dest_context();
-        let (current_batch_id, current_batch_transactions) = call_result
-            .into_option()
-            .ok_or("Current batch is empty")?
-            .into_tuple();
-
+        let (current_batch_id, current_batch_transactions) = match call_result {
+            OptionalArg::Some(batch) => batch.into_tuple(),
+            OptionalArg::None => sc_panic!("Current batch is empty"),
+        };
         let statuses_vec = tx_batch_status.to_vec();
 
         require!(
@@ -200,12 +191,12 @@ pub trait Multisig:
         let action_id = self.propose_action(Action::SetCurrentTransactionBatchStatus {
             esdt_safe_batch_id,
             tx_batch_status: statuses_vec.clone(),
-        })?;
+        });
 
         self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
             .insert(statuses_vec, action_id);
 
-        Ok(action_id)
+        action_id
     }
 
     // Multi-transfer ESDT SC calls
@@ -215,7 +206,7 @@ pub trait Multisig:
         &self,
         eth_batch_id: u64,
         #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
-    ) -> SCResult<usize> {
+    ) -> usize {
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
             eth_batch_id == next_eth_batch_id,
@@ -223,9 +214,9 @@ pub trait Multisig:
         );
 
         let transfers_as_eth_tx = self.transfers_multiarg_to_eth_tx_vec(transfers);
-        self.require_valid_eth_tx_ids(&transfers_as_eth_tx)?;
+        self.require_valid_eth_tx_ids(&transfers_as_eth_tx);
 
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx)?;
+        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
         require!(
             self.batch_id_to_action_id_mapping(eth_batch_id)
                 .get(&batch_hash)
@@ -236,12 +227,12 @@ pub trait Multisig:
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
             eth_batch_id,
             transfers: transfers_as_eth_tx,
-        })?;
+        });
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
             .insert(batch_hash, action_id);
 
-        Ok(action_id)
+        action_id
     }
 
     #[only_owner]
@@ -268,7 +259,7 @@ pub trait Multisig:
 
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
-    fn perform_action_endpoint(&self, action_id: usize) -> SCResult<()> {
+    fn perform_action_endpoint(&self, action_id: usize) {
         require!(
             !self.action_mapper().item_is_empty(action_id),
             "Action was already executed"
@@ -291,8 +282,6 @@ pub trait Multisig:
         );
 
         self.perform_action(action_id);
-
-        Ok(())
     }
 
     #[view(getCurrentTxBatch)]
@@ -312,7 +301,7 @@ pub trait Multisig:
     fn get_current_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
         let _ = self
             .get_multi_transfer_esdt_proxy_instance()
-            .get_current_tx_batch()
+            .get_first_batch_any_status()
             .execute_on_dest_context();
 
         // result is already returned automatically from the MultiTransferEsdt call,
@@ -358,15 +347,11 @@ pub trait Multisig:
         #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
     ) -> usize {
         let transfers_as_struct = self.transfers_multiarg_to_eth_tx_vec(transfers);
-        let result_batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
+        let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
 
-        match result_batch_hash {
-            Ok(batch_hash) => self
-                .batch_id_to_action_id_mapping(eth_batch_id)
-                .get(&batch_hash)
-                .unwrap_or(0),
-            Err(_) => 0,
-        }
+        self.batch_id_to_action_id_mapping(eth_batch_id)
+            .get(&batch_hash)
+            .unwrap_or(0)
     }
 
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
@@ -443,12 +428,11 @@ pub trait Multisig:
 
                 // The "if" is not really needed, but this is more efficient than unwrap()
                 let last_tx_index = transfers.len() - 1;
-                if let Some(last_tx) = transfers.get(last_tx_index) {
-                    self.last_executed_eth_tx_id().set(&last_tx.tx_nonce);
-                }
+                let last_tx = transfers.get(last_tx_index);
+                self.last_executed_eth_tx_id().set(&last_tx.tx_nonce);
 
                 self.get_multi_transfer_esdt_proxy_instance()
-                    .batch_transfer_esdt_token(transfers.into())
+                    .batch_transfer_esdt_token(eth_batch_id, transfers.into())
                     .execute_on_dest_context();
             }
             _ => {}

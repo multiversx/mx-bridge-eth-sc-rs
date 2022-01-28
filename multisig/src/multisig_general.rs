@@ -7,7 +7,7 @@ use crate::user_role::UserRole;
 pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::StorageModule {
     /// Used by board members to sign actions.
     #[endpoint]
-    fn sign(&self, action_id: usize) -> SCResult<()> {
+    fn sign(&self, action_id: usize) {
         require!(
             !self.action_mapper().item_is_empty_unchecked(action_id),
             "action does not exist"
@@ -20,11 +20,9 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         require!(self.has_enough_stake(&caller_address), "not enough stake");
 
         let _ = self.action_signer_ids(action_id).insert(caller_id);
-
-        Ok(())
     }
 
-    fn propose_action(&self, action: Action<Self::Api>) -> SCResult<usize> {
+    fn propose_action(&self, action: Action<Self::Api>) -> usize {
         let caller_address = self.blockchain().get_caller();
         let caller_id = self.user_mapper().get_user_id(&caller_address);
         let caller_role = self.user_id_to_role(caller_id).get();
@@ -43,7 +41,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
             let _ = self.action_signer_ids(action_id).insert(caller_id);
         }
 
-        Ok(action_id)
+        action_id
     }
 
     fn clear_action(&self, action_id: usize) {

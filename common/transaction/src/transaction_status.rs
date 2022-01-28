@@ -39,6 +39,7 @@ impl TransactionStatus {
 impl ManagedVecItem for TransactionStatus {
     const PAYLOAD_SIZE: usize = 1;
     const SKIPS_RESERIALIZATION: bool = true;
+    type Ref<'a> = Self;
 
     fn from_byte_reader<Reader: FnMut(&mut [u8])>(reader: Reader) -> Self {
         u8::from_byte_reader(reader).into()
@@ -46,5 +47,11 @@ impl ManagedVecItem for TransactionStatus {
 
     fn to_byte_writer<R, Writer: FnMut(&[u8]) -> R>(&self, writer: Writer) -> R {
         <u8 as ManagedVecItem>::to_byte_writer(&self.as_u8(), writer)
+    }
+
+    unsafe fn from_byte_reader_as_borrow<'a, Reader: FnMut(&mut [u8])>(
+        reader: Reader,
+    ) -> Self::Ref<'a> {
+        Self::from_byte_reader(reader)
     }
 }

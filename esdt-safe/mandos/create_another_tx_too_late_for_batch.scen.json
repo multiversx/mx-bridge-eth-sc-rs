@@ -22,6 +22,24 @@
             }
         },
         {
+            "step": "scQuery",
+            "txId": "get-batch-status-final",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatchStatus",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    {
+                        "1-enum-variant": "u8:4"
+                    }
+                ]
+            }
+        },
+        {
             "step": "scCall",
             "txId": "user2-create-transaction-too-late-for-batch",
             "tx": {

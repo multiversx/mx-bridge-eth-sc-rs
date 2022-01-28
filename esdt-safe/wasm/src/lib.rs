@@ -7,7 +7,6 @@
 elrond_wasm_node::wasm_endpoints! {
     esdt_safe
     (
-        init
         addRefundBatch
         addTokenToWhitelist
         calculateRequiredFee
@@ -16,10 +15,12 @@ elrond_wasm_node::wasm_endpoints! {
         distributeFees
         getAllKnownTokens
         getBatch
+        getBatchStatus
         getCurrentTxBatch
         getDefaultPricePerGasUnit
         getEthTxGasLimit
         getFeeEstimatorContractAddress
+        getFirstBatchAnyStatus
         getFirstBatchId
         getLastBatchId
         getRefundAmounts

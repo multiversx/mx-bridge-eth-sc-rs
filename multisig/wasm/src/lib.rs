@@ -7,7 +7,6 @@
 elrond_wasm_node::wasm_endpoints! {
     multisig
     (
-        init
         addBoardMember
         addMapping
         changeDefaultPricePerGasUnit
@@ -45,10 +44,8 @@ elrond_wasm_node::wasm_endpoints! {
         getTokenIdForErc20Address
         isPaused
         moveRefundBatchToSafe
-        multiTransferEsdtRemoveTokenFromWhitelist
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration
         multiTransferEsdtSetMaxRefundTxBatchSize
-        multiTransferEsdtaddTokenToWhitelist
         pause
         performAction
         proposeEsdtSafeSetCurrentTransactionBatchStatus

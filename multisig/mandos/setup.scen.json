@@ -48,13 +48,7 @@
                         "str:maxTxBatchBlockDuration": "3,600",
 
                         "str:firstBatchId": "1",
-                        "str:lastBatchId": "1",
-
-                        "str:tokenWhitelist.index|nested:str:EGLD-123456": "1",
-                        "str:tokenWhitelist.item|u32:1": "str:EGLD-123456",
-                        "str:tokenWhitelist.index|nested:str:ETH-123456": "2",
-                        "str:tokenWhitelist.item|u32:2": "str:ETH-123456",
-                        "str:tokenWhitelist.len": "2"
+                        "str:lastBatchId": "1"
                     },
                     "owner": "sc:multisig",
                     "code": "file:../../multi-transfer-esdt/output/multi-transfer-esdt.wasm"

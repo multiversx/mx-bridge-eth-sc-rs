@@ -141,10 +141,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         transfers_as_eth_tx
     }
 
-    fn require_valid_eth_tx_ids(
-        &self,
-        eth_tx_vec: &ManagedVec<EthTransaction<Self::Api>>,
-    ) -> SCResult<()> {
+    fn require_valid_eth_tx_ids(&self, eth_tx_vec: &ManagedVec<EthTransaction<Self::Api>>) {
         let last_executed_eth_tx_id = self.last_executed_eth_tx_id().get();
         let mut current_expected_tx_id = last_executed_eth_tx_id + 1;
 
@@ -152,23 +149,25 @@ pub trait UtilModule: crate::storage::StorageModule {
             require!(eth_tx.tx_nonce == current_expected_tx_id, "Invalid Tx ID");
             current_expected_tx_id += 1;
         }
-
-        Ok(())
     }
 
     // Only for backwards compatibility
     fn hash_eth_tx_batch(
         &self,
         eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
-    ) -> SCResult<EthBatchHash<Self::Api>> {
+    ) -> EthBatchHash<Self::Api> {
         let mut serialized = ManagedBuffer::new();
-        eth_tx_batch.top_encode(&mut serialized)?;
+        if eth_tx_batch.top_encode(&mut serialized).is_err() {
+            sc_panic!("Failed to serialized batch");
+        }
 
-        let raw_hash: H256 = self
-            .crypto()
-            .keccak256(&serialized.to_boxed_bytes().as_slice());
+        let raw_hash: H256 =
+            Self::Api::crypto_api_impl().keccak256_legacy(&serialized.to_boxed_bytes().as_slice());
         let buffer = ManagedBuffer::new_from_bytes(raw_hash.as_bytes());
-        
-        EthBatchHash::try_from(buffer).into()
+
+        match EthBatchHash::try_from(buffer) {
+            core::result::Result::Ok(byte_array) => byte_array,
+            core::result::Result::Err(_) => sc_panic!("Failed to serialized batch"),
+        }
     }
 }
