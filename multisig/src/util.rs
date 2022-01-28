@@ -162,7 +162,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         }
 
         let raw_hash: H256 =
-            Self::Api::crypto_api_impl().keccak256_legacy(&serialized.to_boxed_bytes().as_slice());
+            Self::Api::crypto_api_impl().keccak256_legacy(serialized.to_boxed_bytes().as_slice());
         let buffer = ManagedBuffer::new_from_bytes(raw_hash.as_bytes());
 
         match EthBatchHash::try_from(buffer) {
