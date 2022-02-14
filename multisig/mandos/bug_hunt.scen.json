@@ -20,34 +20,10 @@
             ]
         },
         {
-            "step": "scDeploy",
-            "txId": "deploy",
-            "tx": {
-                "from": "address:owner",
-                "contractCode": "file:../output/multisig.wasm",
-                "value": "0",
-                "arguments": [
-                    "sc:esdt_safe",
-                    "sc:multi_transfer",
-                    "1000",
-                    "500",
-                    "2"
-                ],
-                "gasLimit": "40,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "checkState",
+            "step": "setState",
             "accounts": {
                 "sc:multisig": {
-                    "nonce": "*",
+                    "nonce": "0",
                     "balance": "0",
                     "storage": {
                         "str:esdtSafeAddress": "sc:esdt_safe",
@@ -57,8 +33,7 @@
                         "str:slashAmount": "500"
                     },
                     "code": "file:../output/multisig.wasm"
-                },
-                "+": {}
+                }
             }
         },
         {
