@@ -9,6 +9,17 @@ use crate::user_role::UserRole;
 
 use core::convert::TryFrom;
 
+extern "C" {
+    fn keccak256(dataOffset: *const u8, length: i32, resultOffset: *mut u8) -> i32;
+}
+
+const AVERAGE_SERIALIZED_TX_SIZE: usize = 85;
+const BUFFER_SIZE: usize = AVERAGE_SERIALIZED_TX_SIZE * 100;
+static mut STATIC_BUFFER: [u8; BUFFER_SIZE] = [0u8; BUFFER_SIZE]; // = 8500 bytes ~= 8.5 kB
+
+const HASH_LEN: usize = 32;
+static mut HASH_BUFFER: [u8; HASH_LEN] = [0u8; HASH_LEN];
+
 #[elrond_wasm::module]
 pub trait UtilModule: crate::storage::StorageModule {
     /// Returns `true` (`1`) if the user has signed the action.
@@ -157,17 +168,37 @@ pub trait UtilModule: crate::storage::StorageModule {
         eth_tx_batch: &ManagedVec<EthTransaction<Self::Api>>,
     ) -> EthBatchHash<Self::Api> {
         let mut serialized = ManagedBuffer::new();
-        if eth_tx_batch.top_encode(&mut serialized).is_err() {
-            sc_panic!("Failed to serialized batch");
-        }
+        require!(
+            eth_tx_batch.top_encode(&mut serialized).is_ok(),
+            "Failed to serialized batch"
+        );
 
-        let raw_hash: H256 =
-            Self::Api::crypto_api_impl().keccak256_legacy(serialized.to_boxed_bytes().as_slice());
-        let buffer = ManagedBuffer::new_from_bytes(raw_hash.as_bytes());
+        let serialized_len = serialized.len();
+        require!(
+            serialized_len <= BUFFER_SIZE,
+            "Cannot fit serialized batch in static buffer"
+        );
 
-        match EthBatchHash::try_from(buffer) {
-            core::result::Result::Ok(byte_array) => byte_array,
-            core::result::Result::Err(_) => sc_panic!("Failed to serialized batch"),
+        unsafe {
+            let static_buffer_slice = &mut STATIC_BUFFER[..serialized_len];
+
+            require!(
+                serialized.load_slice(0, static_buffer_slice).is_ok(),
+                "Failed to load into static buffer"
+            );
+
+            let api_call_result = keccak256(
+                static_buffer_slice.as_ptr(),
+                serialized_len as i32,
+                HASH_BUFFER.as_mut_ptr(),
+            );
+            require!(api_call_result == 0, "keccak256 API call failed");
+
+            let managed_hash = ManagedByteArray::new_from_bytes(&HASH_BUFFER);
+            match EthBatchHash::try_from(managed_hash) {
+                core::result::Result::Ok(byte_array) => byte_array,
+                core::result::Result::Err(_) => sc_panic!("Failed to serialized batch"),
+            }
         }
     }
 }
