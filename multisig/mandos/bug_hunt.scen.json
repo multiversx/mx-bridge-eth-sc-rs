@@ -1,6 +1,5 @@
 {
     "name": "bug hunt",
-    "traceGas": true,
     "steps": [
         {
             "step": "setState",
@@ -39,7 +38,6 @@
         {
             "step": "scQuery",
             "txId": "get-with-sc-query",
-            "displayLogs": true,
             "tx": {
                 "to": "sc:multisig",
                 "function": "wasTransferActionProposed",
