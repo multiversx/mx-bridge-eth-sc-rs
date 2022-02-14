@@ -13,9 +13,9 @@ extern "C" {
     fn keccak256(dataOffset: *const u8, length: i32, resultOffset: *mut u8) -> i32;
 }
 
-const AVERAGE_SERIALIZED_TX_SIZE: usize = 65;
+const AVERAGE_SERIALIZED_TX_SIZE: usize = 85;
 const BUFFER_SIZE: usize = AVERAGE_SERIALIZED_TX_SIZE * 100;
-static mut STATIC_BUFFER: [u8; BUFFER_SIZE] = [0u8; BUFFER_SIZE]; // = 6500 bytes ~= 6.5 kB
+static mut STATIC_BUFFER: [u8; BUFFER_SIZE] = [0u8; BUFFER_SIZE]; // = 8500 bytes ~= 8.5 kB
 
 const HASH_LEN: usize = 32;
 static mut HASH_BUFFER: [u8; HASH_LEN] = [0u8; HASH_LEN];
