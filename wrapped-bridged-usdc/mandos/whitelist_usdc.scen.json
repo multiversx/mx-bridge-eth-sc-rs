@@ -55,7 +55,7 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:wrapped_bridged_usdc",
-                "function": "whitelistUSDC",
+                "function": "whitelistUsdc",
                 "arguments": [
                     "str:USDC-bbbbbb"
                 ],
@@ -75,7 +75,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:wrapped_bridged_usdc",
-                "function": "whitelistUSDC",
+                "function": "whitelistUsdc",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -95,7 +95,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:wrapped_bridged_usdc",
-                "function": "whitelistUSDC",
+                "function": "whitelistUsdc",
                 "arguments": [
                     "str:USDC-cccccc"
                 ],

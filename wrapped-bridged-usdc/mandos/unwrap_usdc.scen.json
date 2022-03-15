@@ -17,7 +17,7 @@
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "300"
                 },
-                "function": "unwrapUSDC",
+                "function": "unwrapUsdc",
                 "arguments": [
                     "str:USDC-bbbbbb"
                 ],
@@ -42,7 +42,7 @@
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "500"
                 },
-                "function": "unwrapUSDC",
+                "function": "unwrapUsdc",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -67,7 +67,7 @@
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "100"
                 },
-                "function": "unwrapUSDC",
+                "function": "unwrapUsdc",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],

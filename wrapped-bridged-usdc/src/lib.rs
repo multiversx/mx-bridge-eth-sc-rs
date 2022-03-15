@@ -2,8 +2,6 @@
 
 elrond_wasm::imports!();
 
-const LEFTOVER_GAS: u64 = 10_000u64;
-
 #[elrond_wasm::contract]
 pub trait WrappedBridgedUsdc {
     #[init]
@@ -12,13 +10,13 @@ pub trait WrappedBridgedUsdc {
     }
 
     #[only_owner]
-    #[endpoint(whitelistUSDC)]
+    #[endpoint(whitelistUsdc)]
     fn whitelist_usdc(&self, usdc_token_id: TokenIdentifier) {
         self.usdc_token_ids().insert(usdc_token_id);
     }
 
     #[only_owner]
-    #[endpoint(blacklistUSDC)]
+    #[endpoint(blacklistUsdc)]
     fn blacklist_usdc(&self, usdc_token_id: TokenIdentifier) {
         self.usdc_token_ids().swap_remove(&usdc_token_id);
     }
@@ -26,12 +24,11 @@ pub trait WrappedBridgedUsdc {
     // endpoints
 
     #[payable("*")]
-    #[endpoint(wrapUSDC)]
+    #[endpoint(wrapUsdc)]
     fn wrap_usdc(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
-        #[var_args] accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let usdc_token_id = &payment_token;
         require!(
@@ -46,35 +43,18 @@ pub trait WrappedBridgedUsdc {
             .esdt_local_mint(&wrapped_usdc_token_id, 0, &payment_amount);
 
         let caller = self.blockchain().get_caller();
-        let function = match accept_funds_endpoint_name {
-            OptionalValue::Some(f) => f,
-            OptionalValue::None => ManagedBuffer::new(),
-        };
 
-        if self.needs_execution(&caller, &function) {
-            let gas_limit = self.blockchain().get_gas_left() - LEFTOVER_GAS;
-            let _ = Self::Api::send_api_impl().direct_esdt_execute(
-                &caller,
-                &wrapped_usdc_token_id,
-                &payment_amount,
-                gas_limit,
-                &function,
-                &ManagedArgBuffer::new_empty(),
-            );
-        } else {
-            self.send()
-                .direct(&caller, &wrapped_usdc_token_id, 0, &payment_amount, &[]);
-        }
+        self.send()
+            .direct(&caller, &wrapped_usdc_token_id, 0, &payment_amount, &[]);
     }
 
     #[payable("*")]
-    #[endpoint(unwrapUSDC)]
+    #[endpoint(unwrapUsdc)]
     fn unwrap_usdc(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
         requested_token: TokenIdentifier,
-        #[var_args] accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let usdc_token_id = &requested_token;
         require!(
@@ -97,25 +77,9 @@ pub trait WrappedBridgedUsdc {
 
         // 1 wrapped USDC = 1 USDC, so we pay back the same amount
         let caller = self.blockchain().get_caller();
-        let function = match accept_funds_endpoint_name {
-            OptionalValue::Some(f) => f,
-            OptionalValue::None => ManagedBuffer::new(),
-        };
 
-        if self.needs_execution(&caller, &function) {
-            let gas_limit = self.blockchain().get_gas_left() - LEFTOVER_GAS;
-            let _ = Self::Api::send_api_impl().direct_esdt_execute(
-                &caller,
-                usdc_token_id,
-                &payment_amount,
-                gas_limit,
-                &function,
-                &ManagedArgBuffer::new_empty(),
-            );
-        } else {
-            self.send()
-                .direct(&caller, usdc_token_id, 0, &payment_amount, &[]);
-        }
+        self.send()
+            .direct(&caller, usdc_token_id, 0, &payment_amount, &[]);
     }
 
     // views
@@ -135,11 +99,11 @@ pub trait WrappedBridgedUsdc {
 
     // 1 USDC = 1 wrapped USDC, and they are interchangeable through this contract
 
-    #[view(getWrappedUSDCTokenId)]
+    #[view(getWrappedUsdcTokenId)]
     #[storage_mapper("wrappedUSDCTokenId")]
     fn wrapped_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
-    #[view(getUSDCTokenIds)]
+    #[view(getUsdcTokenIds)]
     #[storage_mapper("USDCTokenIds")]
     fn usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }

@@ -12,7 +12,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:wrapped_bridged_usdc",
-                "function": "blacklistUSDC",
+                "function": "blacklistUsdc",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -37,7 +37,7 @@
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "100"
                 },
-                "function": "unwrapUSDC",
+                "function": "unwrapUsdc",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],

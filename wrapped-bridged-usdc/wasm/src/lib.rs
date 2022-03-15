@@ -7,13 +7,13 @@
 elrond_wasm_node::wasm_endpoints! {
     wrapped_bridged_usdc
     (
-        blacklistUSDC
+        blacklistUsdc
         getLiquidity
-        getUSDCTokenIds
-        getWrappedUSDCTokenId
-        unwrapUSDC
-        whitelistUSDC
-        wrapUSDC
+        getUsdcTokenIds
+        getWrappedUsdcTokenId
+        unwrapUsdc
+        whitelistUsdc
+        wrapUsdc
     )
 }
 
