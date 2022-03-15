@@ -107,12 +107,6 @@ pub trait WrappedBridgedUsdc {
         self.blockchain().get_sc_balance(bridged_usdc_token, 0)
     }
 
-    // private
-
-    fn needs_execution(&self, caller: &ManagedAddress, function: &ManagedBuffer) -> bool {
-        self.blockchain().is_smart_contract(caller) && !function.is_empty()
-    }
-
     // storage
 
     // 1 USDC = 1 wrapped USDC, and they are interchangeable through this contract
