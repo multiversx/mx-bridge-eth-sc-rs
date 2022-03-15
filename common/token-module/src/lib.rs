@@ -53,11 +53,11 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        #[var_args] opt_default_price_per_gas_unit: OptionalArg<BigUint>,
+        #[var_args] opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
 
-        if let OptionalArg::Some(default_price_per_gas_unit) = opt_default_price_per_gas_unit {
+        if let OptionalValue::Some(default_price_per_gas_unit) = opt_default_price_per_gas_unit {
             self.default_price_per_gas_unit(&token_id)
                 .set(&default_price_per_gas_unit);
         }

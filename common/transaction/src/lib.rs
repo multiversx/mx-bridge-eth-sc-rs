@@ -17,7 +17,7 @@ pub type TxNonce = u64;
 pub type BlockNonce = u64;
 pub type SenderAddressRaw<M> = ManagedBuffer<M>;
 pub type ReceiverAddressRaw<M> = ManagedBuffer<M>;
-pub type TxAsMultiResult<M> = MultiResult6<
+pub type TxAsMultiValue<M> = MultiValue6<
     BlockNonce,
     TxNonce,
     SenderAddressRaw<M>,
@@ -35,8 +35,8 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub tx_nonce: TxNonce,
 }
 
-pub type EthTxAsMultiArg<M> =
-    MultiArg5<EthAddress<M>, ManagedAddress<M>, TokenIdentifier<M>, BigUint<M>, TxNonce>;
+pub type EthTxAsMultiValue<M> =
+    MultiValue5<EthAddress<M>, ManagedAddress<M>, TokenIdentifier<M>, BigUint<M>, TxNonce>;
 
 #[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
@@ -49,8 +49,8 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub is_refund_tx: bool,
 }
 
-impl<M: ManagedTypeApi> From<TxAsMultiResult<M>> for Transaction<M> {
-    fn from(tx_as_multiresult: TxAsMultiResult<M>) -> Self {
+impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {
+    fn from(tx_as_multiresult: TxAsMultiValue<M>) -> Self {
         let (block_nonce, nonce, from, to, token_identifier, amount) =
             tx_as_multiresult.into_tuple();
 
@@ -67,7 +67,7 @@ impl<M: ManagedTypeApi> From<TxAsMultiResult<M>> for Transaction<M> {
 }
 
 impl<M: ManagedTypeApi> Transaction<M> {
-    pub fn into_multiresult(self) -> TxAsMultiResult<M> {
+    pub fn into_multiresult(self) -> TxAsMultiValue<M> {
         (
             self.block_nonce,
             self.nonce,
