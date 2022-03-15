@@ -79,7 +79,6 @@ pub trait WrappedBridgedUsdc {
         );
 
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
-        // this should never happen, but we'll check anyway
         require!(
             payment_amount <= self.get_liquidity(chain_specific_usdc_token_id),
             "Contract does not have enough funds"
