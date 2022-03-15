@@ -1,7 +1,7 @@
 [package]
 name = "wrapped-bridged-usdc-wasm"
 version = "0.0.0"
-authors = ["Andrei Marinica <andrei.marinica@elrond.com>"]
+authors = ["Alin Cruceat <alin.cruceat@elrond.com>"]
 edition = "2018"
 publish = false
 
@@ -15,16 +15,14 @@ lto = true
 debug = false
 panic = "abort"
 
-[dependencies.wrapped-bridged-usdc-meta]
+[dependencies.wrapped-bridged-usdc]
 path = ".."
 
 [dependencies.elrond-wasm-node]
 version = "0.29.3"
-path = "../../../../elrond-wasm-node"
 
 [dependencies.elrond-wasm-output]
 version = "0.29.3"
-path = "../../../../elrond-wasm-output"
 features = ["wasm-output-mode"]
 
 [workspace]

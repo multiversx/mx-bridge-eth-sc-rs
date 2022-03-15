@@ -5,10 +5,13 @@
 #![no_std]
 
 elrond_wasm_node::wasm_endpoints! {
-    adder
+    wrapped_bridged_usdc
     (
-        add
-        getSum
+        getLockedUSDCBalance
+        getUSDCTokenId
+        getWrappedUSDCTokenId
+        unwrapUSDC
+        wrapUSDC
     )
 }
 

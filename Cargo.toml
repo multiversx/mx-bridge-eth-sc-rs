@@ -7,5 +7,7 @@ members = [
   "multi-transfer-esdt",
   "multi-transfer-esdt/meta",
   "multisig",
-  "multisig/meta"
+  "multisig/meta",
+  "wrapped-bridged-usdc",
+  "wrapped-bridged-usdc/meta"
 ]

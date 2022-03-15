@@ -2,6 +2,8 @@
 
 elrond_wasm::imports!();
 
+const LEFTOVER_GAS: u64 = 10_000u64;
+
 #[elrond_wasm::derive::contract]
 pub trait WrappedBridgedUsdc {
     #[init]
@@ -12,13 +14,13 @@ pub trait WrappedBridgedUsdc {
 
     // endpoints
 
-    #[payable("EGLD")]
+    #[payable("*")]
     #[endpoint(wrapUSDC)]
     fn wrap_usdc(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
-        #[var_args] accept_funds_endpoint_name: OptionalArg<ManagedBuffer>,
+        #[var_args] accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let usdc_token_id = self.usdc_token_id().get();
         let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
@@ -31,8 +33,8 @@ pub trait WrappedBridgedUsdc {
 
         let caller = self.blockchain().get_caller();
         let function = match accept_funds_endpoint_name {
-            OptionalArg::Some(f) => f,
-            OptionalArg::None => ManagedBuffer::new(),
+            OptionalValue::Some(f) => f,
+            OptionalValue::None => ManagedBuffer::new(),
         };
 
         if self.needs_execution(&caller, &function) {
@@ -41,7 +43,7 @@ pub trait WrappedBridgedUsdc {
                 &caller,
                 &wrapped_usdc_token_id,
                 &payment_amount,
-                gas_limit,x`x`
+                gas_limit,
                 &function,
                 &ManagedArgBuffer::new_empty(),
             );
@@ -52,12 +54,12 @@ pub trait WrappedBridgedUsdc {
     }
 
     #[payable("*")]
-    #[endpoint(unwrapEgld)]
+    #[endpoint(unwrapUSDC)]
     fn unwrap_usdc(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
-        #[var_args] accept_funds_endpoint_name: OptionalArg<ManagedBuffer>,
+        #[var_args] accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let usdc_token_id = self.usdc_token_id().get();
         let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
@@ -76,8 +78,8 @@ pub trait WrappedBridgedUsdc {
         // 1 wrapped eGLD = 1 eGLD, so we pay back the same amount
         let caller = self.blockchain().get_caller();
         let function = match accept_funds_endpoint_name {
-            OptionalArg::Some(f) => f,
-            OptionalArg::None => ManagedBuffer::new(),
+            OptionalValue::Some(f) => f,
+            OptionalValue::None => ManagedBuffer::new(),
         };
 
         if self.needs_execution(&caller, &function) {
@@ -99,7 +101,7 @@ pub trait WrappedBridgedUsdc {
     // views
 
     #[view(getLockedUSDCBalance)]
-    fn get_locked_usdc_balance(&self, usdc_token: &TokenIdentifier) -> BigUint {
+    fn get_locked_balance(&self, usdc_token: &TokenIdentifier) -> BigUint {
         self.blockchain().get_sc_balance(usdc_token, 0)
     }
 
