@@ -19,6 +19,9 @@
                         "str:USDC-bbbbbb": {
                             "balance": "500"
                         },
+                        "str:USDC-cccccc": {
+                            "balance": "500"
+                        },
                         "str:WUSDC-abcdef": {
                             "balance": "500"
                         }
@@ -87,10 +90,30 @@
             }
         },
         {
+            "step": "scCall",
+            "txId": "whitelist-usdt",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "whitelistUSDC",
+                "arguments": [
+                    "str:USDC-cccccc"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "storage": {}
                 },
@@ -101,6 +124,9 @@
                             "balance": "500"
                         },
                         "str:USDC-bbbbbb": {
+                            "balance": "500"
+                        },
+                        "str:USDC-cccccc": {
                             "balance": "500"
                         },
                         "str:WUSDC-abcdef": {
@@ -121,9 +147,11 @@
                         }
                     },
                     "storage": {
-                        "str:USDCTokenIds.len": "1",
+                        "str:USDCTokenIds.len": "2",
                         "str:USDCTokenIds.index|nested:str:USDC-aaaaaa": "1",
+                        "str:USDCTokenIds.index|nested:str:USDC-cccccc": "2",
                         "str:USDCTokenIds.item|u32:1": "str:USDC-aaaaaa",
+                        "str:USDCTokenIds.item|u32:2": "str:USDC-cccccc",
                         "str:wrappedUSDCTokenId": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/wrapped-bridged-usdc.wasm",

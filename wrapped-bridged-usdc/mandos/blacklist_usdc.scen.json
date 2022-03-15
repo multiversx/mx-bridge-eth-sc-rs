@@ -50,6 +50,60 @@
                 "gas": "*",
                 "refund": "*"
             }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "3",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "8",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "300"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "400"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "800"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:wrapped_bridged_usdc": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:USDC-aaaaaa": {
+                            "balance": "200"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "100"
+                        }
+                    },
+                    "storage": {
+                        "str:USDCTokenIds.len": "1",
+                        "str:USDCTokenIds.index|nested:str:USDC-cccccc": "1",
+                        "str:USDCTokenIds.item|u32:1": "str:USDC-cccccc",
+                        "str:wrappedUSDCTokenId": "str:WUSDC-abcdef"
+                    },
+                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "owner": "address:owner"
+                }
+            }
         }
     ]
 }

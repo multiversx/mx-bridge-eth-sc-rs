@@ -85,12 +85,12 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "storage": {}
                 },
                 "address:user": {
-                    "nonce": "6",
+                    "nonce": "7",
                     "esdt": {
                         "str:USDC-aaaaaa": {
                             "balance": "300"
@@ -98,8 +98,11 @@
                         "str:USDC-bbbbbb": {
                             "balance": "500"
                         },
+                        "str:USDC-cccccc": {
+                            "balance": "400"
+                        },
                         "str:WUSDC-abcdef": {
-                            "balance": "700"
+                            "balance": "800"
                         }
                     },
                     "storage": {}
@@ -116,12 +119,17 @@
                         },
                         "str:USDC-aaaaaa": {
                             "balance": "200"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "100"
                         }
                     },
                     "storage": {
-                        "str:USDCTokenIds.len": "1",
+                        "str:USDCTokenIds.len": "2",
                         "str:USDCTokenIds.index|nested:str:USDC-aaaaaa": "1",
+                        "str:USDCTokenIds.index|nested:str:USDC-cccccc": "2",
                         "str:USDCTokenIds.item|u32:1": "str:USDC-aaaaaa",
+                        "str:USDCTokenIds.item|u32:2": "str:USDC-cccccc",
                         "str:wrappedUSDCTokenId": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/wrapped-bridged-usdc.wasm",
