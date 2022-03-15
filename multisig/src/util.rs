@@ -7,6 +7,15 @@ use crate::action::Action;
 use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
 
+// 32 - from address
+// 32 - to address
+// 4 + 17 - token ID
+// 4 + 32 - amount
+// 8 - nonce
+// ~= 130. We add another 30 bytes just to be safe.
+const AVERAGE_SERIALIZED_TX_SIZE: usize = 160;
+const MAX_BUFFER_SIZE: usize = AVERAGE_SERIALIZED_TX_SIZE * 100;
+
 #[elrond_wasm::module]
 pub trait UtilModule: crate::storage::StorageModule {
     /// Returns `true` (`1`) if the user has signed the action.
@@ -158,6 +167,7 @@ pub trait UtilModule: crate::storage::StorageModule {
             sc_panic!("Failed to serialized batch");
         }
 
-        self.crypto().keccak256(&serialized)
+        self.crypto()
+            .keccak256_legacy_managed::<MAX_BUFFER_SIZE>(&serialized)
     }
 }
