@@ -5,20 +5,22 @@ elrond_wasm::imports!();
 #[elrond_wasm::contract]
 pub trait WrappedBridgedUsdc {
     #[init]
-    fn init(&self, wrapped_usdc_token_id: TokenIdentifier) {
-        self.wrapped_usdc_token_id().set(wrapped_usdc_token_id);
+    fn init(&self, universal_bridged_usdc_token_id: TokenIdentifier) {
+        self.universal_bridged_usdc_token_id()
+            .set(universal_bridged_usdc_token_id);
     }
 
     #[only_owner]
     #[endpoint(whitelistUsdc)]
-    fn whitelist_usdc(&self, usdc_token_id: TokenIdentifier) {
-        self.usdc_token_ids().insert(usdc_token_id);
+    fn whitelist_usdc(&self, bridged_usdc_token_id: TokenIdentifier) {
+        self.bridged_usdc_token_ids().insert(bridged_usdc_token_id);
     }
 
     #[only_owner]
     #[endpoint(blacklistUsdc)]
-    fn blacklist_usdc(&self, usdc_token_id: TokenIdentifier) {
-        self.usdc_token_ids().swap_remove(&usdc_token_id);
+    fn blacklist_usdc(&self, bridged_usdc_token_id: TokenIdentifier) {
+        self.bridged_usdc_token_ids()
+            .swap_remove(&bridged_usdc_token_id);
     }
 
     // endpoints
@@ -30,22 +32,28 @@ pub trait WrappedBridgedUsdc {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
     ) {
-        let usdc_token_id = &payment_token;
+        let bridged_usdc_token_id = &payment_token;
         require!(
-            self.usdc_token_ids().contains(usdc_token_id),
+            self.bridged_usdc_token_ids()
+                .contains(bridged_usdc_token_id),
             "Wrong esdt token"
         );
 
-        let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
+        let universal_bridged_usdc_token_id = self.universal_bridged_usdc_token_id().get();
         require!(payment_amount > 0u32, "Payment must be more than 0");
 
         self.send()
-            .esdt_local_mint(&wrapped_usdc_token_id, 0, &payment_amount);
+            .esdt_local_mint(&universal_bridged_usdc_token_id, 0, &payment_amount);
 
         let caller = self.blockchain().get_caller();
 
-        self.send()
-            .direct(&caller, &wrapped_usdc_token_id, 0, &payment_amount, &[]);
+        self.send().direct(
+            &caller,
+            &universal_bridged_usdc_token_id,
+            0,
+            &payment_amount,
+            &[],
+        );
     }
 
     #[payable("*")]
@@ -56,37 +64,41 @@ pub trait WrappedBridgedUsdc {
         #[payment_amount] payment_amount: BigUint,
         requested_token: TokenIdentifier,
     ) {
-        let usdc_token_id = &requested_token;
+        let bridged_usdc_token_id = &requested_token;
         require!(
-            self.usdc_token_ids().contains(usdc_token_id),
+            self.bridged_usdc_token_ids()
+                .contains(bridged_usdc_token_id),
             "Esdt token unavailable"
         );
 
-        let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
-        require!(payment_token == wrapped_usdc_token_id, "Wrong esdt token");
+        let universal_bridged_usdc_token_id = self.universal_bridged_usdc_token_id().get();
+        require!(
+            payment_token == universal_bridged_usdc_token_id,
+            "Wrong esdt token"
+        );
 
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
-            payment_amount <= self.get_liquidity(usdc_token_id),
+            payment_amount <= self.get_liquidity(bridged_usdc_token_id),
             "Contract does not have enough funds"
         );
 
         self.send()
-            .esdt_local_burn(&wrapped_usdc_token_id, 0, &payment_amount);
+            .esdt_local_burn(&universal_bridged_usdc_token_id, 0, &payment_amount);
 
         // 1 wrapped USDC = 1 USDC, so we pay back the same amount
         let caller = self.blockchain().get_caller();
 
         self.send()
-            .direct(&caller, usdc_token_id, 0, &payment_amount, &[]);
+            .direct(&caller, bridged_usdc_token_id, 0, &payment_amount, &[]);
     }
 
     // views
 
     #[view(getLiquidity)]
-    fn get_liquidity(&self, usdc_token: &TokenIdentifier) -> BigUint {
-        self.blockchain().get_sc_balance(usdc_token, 0)
+    fn get_liquidity(&self, bridged_usdc_token: &TokenIdentifier) -> BigUint {
+        self.blockchain().get_sc_balance(bridged_usdc_token, 0)
     }
 
     // private
@@ -100,10 +112,10 @@ pub trait WrappedBridgedUsdc {
     // 1 USDC = 1 wrapped USDC, and they are interchangeable through this contract
 
     #[view(getWrappedUsdcTokenId)]
-    #[storage_mapper("wrappedUSDCTokenId")]
-    fn wrapped_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
+    #[storage_mapper("universalUsdcToken")]
+    fn universal_bridged_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
-    #[view(getUsdcTokenIds)]
-    #[storage_mapper("USDCTokenIds")]
-    fn usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    #[view(getBridgedUsdcTokenIds)]
+    #[storage_mapper("bridgedUsdcToken")]
+    fn bridged_usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }
