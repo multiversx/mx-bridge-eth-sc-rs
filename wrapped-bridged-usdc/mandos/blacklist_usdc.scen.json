@@ -1,0 +1,55 @@
+{
+    "name": "blacklist usdc",
+    "gasSchedule": "v4",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "unwrap_usdc.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "blacklist-usdt",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "blacklistUSDC",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "unwrap-usdc",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:wrapped_bridged_usdc",
+                "value": "0",
+                "esdt": {
+                    "tokenIdentifier": "str:WUSDC-abcdef",
+                    "value": "100"
+                },
+                "function": "unwrapUSDC",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Esdt token unavailable",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

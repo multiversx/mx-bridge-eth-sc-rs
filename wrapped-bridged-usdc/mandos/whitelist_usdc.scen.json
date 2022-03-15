@@ -1,0 +1,135 @@
+{
+    "name": "whitelist usdc",
+    "gasSchedule": "v4",
+    "steps": [
+        {
+            "step": "setState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "500"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "500"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:wrapped_bridged_usdc": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:wrappedUSDCTokenId": [
+                            "str:WUSDC-abcdef"
+                        ]
+                    },
+                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "whitelist-usdt-fail",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "whitelistUSDC",
+                "arguments": [
+                    "str:USDC-bbbbbb"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Endpoint can only be called by owner",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "whitelist-usdt",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "whitelistUSDC",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "1",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "500"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "500"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:wrapped_bridged_usdc": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:USDCTokenIds.len": "1",
+                        "str:USDCTokenIds.index|nested:str:USDC-aaaaaa": "1",
+                        "str:USDCTokenIds.item|u32:1": "str:USDC-aaaaaa",
+                        "str:wrappedUSDCTokenId": "str:WUSDC-abcdef"
+                    },
+                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        }
+    ]
+}

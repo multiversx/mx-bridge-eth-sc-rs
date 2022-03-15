@@ -4,7 +4,7 @@ elrond_wasm::imports!();
 
 const LEFTOVER_GAS: u64 = 10_000u64;
 
-#[elrond_wasm::derive::contract]
+#[elrond_wasm::contract]
 pub trait WrappedBridgedUsdc {
     #[init]
     fn init(&self, wrapped_usdc_token_id: TokenIdentifier) {
@@ -14,8 +14,15 @@ pub trait WrappedBridgedUsdc {
     #[only_owner]
     #[endpoint(whitelistUSDC)]
     fn whitelist_usdc(&self, usdc_token_id: TokenIdentifier) {
-        self.usdc_token_id().insert(usdc_token_id);
+        self.usdc_token_ids().insert(usdc_token_id);
     }
+
+    #[only_owner]
+    #[endpoint(blacklistUSDC)]
+    fn blacklist_usdc(&self, usdc_token_id: TokenIdentifier) {
+        self.usdc_token_ids().swap_remove(&usdc_token_id);
+    }
+
     // endpoints
 
     #[payable("*")]
@@ -27,12 +34,12 @@ pub trait WrappedBridgedUsdc {
         #[var_args] accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let usdc_token_id = &payment_token;
-        let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
-
         require!(
-            self.usdc_token_id().contains(usdc_token_id),
+            self.usdc_token_ids().contains(usdc_token_id),
             "Wrong esdt token"
         );
+
+        let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
         require!(payment_amount > 0u32, "Payment must be more than 0");
 
         self.send()
@@ -70,13 +77,14 @@ pub trait WrappedBridgedUsdc {
         #[var_args] accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let usdc_token_id = &requested_token;
-        let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
-
-        require!(payment_token == wrapped_usdc_token_id, "Wrong esdt token");
         require!(
-            self.usdc_token_id().contains(usdc_token_id),
+            self.usdc_token_ids().contains(usdc_token_id),
             "Esdt token unavailable"
         );
+
+        let wrapped_usdc_token_id = self.wrapped_usdc_token_id().get();
+        require!(payment_token == wrapped_usdc_token_id, "Wrong esdt token");
+
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
@@ -131,7 +139,7 @@ pub trait WrappedBridgedUsdc {
     #[storage_mapper("wrappedUSDCTokenId")]
     fn wrapped_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
-    #[view(getUSDCTokenId)]
-    #[storage_mapper("USDCTokenId")]
-    fn usdc_token_id(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    #[view(getUSDCTokenIds)]
+    #[storage_mapper("USDCTokenIds")]
+    fn usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }
