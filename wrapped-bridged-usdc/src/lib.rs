@@ -88,7 +88,7 @@ pub trait WrappedBridgedUsdc {
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
-            payment_amount <= self.get_liquidity(&usdc_token_id),
+            payment_amount <= self.get_liquidity(usdc_token_id),
             "Contract does not have enough funds"
         );
 
@@ -106,7 +106,7 @@ pub trait WrappedBridgedUsdc {
             let gas_limit = self.blockchain().get_gas_left() - LEFTOVER_GAS;
             let _ = Self::Api::send_api_impl().direct_esdt_execute(
                 &caller,
-                &usdc_token_id,
+                usdc_token_id,
                 &payment_amount,
                 gas_limit,
                 &function,
@@ -114,7 +114,7 @@ pub trait WrappedBridgedUsdc {
             );
         } else {
             self.send()
-                .direct(&caller, &usdc_token_id, 0, &payment_amount, &[]);
+                .direct(&caller, usdc_token_id, 0, &payment_amount, &[]);
         }
     }
 
