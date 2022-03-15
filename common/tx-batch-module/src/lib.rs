@@ -38,41 +38,41 @@ pub trait TxBatchModule {
     // views
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+    fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
         if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
-            let mut result_vec = ManagedMultiResultVec::new();
+            let mut result_vec = MultiValueEncoded::new();
             for tx in first_batch.iter() {
                 result_vec.push(tx.into_multiresult());
             }
 
-            return OptionalResult::Some((first_batch_id, result_vec).into());
+            return OptionalValue::Some((first_batch_id, result_vec).into());
         }
 
-        OptionalResult::None
+        OptionalValue::None
     }
 
     #[view(getFirstBatchAnyStatus)]
-    fn get_first_batch_any_status(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+    fn get_first_batch_any_status(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let first_batch_id = self.first_batch_id().get();
         self.get_batch(first_batch_id)
     }
 
     #[view(getBatch)]
-    fn get_batch(&self, batch_id: u64) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+    fn get_batch(&self, batch_id: u64) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let tx_batch = self.pending_batches(batch_id).get();
         if tx_batch.is_empty() {
-            return OptionalResult::None;
+            return OptionalValue::None;
         }
 
-        let mut result_vec = ManagedMultiResultVec::new();
+        let mut result_vec = MultiValueEncoded::new();
         for tx in tx_batch.iter() {
             result_vec.push(tx.into_multiresult());
         }
 
-        OptionalResult::Some((batch_id, result_vec).into())
+        OptionalValue::Some((batch_id, result_vec).into())
     }
 
     #[view(getBatchStatus)]

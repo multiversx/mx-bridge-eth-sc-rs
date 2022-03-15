@@ -2,10 +2,11 @@ elrond_wasm::derive_imports!();
 
 use elrond_wasm::{
     api::ManagedTypeApi,
-    types::{ManagedMultiResultVec, ManagedVec, MultiResult2},
+    elrond_codec::multi_types::MultiValue2,
+    types::{ManagedVec, MultiValueEncoded},
 };
 
-use crate::{Transaction, TxAsMultiResult};
+use crate::{Transaction, TxAsMultiValue};
 
 #[derive(TypeAbi, TopEncode, TopDecode)]
 pub struct EsdtSafeTxBatch<M: ManagedTypeApi> {
@@ -13,5 +14,4 @@ pub struct EsdtSafeTxBatch<M: ManagedTypeApi> {
     pub transactions: ManagedVec<M, Transaction<M>>,
 }
 
-pub type TxBatchSplitInFields<M> =
-    MultiResult2<u64, ManagedMultiResultVec<M, TxAsMultiResult<M>>>;
+pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;

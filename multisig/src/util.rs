@@ -1,11 +1,20 @@
 elrond_wasm::imports!();
 use elrond_wasm::elrond_codec::TopEncode;
 
-use transaction::{EthTransaction, EthTxAsMultiArg};
+use transaction::{EthTransaction, EthTxAsMultiValue};
 
 use crate::action::Action;
 use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
+
+// 32 - from address
+// 32 - to address
+// 4 + 17 - token ID
+// 4 + 32 - amount
+// 8 - nonce
+// ~= 130. We add another 30 bytes just to be safe.
+const AVERAGE_SERIALIZED_TX_SIZE: usize = 160;
+const MAX_BUFFER_SIZE: usize = AVERAGE_SERIALIZED_TX_SIZE * 100;
 
 #[elrond_wasm::module]
 pub trait UtilModule: crate::storage::StorageModule {
@@ -37,12 +46,12 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     /// Lists all users that can sign actions.
     #[view(getAllBoardMembers)]
-    fn get_all_board_members(&self) -> ManagedMultiResultVec<ManagedAddress> {
+    fn get_all_board_members(&self) -> MultiValueEncoded<ManagedAddress> {
         self.get_all_users_with_role(UserRole::BoardMember)
     }
 
     #[view(getAllStakedRelayers)]
-    fn get_all_staked_relayers(&self) -> ManagedMultiResultVec<ManagedAddress> {
+    fn get_all_staked_relayers(&self) -> MultiValueEncoded<ManagedAddress> {
         let relayers = self.get_all_board_members().to_vec();
         let mut staked_relayers = ManagedVec::new();
 
@@ -99,7 +108,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         self.action_mapper().get(action_id)
     }
 
-    fn get_all_users_with_role(&self, role: UserRole) -> ManagedMultiResultVec<ManagedAddress> {
+    fn get_all_users_with_role(&self, role: UserRole) -> MultiValueEncoded<ManagedAddress> {
         let mut result = ManagedVec::new();
         let num_users = self.user_mapper().get_user_count();
         for user_id in 1..=num_users {
@@ -119,9 +128,9 @@ pub trait UtilModule: crate::storage::StorageModule {
         amount_staked >= required_stake
     }
 
-    fn transfers_multiarg_to_eth_tx_vec(
+    fn transfers_MultiValue_to_eth_tx_vec(
         &self,
-        transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> ManagedVec<EthTransaction<Self::Api>> {
         let mut transfers_as_eth_tx = ManagedVec::new();
         for transfer in transfers {
@@ -158,6 +167,7 @@ pub trait UtilModule: crate::storage::StorageModule {
             sc_panic!("Failed to serialized batch");
         }
 
-        self.crypto().keccak256(&serialized)
+        self.crypto()
+            .keccak256_legacy_managed::<MAX_BUFFER_SIZE>(&serialized)
     }
 }

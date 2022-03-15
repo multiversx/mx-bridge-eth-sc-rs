@@ -42,7 +42,7 @@ pub trait Multisig:
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
-        #[var_args] board: ManagedVarArgs<ManagedAddress>,
+        #[var_args] board: MultiValueEncoded<ManagedAddress>,
     ) {
         self.quorum().set(&quorum);
 
@@ -86,7 +86,9 @@ pub trait Multisig:
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
         &self,
-        #[var_args] dest_address_percentage_pairs: ManagedVarArgs<MultiArg2<ManagedAddress, u32>>,
+        #[var_args] dest_address_percentage_pairs: MultiValueEncoded<
+            MultiValue2<ManagedAddress, u32>,
+        >,
     ) {
         let mut args = ManagedVec::new();
         let mut total_percentage = 0;
@@ -158,15 +160,15 @@ pub trait Multisig:
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] tx_batch_status: ManagedVarArgs<TransactionStatus>,
+        #[var_args] tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
-        let call_result = self
+        let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
             .get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
             .execute_on_dest_context();
         let (current_batch_id, current_batch_transactions) = match call_result {
-            OptionalArg::Some(batch) => batch.into_tuple(),
-            OptionalArg::None => sc_panic!("Current batch is empty"),
+            OptionalValue::Some(batch) => batch.into_tuple(),
+            OptionalValue::None => sc_panic!("Current batch is empty"),
         };
         let statuses_vec = tx_batch_status.to_vec();
 
@@ -177,7 +179,7 @@ pub trait Multisig:
             "Action already proposed"
         );
 
-        let current_batch_len = current_batch_transactions.len() / TX_MULTIRESULT_NR_FIELDS;
+        let current_batch_len = current_batch_transactions.raw_len() / TX_MULTIRESULT_NR_FIELDS;
         let status_batch_len = statuses_vec.len();
         require!(
             current_batch_len == status_batch_len,
@@ -205,7 +207,7 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         eth_batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
+        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
@@ -213,7 +215,7 @@ pub trait Multisig:
             "Can only propose for next batch ID"
         );
 
-        let transfers_as_eth_tx = self.transfers_multiarg_to_eth_tx_vec(transfers);
+        let transfers_as_eth_tx = self.transfers_MultiValue_to_eth_tx_vec(transfers);
         self.require_valid_eth_tx_ids(&transfers_as_eth_tx);
 
         let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
@@ -238,12 +240,12 @@ pub trait Multisig:
     #[only_owner]
     #[endpoint(moveRefundBatchToSafe)]
     fn move_refund_batch_to_safe(&self) {
-        let opt_refund_batch_fields: OptionalResult<TxBatchSplitInFields<Self::Api>> = self
+        let opt_refund_batch_fields: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
             .get_multi_transfer_esdt_proxy_instance()
             .get_and_clear_first_refund_batch()
             .execute_on_dest_context();
 
-        if let OptionalResult::Some(refund_batch_fields) = opt_refund_batch_fields {
+        if let OptionalValue::Some(refund_batch_fields) = opt_refund_batch_fields {
             let (_batch_id, all_tx_fields) = refund_batch_fields.into_tuple();
             let mut refund_batch = ManagedVec::new();
 
@@ -285,7 +287,7 @@ pub trait Multisig:
     }
 
     #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+    fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let _ = self
             .get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
@@ -293,12 +295,12 @@ pub trait Multisig:
 
         // result is already returned automatically from the EsdtSafe call,
         // we only keep this signature for correct ABI generation
-        OptionalResult::None
+        OptionalValue::None
     }
 
     // For failed Ethereum -> Elrond transactions
     #[view(getCurrentRefundBatch)]
-    fn get_current_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+    fn get_current_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let _ = self
             .get_multi_transfer_esdt_proxy_instance()
             .get_first_batch_any_status()
@@ -306,7 +308,7 @@ pub trait Multisig:
 
         // result is already returned automatically from the MultiTransferEsdt call,
         // we only keep this signature for correct ABI generation
-        OptionalResult::None
+        OptionalValue::None
     }
 
     fn is_valid_action_id(&self, action_id: usize) -> bool {
@@ -333,7 +335,7 @@ pub trait Multisig:
     fn was_transfer_action_proposed(
         &self,
         eth_batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
+        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
 
@@ -344,9 +346,9 @@ pub trait Multisig:
     fn get_action_id_for_transfer_batch(
         &self,
         eth_batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<EthTxAsMultiArg<Self::Api>>,
+        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
-        let transfers_as_struct = self.transfers_multiarg_to_eth_tx_vec(transfers);
+        let transfers_as_struct = self.transfers_MultiValue_to_eth_tx_vec(transfers);
         let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
@@ -358,7 +360,7 @@ pub trait Multisig:
     fn was_set_current_transaction_batch_status_action_proposed(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
+        #[var_args] expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> bool {
         self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
             esdt_safe_batch_id,
@@ -370,7 +372,7 @@ pub trait Multisig:
     fn get_action_id_for_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: ManagedVarArgs<TransactionStatus>,
+        #[var_args] expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
         self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
             .get(&expected_tx_batch_status.to_vec())
@@ -405,7 +407,7 @@ pub trait Multisig:
                 self.get_esdt_safe_proxy_instance()
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
-                        ManagedVarArgs::from(tx_batch_status),
+                        MultiValueEncoded::from(tx_batch_status),
                     )
                     .execute_on_dest_context();
             }

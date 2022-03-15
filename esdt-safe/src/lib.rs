@@ -45,7 +45,7 @@ pub trait EsdtSafe:
     fn set_transaction_batch_status(
         &self,
         batch_id: u64,
-        #[var_args] tx_statuses: ManagedVarArgs<TransactionStatus>,
+        #[var_args] tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
         let first_batch_id = self.first_batch_id().get();
         require!(
@@ -199,8 +199,8 @@ pub trait EsdtSafe:
     fn get_refund_amounts(
         &self,
         address: ManagedAddress,
-    ) -> ManagedMultiResultVec<MultiResult2<TokenIdentifier, BigUint>> {
-        let mut refund_amounts = ManagedMultiResultVec::new();
+    ) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
+        let mut refund_amounts = MultiValueEncoded::new();
         for token_id in self.token_whitelist().iter() {
             let amount = self.refund_amount(&address, &token_id).get();
             if amount > 0u32 {
