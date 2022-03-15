@@ -12,15 +12,16 @@ pub trait WrappedBridgedUsdc {
 
     #[only_owner]
     #[endpoint(whitelistUsdc)]
-    fn whitelist_usdc(&self, bridged_usdc_token_id: TokenIdentifier) {
-        self.bridged_usdc_token_ids().insert(bridged_usdc_token_id);
+    fn whitelist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
+        self.chain_specific_usdc_token_ids()
+            .insert(chain_specific_usdc_token_id);
     }
 
     #[only_owner]
     #[endpoint(blacklistUsdc)]
-    fn blacklist_usdc(&self, bridged_usdc_token_id: TokenIdentifier) {
-        self.bridged_usdc_token_ids()
-            .swap_remove(&bridged_usdc_token_id);
+    fn blacklist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
+        self.chain_specific_usdc_token_ids()
+            .swap_remove(&chain_specific_usdc_token_id);
     }
 
     // endpoints
@@ -32,10 +33,10 @@ pub trait WrappedBridgedUsdc {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
     ) {
-        let bridged_usdc_token_id = &payment_token;
+        let chain_specific_usdc_token_id = &payment_token;
         require!(
-            self.bridged_usdc_token_ids()
-                .contains(bridged_usdc_token_id),
+            self.chain_specific_usdc_token_ids()
+                .contains(chain_specific_usdc_token_id),
             "Wrong esdt token"
         );
 
@@ -64,10 +65,10 @@ pub trait WrappedBridgedUsdc {
         #[payment_amount] payment_amount: BigUint,
         requested_token: TokenIdentifier,
     ) {
-        let bridged_usdc_token_id = &requested_token;
+        let chain_specific_usdc_token_id = &requested_token;
         require!(
-            self.bridged_usdc_token_ids()
-                .contains(bridged_usdc_token_id),
+            self.chain_specific_usdc_token_ids()
+                .contains(chain_specific_usdc_token_id),
             "Esdt token unavailable"
         );
 
@@ -80,7 +81,7 @@ pub trait WrappedBridgedUsdc {
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
         // this should never happen, but we'll check anyway
         require!(
-            payment_amount <= self.get_liquidity(bridged_usdc_token_id),
+            payment_amount <= self.get_liquidity(chain_specific_usdc_token_id),
             "Contract does not have enough funds"
         );
 
@@ -90,8 +91,13 @@ pub trait WrappedBridgedUsdc {
         // 1 wrapped USDC = 1 USDC, so we pay back the same amount
         let caller = self.blockchain().get_caller();
 
-        self.send()
-            .direct(&caller, bridged_usdc_token_id, 0, &payment_amount, &[]);
+        self.send().direct(
+            &caller,
+            chain_specific_usdc_token_id,
+            0,
+            &payment_amount,
+            &[],
+        );
     }
 
     // views
@@ -116,6 +122,6 @@ pub trait WrappedBridgedUsdc {
     fn universal_bridged_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
     #[view(getBridgedUsdcTokenIds)]
-    #[storage_mapper("bridgedUsdcToken")]
-    fn bridged_usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    #[storage_mapper("chainSpecificUsdcToken")]
+    fn chain_specific_usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }

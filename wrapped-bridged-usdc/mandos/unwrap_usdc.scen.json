@@ -125,11 +125,11 @@
                         }
                     },
                     "storage": {
-                        "str:bridgedUsdcToken.len": "2",
-                        "str:bridgedUsdcToken.index|nested:str:USDC-aaaaaa": "1",
-                        "str:bridgedUsdcToken.index|nested:str:USDC-cccccc": "2",
-                        "str:bridgedUsdcToken.item|u32:1": "str:USDC-aaaaaa",
-                        "str:bridgedUsdcToken.item|u32:2": "str:USDC-cccccc",
+                        "str:chainSpecificUsdcToken.len": "2",
+                        "str:chainSpecificUsdcToken.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificUsdcToken.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificUsdcToken.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificUsdcToken.item|u32:2": "str:USDC-cccccc",
                         "str:universalUsdcToken": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/wrapped-bridged-usdc.wasm",

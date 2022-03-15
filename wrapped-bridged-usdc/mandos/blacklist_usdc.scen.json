@@ -95,9 +95,9 @@
                         }
                     },
                     "storage": {
-                        "str:bridgedUsdcToken.len": "1",
-                        "str:bridgedUsdcToken.index|nested:str:USDC-cccccc": "1",
-                        "str:bridgedUsdcToken.item|u32:1": "str:USDC-cccccc",
+                        "str:chainSpecificUsdcToken.len": "1",
+                        "str:chainSpecificUsdcToken.index|nested:str:USDC-cccccc": "1",
+                        "str:chainSpecificUsdcToken.item|u32:1": "str:USDC-cccccc",
                         "str:universalUsdcToken": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/wrapped-bridged-usdc.wasm",
