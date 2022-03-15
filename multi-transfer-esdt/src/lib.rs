@@ -26,7 +26,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
     fn batch_transfer_esdt_token(
         &self,
         batch_id: u64,
-        #[var_args] transfers: ManagedVarArgs<EthTransaction<Self::Api>>,
+        #[var_args] transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
         let mut refund_tx_list = ManagedVec::new();
         for eth_tx in transfers {
@@ -60,9 +60,9 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
     #[only_owner]
     #[endpoint(getAndClearFirstRefundBatch)]
-    fn get_and_clear_first_refund_batch(&self) -> OptionalResult<TxBatchSplitInFields<Self::Api>> {
+    fn get_and_clear_first_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let opt_current_batch = self.get_first_batch_any_status();
-        if matches!(opt_current_batch, OptionalResult::Some(_)) {
+        if matches!(opt_current_batch, OptionalValue::Some(_)) {
             self.clear_first_batch();
         }
 

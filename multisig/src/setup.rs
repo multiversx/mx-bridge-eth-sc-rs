@@ -19,7 +19,7 @@ pub trait SetupModule:
         &self,
         child_sc_address: ManagedAddress,
         source_address: ManagedAddress,
-        #[var_args] init_args: ManagedVarArgs<ManagedBuffer>,
+        #[var_args] init_args: MultiValueEncoded<ManagedBuffer>,
     ) {
         let gas = self.blockchain().get_gas_left();
         Self::Api::send_api_impl().upgrade_from_source_contract(
@@ -168,7 +168,7 @@ pub trait SetupModule:
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        #[var_args] opt_default_value_in_dollars: OptionalArg<BigUint>,
+        #[var_args] opt_default_value_in_dollars: OptionalValue<BigUint>,
     ) {
         self.setup_get_esdt_safe_proxy_instance()
             .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)

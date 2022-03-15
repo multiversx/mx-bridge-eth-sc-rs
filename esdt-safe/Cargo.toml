@@ -24,7 +24,7 @@ path = "../common/token-module"
 path = "../common/tx-batch-module"
 
 [dependencies.elrond-wasm]
-version = "0.27.0"
+version = "0.29.3"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.27.0"
+version = "0.29.3"
