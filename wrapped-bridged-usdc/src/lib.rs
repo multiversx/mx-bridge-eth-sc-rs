@@ -111,10 +111,10 @@ pub trait WrappedBridgedUsdc {
     // 1 USDC = 1 wrapped USDC, and they are interchangeable through this contract
 
     #[view(getWrappedUsdcTokenId)]
-    #[storage_mapper("universalUsdcToken")]
+    #[storage_mapper("universalUsdcTokenId")]
     fn universal_bridged_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
     #[view(getChainSpecificUsdcTokenIds)]
-    #[storage_mapper("chainSpecificUsdcToken")]
+    #[storage_mapper("chainSpecificUsdcTokenId")]
     fn chain_specific_usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }
