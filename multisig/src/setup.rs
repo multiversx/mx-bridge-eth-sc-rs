@@ -218,6 +218,17 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    #[only_owner]
+    #[endpoint(multiTransferEsdtSetWrappingContractAddress)]
+    fn multi_transfer_esdt_set_wrapping_contract_address(
+        &self,
+        #[var_args] opt_wrapping_contract_address: OptionalValue<ManagedAddress>,
+    ) {
+        self.setup_get_multi_transfer_esdt_proxy_instance()
+            .set_wrapping_contract_address(opt_wrapping_contract_address)
+            .execute_on_dest_context();
+    }
+
     // proxies
 
     #[proxy]
