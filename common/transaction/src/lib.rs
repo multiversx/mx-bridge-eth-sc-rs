@@ -25,6 +25,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
     TokenIdentifier<M>,
     BigUint<M>,
 >;
+pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct EthTransaction<M: ManagedTypeApi> {

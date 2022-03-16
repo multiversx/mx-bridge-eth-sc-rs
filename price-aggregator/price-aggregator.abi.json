@@ -1,0 +1,282 @@
+{
+    "buildInfo": {
+        "rustc": {
+            "version": "1.60.0-nightly",
+            "commitHash": "bd3cb52565faab2755ff1bdb54d88bc91f47b4b9",
+            "commitDate": "2022-01-16",
+            "channel": "Nightly",
+            "short": "rustc 1.60.0-nightly (bd3cb5256 2022-01-16)"
+        },
+        "contractCrate": {
+            "name": "price-aggregator",
+            "version": "0.0.1"
+        },
+        "framework": {
+            "name": "elrond-wasm",
+            "version": "0.29.3"
+        }
+    },
+    "name": "PriceAggregator",
+    "constructor": {
+        "inputs": [
+            {
+                "name": "payment_token",
+                "type": "TokenIdentifier"
+            },
+            {
+                "name": "oracles",
+                "type": "List<Address>"
+            },
+            {
+                "name": "submission_count",
+                "type": "u32"
+            },
+            {
+                "name": "decimals",
+                "type": "u8"
+            },
+            {
+                "name": "query_payment_amount",
+                "type": "BigUint"
+            }
+        ],
+        "outputs": []
+    },
+    "endpoints": [
+        {
+            "name": "deposit",
+            "mutability": "mutable",
+            "payableInTokens": [
+                "*"
+            ],
+            "inputs": [
+                {
+                    "name": "on_behalf_of",
+                    "type": "optional<Address>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "withdraw",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "amount",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "submit",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "bytes"
+                },
+                {
+                    "name": "to",
+                    "type": "bytes"
+                },
+                {
+                    "name": "price",
+                    "type": "BigUint"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "submitBatch",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "submissions",
+                    "type": "variadic<multi<bytes,bytes,BigUint>>",
+                    "multi_arg": true
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "myBalance",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "getBalance",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "address",
+                    "type": "Address"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "latestRoundData",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<PriceFeed>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "latestPriceFeed",
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "bytes"
+                },
+                {
+                    "name": "to",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "u32"
+                },
+                {
+                    "type": "bytes"
+                },
+                {
+                    "type": "bytes"
+                },
+                {
+                    "type": "BigUint"
+                },
+                {
+                    "type": "u8"
+                }
+            ]
+        },
+        {
+            "name": "latestPriceFeedOptional",
+            "mutability": "readonly",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "bytes"
+                },
+                {
+                    "name": "to",
+                    "type": "bytes"
+                }
+            ],
+            "outputs": [
+                {
+                    "type": "optional<multi<u32,bytes,bytes,BigUint,u8>>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "setSubmissionCount",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [
+                {
+                    "name": "submission_count",
+                    "type": "u32"
+                }
+            ],
+            "outputs": []
+        },
+        {
+            "name": "getOracles",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "variadic<Address>",
+                    "multi_result": true
+                }
+            ]
+        },
+        {
+            "name": "payment_token",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "TokenIdentifier"
+                }
+            ]
+        },
+        {
+            "name": "query_payment_amount",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "BigUint"
+                }
+            ]
+        },
+        {
+            "name": "submission_count",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u32"
+                }
+            ]
+        },
+        {
+            "name": "decimals",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "u8"
+                }
+            ]
+        }
+    ],
+    "hasCallback": false,
+    "types": {
+        "PriceFeed": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "round_id",
+                    "type": "u32"
+                },
+                {
+                    "name": "from",
+                    "type": "bytes"
+                },
+                {
+                    "name": "to",
+                    "type": "bytes"
+                },
+                {
+                    "name": "price",
+                    "type": "BigUint"
+                },
+                {
+                    "name": "decimals",
+                    "type": "u8"
+                }
+            ]
+        }
+    }
+}
