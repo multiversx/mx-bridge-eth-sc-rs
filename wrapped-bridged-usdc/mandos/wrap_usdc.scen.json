@@ -1,0 +1,132 @@
+{
+    "name": "wrap usdc",
+    "gasSchedule": "v4",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "whitelist_usdc.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "wrap-usdc-fail",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "wrapUsdc",
+                "esdt": {
+                    "tokenIdentifier": "str:USDC-bbbbbb",
+                    "value": "300"
+                },
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Wrong esdt token",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "wrap-usdc",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "wrapUsdc",
+                "esdt": {
+                    "tokenIdentifier": "str:USDC-aaaaaa",
+                    "value": "300"
+                },
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "wrap-usdc",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:wrapped_bridged_usdc",
+                "function": "wrapUsdc",
+                "esdt": {
+                    "tokenIdentifier": "str:USDC-cccccc",
+                    "value": "100"
+                },
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "2",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "4",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "200"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "400"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "900"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:wrapped_bridged_usdc": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:USDC-aaaaaa": {
+                            "balance": "300"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "100"
+                        }
+                    },
+                    "storage": {
+                        "str:chainSpecificUsdcTokenIds.len": "2",
+                        "str:chainSpecificUsdcTokenIds.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificUsdcTokenIds.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificUsdcTokenIds.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificUsdcTokenIds.item|u32:2": "str:USDC-cccccc",
+                        "str:universalUsdcTokenId": "str:WUSDC-abcdef"
+                    },
+                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        }
+    ]
+}
