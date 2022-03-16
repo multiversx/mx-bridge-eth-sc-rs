@@ -7,22 +7,32 @@ elrond_wasm::imports!();
 #[elrond_wasm::contract]
 pub trait WrappedBridgedUsdc {
     #[init]
-    fn init(&self, universal_bridged_usdc_token_id: TokenIdentifier) {
+    fn init(
+        &self,
+        universal_bridged_usdc_token_id: TokenIdentifier,
+        #[var_args] chain_specific_tokens: MultiValueEncoded<TokenIdentifier>,
+    ) {
         self.universal_bridged_usdc_token_id()
             .set(universal_bridged_usdc_token_id);
+
+        for token_id in chain_specific_tokens {
+            let _ = self.chain_specific_usdc_token_ids().insert(token_id);
+        }
     }
 
     #[only_owner]
     #[endpoint(whitelistUsdc)]
     fn whitelist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
-        self.chain_specific_usdc_token_ids()
+        let _ = self
+            .chain_specific_usdc_token_ids()
             .insert(chain_specific_usdc_token_id);
     }
 
     #[only_owner]
     #[endpoint(blacklistUsdc)]
     fn blacklist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
-        self.chain_specific_usdc_token_ids()
+        let _ = self
+            .chain_specific_usdc_token_ids()
             .swap_remove(&chain_specific_usdc_token_id);
     }
 
