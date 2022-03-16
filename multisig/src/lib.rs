@@ -215,7 +215,7 @@ pub trait Multisig:
             "Can only propose for next batch ID"
         );
 
-        let transfers_as_eth_tx = self.transfers_MultiValue_to_eth_tx_vec(transfers);
+        let transfers_as_eth_tx = self.transfers_multi_value_to_eth_tx_vec(transfers);
         self.require_valid_eth_tx_ids(&transfers_as_eth_tx);
 
         let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
@@ -348,7 +348,7 @@ pub trait Multisig:
         eth_batch_id: u64,
         #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
-        let transfers_as_struct = self.transfers_MultiValue_to_eth_tx_vec(transfers);
+        let transfers_as_struct = self.transfers_multi_value_to_eth_tx_vec(transfers);
         let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
 
         self.batch_id_to_action_id_mapping(eth_batch_id)

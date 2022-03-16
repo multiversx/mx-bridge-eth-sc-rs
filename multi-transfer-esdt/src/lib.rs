@@ -18,14 +18,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         self.max_tx_batch_block_duration()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
-        if let OptionalValue::Some(sc_addr) = opt_wrapping_contract_address {
-            require!(
-                self.blockchain().is_smart_contract(&sc_addr),
-                "Invalid unwrapping contract address"
-            );
-
-            self.wrapping_contract_address().set(&sc_addr);
-        }
+        self.set_wrapping_contract_address(opt_wrapping_contract_address);
 
         // batch ID 0 is considered invalid
         self.first_batch_id().set_if_empty(&1);
@@ -93,6 +86,25 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         opt_current_batch
     }
 
+    #[only_owner]
+    #[endpoint(setWrappingContractAddress)]
+    fn set_wrapping_contract_address(
+        &self,
+        #[var_args] opt_new_address: OptionalValue<ManagedAddress>,
+    ) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid unwrapping contract address"
+                );
+
+                self.wrapping_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.wrapping_contract_address().clear(),
+        }
+    }
+
     // private
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
@@ -149,6 +161,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
     // storage
 
+    #[view(getWrappingContractAddress)]
     #[storage_mapper("wrappingContractAddress")]
     fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 

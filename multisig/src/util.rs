@@ -128,7 +128,7 @@ pub trait UtilModule: crate::storage::StorageModule {
         amount_staked >= required_stake
     }
 
-    fn transfers_MultiValue_to_eth_tx_vec(
+    fn transfers_multi_value_to_eth_tx_vec(
         &self,
         transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> ManagedVec<EthTransaction<Self::Api>> {

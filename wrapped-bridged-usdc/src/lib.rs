@@ -70,6 +70,7 @@ pub trait WrappedBridgedUsdc {
     }
 
     /// Will wrap what it can, and send back the rest unchanged
+    #[payable("*")]
     #[endpoint(wrapMultipleTokens)]
     fn wrap_multiple_tokens(&self) -> PaymentsVec<Self::Api> {
         let original_payments = self.call_value().all_esdt_transfers();
