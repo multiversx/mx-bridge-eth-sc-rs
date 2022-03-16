@@ -95,9 +95,9 @@
                         }
                     },
                     "storage": {
-                        "str:chainSpecificUsdcTokenId.len": "1",
-                        "str:chainSpecificUsdcTokenId.index|nested:str:USDC-cccccc": "1",
-                        "str:chainSpecificUsdcTokenId.item|u32:1": "str:USDC-cccccc",
+                        "str:chainSpecificUsdcTokenIds.len": "1",
+                        "str:chainSpecificUsdcTokenIds.index|nested:str:USDC-cccccc": "1",
+                        "str:chainSpecificUsdcTokenIds.item|u32:1": "str:USDC-cccccc",
                         "str:universalUsdcTokenId": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/wrapped-bridged-usdc.wasm",

@@ -115,6 +115,6 @@ pub trait WrappedBridgedUsdc {
     fn universal_bridged_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
     #[view(getChainSpecificUsdcTokenIds)]
-    #[storage_mapper("chainSpecificUsdcTokenId")]
+    #[storage_mapper("chainSpecificUsdcTokenIds")]
     fn chain_specific_usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }
