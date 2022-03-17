@@ -1,5 +1,5 @@
 {
-    "name": "wrap usdc",
+    "name": "wrap token",
     "gasSchedule": "v4",
     "steps": [
         {
@@ -8,7 +8,7 @@
         },
         {
             "step": "scCall",
-            "txId": "wrap-usdc-fail",
+            "txId": "wrap-token-fail",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -30,7 +30,7 @@
         },
         {
             "step": "scCall",
-            "txId": "wrap-usdc",
+            "txId": "wrap-token",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -52,7 +52,7 @@
         },
         {
             "step": "scCall",
-            "txId": "wrap-usdc",
+            "txId": "wrap-token",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -76,7 +76,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "2",
+                    "nonce": "3",
                     "balance": "0",
                     "storage": {}
                 },
@@ -123,7 +123,9 @@
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
                         "str:universalBridgedTokenPair|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
                         "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
-                        "str:universalBridgedTokenId": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenId.len": "1",
+                        "str:universalBridgedTokenId.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenId.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },

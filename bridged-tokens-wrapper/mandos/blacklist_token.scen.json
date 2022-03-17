@@ -1,5 +1,5 @@
 {
-    "name": "blacklist usdc",
+    "name": "blacklist token",
     "gasSchedule": "v4",
     "steps": [
         {
@@ -28,7 +28,7 @@
         },
         {
             "step": "scCall",
-            "txId": "unwrap-usdc",
+            "txId": "unwrap-token",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -55,7 +55,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "3",
+                    "nonce": "4",
                     "balance": "0",
                     "storage": {}
                 },
@@ -99,7 +99,9 @@
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "1",
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-cccccc",
                         "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
-                        "str:universalBridgedTokenId": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenId.len": "1",
+                        "str:universalBridgedTokenId.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenId.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },
