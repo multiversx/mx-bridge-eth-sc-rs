@@ -1,6 +1,5 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
-// #![allow(clippy::type_complexity)]
 
 mod action;
 mod multisig_general;
