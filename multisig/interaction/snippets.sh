@@ -6,13 +6,13 @@
 # 4. Deploy aggregator (compile, copy it) and run deployAggregator
 # 5. Call submitAggregatorBatch to set gas price for eth
 # 6. deploySafe
-# 7. deployWrappedBridgedUSDC
+# 7. deployBridgedTokensWrapper
 # 7. deployMultiTransfer
 # 8. deployMultisig
 # 9. changeChildContractsOwnership # - this changes the owher of the safe and multitransfer to the multisig
 # 10. setLocalRolesEsdtSafe # - keep in mind we need to do this with the token owner
 # 11. setLocalRolesMultiTransferEsdt # - keep in mind we need to do this with the token owner
-# 12. setLocalRolesWrappedBridgedUSDC # - keep in mind we need to do this with the token owner
+# 12. setLocalRolesBridgedTokensWrapper # - keep in mind we need to do this with the token owner
 # 12. addMapping
 # 13. addTokenToWhitelist
 # 14. stake # foreach relayer
@@ -21,7 +21,7 @@
 PROJECT="../"
 PROJECT_SAFE="../../esdt-safe/"
 PROJECT_MULTI_TRANSFER="../../multi-transfer-esdt/"
-PROJECT_WRAPPED_BRIDGED_USDC="../../wrapped-bridged-usdc/"
+PROJECT_bridged_tokens_wrapper="../../bridged-tokens-wrapper/"
 ALICE="./wallets/alice.pem"
 
 # We don't care about Bob
@@ -153,17 +153,17 @@ deploySafe() {
     echo "Safe contract address: ${ADDRESS}"
 }
 
-deployWrappedBridgedUSDC() {
+deployBridgedTokensWrapper() {
 
-    erdpy --verbose contract deploy --project=${PROJECT_WRAPPED_BRIDGED_USDC} --recall-nonce --pem=${ALICE} \
+    erdpy --verbose contract deploy --project=${PROJECT_bridged_tokens_wrapper} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
     --arguments ${WRAPPED_USDC_TOKEN_ID} ${ETHEREUM_WRAPPED_USDC_TOKEN_ID} \
-    --send --outfile="deploy-wrapped-bridged-usdc-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+    --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-wrapped-bridged-usdc-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-wrapped-bridged-usdc-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['address']")
 
-    erdpy data store --key=address-testnet-wrapped-bridged-usdc --value=${ADDRESS}
+    erdpy data store --key=address-testnet-bridged-tokens-wrapper --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
 
     echo ""
@@ -171,12 +171,12 @@ deployWrappedBridgedUSDC() {
 }
 
 deployMultiTransfer() {
-    getWrappedBridgedUSDCAddressHex
+    getBridgedTokensWrapperAddressHex
     local MULTI_TRANSFER_ESDT_TX_GAS_LIMIT=10000 # gives us 100$ fee for eth->elrond
 
     erdpy --verbose contract deploy --project=${PROJECT_MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
     --gas-limit=100000000 \
-    --arguments 0x${WRAPPED_BRIDGED_USDC_ADDRESS_HEX} --metadata-payable \
+    --arguments 0x${bridged_tokens_wrapper_ADDRESS_HEX} --metadata-payable \
     --send --outfile="deploy-multitransfer-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
@@ -255,9 +255,9 @@ setLocalRolesMultiTransferEsdt() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-setLocalRolesWrappedBridgedUSDC() {
-    getWrappedBridgedUSDCAddress
-    bech32ToHex ${getWrappedBridgedUSDCAddress}
+setLocalRolesBridgedTokensWrapper() {
+    getBridgedTokensWrapperAddress
+    bech32ToHex ${getBridgedTokensWrapperAddress}
 
     local LOCAL_BURN_ROLE=0x45534454526f6c654c6f63616c4275726e # "ESDTRoleLocalBurn"
     local LOCAL_MINT_ROLE=0x45534454526f6c654c6f63616c4d696e74 # "ESDTRoleLocalMint"
@@ -704,9 +704,9 @@ getMultiTransferEsdtAddress() {
     echo "MultiTransferEsdt address: ${MULTI_TRANSFER_ESDT_ADDRESS}"
 }
 
-getWrappedBridgedUSDCAddress() {
-    WRAPPED_BRIDGED_USDC_ADDRESS=$(erdpy data parse --file="./deploy-wrapped-bridged-usdc-testnet.interaction.json" --expression="data['emitted_tx']['address']")
-    echo "Wrapped bridged USDC address: ${WRAPPED_BRIDGED_USDC_ADDRESS}"
+getBridgedTokensWrapperAddress() {
+    bridged_tokens_wrapper_ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    echo "Wrapped bridged USDC address: ${bridged_tokens_wrapper_ADDRESS}"
 }
 
 getAggregatorAddress() {
@@ -724,9 +724,9 @@ getMultiTransferEsdtAddressHex() {
     MULTI_TRANSFER_ESDT_ADDRESS_HEX=$(erdpy wallet bech32 --decode $MULTI_TRANSFER_ESDT_ADDRESS)
 }
 
-getWrappedBridgedUSDCAddressHex() {
-    getWrappedBridgedUSDCAddress
-    WRAPPED_BRIDGED_USDC_ADDRESS_HEX=$(erdpy wallet bech32 --decode $WRAPPED_BRIDGED_USDC_ADDRESS)
+getBridgedTokensWrapperAddressHex() {
+    getBridgedTokensWrapperAddress
+    bridged_tokens_wrapper_ADDRESS_HEX=$(erdpy wallet bech32 --decode $bridged_tokens_wrapper_ADDRESS)
 }
 
 getAggregatorAddressHex() {

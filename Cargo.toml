@@ -8,6 +8,6 @@ members = [
   "multi-transfer-esdt/meta",
   "multisig",
   "multisig/meta",
-  "wrapped-bridged-usdc",
-  "wrapped-bridged-usdc/meta"
+  "bridged-tokens-wrapper",
+  "bridged-tokens-wrapper/meta"
 ]

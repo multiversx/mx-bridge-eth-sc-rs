@@ -5,7 +5,7 @@ use transaction::PaymentsVec;
 elrond_wasm::imports!();
 
 #[elrond_wasm::contract]
-pub trait WrappedBridgedUsdc {
+pub trait BridgedTokensWrapper {
     #[init]
     fn init(
         &self,

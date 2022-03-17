@@ -1,10 +1,10 @@
 [package]
-name = "wrapped-bridged-usdc-meta"
+name = "bridged-tokens-wrapper-meta"
 version = "0.0.0"
 edition = "2018"
 publish = false
 
-[dependencies.wrapped-bridged-usdc]
+[dependencies.bridged-tokens-wrapper]
 path = ".."
 
 [dependencies.elrond-wasm-debug]

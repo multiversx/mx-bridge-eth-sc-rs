@@ -14,8 +14,8 @@ path = "../common/transaction"
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 
-[dependencies.wrapped-bridged-usdc]
-path = "../wrapped-bridged-usdc"
+[dependencies.bridged-tokens-wrapper]
+path = "../bridged-tokens-wrapper"
 
 [dependencies.elrond-wasm]
 version = "0.29.3"
