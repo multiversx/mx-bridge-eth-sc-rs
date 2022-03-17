@@ -148,6 +148,7 @@
                 "arguments": [
                     "sc:esdt_safe",
                     "sc:egld_esdt_swap",
+                    "false",
                     "str:EGLD-123456"
                 ],
                 "gasLimit": "500,000,000",
