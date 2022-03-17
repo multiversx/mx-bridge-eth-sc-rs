@@ -2,7 +2,9 @@
 
 elrond_wasm::imports!();
 
-use transaction::{esdt_safe_batch::TxBatchSplitInFields, EthTransaction, Transaction};
+use transaction::{
+    esdt_safe_batch::TxBatchSplitInFields, EthTransaction, PaymentsVec, Transaction,
+};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -10,11 +12,13 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 #[elrond_wasm::contract]
 pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
     #[init]
-    fn init(&self) {
+    fn init(&self, #[var_args] opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
         self.max_tx_batch_size()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+
+        self.set_wrapping_contract_address(opt_wrapping_contract_address);
 
         // batch ID 0 is considered invalid
         self.first_batch_id().set_if_empty(&1);
@@ -28,7 +32,10 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         batch_id: u64,
         #[var_args] transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
+        let mut valid_payments_list = ManagedVec::new();
+        let mut valid_dest_addresses_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
+
         for eth_tx in transfers {
             if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
@@ -49,11 +56,21 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
             self.send()
                 .esdt_local_mint(&eth_tx.token_id, 0, &eth_tx.amount);
-            self.send()
-                .direct(&eth_tx.to, &eth_tx.token_id, 0, &eth_tx.amount, &[]);
 
+            // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
+
+            valid_dest_addresses_list.push(eth_tx.to);
+            valid_payments_list.push(EsdtTokenPayment {
+                token_type: EsdtTokenType::Fungible,
+                token_identifier: eth_tx.token_id,
+                token_nonce: 0,
+                amount: eth_tx.amount,
+            });
         }
+
+        let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
+        self.distribute_payments(valid_dest_addresses_list, payments_after_wrapping);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -67,6 +84,25 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         }
 
         opt_current_batch
+    }
+
+    #[only_owner]
+    #[endpoint(setWrappingContractAddress)]
+    fn set_wrapping_contract_address(
+        &self,
+        #[var_args] opt_new_address: OptionalValue<ManagedAddress>,
+    ) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid unwrapping contract address"
+                );
+
+                self.wrapping_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.wrapping_contract_address().clear(),
+        }
     }
 
     // private
@@ -88,6 +124,46 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
         roles.has_role(role)
     }
+
+    fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
+        if self.wrapping_contract_address().is_empty() {
+            return payments;
+        }
+
+        self.get_wrapping_contract_proxy_instance()
+            .wrap_multiple_tokens()
+            .with_multi_token_transfer(payments)
+            .execute_on_dest_context()
+    }
+
+    fn distribute_payments(
+        &self,
+        dest_addresses: ManagedVec<ManagedAddress>,
+        payments: PaymentsVec<Self::Api>,
+    ) {
+        for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
+            self.send()
+                .direct(&dest, &p.token_identifier, 0, &p.amount, &[]);
+        }
+    }
+
+    // proxies
+
+    #[proxy]
+    fn wrapping_contract_proxy(
+        &self,
+        sc_address: ManagedAddress,
+    ) -> wrapped_bridged_usdc::Proxy<Self::Api>;
+
+    fn get_wrapping_contract_proxy_instance(&self) -> wrapped_bridged_usdc::Proxy<Self::Api> {
+        self.wrapping_contract_proxy(self.wrapping_contract_address().get())
+    }
+
+    // storage
+
+    #[view(getWrappingContractAddress)]
+    #[storage_mapper("wrappingContractAddress")]
+    fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     // events
 

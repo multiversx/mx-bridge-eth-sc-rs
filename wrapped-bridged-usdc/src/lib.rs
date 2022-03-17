@@ -1,26 +1,38 @@
 #![no_std]
 
+use transaction::PaymentsVec;
+
 elrond_wasm::imports!();
 
 #[elrond_wasm::contract]
 pub trait WrappedBridgedUsdc {
     #[init]
-    fn init(&self, universal_bridged_usdc_token_id: TokenIdentifier) {
+    fn init(
+        &self,
+        universal_bridged_usdc_token_id: TokenIdentifier,
+        #[var_args] chain_specific_tokens: MultiValueEncoded<TokenIdentifier>,
+    ) {
         self.universal_bridged_usdc_token_id()
             .set(universal_bridged_usdc_token_id);
+
+        for token_id in chain_specific_tokens {
+            let _ = self.chain_specific_usdc_token_ids().insert(token_id);
+        }
     }
 
     #[only_owner]
     #[endpoint(whitelistUsdc)]
     fn whitelist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
-        self.chain_specific_usdc_token_ids()
+        let _ = self
+            .chain_specific_usdc_token_ids()
             .insert(chain_specific_usdc_token_id);
     }
 
     #[only_owner]
     #[endpoint(blacklistUsdc)]
     fn blacklist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
-        self.chain_specific_usdc_token_ids()
+        let _ = self
+            .chain_specific_usdc_token_ids()
             .swap_remove(&chain_specific_usdc_token_id);
     }
 
@@ -55,6 +67,43 @@ pub trait WrappedBridgedUsdc {
             &payment_amount,
             &[],
         );
+    }
+
+    /// Will wrap what it can, and send back the rest unchanged
+    #[payable("*")]
+    #[endpoint(wrapMultipleTokens)]
+    fn wrap_multiple_tokens(&self) -> PaymentsVec<Self::Api> {
+        let original_payments = self.call_value().all_esdt_transfers();
+        if original_payments.is_empty() {
+            return original_payments;
+        }
+
+        let mut new_payments = ManagedVec::new();
+        let token_whitelist = self.chain_specific_usdc_token_ids();
+        let universal_token_id = self.universal_bridged_usdc_token_id().get();
+
+        for p in &original_payments {
+            let new_payment = if token_whitelist.contains(&p.token_identifier) {
+                self.send()
+                    .esdt_local_mint(&universal_token_id, 0, &p.amount);
+
+                EsdtTokenPayment {
+                    token_type: EsdtTokenType::Fungible,
+                    token_identifier: universal_token_id.clone(),
+                    token_nonce: 0,
+                    amount: p.amount,
+                }
+            } else {
+                p
+            };
+
+            new_payments.push(new_payment);
+        }
+
+        let caller = self.blockchain().get_caller();
+        self.send().direct_multi(&caller, &new_payments, &[]);
+
+        new_payments
     }
 
     #[payable("*")]

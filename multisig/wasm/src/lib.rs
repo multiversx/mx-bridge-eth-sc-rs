@@ -46,6 +46,7 @@ elrond_wasm_node::wasm_endpoints! {
         moveRefundBatchToSafe
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration
         multiTransferEsdtSetMaxRefundTxBatchSize
+        multiTransferEsdtSetWrappingContractAddress
         pause
         performAction
         proposeEsdtSafeSetCurrentTransactionBatchStatus
