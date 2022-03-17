@@ -95,10 +95,10 @@
                         }
                     },
                     "storage": {
-                        "str:chainSpecificUsdcTokenIds.len": "1",
-                        "str:chainSpecificUsdcTokenIds.index|nested:str:USDC-cccccc": "1",
-                        "str:chainSpecificUsdcTokenIds.item|u32:1": "str:USDC-cccccc",
-                        "str:universalUsdcTokenId": "str:WUSDC-abcdef"
+                        "str:chainSpecificTokenIds.len": "1",
+                        "str:chainSpecificTokenIds.index|nested:str:USDC-cccccc": "1",
+                        "str:chainSpecificTokenIds.item|u32:1": "str:USDC-cccccc",
+                        "str:universalBridgedTokenId": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
