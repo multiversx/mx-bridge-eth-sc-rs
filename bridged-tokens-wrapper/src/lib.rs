@@ -9,14 +9,14 @@ pub trait BridgedTokensWrapper {
     #[init]
     fn init(
         &self,
-        universal_bridged_usdc_token_id: TokenIdentifier,
+        universal_bridged_token_id: TokenIdentifier,
         #[var_args] chain_specific_tokens: MultiValueEncoded<TokenIdentifier>,
     ) {
-        self.universal_bridged_usdc_token_id()
-            .set(universal_bridged_usdc_token_id);
+        self.universal_bridged_token_id()
+            .set(universal_bridged_token_id);
 
         for token_id in chain_specific_tokens {
-            let _ = self.chain_specific_usdc_token_ids().insert(token_id);
+            let _ = self.chain_specific_token_ids().insert(token_id);
         }
     }
 
@@ -24,7 +24,7 @@ pub trait BridgedTokensWrapper {
     #[endpoint(whitelistUsdc)]
     fn whitelist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
         let _ = self
-            .chain_specific_usdc_token_ids()
+            .chain_specific_token_ids()
             .insert(chain_specific_usdc_token_id);
     }
 
@@ -32,7 +32,7 @@ pub trait BridgedTokensWrapper {
     #[endpoint(blacklistUsdc)]
     fn blacklist_usdc(&self, chain_specific_usdc_token_id: TokenIdentifier) {
         let _ = self
-            .chain_specific_usdc_token_ids()
+            .chain_specific_token_ids()
             .swap_remove(&chain_specific_usdc_token_id);
     }
 
@@ -47,22 +47,22 @@ pub trait BridgedTokensWrapper {
     ) {
         let chain_specific_usdc_token_id = &payment_token;
         require!(
-            self.chain_specific_usdc_token_ids()
+            self.chain_specific_token_ids()
                 .contains(chain_specific_usdc_token_id),
             "Wrong esdt token"
         );
 
-        let universal_bridged_usdc_token_id = self.universal_bridged_usdc_token_id().get();
+        let universal_bridged_token_id = self.universal_bridged_token_id().get();
         require!(payment_amount > 0u32, "Payment must be more than 0");
 
         self.send()
-            .esdt_local_mint(&universal_bridged_usdc_token_id, 0, &payment_amount);
+            .esdt_local_mint(&universal_bridged_token_id, 0, &payment_amount);
 
         let caller = self.blockchain().get_caller();
 
         self.send().direct(
             &caller,
-            &universal_bridged_usdc_token_id,
+            &universal_bridged_token_id,
             0,
             &payment_amount,
             &[],
@@ -79,8 +79,8 @@ pub trait BridgedTokensWrapper {
         }
 
         let mut new_payments = ManagedVec::new();
-        let token_whitelist = self.chain_specific_usdc_token_ids();
-        let universal_token_id = self.universal_bridged_usdc_token_id().get();
+        let token_whitelist = self.chain_specific_token_ids();
+        let universal_token_id = self.universal_bridged_token_id().get();
 
         for p in &original_payments {
             let new_payment = if token_whitelist.contains(&p.token_identifier) {
@@ -116,14 +116,14 @@ pub trait BridgedTokensWrapper {
     ) {
         let chain_specific_usdc_token_id = &requested_token;
         require!(
-            self.chain_specific_usdc_token_ids()
+            self.chain_specific_token_ids()
                 .contains(chain_specific_usdc_token_id),
             "Esdt token unavailable"
         );
 
-        let universal_bridged_usdc_token_id = self.universal_bridged_usdc_token_id().get();
+        let universal_bridged_token_id = self.universal_bridged_token_id().get();
         require!(
-            payment_token == universal_bridged_usdc_token_id,
+            payment_token == universal_bridged_token_id,
             "Wrong esdt token"
         );
 
@@ -134,9 +134,8 @@ pub trait BridgedTokensWrapper {
         );
 
         self.send()
-            .esdt_local_burn(&universal_bridged_usdc_token_id, 0, &payment_amount);
+            .esdt_local_burn(&universal_bridged_token_id, 0, &payment_amount);
 
-        // 1 wrapped USDC = 1 USDC, so we pay back the same amount
         let caller = self.blockchain().get_caller();
 
         self.send().direct(
@@ -155,15 +154,11 @@ pub trait BridgedTokensWrapper {
         self.blockchain().get_sc_balance(bridged_usdc_token, 0)
     }
 
-    // storage
+    #[view(getUniversalBridgedTokenId)]
+    #[storage_mapper("universalBridgedTokenId")]
+    fn universal_bridged_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
 
-    // 1 USDC = 1 wrapped USDC, and they are interchangeable through this contract
-
-    #[view(getWrappedUsdcTokenId)]
-    #[storage_mapper("universalUsdcTokenId")]
-    fn universal_bridged_usdc_token_id(&self) -> SingleValueMapper<TokenIdentifier>;
-
-    #[view(getChainSpecificUsdcTokenIds)]
-    #[storage_mapper("chainSpecificUsdcTokenIds")]
-    fn chain_specific_usdc_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    #[view(getchainSpecificTokenIds)]
+    #[storage_mapper("chainSpecificTokenIds")]
+    fn chain_specific_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
 }

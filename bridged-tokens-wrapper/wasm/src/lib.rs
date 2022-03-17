@@ -8,9 +8,9 @@ elrond_wasm_node::wasm_endpoints! {
     bridged_tokens_wrapper
     (
         blacklistUsdc
-        getChainSpecificUsdcTokenIds
         getLiquidity
-        getWrappedUsdcTokenId
+        getUniversalBridgedTokenId
+        getchainSpecificTokenIds
         unwrapUsdc
         whitelistUsdc
         wrapMultipleTokens
