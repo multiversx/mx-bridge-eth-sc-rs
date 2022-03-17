@@ -1,20 +1,13 @@
 use elrond_wasm::api::ManagedTypeApi;
-use elrond_wasm::types::{ManagedAddress, ManagedVec};
+use elrond_wasm::types::ManagedVec;
 use transaction::transaction_status::TransactionStatus;
 use transaction::EthTransaction;
 
 elrond_wasm::derive_imports!();
 
-// Actions with _ in front are not used
-// Keeping the actions even if they're not used, for backwards compatibility of action type ID
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum Action<M: ManagedTypeApi> {
     Nothing,
-    _AddBoardMember(ManagedAddress<M>),
-    _AddProposer(ManagedAddress<M>),
-    _RemoveUser(ManagedAddress<M>),
-    _SlashUser(ManagedAddress<M>),
-    _ChangeQuorum(usize),
     SetCurrentTransactionBatchStatus {
         esdt_safe_batch_id: u64,
         tx_batch_status: ManagedVec<M, TransactionStatus>,

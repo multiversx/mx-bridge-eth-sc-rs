@@ -95,7 +95,7 @@
                     "balance": "2000",
                     "storage": {
                         "str:quorum": "1",
-                        "str:user_role|u32:1": "2",
+                        "str:user_role|u32:1": "1",
                         "str:user_role|u32:2": "0",
                         "+": ""
                     },
@@ -161,7 +161,7 @@
                     "balance": "1000",
                     "storage": {
                         "str:quorum": "1",
-                        "str:user_role|u32:1": "2",
+                        "str:user_role|u32:1": "1",
                         "str:user_role|u32:2": "0",
                         "+": ""
                     },

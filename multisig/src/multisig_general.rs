@@ -49,28 +49,23 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
         self.action_signer_ids(action_id).clear();
     }
 
-    /// Can be used to:
-    /// - create new user (board member / proposer)
-    /// - remove user (board member / proposer)
-    /// - reactivate removed user
-    /// - convert between board member and proposer
-    /// Will keep the board size and proposer count in sync.
-    fn change_user_role(&self, user_address: ManagedAddress, new_role: UserRole) {
-        let user_id = self.user_mapper().get_or_create_user(&user_address);
-        let old_role = self.user_role(&user_address);
+    fn add_board_member(&self, user_address: &ManagedAddress) {
+        let user_id = self.user_mapper().get_or_create_user(user_address);
+        let old_role = self.get_user_role(user_address);
 
-        // update board size
-        #[allow(clippy::collapsible_else_if)]
-        if old_role == UserRole::BoardMember {
-            if new_role != UserRole::BoardMember {
-                self.num_board_members().update(|value| *value -= 1);
-            }
-        } else {
-            if new_role == UserRole::BoardMember {
-                self.num_board_members().update(|value| *value += 1);
-            }
+        if !old_role.is_board_member() {
+            self.num_board_members().update(|value| *value += 1);
+            self.user_id_to_role(user_id).set(&UserRole::BoardMember);
         }
+    }
 
-        self.user_id_to_role(user_id).set(&new_role);
+    fn remove_board_member(&self, user_address: &ManagedAddress) {
+        let user_id = self.user_mapper().get_or_create_user(user_address);
+        let old_role = self.get_user_role(user_address);
+
+        if old_role.is_board_member() {
+            self.num_board_members().update(|value| *value -= 1);
+            self.user_id_to_role(user_id).set(&UserRole::None);
+        }
     }
 }
