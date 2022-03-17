@@ -176,7 +176,7 @@ deployMultiTransfer() {
 
     erdpy --verbose contract deploy --project=${PROJECT_MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
     --gas-limit=100000000 \
-    --arguments 0x${WRAPPED_BRIDGED_USDC_ADDRESS_HEX} \
+    --arguments 0x${WRAPPED_BRIDGED_USDC_ADDRESS_HEX} --metadata-payable \
     --send --outfile="deploy-multitransfer-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
