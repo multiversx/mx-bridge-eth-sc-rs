@@ -3,7 +3,7 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "../../bridged-tokens-wrapper/mandos/whitelist_usdc.scen.json"
+            "path": "../../bridged-tokens-wrapper/mandos/whitelist_token.scen.json"
         },
         {
             "step": "setState",

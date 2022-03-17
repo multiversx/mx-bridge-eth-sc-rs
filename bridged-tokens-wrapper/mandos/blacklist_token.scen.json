@@ -4,15 +4,15 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "unwrap_usdc.scen.json"
+            "path": "unwrap_token.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "blacklist-usdt",
+            "txId": "blacklist-token",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "blacklistUsdc",
+                "function": "blacklistToken",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -37,7 +37,7 @@
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "100"
                 },
-                "function": "unwrapUsdc",
+                "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -95,10 +95,13 @@
                         }
                     },
                     "storage": {
-                        "str:chainSpecificTokenIds.len": "1",
-                        "str:chainSpecificTokenIds.index|nested:str:USDC-cccccc": "1",
-                        "str:chainSpecificTokenIds.item|u32:1": "str:USDC-cccccc",
-                        "str:universalBridgedTokenId": "str:WUSDC-abcdef"
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-cccccc",
+                        "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenId": "str:WUSDC-abcdef",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

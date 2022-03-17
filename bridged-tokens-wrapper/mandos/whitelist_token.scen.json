@@ -51,13 +51,14 @@
         },
         {
             "step": "scCall",
-            "txId": "whitelist-usdt-fail",
+            "txId": "whitelist-token-fail",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "whitelistUsdc",
+                "function": "whitelistToken",
                 "arguments": [
-                    "str:USDC-bbbbbb"
+                    "str:USDC-bbbbbb",
+                    "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -71,13 +72,14 @@
         },
         {
             "step": "scCall",
-            "txId": "whitelist-usdt",
+            "txId": "whitelist-token-a",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "whitelistUsdc",
+                "function": "whitelistToken",
                 "arguments": [
-                    "str:USDC-aaaaaa"
+                    "str:USDC-aaaaaa",
+                    "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -91,13 +93,14 @@
         },
         {
             "step": "scCall",
-            "txId": "whitelist-usdt",
+            "txId": "whitelist-token-c",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "whitelistUsdc",
+                "function": "whitelistToken",
                 "arguments": [
-                    "str:USDC-cccccc"
+                    "str:USDC-cccccc",
+                    "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -147,11 +150,13 @@
                         }
                     },
                     "storage": {
-                        "str:chainSpecificTokenIds.len": "2",
-                        "str:chainSpecificTokenIds.index|nested:str:USDC-aaaaaa": "1",
-                        "str:chainSpecificTokenIds.index|nested:str:USDC-cccccc": "2",
-                        "str:chainSpecificTokenIds.item|u32:1": "str:USDC-aaaaaa",
-                        "str:chainSpecificTokenIds.item|u32:2": "str:USDC-cccccc",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
+                        "str:universalBridgedTokenPair|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
                         "str:universalBridgedTokenId": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
