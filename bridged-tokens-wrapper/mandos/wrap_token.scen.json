@@ -4,7 +4,7 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "whitelist_usdc.scen.json"
+            "path": "whitelist_token.scen.json"
         },
         {
             "step": "scCall",
@@ -12,7 +12,7 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "wrapUsdc",
+                "function": "wrapToken",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-bbbbbb",
                     "value": "300"
@@ -34,7 +34,7 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "wrapUsdc",
+                "function": "wrapToken",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-aaaaaa",
                     "value": "300"
@@ -56,7 +56,7 @@
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
-                "function": "wrapUsdc",
+                "function": "wrapToken",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-cccccc",
                     "value": "100"
@@ -116,12 +116,16 @@
                         }
                     },
                     "storage": {
-                        "str:chainSpecificTokenIds.len": "2",
-                        "str:chainSpecificTokenIds.index|nested:str:USDC-aaaaaa": "1",
-                        "str:chainSpecificTokenIds.index|nested:str:USDC-cccccc": "2",
-                        "str:chainSpecificTokenIds.item|u32:1": "str:USDC-aaaaaa",
-                        "str:chainSpecificTokenIds.item|u32:2": "str:USDC-cccccc",
-                        "str:universalBridgedTokenId": "str:WUSDC-abcdef"
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
+                        "str:universalBridgedTokenPair|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenId": "str:WUSDC-abcdef",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
