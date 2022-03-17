@@ -1,5 +1,5 @@
 [package]
-name = "wrapped-bridged-usdc-wasm"
+name = "bridged-tokens-wrapper-wasm"
 version = "0.0.0"
 authors = ["Alin Cruceat <alin.cruceat@elrond.com>"]
 edition = "2018"
@@ -15,7 +15,7 @@ lto = true
 debug = false
 panic = "abort"
 
-[dependencies.wrapped-bridged-usdc]
+[dependencies.bridged-tokens-wrapper]
 path = ".."
 
 [dependencies.elrond-wasm-node]

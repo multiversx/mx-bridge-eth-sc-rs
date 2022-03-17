@@ -11,7 +11,7 @@
             "txId": "blacklist-usdt",
             "tx": {
                 "from": "address:owner",
-                "to": "sc:wrapped_bridged_usdc",
+                "to": "sc:bridged_tokens_wrapper",
                 "function": "blacklistUsdc",
                 "arguments": [
                     "str:USDC-aaaaaa"
@@ -31,7 +31,7 @@
             "txId": "unwrap-usdc",
             "tx": {
                 "from": "address:user",
-                "to": "sc:wrapped_bridged_usdc",
+                "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
                 "esdt": {
                     "tokenIdentifier": "str:WUSDC-abcdef",
@@ -77,7 +77,7 @@
                     },
                     "storage": {}
                 },
-                "sc:wrapped_bridged_usdc": {
+                "sc:bridged_tokens_wrapper": {
                     "nonce": "0",
                     "esdt": {
                         "str:WUSDC-abcdef": {
@@ -100,7 +100,7 @@
                         "str:chainSpecificUsdcTokenIds.item|u32:1": "str:USDC-cccccc",
                         "str:universalUsdcTokenId": "str:WUSDC-abcdef"
                     },
-                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
                 }
             }

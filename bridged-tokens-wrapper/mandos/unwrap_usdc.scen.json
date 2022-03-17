@@ -1,67 +1,76 @@
 {
-    "name": "wrap usdc",
+    "name": "unwrap usdc",
     "gasSchedule": "v4",
     "steps": [
         {
             "step": "externalSteps",
-            "path": "whitelist_usdc.scen.json"
+            "path": "wrap_usdc.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "wrap-usdc-fail",
+            "txId": "unwrap-usdc-unavailable",
             "tx": {
                 "from": "address:user",
-                "to": "sc:wrapped_bridged_usdc",
-                "function": "wrapUsdc",
+                "to": "sc:bridged_tokens_wrapper",
+                "value": "0",
                 "esdt": {
-                    "tokenIdentifier": "str:USDC-bbbbbb",
+                    "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "300"
                 },
-                "arguments": [],
+                "function": "unwrapUsdc",
+                "arguments": [
+                    "str:USDC-bbbbbb"
+                ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "4",
-                "message": "str:Wrong esdt token",
+                "message": "str:Esdt token unavailable",
                 "gas": "*",
                 "refund": "*"
             }
         },
         {
             "step": "scCall",
-            "txId": "wrap-usdc",
+            "txId": "unwrap-usdc-not-enough-funds",
             "tx": {
                 "from": "address:user",
-                "to": "sc:wrapped_bridged_usdc",
-                "function": "wrapUsdc",
+                "to": "sc:bridged_tokens_wrapper",
+                "value": "0",
                 "esdt": {
-                    "tokenIdentifier": "str:USDC-aaaaaa",
-                    "value": "300"
+                    "tokenIdentifier": "str:WUSDC-abcdef",
+                    "value": "500"
                 },
-                "arguments": [],
+                "function": "unwrapUsdc",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
             "expect": {
-                "status": "0",
-                "message": "",
+                "status": "4",
+                "message": "str:Contract does not have enough funds",
                 "gas": "*",
                 "refund": "*"
             }
         },
         {
             "step": "scCall",
-            "txId": "wrap-usdc",
+            "txId": "unwrap-usdc",
             "tx": {
                 "from": "address:user",
-                "to": "sc:wrapped_bridged_usdc",
-                "function": "wrapUsdc",
+                "to": "sc:bridged_tokens_wrapper",
+                "value": "0",
                 "esdt": {
-                    "tokenIdentifier": "str:USDC-cccccc",
+                    "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "100"
                 },
-                "arguments": [],
+                "function": "unwrapUsdc",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
@@ -81,10 +90,10 @@
                     "storage": {}
                 },
                 "address:user": {
-                    "nonce": "4",
+                    "nonce": "7",
                     "esdt": {
                         "str:USDC-aaaaaa": {
-                            "balance": "200"
+                            "balance": "300"
                         },
                         "str:USDC-bbbbbb": {
                             "balance": "500"
@@ -93,12 +102,12 @@
                             "balance": "400"
                         },
                         "str:WUSDC-abcdef": {
-                            "balance": "900"
+                            "balance": "800"
                         }
                     },
                     "storage": {}
                 },
-                "sc:wrapped_bridged_usdc": {
+                "sc:bridged_tokens_wrapper": {
                     "nonce": "0",
                     "esdt": {
                         "str:WUSDC-abcdef": {
@@ -109,7 +118,7 @@
                             ]
                         },
                         "str:USDC-aaaaaa": {
-                            "balance": "300"
+                            "balance": "200"
                         },
                         "str:USDC-cccccc": {
                             "balance": "100"
@@ -123,7 +132,7 @@
                         "str:chainSpecificUsdcTokenIds.item|u32:2": "str:USDC-cccccc",
                         "str:universalUsdcTokenId": "str:WUSDC-abcdef"
                     },
-                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
                 }
             }

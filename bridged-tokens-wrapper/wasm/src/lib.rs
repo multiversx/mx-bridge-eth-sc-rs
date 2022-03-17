@@ -5,7 +5,7 @@
 #![no_std]
 
 elrond_wasm_node::wasm_endpoints! {
-    wrapped_bridged_usdc
+    bridged_tokens_wrapper
     (
         blacklistUsdc
         getChainSpecificUsdcTokenIds
