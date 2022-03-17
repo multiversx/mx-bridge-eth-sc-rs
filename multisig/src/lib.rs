@@ -1,10 +1,14 @@
 #![no_std]
-#![allow(non_snake_case)]
 #![allow(clippy::too_many_arguments)]
-#![allow(clippy::type_complexity)]
+// #![allow(clippy::type_complexity)]
 
 mod action;
+mod multisig_general;
+mod queries;
+mod setup;
+mod storage;
 mod user_role;
+mod util;
 
 use action::Action;
 use token_module::AddressPercentagePair;
@@ -13,11 +17,8 @@ use transaction::transaction_status::TransactionStatus;
 use transaction::*;
 use user_role::UserRole;
 
-mod multisig_general;
-mod setup;
-mod storage;
-mod util;
-
+use esdt_safe::ProxyTrait as _;
+use multi_transfer_esdt::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
 
@@ -33,6 +34,7 @@ pub trait Multisig:
     + setup::SetupModule
     + storage::StorageModule
     + util::UtilModule
+    + queries::QueriesModule
 {
     #[init]
     fn init(
@@ -286,99 +288,6 @@ pub trait Multisig:
         self.perform_action(action_id);
     }
 
-    #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
-        let _ = self
-            .get_esdt_safe_proxy_instance()
-            .get_current_tx_batch()
-            .execute_on_dest_context();
-
-        // result is already returned automatically from the EsdtSafe call,
-        // we only keep this signature for correct ABI generation
-        OptionalValue::None
-    }
-
-    // For failed Ethereum -> Elrond transactions
-    #[view(getCurrentRefundBatch)]
-    fn get_current_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
-        let _ = self
-            .get_multi_transfer_esdt_proxy_instance()
-            .get_first_batch_any_status()
-            .execute_on_dest_context();
-
-        // result is already returned automatically from the MultiTransferEsdt call,
-        // we only keep this signature for correct ABI generation
-        OptionalValue::None
-    }
-
-    fn is_valid_action_id(&self, action_id: usize) -> bool {
-        let min_id = 1;
-        let max_id = self.action_mapper().len();
-
-        action_id >= min_id && action_id <= max_id
-    }
-
-    /// Actions are cleared after execution, so an empty entry means the action was executed already
-    /// Returns "false" if the action ID is invalid
-    #[view(wasActionExecuted)]
-    fn was_action_executed(&self, action_id: usize) -> bool {
-        if self.is_valid_action_id(action_id) {
-            self.action_mapper().item_is_empty(action_id)
-        } else {
-            false
-        }
-    }
-
-    /// If the mapping was made, it means that the transfer action was proposed in the past
-    /// To check if it was executed as well, use the wasActionExecuted view
-    #[view(wasTransferActionProposed)]
-    fn was_transfer_action_proposed(
-        &self,
-        eth_batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
-    ) -> bool {
-        let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
-
-        self.is_valid_action_id(action_id)
-    }
-
-    #[view(getActionIdForTransferBatch)]
-    fn get_action_id_for_transfer_batch(
-        &self,
-        eth_batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
-    ) -> usize {
-        let transfers_as_struct = self.transfers_multi_value_to_eth_tx_vec(transfers);
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
-
-        self.batch_id_to_action_id_mapping(eth_batch_id)
-            .get(&batch_hash)
-            .unwrap_or(0)
-    }
-
-    #[view(wasSetCurrentTransactionBatchStatusActionProposed)]
-    fn was_set_current_transaction_batch_status_action_proposed(
-        &self,
-        esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
-    ) -> bool {
-        self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
-            esdt_safe_batch_id,
-            expected_tx_batch_status,
-        ))
-    }
-
-    #[view(getActionIdForSetCurrentTransactionBatchStatus)]
-    fn get_action_id_for_set_current_transaction_batch_status(
-        &self,
-        esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
-    ) -> usize {
-        self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
-            .get(&expected_tx_batch_status.to_vec())
-            .unwrap_or(0)
-    }
-
     // private
 
     fn perform_action(&self, action_id: usize) {
@@ -428,7 +337,6 @@ pub trait Multisig:
                 action_ids_mapper.clear();
                 self.last_executed_eth_batch_id().update(|id| *id += 1);
 
-                // The "if" is not really needed, but this is more efficient than unwrap()
                 let last_tx_index = transfers.len() - 1;
                 let last_tx = transfers.get(last_tx_index);
                 self.last_executed_eth_tx_id().set(&last_tx.tx_nonce);
@@ -437,26 +345,6 @@ pub trait Multisig:
                     .batch_transfer_esdt_token(eth_batch_id, transfers.into())
                     .execute_on_dest_context();
             }
-            _ => {}
         }
-    }
-
-    // proxies
-
-    #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
-
-    #[proxy]
-    fn multi_transfer_esdt_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt::Proxy<Self::Api>;
-
-    fn get_esdt_safe_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
-        self.esdt_safe_proxy(self.esdt_safe_address().get())
-    }
-
-    fn get_multi_transfer_esdt_proxy_instance(&self) -> multi_transfer_esdt::Proxy<Self::Api> {
-        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
     }
 }

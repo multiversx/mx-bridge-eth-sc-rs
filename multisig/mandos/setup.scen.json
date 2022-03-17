@@ -169,8 +169,8 @@
                         "str:quorum": "2",
                         "str:requiredStakeAmount": "1000",
                         "str:slashAmount": "500",
-                        "str:user_role|u32:1": "2",
-                        "str:user_role|u32:2": "2",
+                        "str:user_role|u32:1": "1",
+                        "str:user_role|u32:2": "1",
 
                         "str:user_address_to_id|address:relayer1": "1",
                         "str:user_address_to_id|address:relayer2": "2",
