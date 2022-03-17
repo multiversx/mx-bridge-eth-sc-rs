@@ -23,6 +23,34 @@ pub trait BridgedTokensWrapper {
     }
 
     #[only_owner]
+    #[endpoint(addWrappedToken)]
+    fn add_wrapped_token(&self, universal_bridged_token_id: TokenIdentifier) {
+        self.universal_bridged_token_id()
+            .insert(universal_bridged_token_id);
+    }
+
+    #[only_owner]
+    #[endpoint(removeWrappedToken)]
+    fn remove_wrapped_token(&self, universal_bridged_token_id: TokenIdentifier) {
+        let _ = self
+            .universal_bridged_token_id()
+            .swap_remove(&universal_bridged_token_id);
+
+        let chain_specific_tokens = &self.chain_specific_token_ids(&universal_bridged_token_id);
+
+        for token in chain_specific_tokens.iter() {
+            let _ = self
+                .chain_specific_token_ids(&universal_bridged_token_id)
+                .swap_remove(&token);
+
+            self.universal_bridged_token_pair(&token).clear();
+        }
+
+        self.universal_bridged_token_id()
+            .swap_remove(&universal_bridged_token_id);
+    }
+
+    #[only_owner]
     #[endpoint(whitelistToken)]
     fn whitelist_token(
         &self,
@@ -36,9 +64,6 @@ pub trait BridgedTokensWrapper {
         let _ = self
             .universal_bridged_token_pair(&chain_specific_token_id)
             .set(universal_bridged_token_id);
-
-        self.token_liquidity(&chain_specific_token_id)
-            .set_if_empty(&0u64.into())
     }
 
     #[only_owner]
@@ -78,9 +103,6 @@ pub trait BridgedTokensWrapper {
         self.send()
             .esdt_local_mint(&universal_bridged_token_id, 0, &payment_amount);
 
-        self.token_liquidity(chain_specific_token_id)
-            .update(|value| *value += &payment_amount);
-
         let caller = self.blockchain().get_caller();
 
         self.send().direct(
@@ -90,6 +112,9 @@ pub trait BridgedTokensWrapper {
             &payment_amount,
             &[],
         );
+
+        self.token_liquidity(chain_specific_token_id)
+            .update(|value| *value += &payment_amount);
     }
 
     /// Will wrap what it can, and send back the rest unchanged
@@ -113,9 +138,6 @@ pub trait BridgedTokensWrapper {
                 self.send()
                     .esdt_local_mint(&universal_token_id, 0, &payment.amount);
 
-                self.token_liquidity(&payment.token_identifier)
-                    .update(|value| *value += &payment.amount);
-
                 EsdtTokenPayment {
                     token_type: EsdtTokenType::Fungible,
                     token_identifier: universal_token_id.clone(),
@@ -132,6 +154,11 @@ pub trait BridgedTokensWrapper {
         let caller = self.blockchain().get_caller();
 
         self.send().direct_multi(&caller, &new_payments, &[]);
+
+        for payment in &new_payments {
+            self.token_liquidity(&payment.token_identifier)
+                .update(|value| *value += &payment.amount);
+        }
 
         new_payments
     }
@@ -161,18 +188,22 @@ pub trait BridgedTokensWrapper {
         self.send()
             .esdt_local_burn(&universal_bridged_token_id, 0, &payment_amount);
 
-        self.token_liquidity(chain_specific_token_id)
-            .update(|value| *value -= &payment_amount);
-
         let caller = self.blockchain().get_caller();
 
         self.send()
             .direct(&caller, chain_specific_token_id, 0, &payment_amount, &[]);
+
+        self.token_liquidity(chain_specific_token_id)
+            .update(|value| *value -= &payment_amount);
     }
 
     #[view(getUniversalBridgedTokenId)]
     #[storage_mapper("universalBridgedTokenId")]
     fn universal_bridged_token_id(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[view(getTokenLiquidity)]
+    #[storage_mapper("tokenLiquidity")]
+    fn token_liquidity(&self, token: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[view(getUniversalBridgedTokenPair)]
     #[storage_mapper("universalBridgedTokenPair")]
@@ -180,10 +211,6 @@ pub trait BridgedTokensWrapper {
         &self,
         token: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
-
-    #[view(getTokenLiquidity)]
-    #[storage_mapper("tokenLiquidity")]
-    fn token_liquidity(&self, token: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[view(getchainSpecificTokenIds)]
     #[storage_mapper("chainSpecificTokenIds")]

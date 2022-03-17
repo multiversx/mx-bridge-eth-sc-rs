@@ -1,5 +1,5 @@
 {
-    "name": "unwrap usdc",
+    "name": "unwrap token",
     "gasSchedule": "v4",
     "steps": [
         {
@@ -8,7 +8,7 @@
         },
         {
             "step": "scCall",
-            "txId": "unwrap-usdc-unavailable",
+            "txId": "unwrap-token-unavailable",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -33,7 +33,7 @@
         },
         {
             "step": "scCall",
-            "txId": "unwrap-usdc-not-enough-funds",
+            "txId": "unwrap-token-not-enough-funds",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -58,7 +58,7 @@
         },
         {
             "step": "scCall",
-            "txId": "unwrap-usdc",
+            "txId": "unwrap-token",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
@@ -85,7 +85,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "2",
+                    "nonce": "3",
                     "balance": "0",
                     "storage": {}
                 },
@@ -132,7 +132,9 @@
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
                         "str:universalBridgedTokenPair|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
                         "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
-                        "str:universalBridgedTokenId": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenId.len": "1",
+                        "str:universalBridgedTokenId.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenId.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },
