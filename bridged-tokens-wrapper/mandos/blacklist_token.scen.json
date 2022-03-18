@@ -1,18 +1,18 @@
 {
-    "name": "blacklist usdc",
+    "name": "blacklist token",
     "gasSchedule": "v4",
     "steps": [
         {
             "step": "externalSteps",
-            "path": "unwrap_usdc.scen.json"
+            "path": "unwrap_token.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "blacklist-usdt",
+            "txId": "blacklist-token",
             "tx": {
                 "from": "address:owner",
-                "to": "sc:wrapped_bridged_usdc",
-                "function": "blacklistUsdc",
+                "to": "sc:bridged_tokens_wrapper",
+                "function": "blacklistToken",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -28,16 +28,16 @@
         },
         {
             "step": "scCall",
-            "txId": "unwrap-usdc",
+            "txId": "unwrap-token",
             "tx": {
                 "from": "address:user",
-                "to": "sc:wrapped_bridged_usdc",
+                "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
                 "esdt": {
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "100"
                 },
-                "function": "unwrapUsdc",
+                "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-aaaaaa"
                 ],
@@ -55,7 +55,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "3",
+                    "nonce": "4",
                     "balance": "0",
                     "storage": {}
                 },
@@ -77,10 +77,17 @@
                     },
                     "storage": {}
                 },
-                "sc:wrapped_bridged_usdc": {
+                "sc:bridged_tokens_wrapper": {
                     "nonce": "0",
                     "esdt": {
                         "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-uvwxyz": {
                             "balance": "1",
                             "roles": [
                                 "ESDTRoleLocalMint",
@@ -95,12 +102,17 @@
                         }
                     },
                     "storage": {
-                        "str:chainSpecificUsdcTokenIds.len": "1",
-                        "str:chainSpecificUsdcTokenIds.index|nested:str:USDC-cccccc": "1",
-                        "str:chainSpecificUsdcTokenIds.item|u32:1": "str:USDC-cccccc",
-                        "str:universalUsdcTokenId": "str:WUSDC-abcdef"
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-cccccc",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenIds.len": "1",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },
-                    "code": "file:../output/wrapped-bridged-usdc.wasm",
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
                 }
             }

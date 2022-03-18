@@ -131,7 +131,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         }
 
         self.get_wrapping_contract_proxy_instance()
-            .wrap_multiple_tokens()
+            .wrap_tokens()
             .with_multi_token_transfer(payments)
             .execute_on_dest_context()
     }
@@ -153,9 +153,9 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
     fn wrapping_contract_proxy(
         &self,
         sc_address: ManagedAddress,
-    ) -> wrapped_bridged_usdc::Proxy<Self::Api>;
+    ) -> bridged_tokens_wrapper::Proxy<Self::Api>;
 
-    fn get_wrapping_contract_proxy_instance(&self) -> wrapped_bridged_usdc::Proxy<Self::Api> {
+    fn get_wrapping_contract_proxy_instance(&self) -> bridged_tokens_wrapper::Proxy<Self::Api> {
         self.wrapping_contract_proxy(self.wrapping_contract_address().get())
     }
 

@@ -3,7 +3,7 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "../../wrapped-bridged-usdc/mandos/whitelist_usdc.scen.json"
+            "path": "../../bridged-tokens-wrapper/mandos/whitelist_token.scen.json"
         },
         {
             "step": "setState",
@@ -82,7 +82,7 @@
                         "str:maxTxBatchBlockDuration": "3,600",
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:wrappingContractAddress": "sc:wrapped_bridged_usdc"
+                        "str:wrappingContractAddress": "sc:bridged_tokens_wrapper"
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm",
                     "owner": "address:owner"
@@ -134,10 +134,17 @@
                     },
                     "storage": {}
                 },
-                "sc:wrapped_bridged_usdc": {
+                "sc:bridged_tokens_wrapper": {
                     "nonce": "0",
                     "esdt": {
                         "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-uvwxyz": {
                             "balance": "1",
                             "roles": [
                                 "ESDTRoleLocalMint",

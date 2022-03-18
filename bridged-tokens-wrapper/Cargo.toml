@@ -1,5 +1,5 @@
 [package]
-name = "wrapped-bridged-usdc"
+name = "bridged-tokens-wrapper"
 version = "0.0.0"
 authors = ["Alin Cruceat <alin.cruceat@elrond.com>"]
 edition = "2018"
