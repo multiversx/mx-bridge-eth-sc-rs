@@ -131,7 +131,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         }
 
         self.get_wrapping_contract_proxy_instance()
-            .wrap_multiple_tokens()
+            .wrap_tokens()
             .with_multi_token_transfer(payments)
             .execute_on_dest_context()
     }
