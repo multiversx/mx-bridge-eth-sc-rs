@@ -39,15 +39,12 @@ pub trait BridgedTokensWrapper {
         let chain_specific_tokens = &self.chain_specific_token_ids(&universal_bridged_token_id);
 
         for token in chain_specific_tokens.iter() {
-            let _ = self
-                .chain_specific_token_ids(&universal_bridged_token_id)
-                .swap_remove(&token);
-
             self.universal_bridged_token_pair(&token).clear();
         }
 
-        self.universal_bridged_token_id()
-            .swap_remove(&universal_bridged_token_id);
+        let _ = self
+            .chain_specific_token_ids(&universal_bridged_token_id)
+            .clear();
     }
 
     #[only_owner]
