@@ -37,6 +37,13 @@
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
+                        },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
                         }
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
@@ -99,12 +106,19 @@
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
+                        },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
                         }
                     },
                     "storage": {
-                        "str:universalBridgedTokenId.len": "1",
-                        "str:universalBridgedTokenId.index|nested:str:WUSDC-abcdef": "1",
-                        "str:universalBridgedTokenId.item|u32:1": "str:WUSDC-abcdef"
+                        "str:universalBridgedTokenIds.len": "1",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

@@ -11,13 +11,12 @@ elrond_wasm_node::wasm_endpoints! {
         blacklistToken
         getChainSpecificToUniversalMapping
         getTokenLiquidity
-        getUniversalBridgedTokenId
+        getUniversalBridgedTokenIds
         getchainSpecificTokenIds
         removeWrappedToken
         unwrapToken
         whitelistToken
-        wrapMultipleTokens
-        wrapToken
+        wrapTokens
     )
 }
 
