@@ -98,7 +98,7 @@
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "1",
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "1",
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-cccccc",
-                        "str:universalBridgedTokenPair|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
                         "str:universalBridgedTokenId.len": "1",
                         "str:universalBridgedTokenId.index|nested:str:WUSDC-abcdef": "1",
                         "str:universalBridgedTokenId.item|u32:1": "str:WUSDC-abcdef",
