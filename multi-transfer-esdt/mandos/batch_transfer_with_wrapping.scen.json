@@ -144,6 +144,13 @@
                                 "ESDTRoleLocalBurn"
                             ]
                         },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
                         "str:USDC-aaaaaa": "500",
                         "str:USDC-cccccc": "1,000"
                     },

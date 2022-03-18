@@ -148,7 +148,7 @@ pub trait BridgedTokensWrapper {
             "Contract does not have enough funds"
         );
 
-        token_liquidity_mapper.set(&liquidity_amount + &payment_amount);
+        token_liquidity_mapper.set(&liquidity_amount - &payment_amount);
 
         self.send()
             .esdt_local_burn(&universal_bridged_token_ids, 0, &payment_amount);
