@@ -39,7 +39,7 @@
                     "balance": "*",
                     "storage": {
                         "str:action_data.item|u32:1": {
-                            "1-action_type": "u8:7",
+                            "1-action_type": "u8:2",
                             "2-batch_id": "u64:1",
                             "3-transfers_len": "u32:2",
                             "4-transfers_vec": [
