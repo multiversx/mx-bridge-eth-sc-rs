@@ -39,7 +39,7 @@ pub trait BridgedTokensWrapper {
         let chain_specific_tokens = &self.chain_specific_token_ids(&universal_bridged_token_id);
 
         for token in chain_specific_tokens.iter() {
-            self.universal_bridged_token_pair(&token).clear();
+            self.chain_specific_to_universal_mapping(&token).clear();
         }
 
         let _ = self
@@ -59,7 +59,7 @@ pub trait BridgedTokensWrapper {
             .insert(chain_specific_token_id.clone());
 
         let _ = self
-            .universal_bridged_token_pair(&chain_specific_token_id)
+            .chain_specific_to_universal_mapping(&chain_specific_token_id)
             .set(universal_bridged_token_id);
     }
 
@@ -67,14 +67,14 @@ pub trait BridgedTokensWrapper {
     #[endpoint(blacklistToken)]
     fn blacklist_token(&self, chain_specific_token_id: TokenIdentifier) {
         let universal_bridged_token_id = self
-            .universal_bridged_token_pair(&chain_specific_token_id)
+            .chain_specific_to_universal_mapping(&chain_specific_token_id)
             .get();
 
         let _ = self
             .chain_specific_token_ids(&universal_bridged_token_id)
             .swap_remove(&chain_specific_token_id);
 
-        self.universal_bridged_token_pair(&chain_specific_token_id)
+        self.chain_specific_to_universal_mapping(&chain_specific_token_id)
             .clear();
     }
 
@@ -87,7 +87,9 @@ pub trait BridgedTokensWrapper {
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
     ) {
-        let universal_bridged_token_id = self.universal_bridged_token_pair(&payment_token).get();
+        let universal_bridged_token_id = self
+            .chain_specific_to_universal_mapping(&payment_token)
+            .get();
         let chain_specific_token_id = &payment_token;
         require!(
             self.chain_specific_token_ids(&universal_bridged_token_id)
@@ -127,7 +129,7 @@ pub trait BridgedTokensWrapper {
 
         for payment in &original_payments {
             let universal_token_id = self
-                .universal_bridged_token_pair(&payment.token_identifier)
+                .chain_specific_to_universal_mapping(&payment.token_identifier)
                 .get();
             let token_whitelist = self.chain_specific_token_ids(&universal_token_id);
 
@@ -168,7 +170,9 @@ pub trait BridgedTokensWrapper {
         #[payment_amount] payment_amount: BigUint,
         requested_token: TokenIdentifier,
     ) {
-        let universal_bridged_token_id = self.universal_bridged_token_pair(&requested_token).get();
+        let universal_bridged_token_id = self
+            .chain_specific_to_universal_mapping(&requested_token)
+            .get();
         require!(
             payment_token == universal_bridged_token_id,
             "Esdt token unavailable"
@@ -202,9 +206,9 @@ pub trait BridgedTokensWrapper {
     #[storage_mapper("tokenLiquidity")]
     fn token_liquidity(&self, token: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
-    #[view(getUniversalBridgedTokenPair)]
-    #[storage_mapper("universalBridgedTokenPair")]
-    fn universal_bridged_token_pair(
+    #[view(getChainSpecificToUniversalMapping)]
+    #[storage_mapper("chainSpecificToUniversalMapping")]
+    fn chain_specific_to_universal_mapping(
         &self,
         token: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
@@ -213,6 +217,6 @@ pub trait BridgedTokensWrapper {
     #[storage_mapper("chainSpecificTokenIds")]
     fn chain_specific_token_ids(
         &self,
-        token: &TokenIdentifier,
+        universal_token_id: &TokenIdentifier,
     ) -> UnorderedSetMapper<TokenIdentifier>;
 }
