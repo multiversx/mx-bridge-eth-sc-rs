@@ -87,6 +87,13 @@
                                 "ESDTRoleLocalBurn"
                             ]
                         },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
                         "str:USDC-aaaaaa": {
                             "balance": "200"
                         },
@@ -99,9 +106,9 @@
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "1",
                         "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-cccccc",
                         "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
-                        "str:universalBridgedTokenId.len": "1",
-                        "str:universalBridgedTokenId.index|nested:str:WUSDC-abcdef": "1",
-                        "str:universalBridgedTokenId.item|u32:1": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenIds.len": "1",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
                     },
