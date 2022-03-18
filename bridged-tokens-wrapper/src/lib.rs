@@ -7,18 +7,7 @@ elrond_wasm::imports!();
 #[elrond_wasm::contract]
 pub trait BridgedTokensWrapper {
     #[init]
-    fn init(
-        &self,
-        universal_bridged_token_ids: TokenIdentifier,
-        #[var_args] chain_specific_tokens: MultiValueEncoded<TokenIdentifier>,
-    ) {
-        let mut whitelist = self.chain_specific_token_ids(&universal_bridged_token_ids);
-        self.add_wrapped_token(universal_bridged_token_ids);
-
-        for token_id in chain_specific_tokens {
-            let _ = whitelist.insert(token_id);
-        }
-    }
+    fn init(&self) {}
 
     #[only_owner]
     #[endpoint(addWrappedToken)]
@@ -50,6 +39,8 @@ pub trait BridgedTokensWrapper {
         chain_specific_token_id: TokenIdentifier,
         universal_bridged_token_ids: TokenIdentifier,
     ) {
+        self.add_wrapped_token(universal_bridged_token_ids.clone());
+
         let chain_to_universal_mapper =
             self.chain_specific_to_universal_mapping(&chain_specific_token_id);
         require!(
