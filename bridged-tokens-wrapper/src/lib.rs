@@ -39,7 +39,7 @@ pub trait BridgedTokensWrapper {
         chain_specific_token_id: TokenIdentifier,
         universal_bridged_token_ids: TokenIdentifier,
     ) {
-        self.add_wrapped_token(universal_bridged_token_ids.clone());
+        self.require_mint_and_burn_roles(&universal_bridged_token_ids);
 
         let chain_to_universal_mapper =
             self.chain_specific_to_universal_mapping(&chain_specific_token_id);
@@ -53,6 +53,9 @@ pub trait BridgedTokensWrapper {
         let _ = self
             .chain_specific_token_ids(&universal_bridged_token_ids)
             .insert(chain_specific_token_id);
+
+        self.universal_bridged_token_ids()
+            .insert(universal_bridged_token_ids);
     }
 
     #[only_owner]
