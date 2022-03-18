@@ -21,7 +21,7 @@
 PROJECT="../"
 PROJECT_SAFE="../../esdt-safe/"
 PROJECT_MULTI_TRANSFER="../../multi-transfer-esdt/"
-PROJECT_bridged_tokens_wrapper="../../bridged-tokens-wrapper/"
+PROJECT_BRIDGED_TOKENS_WRAPPER="../../bridged-tokens-wrapper/"
 ALICE="./wallets/alice.pem"
 
 # We don't care about Bob
@@ -155,7 +155,7 @@ deploySafe() {
 
 deployBridgedTokensWrapper() {
 
-    erdpy --verbose contract deploy --project=${PROJECT_bridged_tokens_wrapper} --recall-nonce --pem=${ALICE} \
+    erdpy --verbose contract deploy --project=${PROJECT_BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
     --arguments ${WRAPPED_USDC_TOKEN_ID} ${ETHEREUM_WRAPPED_USDC_TOKEN_ID} \
     --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
