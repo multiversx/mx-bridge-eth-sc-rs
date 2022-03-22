@@ -10,7 +10,9 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 
 #[elrond_wasm::contract]
-pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
+pub trait MultiTransferEsdt:
+    tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
+{
     #[init]
     fn init(&self, #[var_args] opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
         self.max_tx_batch_size()
@@ -37,17 +39,19 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
         let mut refund_tx_list = ManagedVec::new();
 
         for eth_tx in transfers {
+            let mut must_refund = false;
             if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-
-                let refund_tx = self.convert_to_refund_tx(eth_tx);
-                refund_tx_list.push(refund_tx);
-
-                continue;
-            }
-            if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
+                must_refund = true;
+            } else if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
                 self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
+                must_refund = true;
+            } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
+                self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
+                must_refund = true;
+            }
 
+            if must_refund {
                 let refund_tx = self.convert_to_refund_tx(eth_tx);
                 refund_tx_list.push(refund_tx);
 
@@ -175,4 +179,7 @@ pub trait MultiTransferEsdt: tx_batch_module::TxBatchModule {
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("transferOverMaxAmount")]
+    fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 }

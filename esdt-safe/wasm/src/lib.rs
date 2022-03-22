@@ -23,11 +23,13 @@ elrond_wasm_node::wasm_endpoints! {
         getFirstBatchAnyStatus
         getFirstBatchId
         getLastBatchId
+        getMaxBridgedAmount
         getRefundAmounts
         removeTokenFromWhitelist
         setDefaultPricePerGasUnit
         setEthTxGasLimit
         setFeeEstimatorContractAddress
+        setMaxBridgedAmount
         setMaxTxBatchBlockDuration
         setMaxTxBatchSize
         setTokenTicker

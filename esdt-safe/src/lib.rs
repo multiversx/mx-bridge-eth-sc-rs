@@ -18,6 +18,7 @@ pub trait EsdtSafe:
     fee_estimator_module::FeeEstimatorModule
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
     fn init(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
@@ -163,6 +164,8 @@ pub trait EsdtSafe:
             required_fee < payment_amount,
             "Transaction fees cost more than the entire bridged amount"
         );
+
+        self.require_below_max_amount(&payment_token, &payment_amount);
 
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
