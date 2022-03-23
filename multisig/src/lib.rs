@@ -10,7 +10,7 @@ mod user_role;
 mod util;
 
 use action::Action;
-use token_module::AddressPercentagePair;
+use token_module::{AddressPercentagePair, PERCENTAGE_TOTAL};
 use transaction::esdt_safe_batch::TxBatchSplitInFields;
 use transaction::transaction_status::TransactionStatus;
 use transaction::*;
@@ -20,8 +20,6 @@ use esdt_safe::ProxyTrait as _;
 use multi_transfer_esdt::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
-
-pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 
 elrond_wasm::imports!();
 
@@ -35,6 +33,8 @@ pub trait Multisig:
     + util::UtilModule
     + queries::QueriesModule
 {
+    /// EsdtSafe and MultiTransferEsdt are expected to be deployed and configured separately,
+    /// and then having their ownership changed to this Multisig SC.
     #[init]
     fn init(
         &self,
@@ -83,6 +83,9 @@ pub trait Multisig:
             .set(&multi_transfer_sc_address);
     }
 
+    /// Distributes the accumulated fees to the given addresses.
+    /// Expected arguments are pairs of (address, percentage),
+    /// where percentages must add up to the PERCENTAGE_TOTAL constant
     #[only_owner]
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
@@ -119,6 +122,8 @@ pub trait Multisig:
             .execute_on_dest_context();
     }
 
+    /// Board members have to stake a certain amount of EGLD
+    /// before being allowed to sign actions
     #[payable("EGLD")]
     #[endpoint]
     fn stake(&self, #[payment] payment: BigUint) {
@@ -157,6 +162,11 @@ pub trait Multisig:
 
     // ESDT Safe SC calls
 
+    /// After a batch is processed on the Ethereum side,
+    /// the EsdtSafe expects a list of statuses of said transactions (success or failure).
+    /// 
+    /// This endpoint proposes an action to set the statuses to a certain list of values.
+    /// Nothing is changed in the EsdtSafe contract until the action is signed and executed.
     #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
@@ -204,6 +214,9 @@ pub trait Multisig:
 
     // Multi-transfer ESDT SC calls
 
+    /// Proposes a batch of Ethereum -> Elrond transfers.
+    /// Transactions have to be separated by fields, in the following order:
+    /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce
     #[endpoint(proposeMultiTransferEsdtBatch)]
     fn propose_multi_transfer_esdt_batch(
         &self,
@@ -238,6 +251,12 @@ pub trait Multisig:
         action_id
     }
 
+    /// Failed Ethereum -> Elrond transactions are saved in the MultiTransfer SC
+    /// as "refund transactions", and stored in batches, using the same mechanism as EsdtSafe.
+    ///
+    /// This function moves the first refund batch into the EsdtSafe SC,
+    /// converting the transactions into Elrond -> Ethereum transactions
+    /// and adding them into EsdtSafe batches
     #[only_owner]
     #[endpoint(moveRefundBatchToSafe)]
     fn move_refund_batch_to_safe(&self) {

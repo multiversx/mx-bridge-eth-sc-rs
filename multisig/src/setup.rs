@@ -41,6 +41,8 @@ pub trait SetupModule:
         );
     }
 
+    /// Pauses the contract.
+    /// No actions may be proposed or executed while paused.
     #[only_owner]
     #[endpoint]
     fn pause(&self) {
@@ -71,6 +73,12 @@ pub trait SetupModule:
         );
     }
 
+    /// Cuts a fixed amount from a board member's stake.
+    /// This should be used only in cases where the board member
+    /// is being actively malicious.
+    ///
+    /// After stake is cut, the board member would have to stake again
+    /// to be able to sign actions.
     #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: ManagedAddress) {
@@ -97,6 +105,7 @@ pub trait SetupModule:
         self.quorum().set(&new_quorum);
     }
 
+    /// Maps an ESDT token to an ERC20 address. Used by relayers.
     #[only_owner]
     #[endpoint(addMapping)]
     fn add_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
@@ -147,6 +156,12 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Sets the gas limit being used for Ethereum transactions
+    /// This is used in the EsdtSafe contract to determine the fee amount
+    ///
+    /// fee_amount = eth_gas_limit * price_per_gas_unit
+    ///
+    /// where price_per_gas_unit is queried from the aggregator (fee estimator SC)
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
     fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
@@ -155,6 +170,8 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Default price being used if the aggregator lacks a mapping for this token
+    /// or the aggregator address is not set
     #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
@@ -163,6 +180,7 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Token ticker being used when querying the aggregator for GWEI prices
     #[only_owner]
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
@@ -177,10 +195,10 @@ pub trait SetupModule:
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        #[var_args] opt_default_value_in_dollars: OptionalValue<BigUint>,
+        #[var_args] opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.get_esdt_safe_proxy_instance()
-            .add_token_to_whitelist(token_id, ticker, opt_default_value_in_dollars)
+            .add_token_to_whitelist(token_id, ticker, opt_default_price_per_gas_unit)
             .execute_on_dest_context();
     }
 
@@ -192,6 +210,9 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Sets maximum batch size for the EsdtSafe SC.
+    /// If a batch reaches this amount of transactions, it is considered full,
+    /// and a new incoming transaction will be put into a new batch.
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
     fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
@@ -200,6 +221,9 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Sets the maximum block duration in which an EsdtSafe batch accepts transactions
+    /// For a batch to be considered "full", it has to either reach `maxTxBatchSize` transactions,
+    /// or have txBatchBlockDuration blocks pass since the first tx was added in the batch 
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
@@ -208,6 +232,8 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Sets the maximum bridged amount for the token for the Elrond -> Ethereum direction.
+    /// Any attempt to transfer over this amount will be rejected.
     #[only_owner]
     #[endpoint(esdtSafeSetMaxBridgedAmountForToken)]
     fn esdt_safe_set_max_bridged_amount_for_token(
@@ -220,6 +246,7 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Same as the function above, but for Ethereum -> Elrond transactions.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxBridgedAmountForToken)]
     fn multi_transfer_esdt_set_max_bridged_amount_for_token(
@@ -232,6 +259,8 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Any failed Ethereum -> Elrond transactions are added into so-called "refund batches"
+    /// This configures the size of a batch.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]
     fn multi_transfer_esdt_set_max_refund_tx_batch_size(&self, new_max_tx_batch_size: usize) {
@@ -240,6 +269,8 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Max block duration for refund batches. Default is "infinite" (u64::MAX)
+    /// and only max batch size matters
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxRefundTxBatchBlockDuration)]
     fn multi_transfer_esdt_set_max_refund_tx_batch_block_duration(
@@ -251,6 +282,13 @@ pub trait SetupModule:
             .execute_on_dest_context();
     }
 
+    /// Sets the wrapping contract address.
+    /// This contract is used to map multiple tokens to a universal one.
+    /// Useful in cases where a single token (USDC for example)
+    /// is being transferred from multiple chains.
+    /// 
+    /// They will all have different token IDs, but can be swapped 1:1 in the wrapping SC.
+    /// The wrapping is done automatically, so the user only receives the universal token.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetWrappingContractAddress)]
     fn multi_transfer_esdt_set_wrapping_contract_address(

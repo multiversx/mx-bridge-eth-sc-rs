@@ -19,6 +19,8 @@ pub trait FeeEstimatorModule {
         self.eth_tx_gas_limit().set(&new_limit);
     }
 
+    /// Default price being used if the aggregator lacks a mapping for this token
+    /// or the aggregator address is not set
     #[only_owner]
     #[endpoint(setDefaultPricePerGasUnit)]
     fn set_default_price_per_gas_unit(
@@ -30,12 +32,14 @@ pub trait FeeEstimatorModule {
             .set(&default_price_per_gas_unit);
     }
 
+    /// Token ticker being used when querying the aggregator for GWEI prices
     #[only_owner]
     #[endpoint(setTokenTicker)]
     fn set_token_ticker(&self, token_id: TokenIdentifier, ticker: ManagedBuffer) {
         self.token_ticker(&token_id).set(&ticker);
     }
 
+    /// Returns the fee for the given token ID (the fee amount is in the given token)
     #[view(calculateRequiredFee)]
     fn calculate_required_fee(&self, token_id: &TokenIdentifier) -> BigUint {
         let price_per_gas_unit = self.get_price_per_gas_unit(token_id);
