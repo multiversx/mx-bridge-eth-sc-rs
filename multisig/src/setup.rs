@@ -1,8 +1,10 @@
 elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
 
 use fee_estimator_module::ProxyTrait as _;
+use max_bridged_amount_module::ProxyTrait as _;
 use multi_transfer_esdt::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
@@ -203,6 +205,30 @@ pub trait SetupModule:
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
         self.get_esdt_safe_proxy_instance()
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(esdtSafeSetMaxBridgedAmountForToken)]
+    fn esdt_safe_set_max_bridged_amount_for_token(
+        &self,
+        token_id: TokenIdentifier,
+        max_amount: BigUint,
+    ) {
+        self.get_esdt_safe_proxy_instance()
+            .set_max_bridged_amount(token_id, max_amount)
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(multiTransferEsdtSetMaxBridgedAmountForToken)]
+    fn multi_transfer_esdt_set_max_bridged_amount_for_token(
+        &self,
+        token_id: TokenIdentifier,
+        max_amount: BigUint,
+    ) {
+        self.get_multi_transfer_esdt_proxy_instance()
+            .set_max_bridged_amount(token_id, max_amount)
             .execute_on_dest_context();
     }
 
