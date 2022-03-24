@@ -11,7 +11,7 @@ pub trait MaxBridgedAmountModule {
     }
 
     fn is_above_max_amount(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
-        let max_amount = self.max_bridged_amount(&token_id).get();
+        let max_amount = self.max_bridged_amount(token_id).get();
         if max_amount > 0 {
             amount > &max_amount
         } else {
