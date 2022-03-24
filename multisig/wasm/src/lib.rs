@@ -18,6 +18,7 @@ elrond_wasm_node::wasm_endpoints! {
         distributeFeesFromChildContracts
         esdtSafeAddTokenToWhitelist
         esdtSafeRemoveTokenFromWhitelist
+        esdtSafeSetMaxBridgedAmountForToken
         esdtSafeSetMaxTxBatchBlockDuration
         esdtSafeSetMaxTxBatchSize
         getActionData
@@ -44,6 +45,7 @@ elrond_wasm_node::wasm_endpoints! {
         getTokenIdForErc20Address
         isPaused
         moveRefundBatchToSafe
+        multiTransferEsdtSetMaxBridgedAmountForToken
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration
         multiTransferEsdtSetMaxRefundTxBatchSize
         multiTransferEsdtSetWrappingContractAddress

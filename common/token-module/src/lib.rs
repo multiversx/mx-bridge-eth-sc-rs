@@ -4,7 +4,7 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-pub const PERCENTAGE_TOTAL: u64 = 10_000; // precision of 2 decimals
+pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 
 #[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
@@ -16,6 +16,9 @@ pub struct AddressPercentagePair<M: ManagedTypeApi> {
 pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     // endpoints - owner-only
 
+    /// Distributes the accumulated fees to the given addresses.
+    /// Expected arguments are pairs of (address, percentage),
+    /// where percentages must add up to the PERCENTAGE_TOTAL constant
     #[only_owner]
     #[endpoint(distributeFees)]
     fn distribute_fees(

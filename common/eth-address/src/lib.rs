@@ -9,6 +9,7 @@ use elrond_wasm::{
 
 pub const ETH_ADDRESS_LEN: usize = 20;
 
+/// Wrapper over a 20-byte array
 #[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem)]
 pub struct EthAddress<M: ManagedTypeApi> {
     pub raw_addr: ManagedByteArray<M, ETH_ADDRESS_LEN>,
