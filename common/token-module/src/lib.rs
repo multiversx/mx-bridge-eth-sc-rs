@@ -49,10 +49,12 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 let amount_to_send =
                     &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
 
-                remaining_fees -= &amount_to_send;
+                if amount_to_send > 0 {
+                    remaining_fees -= &amount_to_send;
 
-                self.send()
-                    .direct(&pair.address, &token_id, 0, &amount_to_send, &[]);
+                    self.send()
+                        .direct(&pair.address, &token_id, 0, &amount_to_send, &[]);
+                }
             }
 
             self.accumulated_transaction_fees(&token_id)
