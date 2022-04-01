@@ -130,6 +130,10 @@ pub trait TxBatchModule {
         &self,
         transactions: &ManagedVec<Transaction<Self::Api>>,
     ) -> ManagedVec<u64> {
+        if transactions.is_empty() {
+            return ManagedVec::new();
+        }
+
         let mut last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id).get();
         let mut batch_ids = ManagedVec::new();
