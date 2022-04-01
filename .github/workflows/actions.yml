@@ -1,4 +1,4 @@
-name: Builds and tests
+name: CI
 
 on:
   push:
@@ -7,54 +7,12 @@ on:
   pull_request:
 
 jobs:
-  wasm_test:
-    name: Wasm tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          default: true
-          toolchain: nightly
-      - name: Install erdpy and vmtools
-        run : |
-          source .github/workflows/env
-          pip3 install erdpy
-          mkdir $HOME/elrondsdk
-          erdpy config set dependencies.vmtools.tag v1.4.43
-          erdpy deps install vmtools
-          erdpy deps install nodejs
-          erdpy deps install wasm-opt
-      - name: Build the wasm contracts
-        run: |
-          source .github/workflows/env
-          ./build-wasm.sh
-      - name: Run Vm tests
-        run: |
-          source .github/workflows/env
-          cargo test --features elrond-wasm-debug/mandos-go-tests
-  rust_test:
-    name: Rust tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          default: true
-          toolchain: nightly
-      - name: Run rust tests
-        run: cargo test
-  clippy_check:
-    name: Clippy linter check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-            toolchain: nightly
-            components: clippy
-            default: true
-      - uses: actions-rs/clippy-check@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args:
+  contracts:
+    name: Contracts
+    uses: ElrondNetwork/elrond-actions/.github/workflows/contracts.yml@v1
+    with:
+      rust-toolchain: nightly-2022-03-01
+      vmtools-version: v1.4.43
+      extra-build-args: --ignore-eei-checks
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
