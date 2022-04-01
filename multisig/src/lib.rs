@@ -10,7 +10,7 @@ mod user_role;
 mod util;
 
 use action::Action;
-use token_module::{AddressPercentagePair, PERCENTAGE_TOTAL};
+use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
 use transaction::esdt_safe_batch::TxBatchSplitInFields;
 use transaction::transaction_status::TransactionStatus;
 use transaction::*;
@@ -95,7 +95,7 @@ pub trait Multisig:
         >,
     ) {
         let mut args = ManagedVec::new();
-        let mut total_percentage = 0;
+        let mut total_percentage = 0u64;
 
         for pair in dest_address_percentage_pairs {
             let (dest_address, percentage) = pair.into_tuple();
@@ -105,7 +105,7 @@ pub trait Multisig:
                 "Cannot transfer to smart contract dest_address"
             );
 
-            total_percentage += percentage;
+            total_percentage += percentage as u64;
             args.push(AddressPercentagePair {
                 address: dest_address,
                 percentage,
@@ -113,8 +113,8 @@ pub trait Multisig:
         }
 
         require!(
-            total_percentage == PERCENTAGE_TOTAL,
-            "Percentages do not add up to 100%"
+            total_percentage == PERCENTAGE_TOTAL as u64,
+            INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
 
         self.get_esdt_safe_proxy_instance()
@@ -164,7 +164,7 @@ pub trait Multisig:
 
     /// After a batch is processed on the Ethereum side,
     /// the EsdtSafe expects a list of statuses of said transactions (success or failure).
-    /// 
+    ///
     /// This endpoint proposes an action to set the statuses to a certain list of values.
     /// Nothing is changed in the EsdtSafe contract until the action is signed and executed.
     #[endpoint(proposeEsdtSafeSetCurrentTransactionBatchStatus)]
