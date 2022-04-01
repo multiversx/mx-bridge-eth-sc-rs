@@ -5,6 +5,7 @@ elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
+pub static INVALID_PERCENTAGE_SUM_OVER_ERR_MSG: &[u8] = b"Percentages do not add up to 100%";
 
 #[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
@@ -26,6 +27,15 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         address_percentage_pairs: ManagedVec<AddressPercentagePair<Self::Api>>,
     ) {
         let percentage_total = BigUint::from(PERCENTAGE_TOTAL);
+
+        let mut percentage_sum = 0u64;
+        for pair in &address_percentage_pairs {
+            percentage_sum += pair.percentage as u64;
+        }
+        require!(
+            percentage_sum == PERCENTAGE_TOTAL as u64,
+            INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
+        );
 
         for token_id in self.token_whitelist().iter() {
             let accumulated_fees = self.accumulated_transaction_fees(&token_id).get();
