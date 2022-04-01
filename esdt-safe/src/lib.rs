@@ -20,10 +20,10 @@ pub trait EsdtSafe:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
 {
-    /// fee_estimator_contract_address - The address of a Price Aggregator contract, 
+    /// fee_estimator_contract_address - The address of a Price Aggregator contract,
     /// which will get the price of token A in token B
-    /// 
-    /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side. 
+    ///
+    /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side.
     /// Will be used to compute the fees for the transfer
     #[init]
     fn init(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
@@ -46,7 +46,7 @@ pub trait EsdtSafe:
             .set(gwei_token_id.as_managed_buffer());
     }
 
-    /// Sets the statuses for the transactions, after they were executed on the Ethereum side. 
+    /// Sets the statuses for the transactions, after they were executed on the Ethereum side.
     ///
     /// Only TransactionStatus::Executed (3) and TransactionStatus::Rejected (4) values are allowed.
     /// Number of provided statuses must be equal to number of transactions in the batch.
@@ -102,7 +102,7 @@ pub trait EsdtSafe:
 
     /// Converts failed Ethereum -> Elrond transactions to Elrond -> Ethereum transaction.
     /// This is done every now and then to refund the tokens.
-    /// 
+    ///
     /// As with normal Elrond -> Ethereum transactions, a part of the tokens will be
     /// subtracted to pay for the fees
     #[only_owner]
@@ -160,7 +160,7 @@ pub trait EsdtSafe:
     // endpoints
 
     /// Create an Elrond -> Ethereum transaction. Only fungible tokens are accepted.
-    /// 
+    ///
     /// Every transfer will have a part of the tokens subtracted as fees.
     /// The fee amount depends on the global eth_tx_gas_limit
     /// and the current GWEI price, respective to the bridged token
@@ -249,14 +249,6 @@ pub trait EsdtSafe:
     fn mark_refund(&self, to: &ManagedAddress, token_id: &TokenIdentifier, amount: &BigUint) {
         self.refund_amount(to, token_id)
             .update(|refund| *refund += amount);
-    }
-
-    fn data_or_empty(&self, to: &ManagedAddress, data: &'static [u8]) -> &[u8] {
-        if self.blockchain().is_smart_contract(to) {
-            &[]
-        } else {
-            data
-        }
     }
 
     // events
