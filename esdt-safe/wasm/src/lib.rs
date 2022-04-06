@@ -13,6 +13,7 @@ elrond_wasm_node::wasm_endpoints! {
         claimRefund
         createTransaction
         distributeFees
+        getAccumulatedTransactionFees
         getAllKnownTokens
         getBatch
         getBatchStatus
