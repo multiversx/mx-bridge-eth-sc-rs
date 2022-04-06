@@ -117,6 +117,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
 
+    #[view(getAccumulatedTransactionFees)]
     #[storage_mapper("accumulatedTransactionFees")]
     fn accumulated_transaction_fees(
         &self,
