@@ -7,6 +7,7 @@
 elrond_wasm_node::wasm_endpoints! {
     multi_transfer_esdt
     (
+        amIFrozen
         batchTransferEsdtToken
         getAndClearFirstRefundBatch
         getBatch

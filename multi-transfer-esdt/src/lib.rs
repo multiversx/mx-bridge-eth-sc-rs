@@ -38,6 +38,9 @@ pub trait MultiTransferEsdt:
         let mut valid_dest_addresses_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
+        let own_sc_address = self.blockchain().get_sc_address();
+        let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+
         for eth_tx in transfers {
             let mut must_refund = false;
             if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
@@ -48,6 +51,9 @@ pub trait MultiTransferEsdt:
                 must_refund = true;
             } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
                 self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
+                must_refund = true;
+            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
+                self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             }
 
@@ -129,6 +135,35 @@ pub trait MultiTransferEsdt:
         roles.has_role(role)
     }
 
+    fn is_account_same_shard_frozen(
+        &self,
+        sc_shard: u32,
+        dest_address: &ManagedAddress,
+        token_id: &TokenIdentifier,
+    ) -> bool {
+        let dest_shard = self.blockchain().get_shard_of_address(dest_address);
+        if sc_shard != dest_shard {
+            return false;
+        }
+
+        let token_data = self
+            .blockchain()
+            .get_esdt_token_data(dest_address, token_id, 0);
+        token_data.frozen
+    }
+
+    #[endpoint(amIFrozen)]
+    fn am_i_frozen(&self, token_id: TokenIdentifier) -> ManagedBuffer {
+        let caller = self.blockchain().get_caller();
+        let token_data = self.blockchain().get_esdt_token_data(&caller, &token_id, 0);
+
+        if token_data.frozen {
+            b"You are frozen, brrr".into()
+        } else {
+            b"You are warm!".into()
+        }
+    }
+
     fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
         if self.wrapping_contract_address().is_empty() {
             return payments;
@@ -179,6 +214,13 @@ pub trait MultiTransferEsdt:
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("transferFailedFrozenDestinationAccount")]
+    fn transfer_failed_frozen_destination_account(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+    );
 
     #[event("transferOverMaxAmount")]
     fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
