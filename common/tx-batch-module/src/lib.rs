@@ -1,12 +1,12 @@
 #![no_std]
 
-use transaction::{esdt_safe_batch::TxBatchSplitInFields, Transaction, MIN_BLOCKS_FOR_FINALITY};
-
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
 pub mod batch_status;
+
 pub use batch_status::BatchStatus;
+use transaction::{esdt_safe_batch::TxBatchSplitInFields, Transaction, MIN_BLOCKS_FOR_FINALITY};
 
 #[elrond_wasm::module]
 pub trait TxBatchModule {
@@ -42,7 +42,9 @@ pub trait TxBatchModule {
         let first_batch_id = self.first_batch_id().get();
         let first_batch = self.pending_batches(first_batch_id).get();
 
-        if self.is_batch_full(&first_batch) && self.is_batch_final(&first_batch) {
+        if self.is_batch_full(&first_batch, first_batch_id, first_batch_id)
+            && self.is_batch_final(&first_batch)
+        {
             let mut result_vec = MultiValueEncoded::new();
             for tx in first_batch.iter() {
                 result_vec.push(tx.into_multiresult());
@@ -87,7 +89,7 @@ pub trait TxBatchModule {
             return BatchStatus::Empty;
         }
 
-        if self.is_batch_full(&tx_batch) {
+        if self.is_batch_full(&tx_batch, batch_id, first_batch_id) {
             if batch_id == first_batch_id {
                 return BatchStatus::WaitingForSignatures;
             } else {
@@ -112,10 +114,11 @@ pub trait TxBatchModule {
     // private
 
     fn add_to_batch(&self, transaction: Transaction<Self::Api>) -> u64 {
+        let first_batch_id = self.first_batch_id().get();
         let last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id).get();
 
-        if self.is_batch_full(&last_batch) {
+        if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
             self.create_new_batch(transaction)
         } else {
             last_batch.push(transaction);
@@ -134,16 +137,16 @@ pub trait TxBatchModule {
             return ManagedVec::new();
         }
 
+        let first_batch_id = self.first_batch_id().get();
         let mut last_batch_id = self.last_batch_id().get();
         let mut last_batch = self.pending_batches(last_batch_id).get();
         let mut batch_ids = ManagedVec::new();
 
         for tx in transactions {
-            if self.is_batch_full(&last_batch) {
+            if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
                 self.pending_batches(last_batch_id).set(&last_batch);
 
                 last_batch.overwrite_with_single_item(tx.clone());
-
                 last_batch_id = self.create_new_batch(tx);
             } else {
                 last_batch.push(tx);
@@ -170,7 +173,12 @@ pub trait TxBatchModule {
         new_batch_id
     }
 
-    fn is_batch_full(&self, tx_batch: &ManagedVec<Transaction<Self::Api>>) -> bool {
+    fn is_batch_full(
+        &self,
+        tx_batch: &ManagedVec<Transaction<Self::Api>>,
+        batch_id: u64,
+        first_batch_id: u64,
+    ) -> bool {
         if tx_batch.is_empty() {
             return false;
         }
@@ -178,6 +186,12 @@ pub trait TxBatchModule {
         let max_batch_size = self.max_tx_batch_size().get();
         if tx_batch.len() == max_batch_size {
             return true;
+        }
+
+        // if this is not the first batch, we ignore the timestamp checks
+        // we only check for max len
+        if batch_id > first_batch_id {
+            return false;
         }
 
         let current_block_nonce = self.blockchain().get_block_nonce();
