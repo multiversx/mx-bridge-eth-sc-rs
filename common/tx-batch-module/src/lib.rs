@@ -6,7 +6,7 @@ elrond_wasm::derive_imports!();
 pub mod batch_status;
 
 pub use batch_status::BatchStatus;
-use transaction::{esdt_safe_batch::TxBatchSplitInFields, Transaction, MIN_BLOCKS_FOR_FINALITY};
+use transaction::{Transaction, TxBatchSplitInFields, MIN_BLOCKS_FOR_FINALITY};
 
 #[elrond_wasm::module]
 pub trait TxBatchModule {

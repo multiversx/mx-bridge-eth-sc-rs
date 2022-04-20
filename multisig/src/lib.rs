@@ -11,8 +11,8 @@ mod util;
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
-use transaction::esdt_safe_batch::TxBatchSplitInFields;
 use transaction::transaction_status::TransactionStatus;
+use transaction::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 

@@ -1,9 +1,7 @@
 elrond_wasm::imports!();
 
 use crate::{action::Action, user_role::UserRole};
-use transaction::{
-    esdt_safe_batch::TxBatchSplitInFields, transaction_status::TransactionStatus, EthTxAsMultiValue,
-};
+use transaction::{transaction_status::TransactionStatus, EthTxAsMultiValue, TxBatchSplitInFields};
 
 use tx_batch_module::ProxyTrait as _;
 
@@ -11,10 +9,10 @@ use tx_batch_module::ProxyTrait as _;
 #[elrond_wasm::module]
 pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule {
     /// Returns the current EsdtSafe batch.
-    /// 
+    ///
     /// First result is the batch ID, then pairs of 6 results, representing transactions
     /// split by fields:
-    /// 
+    ///
     /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token ID, Amount
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {

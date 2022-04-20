@@ -2,9 +2,7 @@
 
 elrond_wasm::imports!();
 
-use transaction::{
-    esdt_safe_batch::TxBatchSplitInFields, EthTransaction, PaymentsVec, Transaction,
-};
+use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
