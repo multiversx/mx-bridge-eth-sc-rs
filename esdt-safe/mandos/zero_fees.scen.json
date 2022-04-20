@@ -98,7 +98,7 @@
                         }
                     },
                     "storage": {
-                        "str:pendingBatches|u64:1": {
+                        "str:pendingBatches|u64:1|str:.item|u32:1": {
                             "1-block_nonce": "u64:0",
                             "2-nonce": "u64:1",
                             "3-from": "u32:32|address:user1",
@@ -109,9 +109,7 @@
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
@@ -121,4 +119,3 @@
         }
     ]
 }
-
