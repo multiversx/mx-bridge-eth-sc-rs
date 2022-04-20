@@ -132,9 +132,6 @@ pub trait EsdtSafe:
                 continue;
             }
 
-            self.accumulated_transaction_fees(&refund_tx.token_identifier)
-                .update(|fees| *fees += &required_fee);
-
             let actual_bridged_amount = refund_tx.amount - required_fee;
             let tx_nonce = self.get_and_save_next_tx_id();
 
