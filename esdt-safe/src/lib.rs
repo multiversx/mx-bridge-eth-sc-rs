@@ -63,7 +63,7 @@ pub trait EsdtSafe:
             "Batches must be processed in order"
         );
 
-        let tx_batch = self.pending_batches(batch_id).get();
+        let mut tx_batch = self.pending_batches(batch_id);
         require!(
             tx_batch.len() == tx_statuses.len(),
             "Invalid number of statuses provided"
@@ -97,7 +97,7 @@ pub trait EsdtSafe:
             self.set_status_event(batch_id, tx.nonce, tx_status);
         }
 
-        self.clear_first_batch();
+        self.clear_first_batch(&mut tx_batch);
     }
 
     /// Converts failed Ethereum -> Elrond transactions to Elrond -> Ethereum transaction.

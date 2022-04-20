@@ -39,7 +39,7 @@ pub struct EthTransaction<M: ManagedTypeApi> {
 pub type EthTxAsMultiValue<M> =
     MultiValue5<EthAddress<M>, ManagedAddress<M>, TokenIdentifier<M>, BigUint<M>, TxNonce>;
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
