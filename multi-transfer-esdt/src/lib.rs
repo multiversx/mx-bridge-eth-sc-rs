@@ -2,9 +2,7 @@
 
 elrond_wasm::imports!();
 
-use transaction::{
-    esdt_safe_batch::TxBatchSplitInFields, EthTransaction, PaymentsVec, Transaction,
-};
+use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -84,7 +82,10 @@ pub trait MultiTransferEsdt:
     fn get_and_clear_first_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
         let opt_current_batch = self.get_first_batch_any_status();
         if matches!(opt_current_batch, OptionalValue::Some(_)) {
-            self.clear_first_batch();
+            let first_batch_id = self.first_batch_id().get();
+            let mut first_batch = self.pending_batches(first_batch_id);
+
+            self.clear_first_batch(&mut first_batch);
         }
 
         opt_current_batch

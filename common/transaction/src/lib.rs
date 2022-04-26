@@ -6,7 +6,6 @@ elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
 
-pub mod esdt_safe_batch;
 pub mod transaction_status;
 
 // revert protection
@@ -26,6 +25,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
     BigUint<M>,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct EthTransaction<M: ManagedTypeApi> {
@@ -39,7 +39,7 @@ pub struct EthTransaction<M: ManagedTypeApi> {
 pub type EthTxAsMultiValue<M> =
     MultiValue5<EthAddress<M>, ManagedAddress<M>, TokenIdentifier<M>, BigUint<M>, TxNonce>;
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
