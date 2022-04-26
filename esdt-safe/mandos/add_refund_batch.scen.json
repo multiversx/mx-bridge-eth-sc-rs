@@ -106,7 +106,9 @@
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "6,000,000",
+
+                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "3,000,000",
+
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"

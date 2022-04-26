@@ -307,8 +307,11 @@
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
-                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
+
+                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
+
+
                         "+": ""
                     },
                     "code": "*"
