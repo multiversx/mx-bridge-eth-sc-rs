@@ -4,7 +4,9 @@ use crate::action::Action;
 use crate::user_role::UserRole;
 
 #[elrond_wasm::module]
-pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::StorageModule {
+pub trait MultisigGeneralModule:
+    crate::util::UtilModule + crate::storage::StorageModule + elrond_wasm_modules::pause::PauseModule
+{
     /// Used by board members to sign actions.
     #[endpoint]
     fn sign(&self, action_id: usize) {
@@ -31,10 +33,7 @@ pub trait MultisigGeneralModule: crate::util::UtilModule + crate::storage::Stora
             "only board members can propose"
         );
 
-        require!(
-            !self.pause_status().get(),
-            "No actions may be proposed while paused"
-        );
+        require!(self.not_paused(), "No actions may be proposed while paused");
 
         let action_id = self.action_mapper().push(&action);
         if self.has_enough_stake(&caller_address) {

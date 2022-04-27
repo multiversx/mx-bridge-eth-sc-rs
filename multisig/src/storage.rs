@@ -54,10 +54,6 @@ pub trait StorageModule {
     #[storage_mapper("slashedTokensAmount")]
     fn slashed_tokens_amount(&self) -> SingleValueMapper<BigUint>;
 
-    #[view(isPaused)]
-    #[storage_mapper("pauseStatus")]
-    fn pause_status(&self) -> SingleValueMapper<bool>;
-
     #[view(getLastExecutedEthBatchId)]
     #[storage_mapper("lastExecutedEthBatchId")]
     fn last_executed_eth_batch_id(&self) -> SingleValueMapper<u64>;

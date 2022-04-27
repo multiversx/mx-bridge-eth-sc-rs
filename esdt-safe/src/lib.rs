@@ -19,6 +19,7 @@ pub trait EsdtSafe:
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
+    + elrond_wasm_modules::pause::PauseModule
 {
     /// fee_estimator_contract_address - The address of a Price Aggregator contract,
     /// which will get the price of token A in token B
@@ -44,6 +45,8 @@ pub trait EsdtSafe:
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
         self.token_ticker(&gwei_token_id)
             .set(gwei_token_id.as_managed_buffer());
+
+        self.set_paused(true);
     }
 
     /// Sets the statuses for the transactions, after they were executed on the Ethereum side.

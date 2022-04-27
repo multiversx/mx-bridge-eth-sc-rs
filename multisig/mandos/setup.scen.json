@@ -176,7 +176,9 @@
                         "str:user_address_to_id|address:relayer2": "2",
                         "str:user_count": "2",
                         "str:user_id_to_address|u32:1": "address:relayer1",
-                        "str:user_id_to_address|u32:2": "address:relayer2"
+                        "str:user_id_to_address|u32:2": "address:relayer2",
+
+                        "str:pause_module:paused": "true"
                     },
                     "code": "file:../output/multisig.wasm"
                 },
@@ -294,6 +296,25 @@
                     "str:EGLD-123456",
                     "str:ETH-123456"
                 ]
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "unpause multisig",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:multisig",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "out": [],
+                "message": "",
+                "gas": "*",
+                "refund": "*"
             }
         }
     ]

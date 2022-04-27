@@ -3,6 +3,7 @@ elrond_wasm::derive_imports!();
 
 use eth_address::EthAddress;
 
+use elrond_wasm_modules::pause::ProxyTrait as _;
 use fee_estimator_module::ProxyTrait as _;
 use max_bridged_amount_module::ProxyTrait as _;
 use multi_transfer_esdt::ProxyTrait as _;
@@ -14,6 +15,7 @@ pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
     + crate::storage::StorageModule
     + crate::util::UtilModule
+    + elrond_wasm_modules::pause::PauseModule
 {
     #[only_owner]
     #[endpoint(upgradeChildContractFromSource)]
@@ -39,20 +41,6 @@ pub trait SetupModule:
             metadata,
             &init_args.to_arg_buffer(),
         );
-    }
-
-    /// Pauses the contract.
-    /// No actions may be proposed or executed while paused.
-    #[only_owner]
-    #[endpoint]
-    fn pause(&self) {
-        self.pause_status().set(&true);
-    }
-
-    #[only_owner]
-    #[endpoint]
-    fn unpause(&self) {
-        self.pause_status().set(&false);
     }
 
     #[only_owner]
@@ -149,6 +137,22 @@ pub trait SetupModule:
     }
 
     #[only_owner]
+    #[endpoint(pauseEsdtSafe)]
+    fn pause_esdt_safe(&self) {
+        self.get_esdt_safe_proxy_instance()
+            .pause_endpoint()
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseEsdtSafe)]
+    fn unpause_esdt_safe(&self) {
+        self.get_esdt_safe_proxy_instance()
+            .unpause_endpoint()
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
         self.get_esdt_safe_proxy_instance()
@@ -223,7 +227,7 @@ pub trait SetupModule:
 
     /// Sets the maximum block duration in which an EsdtSafe batch accepts transactions
     /// For a batch to be considered "full", it has to either reach `maxTxBatchSize` transactions,
-    /// or have txBatchBlockDuration blocks pass since the first tx was added in the batch 
+    /// or have txBatchBlockDuration blocks pass since the first tx was added in the batch
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
@@ -286,7 +290,7 @@ pub trait SetupModule:
     /// This contract is used to map multiple tokens to a universal one.
     /// Useful in cases where a single token (USDC for example)
     /// is being transferred from multiple chains.
-    /// 
+    ///
     /// They will all have different token IDs, but can be swapped 1:1 in the wrapping SC.
     /// The wrapping is done automatically, so the user only receives the universal token.
     #[only_owner]
