@@ -60,8 +60,6 @@ pub trait EsdtSafe:
         batch_id: u64,
         #[var_args] tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
-        require!(self.not_paused(), "Cannot set status while paused");
-
         let first_batch_id = self.first_batch_id().get();
         require!(
             batch_id == first_batch_id,
