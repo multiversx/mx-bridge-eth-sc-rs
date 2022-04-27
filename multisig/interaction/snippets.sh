@@ -18,6 +18,7 @@
 # 16. addMapping
 # 17. addTokenToWhitelist
 # 18. stake # foreach relayer
+# 19. unpause Multisig & Safe
 
 
 PROJECT="../"
