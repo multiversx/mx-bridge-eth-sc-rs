@@ -174,6 +174,8 @@ pub trait EsdtSafe:
         #[payment_amount] payment_amount: BigUint,
         to: EthAddress<Self::Api>,
     ) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
         require!(
             self.call_value().esdt_token_nonce() == 0,
             "Only fungible ESDT tokens accepted"
