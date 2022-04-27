@@ -32,6 +32,7 @@ pub trait Multisig:
     + storage::StorageModule
     + util::UtilModule
     + queries::QueriesModule
+    + elrond_wasm_modules::pause::PauseModule
 {
     /// EsdtSafe and MultiTransferEsdt are expected to be deployed and configured separately,
     /// and then having their ownership changed to this Multisig SC.
@@ -81,6 +82,8 @@ pub trait Multisig:
         );
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_sc_address);
+
+        self.set_paused(true);
     }
 
     /// Distributes the accumulated fees to the given addresses.
@@ -298,10 +301,7 @@ pub trait Multisig:
             self.quorum_reached(action_id),
             "quorum has not been reached"
         );
-        require!(
-            !self.pause_status().get(),
-            "No actions may be executed while paused"
-        );
+        require!(self.not_paused(), "No actions may be executed while paused");
 
         self.perform_action(action_id);
     }

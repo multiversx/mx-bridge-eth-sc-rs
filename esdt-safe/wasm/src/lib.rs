@@ -26,6 +26,8 @@ elrond_wasm_node::wasm_endpoints! {
         getLastBatchId
         getMaxBridgedAmount
         getRefundAmounts
+        isPaused
+        pause
         removeTokenFromWhitelist
         setDefaultPricePerGasUnit
         setEthTxGasLimit
@@ -35,6 +37,7 @@ elrond_wasm_node::wasm_endpoints! {
         setMaxTxBatchSize
         setTokenTicker
         setTransactionBatchStatus
+        unpause
     )
 }
 

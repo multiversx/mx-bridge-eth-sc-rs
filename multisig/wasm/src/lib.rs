@@ -50,6 +50,7 @@ elrond_wasm_node::wasm_endpoints! {
         multiTransferEsdtSetMaxRefundTxBatchSize
         multiTransferEsdtSetWrappingContractAddress
         pause
+        pauseEsdtSafe
         performAction
         proposeEsdtSafeSetCurrentTransactionBatchStatus
         proposeMultiTransferEsdtBatch
@@ -60,6 +61,7 @@ elrond_wasm_node::wasm_endpoints! {
         slashBoardMember
         stake
         unpause
+        unpauseEsdtSafe
         unstake
         upgradeChildContractFromSource
         userRole

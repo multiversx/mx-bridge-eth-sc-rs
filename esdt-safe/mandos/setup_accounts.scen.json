@@ -97,11 +97,31 @@
                         "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
                         "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:pause_module:paused": "true",
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
                 },
                 "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "unpause",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "out": [],
+                "message": "",
+                "gas": "*",
+                "refund": "*"
             }
         },
         {
