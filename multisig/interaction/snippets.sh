@@ -42,8 +42,8 @@ RELAYER_WALLET9="./walletsRelay/walletKey9.pem"
 
 ADDRESS=$(erdpy data load --key=address-testnet-multisig)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
-PROXY=https://devnet-gateway.elrond.com
-CHAIN_ID=D
+PROXY=https://testnet-gateway.elrond.com
+CHAIN_ID=T
 
 RELAYER_REQUIRED_STAKE=0x00
 ESDT_ISSUE_COST=0xB1A2BC2EC50000 # 0.05 eGLD
