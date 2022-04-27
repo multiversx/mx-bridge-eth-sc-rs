@@ -52,27 +52,27 @@ ESDT_ISSUE_COST_DECIMAL=50000000000000000
 # Addresses in Hex
 BOB_ADDRESS=0x8049d639e5a6980d1cd2392abcce41029cda74a1563523a202f09641cc2618f8 #erd1spyavw0956vq68xj8y4tenjpq2wd5a9p2c6j8gsz7ztyrnpxrruqzu66jx
 
-RELAYER_ADDR_0=0xb329c8f455de725bceabb0babde4149cecb93271b5e65d0c2bfbd69b076d3ce1 # erd1kv5u3az4mee9hn4tkzatmeq5nnktjvn3khn96rptl0tfkpmd8nssy33j7h
-RELAYER_ADDR_1=0x5448490305368f25bc50621365d8f61635d5cffb40c0926fe04322e23519a4e1 # erd123yyjqc9x68jt0zsvgfktk8kzc6atnlmgrqfymlqgv3wydge5nsszgrh43
-RELAYER_ADDR_2=0x8ee4f54b4a921b4a2edfbac7a13c595fd24994df41ed4c588a76b99029aef8e1 # erd13mj02j62jgd55tklhtr6z0zetlfyn9xlg8k5cky2w6ueq2dwlrssyal2h0
-RELAYER_ADDR_3=0xb1688f415a1f8f2edff0511ecd46c01542cf276bca4fda9e41a2d771771953e1 # erd1k95g7s26r78jahls2y0v63kqz4pv7fmtef8a48jp5tthzace20sskjhyhk
-RELAYER_ADDR_4=0x3844f480db43bc3979657c1b0dd8cc2e65c8fa65de52e99626c63407076b59e1 # erd18pz0fqxmgw7rj7t90sdsmkxv9eju37n9mefwn93xcc6qwpmtt8ssxwt23m
-RELAYER_ADDR_5=0xa7ed1b4b1a81fe04660decddba8598b557c720dd9952ba13c10a3acf7c2d31e1 # erd15lk3kjc6s8lqgesdanwm4pvck4tuwgxan9ft5y7ppgav7lpdx8ss20s4t3
-RELAYER_ADDR_6=0x92b56ae0f225d7c46b3808d56e35903f99e9f3c73b95fdf214c1d39f5952d9e1 # erd1j26k4c8jyhtug6ecpr2kudvs87v7nu788w2lmus5c8fe7k2jm8sstdga6w
-RELAYER_ADDR_7=0x0af2faeb60ed12f015917952c2d8c925bbca790688d76e6186d867d9eef3dee1 # erd1pte046mqa5f0q9v309fv9kxfykau57gx3rtkucvxmpnanmhnmmsstjcrl2
-RELAYER_ADDR_8=0xba63c4b5cf545a23b1bf81608063c9240941a357cd3a098102669cc33dad3de1 # erd1hf3ufdw023dz8vdls9sgqc7fysy5rg6he5aqnqgzv6wvx0dd8hsskdgfkh
-RELAYER_ADDR_9=0xa4c2a2aa3a744e4d77f6af37ef1e3cab10d4f6cf030edd11f73e3eb58a180ee1 # erd15np29236w38y6alk4um7783u4vgdfak0qv8d6y0h8clttzscpmssfp6u37
+RELAYER_ADDR_0=0xb329c8f455de725bceabb0babde4149cecb93271b5e65d0c2bfbd69b076d3ce1 # erd1kv5u3az4mee9hn4tkzatmeq5nnktjvn3khn96rptl0tfkpmd8nssy33j7h 
+RELAYER_ADDR_1=0x5448490305368f25bc50621365d8f61635d5cffb40c0926fe04322e23519a4e1 # erd123yyjqc9x68jt0zsvgfktk8kzc6atnlmgrqfymlqgv3wydge5nsszgrh43 
+RELAYER_ADDR_2=0x8ee4f54b4a921b4a2edfbac7a13c595fd24994df41ed4c588a76b99029aef8e1 # erd13mj02j62jgd55tklhtr6z0zetlfyn9xlg8k5cky2w6ueq2dwlrssyal2h0 
+RELAYER_ADDR_3=0xb1688f415a1f8f2edff0511ecd46c01542cf276bca4fda9e41a2d771771953e1 # erd1k95g7s26r78jahls2y0v63kqz4pv7fmtef8a48jp5tthzace20sskjhyhk 
+RELAYER_ADDR_4=0x3844f480db43bc3979657c1b0dd8cc2e65c8fa65de52e99626c63407076b59e1 # erd18pz0fqxmgw7rj7t90sdsmkxv9eju37n9mefwn93xcc6qwpmtt8ssxwt23m 
+RELAYER_ADDR_5=0xa7ed1b4b1a81fe04660decddba8598b557c720dd9952ba13c10a3acf7c2d31e1 # erd15lk3kjc6s8lqgesdanwm4pvck4tuwgxan9ft5y7ppgav7lpdx8ss20s4t3 
+RELAYER_ADDR_6=0x92b56ae0f225d7c46b3808d56e35903f99e9f3c73b95fdf214c1d39f5952d9e1 # erd1j26k4c8jyhtug6ecpr2kudvs87v7nu788w2lmus5c8fe7k2jm8sstdga6w 
+RELAYER_ADDR_7=0x0af2faeb60ed12f015917952c2d8c925bbca790688d76e6186d867d9eef3dee1 # erd1pte046mqa5f0q9v309fv9kxfykau57gx3rtkucvxmpnanmhnmmsstjcrl2 
+RELAYER_ADDR_8=0xba63c4b5cf545a23b1bf81608063c9240941a357cd3a098102669cc33dad3de1 # erd1hf3ufdw023dz8vdls9sgqc7fysy5rg6he5aqnqgzv6wvx0dd8hsskdgfkh 
+RELAYER_ADDR_9=0xa4c2a2aa3a744e4d77f6af37ef1e3cab10d4f6cf030edd11f73e3eb58a180ee1 # erd15np29236w38y6alk4um7783u4vgdfak0qv8d6y0h8clttzscpmssfp6u37 
 
-ERD_RELAYER_ADDR_0=erd1kv5u3az4mee9hn4tkzatmeq5nnktjvn3khn96rptl0tfkpmd8nssy33j7h
-ERD_RELAYER_ADDR_1=erd123yyjqc9x68jt0zsvgfktk8kzc6atnlmgrqfymlqgv3wydge5nsszgrh43
-ERD_RELAYER_ADDR_2=erd13mj02j62jgd55tklhtr6z0zetlfyn9xlg8k5cky2w6ueq2dwlrssyal2h0
-ERD_RELAYER_ADDR_3=erd1k95g7s26r78jahls2y0v63kqz4pv7fmtef8a48jp5tthzace20sskjhyhk
-ERD_RELAYER_ADDR_4=erd18pz0fqxmgw7rj7t90sdsmkxv9eju37n9mefwn93xcc6qwpmtt8ssxwt23m
-ERD_RELAYER_ADDR_5=erd15lk3kjc6s8lqgesdanwm4pvck4tuwgxan9ft5y7ppgav7lpdx8ss20s4t3
-ERD_RELAYER_ADDR_6=erd1j26k4c8jyhtug6ecpr2kudvs87v7nu788w2lmus5c8fe7k2jm8sstdga6w
-ERD_RELAYER_ADDR_7=erd1pte046mqa5f0q9v309fv9kxfykau57gx3rtkucvxmpnanmhnmmsstjcrl2
-ERD_RELAYER_ADDR_8=erd1hf3ufdw023dz8vdls9sgqc7fysy5rg6he5aqnqgzv6wvx0dd8hsskdgfkh
-ERD_RELAYER_ADDR_9=erd15np29236w38y6alk4um7783u4vgdfak0qv8d6y0h8clttzscpmssfp6u37
+ERD_RELAYER_ADDR_0=erd1kv5u3az4mee9hn4tkzatmeq5nnktjvn3khn96rptl0tfkpmd8nssy33j7h 
+ERD_RELAYER_ADDR_1=erd123yyjqc9x68jt0zsvgfktk8kzc6atnlmgrqfymlqgv3wydge5nsszgrh43 
+ERD_RELAYER_ADDR_2=erd13mj02j62jgd55tklhtr6z0zetlfyn9xlg8k5cky2w6ueq2dwlrssyal2h0 
+ERD_RELAYER_ADDR_3=erd1k95g7s26r78jahls2y0v63kqz4pv7fmtef8a48jp5tthzace20sskjhyhk 
+ERD_RELAYER_ADDR_4=erd18pz0fqxmgw7rj7t90sdsmkxv9eju37n9mefwn93xcc6qwpmtt8ssxwt23m 
+ERD_RELAYER_ADDR_5=erd15lk3kjc6s8lqgesdanwm4pvck4tuwgxan9ft5y7ppgav7lpdx8ss20s4t3 
+ERD_RELAYER_ADDR_6=erd1j26k4c8jyhtug6ecpr2kudvs87v7nu788w2lmus5c8fe7k2jm8sstdga6w 
+ERD_RELAYER_ADDR_7=erd1pte046mqa5f0q9v309fv9kxfykau57gx3rtkucvxmpnanmhnmmsstjcrl2 
+ERD_RELAYER_ADDR_8=erd1hf3ufdw023dz8vdls9sgqc7fysy5rg6he5aqnqgzv6wvx0dd8hsskdgfkh 
+ERD_RELAYER_ADDR_9=erd15np29236w38y6alk4um7783u4vgdfak0qv8d6y0h8clttzscpmssfp6u37 
 
 ESDT_SYSTEM_SC_ADDRESS=erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqzllls8a5w6u
 
@@ -145,8 +145,8 @@ deploySafe() {
     --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['contractAddress']")
 
     erdpy data store --key=address-testnet-safe --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
@@ -158,11 +158,11 @@ deploySafe() {
 deployBridgedTokensWrapper() {
 
     erdpy --verbose contract deploy --project=${PROJECT_BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=10000000 \
+    --gas-limit=150000000 \
     --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['contractAddress']")
 
     erdpy data store --key=address-testnet-bridged-tokens-wrapper --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
@@ -177,7 +177,7 @@ addWrappedToken() {
     --gas-limit=6000000 --function="addWrappedToken" \
     --arguments ${WRAPPED_USDC_TOKEN_ID} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
+    
 }
 
 whitelistToken() {
@@ -197,7 +197,7 @@ deployMultiTransfer() {
     --arguments 0x${bridged_tokens_wrapper_ADDRESS_HEX} --metadata-payable \
     --send --outfile="deploy-multitransfer-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['contractAddress']")
     erdpy data store --key=address-testnet-multitransfer --value=${ADDRESS}
 
     echo ""
@@ -220,8 +220,8 @@ deployMultisig() {
     ${RELAYER_ADDR_7} ${RELAYER_ADDR_8} ${RELAYER_ADDR_9} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['contractAddress']")
 
     erdpy data store --key=address-testnet-multisig --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
@@ -353,29 +353,53 @@ stake() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+pauseMultisig() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unpauseMultisig() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="unpause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+pauseEsdtSafe() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pauseEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unpauseEsdtSafe() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="unpauseEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 removeUsers() {
     local RELAYER_REQUIRED_STAKE_DECIMAL=0
-    # bech32ToHex ${ERD_RELAYER_ADDR_0}
-    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    # sleep 10
-    # echo "---------------------------------------------------------"
-    # echo "---------------------------------------------------------"
-    # bech32ToHex ${ERD_RELAYER_ADDR_1}
-    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    # sleep 10
-    # echo "---------------------------------------------------------"
-    # echo "---------------------------------------------------------"
-    # bech32ToHex ${ERD_RELAYER_ADDR_2}
-    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    # --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
-    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    # sleep 10
-    # echo "---------------------------------------------------------"
-    # echo "---------------------------------------------------------"
+    bech32ToHex ${ERD_RELAYER_ADDR_0}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    sleep 10
+    echo "---------------------------------------------------------"
+    echo "---------------------------------------------------------"
+    bech32ToHex ${ERD_RELAYER_ADDR_1}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    sleep 10
+    echo "---------------------------------------------------------"
+    echo "---------------------------------------------------------"
+    bech32ToHex ${ERD_RELAYER_ADDR_2}
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    sleep 10
+    echo "---------------------------------------------------------"
+    echo "---------------------------------------------------------"
     bech32ToHex ${ERD_RELAYER_ADDR_3}
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
@@ -509,7 +533,7 @@ deploySafeForUpgrade() {
     --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="deploy-safe-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    ADDRESS=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
 
     echo ""
     echo "Safe contract address: ${ADDRESS}"
@@ -519,13 +543,13 @@ deploySafeForUpgrade() {
 upgradeSafeContract() {
     local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
 
-    local OLD_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    local OLD_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['contractAddress']")
     local OLD_SAFE_ADDR=$(erdpy wallet bech32 --decode $OLD_SAFE_BECH)
 
-    local NEW_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
+    local NEW_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
     local NEW_SAFE_ADDR=$(erdpy wallet bech32 --decode $NEW_SAFE_BECH)
 
-    local AGG_ADDR_BECH=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    local AGG_ADDR_BECH=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['contractAddress']")
     local AGG_ADDR=$(erdpy wallet bech32 --decode $AGG_ADDR_BECH)
 
 
@@ -577,7 +601,7 @@ clearMapping() {
 
      erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="clearMapping" \
-    --arguments ${WRAPPED_USDC_ERC20} ${WRAPPED_USDC_TOKEN_ID} \
+    --arguments ${WRAPPED_USDC_ERC20} ${ETHEREUM_WRAPPED_USDC_TOKEN_ID} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 
 }
@@ -712,23 +736,23 @@ getEgldEsdtSwapAddress() {
 }
 
 getEsdtSafeAddress() {
-    ADDRESS_BECH32=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    ADDRESS_BECH32=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['contractAddress']")
     ESDT_SAFE_ADDRESS=${ADDRESS_BECH32}
     echo "EsdtSafe address: ${ESDT_SAFE_ADDRESS}"
 }
 
 getMultiTransferEsdtAddress() {
-    MULTI_TRANSFER_ESDT_ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    MULTI_TRANSFER_ESDT_ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['contractAddress']")
     echo "MultiTransferEsdt address: ${MULTI_TRANSFER_ESDT_ADDRESS}"
 }
 
 getBridgedTokensWrapperAddress() {
-    bridged_tokens_wrapper_ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    bridged_tokens_wrapper_ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['contractAddress']")
     echo "Wrapped bridged USDC address: ${bridged_tokens_wrapper_ADDRESS}"
 }
 
 getAggregatorAddress() {
-    AGGREGATOR_ADDRESS=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    AGGREGATOR_ADDRESS=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['contractAddress']")
     echo "Agregator address: ${AGGREGATOR_ADDRESS}"
 }
 
