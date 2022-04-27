@@ -42,8 +42,8 @@ RELAYER_WALLET9="./walletsRelay/walletKey9.pem"
 
 ADDRESS=$(erdpy data load --key=address-testnet-multisig)
 DEPLOY_TRANSACTION=$(erdpy data load --key=deployTransaction-testnet)
-PROXY=https://testnet-gateway.elrond.com
-CHAIN_ID=T
+PROXY=https://devnet-gateway.elrond.com
+CHAIN_ID=D
 
 RELAYER_REQUIRED_STAKE=0x00
 ESDT_ISSUE_COST=0xB1A2BC2EC50000 # 0.05 eGLD
@@ -379,27 +379,27 @@ unpauseEsdtSafe() {
 
 removeUsers() {
     local RELAYER_REQUIRED_STAKE_DECIMAL=0
-    bech32ToHex ${ERD_RELAYER_ADDR_0}
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-    echo "---------------------------------------------------------"
-    echo "---------------------------------------------------------"
-    bech32ToHex ${ERD_RELAYER_ADDR_1}
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-    echo "---------------------------------------------------------"
-    echo "---------------------------------------------------------"
-    bech32ToHex ${ERD_RELAYER_ADDR_2}
-    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-    sleep 10
-    echo "---------------------------------------------------------"
-    echo "---------------------------------------------------------"
+    # bech32ToHex ${ERD_RELAYER_ADDR_0}
+    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    # --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
+    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    # sleep 10
+    # echo "---------------------------------------------------------"
+    # echo "---------------------------------------------------------"
+    # bech32ToHex ${ERD_RELAYER_ADDR_1}
+    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    # --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
+    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    # sleep 10
+    # echo "---------------------------------------------------------"
+    # echo "---------------------------------------------------------"
+    # bech32ToHex ${ERD_RELAYER_ADDR_2}
+    # erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    # --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
+    # --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    # sleep 10
+    # echo "---------------------------------------------------------"
+    # echo "---------------------------------------------------------"
     bech32ToHex ${ERD_RELAYER_ADDR_3}
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=35000000 --function="removeUser" --arguments 0x${ADDRESS_HEX}\
@@ -556,7 +556,7 @@ upgradeSafeContract() {
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 --function="upgradeChildContractFromSource" \
     --arguments 0x${OLD_SAFE_ADDR} 0x${NEW_SAFE_ADDR} \
-    0x${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+        0x01 0x${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
