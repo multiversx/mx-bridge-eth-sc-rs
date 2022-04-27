@@ -9,7 +9,7 @@ use eth_address::EthAddress;
 pub mod transaction_status;
 
 // revert protection
-pub const MIN_BLOCKS_FOR_FINALITY: u64 = 2;
+pub const MIN_BLOCKS_FOR_FINALITY: u64 = 10;
 pub const TX_MULTIRESULT_NR_FIELDS: usize = 6;
 
 pub type TxNonce = u64;
