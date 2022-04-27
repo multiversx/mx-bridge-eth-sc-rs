@@ -60,6 +60,8 @@ pub trait EsdtSafe:
         batch_id: u64,
         #[var_args] tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
+        require!(self.not_paused(), "Cannot set status while paused");
+
         let first_batch_id = self.first_batch_id().get();
         require!(
             batch_id == first_batch_id,
@@ -174,6 +176,8 @@ pub trait EsdtSafe:
         #[payment_amount] payment_amount: BigUint,
         to: EthAddress<Self::Api>,
     ) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
         require!(
             self.call_value().esdt_token_nonce() == 0,
             "Only fungible ESDT tokens accepted"
