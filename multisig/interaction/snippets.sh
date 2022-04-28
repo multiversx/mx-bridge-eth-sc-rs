@@ -18,6 +18,7 @@
 # 16. addMapping
 # 17. addTokenToWhitelist
 # 18. stake # foreach relayer
+# 19. unpause Multisig & Safe
 
 
 PROJECT="../"
@@ -145,8 +146,8 @@ deploySafe() {
     --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['contractAddress']")
 
     erdpy data store --key=address-testnet-safe --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
@@ -158,11 +159,11 @@ deploySafe() {
 deployBridgedTokensWrapper() {
 
     erdpy --verbose contract deploy --project=${PROJECT_BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=10000000 \
+    --gas-limit=150000000 \
     --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['contractAddress']")
 
     erdpy data store --key=address-testnet-bridged-tokens-wrapper --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
@@ -177,7 +178,7 @@ addWrappedToken() {
     --gas-limit=6000000 --function="addWrappedToken" \
     --arguments ${WRAPPED_USDC_TOKEN_ID} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
-
+    
 }
 
 whitelistToken() {
@@ -197,7 +198,7 @@ deployMultiTransfer() {
     --arguments 0x${bridged_tokens_wrapper_ADDRESS_HEX} --metadata-payable \
     --send --outfile="deploy-multitransfer-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['contractAddress']")
     erdpy data store --key=address-testnet-multitransfer --value=${ADDRESS}
 
     echo ""
@@ -220,8 +221,8 @@ deployMultisig() {
     ${RELAYER_ADDR_7} ${RELAYER_ADDR_8} ${RELAYER_ADDR_9} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    TRANSACTION=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    TRANSACTION=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(erdpy data parse --file="./deploy-testnet.interaction.json" --expression="data['contractAddress']")
 
     erdpy data store --key=address-testnet-multisig --value=${ADDRESS}
     erdpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
@@ -350,6 +351,30 @@ stake() {
     echo "---------------------------------------------------------"
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${RELAYER_WALLET9} \
     --gas-limit=35000000 --function="stake" --value=${RELAYER_REQUIRED_STAKE_DECIMAL} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+pauseMultisig() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unpauseMultisig() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="unpause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+pauseEsdtSafe() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pauseEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unpauseEsdtSafe() {
+    erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="unpauseEsdtSafe" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -509,7 +534,7 @@ deploySafeForUpgrade() {
     --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="deploy-safe-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    ADDRESS=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
+    ADDRESS=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
 
     echo ""
     echo "Safe contract address: ${ADDRESS}"
@@ -519,20 +544,20 @@ deploySafeForUpgrade() {
 upgradeSafeContract() {
     local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
 
-    local OLD_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    local OLD_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['contractAddress']")
     local OLD_SAFE_ADDR=$(erdpy wallet bech32 --decode $OLD_SAFE_BECH)
 
-    local NEW_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['emitted_tx']['address']")
+    local NEW_SAFE_BECH=$(erdpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
     local NEW_SAFE_ADDR=$(erdpy wallet bech32 --decode $NEW_SAFE_BECH)
 
-    local AGG_ADDR_BECH=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    local AGG_ADDR_BECH=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['contractAddress']")
     local AGG_ADDR=$(erdpy wallet bech32 --decode $AGG_ADDR_BECH)
 
 
     erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 --function="upgradeChildContractFromSource" \
     --arguments 0x${OLD_SAFE_ADDR} 0x${NEW_SAFE_ADDR} \
-    0x${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+        0x01 0x${AGG_ADDR} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
     --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -577,7 +602,7 @@ clearMapping() {
 
      erdpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="clearMapping" \
-    --arguments ${WRAPPED_USDC_ERC20} ${WRAPPED_USDC_TOKEN_ID} \
+    --arguments ${WRAPPED_USDC_ERC20} ${ETHEREUM_WRAPPED_USDC_TOKEN_ID} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 
 }
@@ -712,23 +737,23 @@ getEgldEsdtSwapAddress() {
 }
 
 getEsdtSafeAddress() {
-    ADDRESS_BECH32=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    ADDRESS_BECH32=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['contractAddress']")
     ESDT_SAFE_ADDRESS=${ADDRESS_BECH32}
     echo "EsdtSafe address: ${ESDT_SAFE_ADDRESS}"
 }
 
 getMultiTransferEsdtAddress() {
-    MULTI_TRANSFER_ESDT_ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    MULTI_TRANSFER_ESDT_ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['contractAddress']")
     echo "MultiTransferEsdt address: ${MULTI_TRANSFER_ESDT_ADDRESS}"
 }
 
 getBridgedTokensWrapperAddress() {
-    bridged_tokens_wrapper_ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emitted_tx']['address']")
+    bridged_tokens_wrapper_ADDRESS=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['contractAddress']")
     echo "Wrapped bridged USDC address: ${bridged_tokens_wrapper_ADDRESS}"
 }
 
 getAggregatorAddress() {
-    AGGREGATOR_ADDRESS=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['emitted_tx']['address']")
+    AGGREGATOR_ADDRESS=$(erdpy data parse --file="./price-aggregator.interaction.json" --expression="data['contractAddress']")
     echo "Agregator address: ${AGGREGATOR_ADDRESS}"
 }
 
