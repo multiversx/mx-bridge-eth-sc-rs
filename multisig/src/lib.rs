@@ -291,8 +291,7 @@ pub trait Multisig:
         );
 
         let caller_address = self.blockchain().get_caller();
-        let caller_id = self.user_mapper().get_user_id(&caller_address);
-        let caller_role = self.user_id_to_role(caller_id).get();
+        let caller_role = self.get_user_role(&caller_address);
         require!(
             caller_role.is_board_member(),
             "only board members can perform actions"
