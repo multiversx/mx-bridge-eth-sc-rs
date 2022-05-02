@@ -59,9 +59,12 @@ pub trait MultisigGeneralModule:
     }
 
     fn remove_board_member(&self, user_address: &ManagedAddress) {
-        let user_id = self.user_mapper().get_or_create_user(user_address);
-        let old_role = self.get_user_role(user_address);
+        let user_id = self.user_mapper().get_user_id(user_address);
+        if user_id == 0 {
+            return;
+        }
 
+        let old_role = self.get_user_role(user_address);
         if old_role.is_board_member() {
             self.num_board_members().update(|value| *value -= 1);
             self.user_id_to_role(user_id).set(&UserRole::None);
