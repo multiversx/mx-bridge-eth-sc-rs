@@ -46,8 +46,6 @@ pub trait Multisig:
         quorum: usize,
         #[var_args] board: MultiValueEncoded<ManagedAddress>,
     ) {
-        self.quorum().set(&quorum);
-
         let mut duplicates = false;
         let board_len = board.len();
         self.user_mapper()
@@ -61,6 +59,7 @@ pub trait Multisig:
 
         self.num_board_members()
             .update(|nr_board_members| *nr_board_members += board_len);
+        self.change_quorum(quorum);
 
         require!(
             slash_amount <= required_stake,
