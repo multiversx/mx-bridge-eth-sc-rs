@@ -125,7 +125,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
 
     /// Indicates user rights.
     /// `0` = no rights,
-    /// `1` = can propose and sign.
+    /// `1` = can propose. Can also sign if they have enough stake.
     #[view(userRole)]
     fn user_role(&self, user: &ManagedAddress) -> UserRole {
         self.get_user_role(user)
@@ -153,8 +153,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
         staked_relayers.into()
     }
 
-    /// Gets addresses of all users who signed an action and are still board members.
-    /// All these signatures are currently valid.
+    /// Gets the number of signatures for the action with the given ID
     #[view(getActionSignerCount)]
     fn get_action_signer_count(&self, action_id: usize) -> usize {
         self.action_signer_ids(action_id).len()
