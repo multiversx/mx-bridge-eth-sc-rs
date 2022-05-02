@@ -50,7 +50,7 @@ pub trait MultisigGeneralModule:
 
     fn add_board_member(&self, user_address: &ManagedAddress) {
         let user_id = self.user_mapper().get_or_create_user(user_address);
-        let old_role = self.get_user_role(user_address);
+        let old_role = self.user_id_to_role(user_id).get();
 
         if !old_role.is_board_member() {
             self.num_board_members().update(|value| *value += 1);
@@ -64,7 +64,7 @@ pub trait MultisigGeneralModule:
             return;
         }
 
-        let old_role = self.get_user_role(user_address);
+        let old_role = self.user_id_to_role(user_id).get();
         if old_role.is_board_member() {
             self.num_board_members().update(|value| *value -= 1);
             self.user_id_to_role(user_id).set(&UserRole::None);
