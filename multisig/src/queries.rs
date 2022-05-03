@@ -170,7 +170,12 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .iter()
             .filter(|signer_id| {
                 let signer_role = self.user_id_to_role(*signer_id).get();
-                signer_role.is_board_member()
+                let signer_address = self
+                    .user_mapper()
+                    .get_user_address(*signer_id)
+                    .unwrap_or_default();
+
+                signer_role.is_board_member() && self.has_enough_stake(&signer_address)
             })
             .count()
     }
