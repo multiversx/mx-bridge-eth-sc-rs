@@ -15,7 +15,8 @@
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
                     "1",
-                    "3", "3"
+                    "3",
+                    "3"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -24,22 +25,6 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "1",
-
-                    "0",
-                    "1",
-                    "address:user",
-                    "0x0102030405060708091011121314151617181920",
-                    "str:EGLD-123456",
-                    "400",
-
-                    "0",
-                    "2",
-                    "address:user",
-                    "0x0102030405060708091011121314151617181920",
-                    "str:ETH-123456",
-                    "350,000",
-
                     "1"
                 ],
                 "gas": "*",
@@ -172,16 +157,13 @@
                             ]
                         }
                     },
-                    "storage": {                        
+                    "storage": {
                         "str:transactionStatus|address:user|u32:1": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:1": "",
-
                         "str:transactionStatus|address:user|u32:2": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": "",
-
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
-
                         "+": ""
                     },
                     "code": "*"
@@ -198,8 +180,10 @@
                 "value": "0",
                 "function": "distributeFeesFromChildContracts",
                 "arguments": [
-                    "address:relayer1", "4000",
-                    "address:relayer2", "6000"
+                    "address:relayer1",
+                    "4000",
+                    "address:relayer2",
+                    "6000"
                 ],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
@@ -257,10 +241,9 @@
                             ]
                         }
                     },
-                    "storage": {                        
+                    "storage": {
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
-
                         "+": ""
                     },
                     "code": "*"

@@ -41,7 +41,7 @@ Once the transaction has been executed, a `SetCurrentTransactionBatchStatus` act
 fn propose_esdt_safe_set_current_transaction_batch_status(
     &self,
     esdt_safe_batch_id: usize,
-    #[var_args] tx_batch_status: VarArgs<TransactionStatus>,
+     tx_batch_status: VarArgs<TransactionStatus>,
 ) -> usize
 ```
 
@@ -70,7 +70,7 @@ The endpoint returns the assigned Action ID. Other relayers can get this ID by u
 fn get_action_id_for_set_current_transaction_batch_status(
     &self,
     esdt_safe_batch_id: usize,
-    #[var_args] expected_tx_batch_status: VarArgs<TransactionStatus>,
+     expected_tx_batch_status: VarArgs<TransactionStatus>,
 ) -> usize
 ```
 
@@ -87,7 +87,7 @@ This is done through the `proposeMultiTransferEsdtBatch` endpoint:
 fn propose_multi_transfer_esdt_batch(
     &self,
     batch_id: u64,
-    #[var_args] transfers: MultiValueVec<MultiValue3<ManagedAddress, TokenIdentifier, BigUint>>,
+     transfers: MultiValueVec<MultiValue3<ManagedAddress, TokenIdentifier, BigUint>>,
 ) -> usize {
 ```
 
@@ -102,7 +102,7 @@ The endpoint returns the assigned Action ID. Other relayers can get this ID by u
 fn get_action_id_for_transfer_batch(
     &self,
     batch_id: u64,
-    #[var_args] transfers: MultiValueVec<MultiValue3<ManagedAddress, TokenIdentifier, BigUint>>,
+     transfers: MultiValueVec<MultiValue3<ManagedAddress, TokenIdentifier, BigUint>>,
 ) -> usize
 ```
 

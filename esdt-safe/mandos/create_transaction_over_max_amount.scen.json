@@ -71,11 +71,7 @@
             "expect": {
                 "status": "0",
                 "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "10",
-                    "0"
+                    
                 ],
                 "message": "",
                 "gas": "*",

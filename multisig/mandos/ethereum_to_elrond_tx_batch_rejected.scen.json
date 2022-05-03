@@ -212,7 +212,6 @@
         {
             "step": "scCall",
             "txId": "move-refund-batch-to-safe",
-            "comment": "output is from execute_on_dest_context results being propagated to the initial caller",
             "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
@@ -225,31 +224,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1",
-                    "0",
-                    "1",
-                    "0x0102030405060708091011121314151617181920",
-                    "sc:egld_esdt_swap",
-                    "str:EGLD-123456",
-                    "2,000,000",
-                    "0",
-                    "2",
-                    "0x0102030405060708091011121314151617181920",
-                    "sc:egld_esdt_swap",
-                    "str:ETH-123456",
-                    "2,000,000",
-                    "1",
-                    "str:GWEI",
-                    "str:EGLD",
-                    "10",
-                    "0",
-                    "1",
-                    "str:GWEI",
-                    "str:ETH",
-                    "1",
-                    "0"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }
@@ -307,11 +282,8 @@
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
-
-
                         "+": ""
                     },
                     "code": "*"

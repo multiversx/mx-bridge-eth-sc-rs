@@ -12,7 +12,7 @@ pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
-    fn init(&self, #[var_args] opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
+    fn init(&self,  opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
         self.max_tx_batch_size()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
@@ -30,7 +30,7 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+         transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
         let mut valid_dest_addresses_list = ManagedVec::new();
@@ -95,7 +95,7 @@ pub trait MultiTransferEsdt:
     #[endpoint(setWrappingContractAddress)]
     fn set_wrapping_contract_address(
         &self,
-        #[var_args] opt_new_address: OptionalValue<ManagedAddress>,
+         opt_new_address: OptionalValue<ManagedAddress>,
     ) {
         match opt_new_address {
             OptionalValue::Some(sc_addr) => {
