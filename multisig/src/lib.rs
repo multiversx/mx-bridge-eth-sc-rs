@@ -44,7 +44,7 @@ pub trait Multisig:
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
-        #[var_args] board: MultiValueEncoded<ManagedAddress>,
+        board: MultiValueEncoded<ManagedAddress>,
     ) {
         let mut duplicates = false;
         let board_len = board.len();
@@ -92,9 +92,7 @@ pub trait Multisig:
     #[endpoint(distributeFeesFromChildContracts)]
     fn distribute_fees_from_child_contracts(
         &self,
-        #[var_args] dest_address_percentage_pairs: MultiValueEncoded<
-            MultiValue2<ManagedAddress, u32>,
-        >,
+        dest_address_percentage_pairs: MultiValueEncoded<MultiValue2<ManagedAddress, u32>>,
     ) {
         let mut args = ManagedVec::new();
         let mut total_percentage = 0u64;
@@ -121,7 +119,7 @@ pub trait Multisig:
 
         self.get_esdt_safe_proxy_instance()
             .distribute_fees(args)
-            .execute_on_dest_context();
+            .execute_on_dest_context_ignore_result();
     }
 
     /// Board members have to stake a certain amount of EGLD
@@ -173,7 +171,7 @@ pub trait Multisig:
     fn propose_esdt_safe_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] tx_batch_status: MultiValueEncoded<TransactionStatus>,
+        tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
         let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
             .get_esdt_safe_proxy_instance()
@@ -223,7 +221,7 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         eth_batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
@@ -277,7 +275,7 @@ pub trait Multisig:
 
             self.get_esdt_safe_proxy_instance()
                 .add_refund_batch(refund_batch)
-                .execute_on_dest_context();
+                .execute_on_dest_context_ignore_result();
         }
     }
 
@@ -334,7 +332,7 @@ pub trait Multisig:
                         esdt_safe_batch_id,
                         MultiValueEncoded::from(tx_batch_status),
                     )
-                    .execute_on_dest_context();
+                    .execute_on_dest_context_ignore_result();
             }
             Action::BatchTransferEsdtToken {
                 eth_batch_id,
@@ -357,9 +355,11 @@ pub trait Multisig:
                 let last_tx = transfers.get(last_tx_index);
                 self.last_executed_eth_tx_id().set(&last_tx.tx_nonce);
 
+                let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
+                    transfers.into();
                 self.get_multi_transfer_esdt_proxy_instance()
-                    .batch_transfer_esdt_token(eth_batch_id, transfers.into())
-                    .execute_on_dest_context();
+                    .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
+                    .execute_on_dest_context_ignore_result();
             }
         }
     }

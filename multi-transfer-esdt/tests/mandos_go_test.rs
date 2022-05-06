@@ -14,6 +14,11 @@ fn batch_transfer_one_executed_one_failed_go() {
 }
 
 #[test]
+fn batch_transfer_to_frozen_account_go() {
+    elrond_wasm_debug::mandos_go("mandos/batch_transfer_to_frozen_account.scen.json");
+}
+
+#[test]
 fn setup_accounts_go() {
     elrond_wasm_debug::mandos_go("mandos/setup_accounts.scen.json");
 }

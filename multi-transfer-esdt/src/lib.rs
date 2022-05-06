@@ -12,7 +12,7 @@ pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
-    fn init(&self, #[var_args] opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
+    fn init(&self, opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
         self.max_tx_batch_size()
             .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
@@ -30,11 +30,14 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
         let mut valid_dest_addresses_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
+
+        let own_sc_address = self.blockchain().get_sc_address();
+        let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
         for eth_tx in transfers {
             let mut must_refund = false;
@@ -46,6 +49,9 @@ pub trait MultiTransferEsdt:
                 must_refund = true;
             } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
                 self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
+                must_refund = true;
+            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
+                self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             }
 
@@ -93,10 +99,7 @@ pub trait MultiTransferEsdt:
 
     #[only_owner]
     #[endpoint(setWrappingContractAddress)]
-    fn set_wrapping_contract_address(
-        &self,
-        #[var_args] opt_new_address: OptionalValue<ManagedAddress>,
-    ) {
+    fn set_wrapping_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
         match opt_new_address {
             OptionalValue::Some(sc_addr) => {
                 require!(
@@ -128,6 +131,23 @@ pub trait MultiTransferEsdt:
         let roles = self.blockchain().get_esdt_local_roles(token_id);
 
         roles.has_role(role)
+    }
+
+    fn is_account_same_shard_frozen(
+        &self,
+        sc_shard: u32,
+        dest_address: &ManagedAddress,
+        token_id: &TokenIdentifier,
+    ) -> bool {
+        let dest_shard = self.blockchain().get_shard_of_address(dest_address);
+        if sc_shard != dest_shard {
+            return false;
+        }
+
+        let token_data = self
+            .blockchain()
+            .get_esdt_token_data(dest_address, token_id, 0);
+        token_data.frozen
     }
 
     fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
@@ -180,6 +200,13 @@ pub trait MultiTransferEsdt:
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("transferFailedFrozenDestinationAccount")]
+    fn transfer_failed_frozen_destination_account(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+    );
 
     #[event("transferOverMaxAmount")]
     fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);

@@ -42,13 +42,7 @@
             },
             "expect": {
                 "status": "0",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "10",
-                    "0"
-                ],
+                "out": [],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -109,9 +103,7 @@
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"

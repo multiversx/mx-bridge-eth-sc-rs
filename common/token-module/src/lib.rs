@@ -68,7 +68,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        #[var_args] opt_default_price_per_gas_unit: OptionalValue<BigUint>,
+         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
 

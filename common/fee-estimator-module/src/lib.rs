@@ -67,7 +67,7 @@ pub trait FeeEstimatorModule {
         let from_ticker = self.token_ticker(from).get();
         let to_ticker = self.token_ticker(to).get();
 
-        let result = self
+        let result: OptionalValue<AggregatorResultAsMultiValue<Self::Api>> = self
             .aggregator_proxy(fee_estimator_sc_address)
             .latest_price_feed_optional(from_ticker, to_ticker)
             .execute_on_dest_context();

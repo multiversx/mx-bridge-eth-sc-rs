@@ -76,13 +76,7 @@
             },
             "expect": {
                 "status": "0",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:EGLD",
-                    "10",
-                    "0"
-                ],
+                "out": [],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -156,13 +150,7 @@
             },
             "expect": {
                 "status": "0",
-                "out": [
-                    "1",
-                    "str:GWEI",
-                    "str:ETH",
-                    "1",
-                    "0"
-                ],
+                "out": [],
                 "message": "",
                 "gas": "*",
                 "refund": "*"

@@ -58,7 +58,7 @@ pub trait EsdtSafe:
     fn set_transaction_batch_status(
         &self,
         batch_id: u64,
-        #[var_args] tx_statuses: MultiValueEncoded<TransactionStatus>,
+         tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
         let first_batch_id = self.first_batch_id().get();
         require!(

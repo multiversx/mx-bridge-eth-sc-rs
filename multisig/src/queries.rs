@@ -16,28 +16,18 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token ID, Amount
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
-        let _ = self
-            .get_esdt_safe_proxy_instance()
+        self.get_esdt_safe_proxy_instance()
             .get_current_tx_batch()
-            .execute_on_dest_context();
-
-        // result is already returned automatically from the EsdtSafe call,
-        // we only keep this signature for correct ABI generation
-        OptionalValue::None
+            .execute_on_dest_context()
     }
 
     /// Returns a batch of failed Ethereum -> Elrond transactions.
     /// The result format is the same as getCurrentTxBatch
     #[view(getCurrentRefundBatch)]
     fn get_current_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
-        let _ = self
-            .get_multi_transfer_esdt_proxy_instance()
+        self.get_multi_transfer_esdt_proxy_instance()
             .get_first_batch_any_status()
-            .execute_on_dest_context();
-
-        // result is already returned automatically from the MultiTransferEsdt call,
-        // we only keep this signature for correct ABI generation
-        OptionalValue::None
+            .execute_on_dest_context()
     }
 
     /// Actions are cleared after execution, so an empty entry means the action was executed already
@@ -58,7 +48,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn was_transfer_action_proposed(
         &self,
         eth_batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
 
@@ -72,7 +62,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn get_action_id_for_transfer_batch(
         &self,
         eth_batch_id: u64,
-        #[var_args] transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
         let transfers_as_struct = self.transfers_multi_value_to_eth_tx_vec(transfers);
         let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
@@ -89,7 +79,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn was_set_current_transaction_batch_status_action_proposed(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
+        expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> bool {
         self.is_valid_action_id(self.get_action_id_for_set_current_transaction_batch_status(
             esdt_safe_batch_id,
@@ -104,7 +94,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn get_action_id_for_set_current_transaction_batch_status(
         &self,
         esdt_safe_batch_id: u64,
-        #[var_args] expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
+        expected_tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
         self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
             .get(&expected_tx_batch_status.to_vec())
