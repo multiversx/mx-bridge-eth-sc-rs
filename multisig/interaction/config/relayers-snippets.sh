@@ -3,12 +3,14 @@ addBoardMembers() {
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=35000000 --function="addBoardMember" --arguments ${RELAYER_ADDR} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
 
 removeBoardMembers() {
     read -p "Relayer address: " RELAYER_ADDR
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=35000000 --function="removeUser" --arguments ${RELAYER_ADDR} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
 
 unstake() {
     read -p "Relayer address: " RELAYER_ADDR

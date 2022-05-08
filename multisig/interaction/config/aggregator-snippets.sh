@@ -17,8 +17,8 @@ deployAggregator() {
 }
 
 submitAggregatorBatch() {
-    erdpy --verbose contract call ${AGGREGATOR_ADDRESS} --recall-nonce --pem=${ALICE} \
+    erdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
-    --arguments str:GWEI str:${CHAINSPECIFIC_TOKEN_TO_BE_WHITELISTED} ${GAS_PRICE_ON_ETH} \
+    --arguments str:GWEI str:${CHAINSPECIFIC_TOKEN} ${GAS_PRICE_ON_ETH} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
