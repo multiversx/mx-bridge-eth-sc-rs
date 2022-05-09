@@ -35,8 +35,8 @@ addWrappedToken() {
 }
 
 wrapper-whitelistToken() {
-    erdpy --verbose contract call ${bridged_tokens_wrapper_ADDRESS} --recall-nonce --pem=${ALICE} \
+    erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="whitelistToken" \
-    --arguments str:${CHAINSPECIFIC_TOKEN} str:${UNIVERSAL_TOKEN} \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
