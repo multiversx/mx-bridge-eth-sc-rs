@@ -18,27 +18,57 @@ case "$1" in
   ;;
 
 'deploy-bridge-contracts')
+  echo -e 
+  echo "PREREQUIREMENTS: AGGREGATOR & BRIDGED_TOKENS_WRAPPER deployed"
+  echo -e 
   confirmation deploy-bridge-contracts
   ;;
 
 'add-relayer')
-  confirmation addRelayer
+  confirmation addBoardMember
   ;;
 
 'remove-relayer')
-  confirmation removeRelayer
+  confirmation removeBoardMember
   ;;
 
 'whitelist-token')
+  echo -e 
+  echo "PREREQUIREMENTS: BRIDGED_TOKENS_WRAPPER needs to have MINT+BURN role for the UNIVERSAL TOKEN"
+  echo "Check and update TOKENS SETTINGS section in configs.cfg"
+  source $SCRIPTPATH/config/configs.cfg
+  echo -e
   confirmation whitelist-token
   ;;
 
-'get_logs')
-  confirmation get_logs
+'set-safe-max-tx')
+  confirmation set-safe-max-tx
+  ;;
+
+'set-safe-batch-block-duration')
+  confirmation set-safe-batch-block-duration
+  ;;
+
+'change-quorum')
+  confirmation change-quorum
+  ;;
+
+'pause-contracts')
+  confirmation pause
+  continue-confirmation pauseEsdtSafe
+  ;;
+
+'unpause-contracts')
+  confirmation unpause
+  continue-confirmation unpauseEsdtSafe
   ;;
 
 *)
-  echo "Usage: Missing parameter ! [deploy-aggregator|deploy-wrapper|deploy-bridge-contracts|add-relayer|remove-relayer|whitelist-token]"
+  echo "Usage: Invalid choice: '"$1"'" 
+  echo -e 
+  echo "Choose from:"
+  echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
+  echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\" }"
   ;;
 
 esac

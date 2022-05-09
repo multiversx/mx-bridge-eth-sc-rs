@@ -1,8 +1,7 @@
 deployMultiTransfer() {
-
-    erdpy --verbose contract deploy --project=${PROJECT_MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
+    erdpy --verbose contract deploy --bytecode=${MULTI_TRANSFER_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=100000000 \
-    --arguments ${bridged_tokens_wrapper_address} --metadata-payable \
+    --arguments ${BRIDGED_TOKENS_WRAPPER} --metadata-payable \
     --send --outfile="deploy-multitransfer-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     ADDRESS=$(erdpy data parse --file="./deploy-multitransfer-testnet.interaction.json" --expression="data['contractAddress']")
@@ -10,4 +9,11 @@ deployMultiTransfer() {
 
     echo ""
     echo "Multi transfer contract address: ${ADDRESS}"
+}
+
+setLocalRolesMultiTransferEsdt() {
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTISIG} str:ESDTRoleLocalMint \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

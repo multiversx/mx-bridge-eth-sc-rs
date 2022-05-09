@@ -1,5 +1,5 @@
 deployMultisig() {
-    erdpy --verbose contract deploy --project=${PROJECT} --recall-nonce --pem=${ALICE} \
+    erdpy --verbose contract deploy --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
     --arguments ${SAFE} ${MULTI_TRANSFER} \
     ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
@@ -29,20 +29,6 @@ changeChildContractsOwnership() {
     erdpy --verbose contract call ${MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
     --gas-limit=10000000 --function="ChangeOwnerAddress" \
     --arguments ${MULTISIG} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-setLocalRolesEsdtSafe() {
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTISIG} str:ESDTRoleLocalBurn \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
-
-setLocalRolesMultiTransferEsdt() {
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTISIG} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
