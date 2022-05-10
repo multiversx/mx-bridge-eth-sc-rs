@@ -7,10 +7,15 @@ on:
   pull_request:
         branches: [ main ]
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   contracts:
     permissions:
       contents: write
+      issues: write
     name: Contracts
     uses: ElrondNetwork/elrond-actions/.github/workflows/contracts.yml@v1
     with:
