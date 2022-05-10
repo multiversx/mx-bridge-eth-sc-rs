@@ -9,6 +9,7 @@ elrond_wasm_node::wasm_endpoints! {
     (
         addWrappedToken
         blacklistToken
+        depositLiquidity
         getChainSpecificToUniversalMapping
         getTokenLiquidity
         getUniversalBridgedTokenIds

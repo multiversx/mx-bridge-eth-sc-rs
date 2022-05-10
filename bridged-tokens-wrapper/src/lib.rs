@@ -73,6 +73,14 @@ pub trait BridgedTokensWrapper {
         chain_to_universal_mapper.clear();
     }
 
+    #[payable("*")]
+    #[endpoint(depositLiquidity)]
+    fn deposit_liquidity(&self) {
+        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+        self.token_liquidity(&payment_token)
+            .update(|liq| *liq += payment_amount);
+    }
+
     /// Will wrap what it can, and send back the rest unchanged
     #[payable("*")]
     #[endpoint(wrapTokens)]
@@ -118,12 +126,8 @@ pub trait BridgedTokensWrapper {
 
     #[payable("*")]
     #[endpoint(unwrapToken)]
-    fn unwrap_token(
-        &self,
-        #[payment_token] payment_token: TokenIdentifier,
-        #[payment_amount] payment_amount: BigUint,
-        requested_token: TokenIdentifier,
-    ) {
+    fn unwrap_token(&self, requested_token: TokenIdentifier) {
+        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
 
         let universal_bridged_token_ids = self
@@ -135,14 +139,14 @@ pub trait BridgedTokensWrapper {
         );
 
         let chain_specific_token_id = &requested_token;
-        let token_liquidity_mapper = self.token_liquidity(chain_specific_token_id);
-        let liquidity_amount = token_liquidity_mapper.get();
-        require!(
-            payment_amount <= liquidity_amount,
-            "Contract does not have enough funds"
-        );
+        self.token_liquidity(chain_specific_token_id).update(|liq| {
+            require!(
+                payment_amount <= *liq,
+                "Contract does not have enough funds"
+            );
 
-        token_liquidity_mapper.set(&liquidity_amount - &payment_amount);
+            *liq -= &payment_amount;
+        });
 
         self.send()
             .esdt_local_burn(&universal_bridged_token_ids, 0, &payment_amount);
