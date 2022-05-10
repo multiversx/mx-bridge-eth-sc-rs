@@ -8,6 +8,8 @@ on:
 
 jobs:
   contracts:
+    permissions:
+      contents: write
     name: Contracts
     uses: ElrondNetwork/elrond-actions/.github/workflows/contracts.yml@v1
     with:
