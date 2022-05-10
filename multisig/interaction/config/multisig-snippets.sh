@@ -75,24 +75,24 @@ changeQuorum() {
 
 pause() {
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
-    --gas-limit=40000000 --function="pause"
+    --gas-limit=40000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 pauseEsdtSafe() {
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
-    --gas-limit=40000000 --function="pauseEsdtSafe"
+    --gas-limit=40000000 --function="pauseEsdtSafe" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 unpause() {
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
-    --gas-limit=40000000 --function="unpause"
+    --gas-limit=40000000 --function="unpause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 unpauseEsdtSafe() {
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
-    --gas-limit=40000000 --function="unpauseEsdtSafe"
+    --gas-limit=40000000 --function="unpauseEsdtSafe" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
