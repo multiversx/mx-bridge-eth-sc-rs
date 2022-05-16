@@ -7,7 +7,9 @@ elrond_wasm::imports!();
 #[elrond_wasm::contract]
 pub trait BridgedTokensWrapper {
     #[init]
-    fn init(&self) {}
+    fn init(&self) {
+        self.deposit_enabled().set(false);
+    }
 
     #[only_owner]
     #[endpoint(addWrappedToken)]
@@ -73,12 +75,20 @@ pub trait BridgedTokensWrapper {
         chain_to_universal_mapper.clear();
     }
 
+    #[only_owner]
+    #[endpoint(setDepositStatus)]
+    fn set_deposit_status(&self, status: bool) {
+        self.deposit_enabled().set(status);
+    }
+
     #[payable("*")]
     #[endpoint(depositLiquidity)]
     fn deposit_liquidity(&self) {
-        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
-        self.token_liquidity(&payment_token)
-            .update(|liq| *liq += payment_amount);
+        if self.deposit_enabled().get() {
+            let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+            self.token_liquidity(&payment_token)
+                .update(|liq| *liq += payment_amount);
+        }
     }
 
     /// Will wrap what it can, and send back the rest unchanged
@@ -179,6 +189,10 @@ pub trait BridgedTokensWrapper {
         &self,
         token: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
+
+    #[view(getDepositStatus)]
+    #[storage_mapper("depositEnabled")]
+    fn deposit_enabled(&self) -> SingleValueMapper<bool>;
 
     #[view(getchainSpecificTokenIds)]
     #[storage_mapper("chainSpecificTokenIds")]
