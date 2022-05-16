@@ -7,9 +7,7 @@ elrond_wasm::imports!();
 #[elrond_wasm::contract]
 pub trait BridgedTokensWrapper {
     #[init]
-    fn init(&self) {
-        self.deposit_enabled().set(false);
-    }
+    fn init(&self) {}
 
     #[only_owner]
     #[endpoint(addWrappedToken)]
