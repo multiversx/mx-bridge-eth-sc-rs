@@ -5,9 +5,11 @@ use transaction::PaymentsVec;
 elrond_wasm::imports!();
 
 #[elrond_wasm::contract]
-pub trait BridgedTokensWrapper {
+pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
     #[init]
-    fn init(&self) {}
+    fn init(&self) {
+        self.set_paused(true);
+    }
 
     #[only_owner]
     #[endpoint(addWrappedToken)]
@@ -73,20 +75,13 @@ pub trait BridgedTokensWrapper {
         chain_to_universal_mapper.clear();
     }
 
-    #[only_owner]
-    #[endpoint(setDepositStatus)]
-    fn set_deposit_status(&self, status: bool) {
-        self.deposit_enabled().set(status);
-    }
-
     #[payable("*")]
     #[endpoint(depositLiquidity)]
     fn deposit_liquidity(&self) {
-        if self.deposit_enabled().get() {
-            let (payment_amount, payment_token) = self.call_value().payment_token_pair();
-            self.token_liquidity(&payment_token)
-                .update(|liq| *liq += payment_amount);
-        }
+        require!(self.not_paused(), "Cannot deposit liquidity while paused");
+        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+        self.token_liquidity(&payment_token)
+            .update(|liq| *liq += payment_amount);
     }
 
     /// Will wrap what it can, and send back the rest unchanged
