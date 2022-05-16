@@ -183,10 +183,6 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
         token: &TokenIdentifier,
     ) -> SingleValueMapper<TokenIdentifier>;
 
-    #[view(getDepositStatus)]
-    #[storage_mapper("depositEnabled")]
-    fn deposit_enabled(&self) -> SingleValueMapper<bool>;
-
     #[view(getchainSpecificTokenIds)]
     #[storage_mapper("chainSpecificTokenIds")]
     fn chain_specific_token_ids(
