@@ -123,8 +123,7 @@
                         "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
                         "str:universalBridgedTokenIds.len": "1",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
-                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
-                        "str:depositEnabled": "0"
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
