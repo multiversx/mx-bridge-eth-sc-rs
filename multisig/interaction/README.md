@@ -1,6 +1,6 @@
 ## Using snippets script for the bridge SCs
 
-### Step 1: Update [config.cfg](config/configs.cfg)
+### Step 1: Update [configs.cfg](config/configs.cfg)
 - Update Alice(owner) and initial relayers' pem location.
 - Update any other SC setting that you would like to change.
 
@@ -19,4 +19,4 @@ Available commands are:
 - pause-contracts
 - unpause-contracts
 
-All the commands that are changing any SC settings will automatically update also [config.cfg](config/configs.cfg). However, there are some points (like token issueing) when the admin will be ask to first update the configs before proceeding with next steps.
+All the commands that are changing any SC settings will automatically update also [configs.cfg](config/configs.cfg). However, there are some points (like token issueing) when the admin will be ask to first update the configs before proceeding with next steps.
