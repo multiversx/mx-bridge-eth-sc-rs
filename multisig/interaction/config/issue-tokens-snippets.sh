@@ -23,6 +23,6 @@ transferToSC() {
 
     erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=500000 --function="ESDTTransfer" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${VALUE_TO_MINT} \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${VALUE_TO_MINT} str:depositLiquidity \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

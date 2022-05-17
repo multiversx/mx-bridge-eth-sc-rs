@@ -1,8 +1,9 @@
 deployMultisig() {
+    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     erdpy --verbose contract deploy --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
     --arguments ${SAFE} ${MULTI_TRANSFER} \
-    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
+    ${MIN_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
     ${RELAYER_ADDR_0} ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     ${RELAYER_ADDR_4} ${RELAYER_ADDR_5} ${RELAYER_ADDR_6} ${RELAYER_ADDR_7} \
     ${RELAYER_ADDR_8} ${RELAYER_ADDR_9} \

@@ -1,3 +1,4 @@
+#TODO: check & updates upgrade snippets
 deploySafeForUpgrade() {
     getAggregatorAddressHex
 
@@ -43,10 +44,10 @@ upgradeMultisig() {
     getMultiTransferEsdtAddressHex
 
     local SLASH_AMOUNT=0x00 # 0
-
+    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     erdpy --verbose contract upgrade ${ADDRESS} --bytecode=../output/multisig.wasm --recall-nonce --pem=${ALICE} \
     --arguments 0x${ESDT_SAFE_ADDRESS_HEX} 0x${MULTI_TRANSFER_ESDT_ADDRESS_HEX} \
-    ${RELAYER_REQUIRED_STAKE} ${SLASH_AMOUNT} 0x07 \
+    ${local} ${SLASH_AMOUNT} 0x07 \
     --gas-limit=200000000 --send --outfile="upgrade-multisig.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
     
 }
