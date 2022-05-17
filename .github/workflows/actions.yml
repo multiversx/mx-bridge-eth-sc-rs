@@ -7,11 +7,11 @@ on:
   pull_request:
         branches: [ main ]
 
-permissions: write-all
+permissions:
+  pull-requests: write
 
 jobs:
   contracts:
-    permissions: write-all
     name: Contracts
     uses: ElrondNetwork/elrond-actions/.github/workflows/contracts.yml@v1
     with:
