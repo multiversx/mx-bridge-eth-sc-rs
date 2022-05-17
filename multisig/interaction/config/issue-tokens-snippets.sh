@@ -22,7 +22,7 @@ transferToSC() {
     VALUE_TO_MINT=$(echo "$UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS" | bc)
 
     erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=500000 --function="ESDTTransfer" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${VALUE_TO_MINT} str:depositLiquidity \
+    --gas-limit=5000000 --function="ESDTTransfer" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${VALUE_TO_MINT} str:depositLiquidity \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

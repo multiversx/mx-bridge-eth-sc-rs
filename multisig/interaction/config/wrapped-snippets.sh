@@ -40,3 +40,9 @@ wrapper-whitelistToken() {
     --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+
+upgradeBridgedTokensWrapper() {
+    erdpy --verbose contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce --pem=${ALICE} \
+    --gas-limit=50000000 --send \
+    --outfile="upgrade-bridged-tokens-wrapper.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return 
+}
