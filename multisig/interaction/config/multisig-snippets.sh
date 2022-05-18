@@ -133,7 +133,7 @@ esdtSafeSetMaxBridgedAmountForToken() {
     MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS" | bc)
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="esdtSafeSetMaxBridgedAmountForToken" \
-    --arguments str:{CHAIN_SPECIFIC_TOKEN} ${MAX} \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -143,6 +143,6 @@ multiTransferEsdtSetMaxBridgedAmountForToken() {
     MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS" | bc)
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="multiTransferEsdtSetMaxBridgedAmountForToken" \
-    --arguments str:{CHAIN_SPECIFIC_TOKEN} ${MAX} \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

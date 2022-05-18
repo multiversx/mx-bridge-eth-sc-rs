@@ -1,6 +1,3 @@
-# 1. deployAggregator
-# 2. Call submitAggregatorBatch to set gas price for eth
-
 deployAggregator() {
     CHECK_VARIABLES AGGREGATOR_WASM CHAIN_SPECIFIC_TOKEN ALICE_ADDRESS
 
@@ -20,11 +17,12 @@ deployAggregator() {
 
 submitAggregatorBatch() {
     CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN MIN_AMOUNT NR_DECIMALS
-    
-    MIN=$(echo "$MIN_AMOUNT*10^$NR_DECIMALS" | bc)
+
+    MIN=$(echo "$MIN_AMOUNT*10^$NR_DECIMALS-1" | bc)
+
     erdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
-    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN} ${MIN} \
+    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${MIN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
@@ -32,7 +30,7 @@ pauseAggregator() {
     CHECK_VARIABLES AGGREGATOR
 
     erdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
-    --gas-limit=15000000 --function="pause" \
+    --gas-limit=5000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
@@ -40,6 +38,6 @@ unpauseAggregator() {
     CHECK_VARIABLES AGGREGATOR
 
     erdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
-    --gas-limit=15000000 --function="unpause" \
+    --gas-limit=5000000 --function="unpause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }

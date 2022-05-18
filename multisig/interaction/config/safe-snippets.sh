@@ -21,6 +21,6 @@ setLocalRolesEsdtSafe() {
 
     erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments ${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
