@@ -9,24 +9,17 @@
         },
         "contractCrate": {
             "name": "price-aggregator",
-            "version": "0.0.1"
+            "version": "0.0.1",
+            "git_version": "49b8105-modified"
         },
         "framework": {
             "name": "elrond-wasm",
-            "version": "0.31.0"
+            "version": "0.31.1"
         }
     },
     "name": "PriceAggregator",
     "constructor": {
         "inputs": [
-            {
-                "name": "payment_token",
-                "type": "TokenIdentifier"
-            },
-            {
-                "name": "oracles",
-                "type": "List<Address>"
-            },
             {
                 "name": "submission_count",
                 "type": "u32"
@@ -36,35 +29,44 @@
                 "type": "u8"
             },
             {
-                "name": "query_payment_amount",
-                "type": "BigUint"
+                "name": "oracles",
+                "type": "variadic<Address>",
+                "multi_arg": true
             }
         ],
         "outputs": []
     },
     "endpoints": [
         {
-            "name": "deposit",
+            "name": "addOracles",
+            "onlyOwner": true,
             "mutability": "mutable",
-            "payableInTokens": [
-                "*"
-            ],
             "inputs": [
                 {
-                    "name": "on_behalf_of",
-                    "type": "optional<Address>",
+                    "name": "oracles",
+                    "type": "variadic<Address>",
                     "multi_arg": true
                 }
             ],
             "outputs": []
         },
         {
-            "name": "withdraw",
+            "docs": [
+                "Also receives submission count,",
+                "so the owner does not have to update it manually with setSubmissionCount before this call"
+            ],
+            "name": "removeOracles",
+            "onlyOwner": true,
             "mutability": "mutable",
             "inputs": [
                 {
-                    "name": "amount",
-                    "type": "BigUint"
+                    "name": "submission_count",
+                    "type": "u32"
+                },
+                {
+                    "name": "oracles",
+                    "type": "variadic<Address>",
+                    "multi_arg": true
                 }
             ],
             "outputs": []
@@ -101,31 +103,6 @@
             "outputs": []
         },
         {
-            "name": "myBalance",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
-            "name": "getBalance",
-            "mutability": "readonly",
-            "inputs": [
-                {
-                    "name": "address",
-                    "type": "Address"
-                }
-            ],
-            "outputs": [
-                {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
             "name": "latestRoundData",
             "mutability": "readonly",
             "inputs": [],
@@ -138,7 +115,7 @@
         },
         {
             "name": "latestPriceFeed",
-            "mutability": "mutable",
+            "mutability": "readonly",
             "inputs": [
                 {
                     "name": "from",
@@ -211,26 +188,6 @@
             ]
         },
         {
-            "name": "payment_token",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "TokenIdentifier"
-                }
-            ]
-        },
-        {
-            "name": "query_payment_amount",
-            "mutability": "readonly",
-            "inputs": [],
-            "outputs": [
-                {
-                    "type": "BigUint"
-                }
-            ]
-        },
-        {
             "name": "submission_count",
             "mutability": "readonly",
             "inputs": [],
@@ -249,6 +206,30 @@
                     "type": "u8"
                 }
             ]
+        },
+        {
+            "name": "isPaused",
+            "mutability": "readonly",
+            "inputs": [],
+            "outputs": [
+                {
+                    "type": "bool"
+                }
+            ]
+        },
+        {
+            "name": "pause",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
+        },
+        {
+            "name": "unpause",
+            "onlyOwner": true,
+            "mutability": "mutable",
+            "inputs": [],
+            "outputs": []
         }
     ],
     "hasCallback": false,
