@@ -32,7 +32,7 @@ pauseAggregator() {
     CHECK_VARIABLES AGGREGATOR
 
     erdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
-    --gas-limit=15000000 --function="unpause" \
+    --gas-limit=15000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
