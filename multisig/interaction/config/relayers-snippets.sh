@@ -1,4 +1,6 @@
 addBoardMember() {
+    CHECK_VARIABLES MULTISIG
+
     read -p "Relayer address: " RELAYER_ADDR
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=35000000 --function="addBoardMember" --arguments ${RELAYER_ADDR} \
@@ -6,6 +8,8 @@ addBoardMember() {
 }
 
 removeBoardMember() {
+    CHECK_VARIABLES MULTISIG
+
     read -p "Relayer address: " RELAYER_ADDR
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=35000000 --function="removeUser" --arguments ${RELAYER_ADDR} \
@@ -13,6 +17,8 @@ removeBoardMember() {
 }
 
 unstake() {
+    CHECK_VARIABLES MULTISIG RELAYER_REQUIRED_STAKE
+
     read -p "Relayer address: " RELAYER_ADDR
     MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem="./walletsRelay/${RELAYER_ADDR}.pem" \
@@ -22,6 +28,10 @@ unstake() {
 }
 
 stake() {
+    CHECK_VARIABLES MULTISIG RELAYER_REQUIRED_STAKE \
+    RELAYER_WALLET0 RELAYER_WALLET1 RELAYER_WALLET2 RELAYER_WALLET3 RELAYER_WALLET4 \
+    RELAYER_WALLET5 RELAYER_WALLET6 RELAYER_WALLET7 RELAYER_WALLET8 RELAYER_WALLET9
+
     MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${RELAYER_WALLET0} \
     --gas-limit=35000000 --function="stake" --value=${MIN_STAKE} \

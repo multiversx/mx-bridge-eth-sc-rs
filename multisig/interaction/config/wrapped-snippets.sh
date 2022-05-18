@@ -6,8 +6,10 @@
 # If we want to add another chain, do only the last step
 
 deployBridgedTokensWrapper() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER_WASM
+    
     erdpy --verbose contract deploy --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce --pem=${ALICE} \
-    --gas-limit=50000000 \
+    --gas-limit=30000000 \
     --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(erdpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emittedTransactionHash']")
@@ -21,6 +23,8 @@ deployBridgedTokensWrapper() {
 }
 
 setLocalRolesBridgedTokensWrapper() {
+    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS UNIVERSAL_TOKEN BRIDGED_TOKENS_WRAPPER
+    
     erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
     --arguments str:${UNIVERSAL_TOKEN} ${BRIDGED_TOKENS_WRAPPER} str:ESDTRoleLocalMint str:ESDTRoleLocalBurn\
@@ -28,6 +32,8 @@ setLocalRolesBridgedTokensWrapper() {
 }
 
 addWrappedToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
+
     erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="addWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} \
@@ -35,8 +41,18 @@ addWrappedToken() {
 }
 
 wrapper-whitelistToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN UNIVERSAL_TOKEN
+
     erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="whitelistToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+upgradeBridgedTokensWrapper() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGED_TOKENS_WRAPPER_WASM
+
+    erdpy --verbose contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce --pem=${ALICE} \
+    --gas-limit=50000000 --send \
+    --outfile="upgrade-bridged-tokens-wrapper.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return 
 }

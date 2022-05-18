@@ -5,8 +5,8 @@ set -e
 SCRIPTPATH="$( cd "$(dirname -- "$0")" ; pwd -P )"
 
 source $SCRIPTPATH/config/configs.cfg
+source $SCRIPTPATH/config/helper.cfg
 source $SCRIPTPATH/config/menu_functions.cfg
-CONFIG_FILE=$SCRIPTPATH/config/configs.cfg
 
 case "$1" in
 'deploy-aggregator')
@@ -54,13 +54,11 @@ case "$1" in
   ;;
 
 'pause-contracts')
-  confirmation pause
-  continue-confirmation pauseEsdtSafe
+  confirmation pause-contracts
   ;;
 
 'unpause-contracts')
-  confirmation unpause
-  continue-confirmation unpauseEsdtSafe
+  confirmation unpause-contracts
   ;;
 
 *)

@@ -1,7 +1,9 @@
 deploySafe() {
+    CHECK_VARIABLES SAFE_WASM AGGREGATOR
+    
     erdpy --verbose contract deploy --bytecode=${SAFE_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
-    --arguments ${AGGREGATOR_ADDRESS} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --arguments ${AGGREGATOR} 1 \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(erdpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emittedTransactionHash']")
@@ -15,8 +17,10 @@ deploySafe() {
 }   
 
 setLocalRolesEsdtSafe() {
+    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN SAFE
+
     erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments ${CHAINSPECIFIC_TOKEN} ${SAFE_ADDRESS} str:ESDTRoleLocalBurn \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
