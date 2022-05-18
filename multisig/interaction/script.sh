@@ -54,13 +54,11 @@ case "$1" in
   ;;
 
 'pause-contracts')
-  confirmation pause
-  continue-confirmation pauseEsdtSafe
+  confirmation pause-contracts
   ;;
 
 'unpause-contracts')
-  confirmation unpause
-  continue-confirmation unpauseEsdtSafe
+  confirmation unpause-contracts
   ;;
 
 *)
