@@ -16,13 +16,13 @@ deployAggregator() {
 }
 
 submitAggregatorBatch() {
-    CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN MIN_AMOUNT NR_DECIMALS
+    CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN FEE_AMOUNT NR_DECIMALS
 
-    MIN=$(echo "$MIN_AMOUNT*10^$NR_DECIMALS-1" | bc)
+    FEE=$(echo "$FEE_AMOUNT*10^$NR_DECIMALS" | bc)
 
     erdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
-    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${MIN} \
+    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${FEE} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
