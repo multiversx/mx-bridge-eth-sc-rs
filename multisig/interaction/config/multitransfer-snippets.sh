@@ -1,4 +1,6 @@
 deployMultiTransfer() {
+    CHECK_VARIABLES MULTI_TRANSFER_WASM BRIDGED_TOKENS_WRAPPER
+
     erdpy --verbose contract deploy --bytecode=${MULTI_TRANSFER_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=100000000 \
     --arguments ${BRIDGED_TOKENS_WRAPPER} --metadata-payable \
@@ -12,6 +14,8 @@ deployMultiTransfer() {
 }
 
 setLocalRolesMultiTransferEsdt() {
+    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN MULTISIG
+
     erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTISIG} str:ESDTRoleLocalMint \

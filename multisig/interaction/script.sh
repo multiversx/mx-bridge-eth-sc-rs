@@ -5,8 +5,10 @@ set -e
 SCRIPTPATH="$( cd "$(dirname -- "$0")" ; pwd -P )"
 
 source $SCRIPTPATH/config/configs.cfg
+source $SCRIPTPATH/config/helper.cfg
 source $SCRIPTPATH/config/menu_functions.cfg
-CONFIG_FILE=$SCRIPTPATH/config/configs.cfg
+
+CHECK_VARIABLES ALICE PROXY CHAIN_ID
 
 case "$1" in
 'deploy-aggregator')
