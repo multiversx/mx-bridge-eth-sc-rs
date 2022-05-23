@@ -23,6 +23,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
     ReceiverAddressRaw<M>,
     TokenIdentifier<M>,
     BigUint<M>,
+    TxNonce,
 >;
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
@@ -34,6 +35,7 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
     pub tx_nonce: TxNonce,
+    pub refundedNonce: TxNonce,
 }
 
 pub type EthTxAsMultiValue<M> =
@@ -48,6 +50,7 @@ pub struct Transaction<M: ManagedTypeApi> {
     pub token_identifier: TokenIdentifier<M>,
     pub amount: BigUint<M>,
     pub is_refund_tx: bool,
+    pub refundedNonce: TxNonce,
 }
 
 impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {
@@ -63,6 +66,7 @@ impl<M: ManagedTypeApi> From<TxAsMultiValue<M>> for Transaction<M> {
             token_identifier,
             amount,
             is_refund_tx: false,
+            refundedNonce: 0,
         }
     }
 }

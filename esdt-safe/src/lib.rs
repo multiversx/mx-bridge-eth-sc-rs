@@ -147,13 +147,14 @@ pub trait EsdtSafe:
                 token_identifier: refund_tx.token_identifier,
                 amount: actual_bridged_amount,
                 is_refund_tx: true,
+                refundedNonce: refund_tx.nonce,
             };
             new_transactions.push(new_tx);
         }
 
         let batch_ids = self.add_multiple_tx_to_batch(&new_transactions);
         for (batch_id, tx) in batch_ids.iter().zip(new_transactions.iter()) {
-            self.add_refund_transaction_event(batch_id, tx.nonce);
+            self.add_refund_transaction_event(batch_id, tx.nonce, tx.refundedNonce);
         }
     }
 
@@ -204,6 +205,7 @@ pub trait EsdtSafe:
             token_identifier: payment_token,
             amount: actual_bridged_amount,
             is_refund_tx: false,
+            refundedNonce: 0,
         };
 
         let batch_id = self.add_to_batch(tx);
@@ -259,7 +261,7 @@ pub trait EsdtSafe:
     fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("addRefundTransactionEvent")]
-    fn add_refund_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn add_refund_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64, #[indexed] refunded_tx_id: u64);
 
     #[event("setStatusEvent")]
     fn set_status_event(
