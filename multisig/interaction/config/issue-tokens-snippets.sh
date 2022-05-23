@@ -34,3 +34,27 @@ transferToSC() {
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${VALUE_TO_MINT} str:depositLiquidity \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+
+setMintRole() {
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setSpecialRole" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unSetMintRole() {
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="unSetSpecialRole" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+mint() {
+    CHECK_VARIABLES NR_DECIMALS ALICE_ADDRESS CHAIN_SPECIFIC_TOKEN
+    read -p "Amount to mint(without decimals): " AMOUNT_TO_MINT
+    VALUE_TO_MINT=$(echo "$AMOUNT_TO_MINT*10^$NR_DECIMALS" | bc)
+    erdpy --verbose contract call ${ALICE_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=300000 --function="ESDTLocalMint" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${VALUE_TO_MINT} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}

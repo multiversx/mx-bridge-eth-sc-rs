@@ -64,13 +64,16 @@ case "$1" in
 'set-swap-fee')
   confirmation set-fee
   ;;
+'mint-chain-specific')
+  confirmation mint-chain-specific
+  ;;
 
 *)
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
   echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
-  echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", \"set-fee\" }"
+  echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", \"set-swap-fee\", \"mint-chain-specific\" }"
   ;;
 
 esac
