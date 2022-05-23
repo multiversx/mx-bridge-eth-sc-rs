@@ -58,7 +58,7 @@ pub trait EsdtSafe:
     fn set_transaction_batch_status(
         &self,
         batch_id: u64,
-         tx_statuses: MultiValueEncoded<TransactionStatus>,
+        tx_statuses: MultiValueEncoded<TransactionStatus>,
     ) {
         let first_batch_id = self.first_batch_id().get();
         require!(
@@ -115,6 +115,7 @@ pub trait EsdtSafe:
         let mut cached_token_ids = ManagedVec::<Self::Api, TokenIdentifier>::new();
         let mut cached_prices = ManagedVec::<Self::Api, BigUint>::new();
         let mut new_transactions = ManagedVec::new();
+        let mut original_tx_nonces = ManagedVec::<Self::Api, u64>::new();
 
         for refund_tx in &refund_transactions {
             let required_fee = match cached_token_ids
@@ -149,11 +150,15 @@ pub trait EsdtSafe:
                 is_refund_tx: true,
             };
             new_transactions.push(new_tx);
+            original_tx_nonces.push(refund_tx.nonce);
         }
 
         let batch_ids = self.add_multiple_tx_to_batch(&new_transactions);
-        for (batch_id, tx) in batch_ids.iter().zip(new_transactions.iter()) {
-            self.add_refund_transaction_event(batch_id, tx.nonce);
+        for (i, tx) in new_transactions.iter().enumerate() {
+            let batch_id = batch_ids.get(i);
+            let original_tx_nonce = original_tx_nonces.get(i);
+
+            self.add_refund_transaction_event(batch_id, tx.nonce, original_tx_nonce);
         }
     }
 
@@ -259,7 +264,12 @@ pub trait EsdtSafe:
     fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("addRefundTransactionEvent")]
-    fn add_refund_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn add_refund_transaction_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] original_tx_id: u64,
+    );
 
     #[event("setStatusEvent")]
     fn set_status_event(
