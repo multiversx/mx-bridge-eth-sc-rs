@@ -10,6 +10,8 @@ pub trait EgldEsdtSwap: elrond_wasm_modules::pause::PauseModule {
     #[init]
     fn init(&self, wrapped_egld_token_id: TokenIdentifier) {
         self.wrapped_egld_token_id().set(&wrapped_egld_token_id);
+
+        self.set_paused(true);
     }
 
     // endpoints
