@@ -76,7 +76,7 @@ pub trait BridgedTokensWrapper {
     #[payable("*")]
     #[endpoint(depositLiquidity)]
     fn deposit_liquidity(&self) {
-        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.token_liquidity(&payment_token)
             .update(|liq| *liq += payment_amount);
     }
@@ -105,12 +105,7 @@ pub trait BridgedTokensWrapper {
                 self.token_liquidity(&payment.token_identifier)
                     .update(|value| *value += &payment.amount);
 
-                EsdtTokenPayment {
-                    token_type: EsdtTokenType::Fungible,
-                    token_identifier: universal_token_id.clone(),
-                    token_nonce: 0,
-                    amount: payment.amount,
-                }
+                EsdtTokenPayment::new(universal_token_id.clone(), 0, payment.amount)
             } else {
                 payment
             };
@@ -127,7 +122,7 @@ pub trait BridgedTokensWrapper {
     #[payable("*")]
     #[endpoint(unwrapToken)]
     fn unwrap_token(&self, requested_token: TokenIdentifier) {
-        let (payment_amount, payment_token) = self.call_value().payment_token_pair();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
 
         let universal_bridged_token_ids = self
@@ -153,7 +148,7 @@ pub trait BridgedTokensWrapper {
 
         let caller = self.blockchain().get_caller();
         self.send()
-            .direct(&caller, chain_specific_token_id, 0, &payment_amount, &[]);
+            .direct_esdt(&caller, chain_specific_token_id, 0, &payment_amount, &[]);
     }
 
     fn require_mint_and_burn_roles(&self, token_id: &TokenIdentifier) {
