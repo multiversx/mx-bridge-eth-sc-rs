@@ -13,13 +13,17 @@ pub trait EgldEsdtSwap {
 
     // endpoints
 
+    #[only_owner]
+    #[payable("EGLD")]
+    fn rebalance(&self) {}
+
     #[payable("EGLD")]
     #[endpoint(wrapEgld)]
     fn wrap_egld(
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
-         accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
+        accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         require!(payment_token.is_egld(), "Only EGLD accepted");
         require!(payment_amount > 0u32, "Payment must be more than 0");
@@ -56,7 +60,7 @@ pub trait EgldEsdtSwap {
         &self,
         #[payment_token] payment_token: TokenIdentifier,
         #[payment_amount] payment_amount: BigUint,
-         accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
+        accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
 
