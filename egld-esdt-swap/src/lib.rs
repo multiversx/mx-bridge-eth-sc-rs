@@ -3,9 +3,10 @@
 elrond_wasm::imports!();
 
 const LEFTOVER_GAS: u64 = 10_000u64;
+static CONTRACT_PAUSED_ERR: &[u8] = b"contract is paused";
 
 #[elrond_wasm::contract]
-pub trait EgldEsdtSwap {
+pub trait EgldEsdtSwap: elrond_wasm_modules::pause::PauseModule {
     #[init]
     fn init(&self, wrapped_egld_token_id: TokenIdentifier) {
         self.wrapped_egld_token_id().set(&wrapped_egld_token_id);
@@ -26,6 +27,8 @@ pub trait EgldEsdtSwap {
         #[payment_amount] payment_amount: BigUint,
         accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
+        require!(self.not_paused(), CONTRACT_PAUSED_ERR);
+
         require!(payment_token.is_egld(), "Only EGLD accepted");
         require!(payment_amount > 0u32, "Payment must be more than 0");
 
@@ -63,6 +66,8 @@ pub trait EgldEsdtSwap {
         #[payment_amount] payment_amount: BigUint,
         accept_funds_endpoint_name: OptionalValue<ManagedBuffer>,
     ) {
+        require!(self.not_paused(), CONTRACT_PAUSED_ERR);
+
         let wrapped_egld_token_id = self.wrapped_egld_token_id().get();
 
         require!(payment_token == wrapped_egld_token_id, "Wrong esdt token");
