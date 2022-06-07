@@ -15,6 +15,7 @@ pub trait EgldEsdtSwap {
 
     #[only_owner]
     #[payable("EGLD")]
+    #[endpoint]
     fn rebalance(&self) {}
 
     #[payable("EGLD")]
