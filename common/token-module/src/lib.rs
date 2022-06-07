@@ -53,7 +53,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                     remaining_fees -= &amount_to_send;
 
                     self.send()
-                        .direct(&pair.address, &token_id, 0, &amount_to_send, &[]);
+                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send, &[]);
                 }
             }
 
@@ -68,7 +68,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
+        opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
 

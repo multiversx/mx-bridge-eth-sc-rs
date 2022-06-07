@@ -69,12 +69,7 @@ pub trait MultiTransferEsdt:
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
             valid_dest_addresses_list.push(eth_tx.to);
-            valid_payments_list.push(EsdtTokenPayment {
-                token_type: EsdtTokenType::Fungible,
-                token_identifier: eth_tx.token_id,
-                token_nonce: 0,
-                amount: eth_tx.amount,
-            });
+            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
@@ -168,7 +163,7 @@ pub trait MultiTransferEsdt:
     ) {
         for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
             self.send()
-                .direct(&dest, &p.token_identifier, 0, &p.amount, &[]);
+                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount, &[]);
         }
     }
 

@@ -33,13 +33,13 @@ pub trait EsdtSafe:
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
-            .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(&1);
-        self.last_batch_id().set_if_empty(&1);
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
 
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
@@ -173,18 +173,10 @@ pub trait EsdtSafe:
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
     #[payable("*")]
     #[endpoint(createTransaction)]
-    fn create_transaction(
-        &self,
-        #[payment_token] payment_token: TokenIdentifier,
-        #[payment_amount] payment_amount: BigUint,
-        to: EthAddress<Self::Api>,
-    ) {
+    fn create_transaction(&self, to: EthAddress<Self::Api>) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
-        require!(
-            self.call_value().esdt_token_nonce() == 0,
-            "Only fungible ESDT tokens accepted"
-        );
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_in_whitelist(&payment_token);
 
         let required_fee = self.calculate_required_fee(&payment_token);
@@ -217,16 +209,18 @@ pub trait EsdtSafe:
 
     /// Claim funds for failed Elrond -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck.
-    /// For example, if the receive is a SC, a frozen account, etc.
+    /// For example, if the receiver is a SC, a frozen account, etc.
     #[endpoint(claimRefund)]
-    fn claim_refund(&self, token_id: TokenIdentifier) {
+    fn claim_refund(&self, token_id: TokenIdentifier) -> EsdtTokenPayment<Self::Api> {
         let caller = self.blockchain().get_caller();
         let refund_amount = self.refund_amount(&caller, &token_id).get();
         require!(refund_amount > 0, "Nothing to refund");
 
         self.refund_amount(&caller, &token_id).clear();
         self.send()
-            .direct(&caller, &token_id, 0, &refund_amount, &[]);
+            .direct_esdt(&caller, &token_id, 0, &refund_amount, &[]);
+
+        EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
     /// Query function that lists all refund amounts for a user.
