@@ -115,9 +115,9 @@
             "accounts": {
                 "address:user": {
                     "nonce": "*",
-                    "balance": "2,000,000",
+                    "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": "500,000",
+                        "str:EGLD-123456": "2,500,000",
                         "str:ETH-123456": "1,500,000"
                     },
                     "storage": {}

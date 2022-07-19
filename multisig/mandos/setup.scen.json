@@ -9,23 +9,6 @@
             "step": "setState",
             "comment": "simulate child contracts deploy + setting local roles + change ownership. Changing ownership will be done after the multisig deploy in the real setup, but this is way less verbose in mandos.",
             "accounts": {
-                "sc:egld_esdt_swap": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalMint",
-                                "ESDTRoleLocalBurn"
-                            ]
-                        }
-                    },
-                    "storage": {
-                        "str:wrappedEgldTokenId": "str:EGLD-123456"
-                    },
-                    "code": "file:../../egld-esdt-swap/output/egld-esdt-swap.wasm"
-                },
                 "sc:multi_transfer": {
                     "nonce": "0",
                     "balance": "0",
@@ -114,8 +97,9 @@
                 },
                 "address:user": {
                     "nonce": "0",
-                    "balance": "2,000,000",
+                    "balance": "0",
                     "esdt": {
+                        "str:EGLD-123456": "2,000,000",
                         "str:ETH-123456": "1,000,000"
                     },
                     "storage": {}
