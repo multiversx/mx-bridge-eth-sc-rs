@@ -14,10 +14,19 @@ deployMultiTransfer() {
 }
 
 setLocalRolesMultiTransferEsdt() {
-    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN MULTISIG
+    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN MULTI_TRANSFER
 
     erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTISIG} str:ESDTRoleLocalMint \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTI_TRANSFER} str:ESDTRoleLocalMint \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unsetLocalRolesMultiTransferEsdt() {
+    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN MULTI_TRANSFER
+
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="unSetSpecialRole" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MULTI_TRANSFER} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

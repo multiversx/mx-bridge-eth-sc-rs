@@ -41,6 +41,15 @@ case "$1" in
   confirmation whitelist-token
   ;;
 
+'remove-whitelist-token')
+  echo -e 
+  echo "PREREQUIREMENTS: BRIDGED_TOKENS_WRAPPER needs to have MINT+BURN role for the UNIVERSAL TOKEN"
+  echo "Check and update TOKENS SETTINGS section in configs.cfg"
+  source $SCRIPTPATH/config/configs.cfg
+  echo -e
+  confirmation remove-whitelist-token
+  ;;
+
 'set-safe-max-tx')
   confirmation set-safe-max-tx
   ;;
@@ -73,7 +82,7 @@ case "$1" in
   echo -e 
   echo "Choose from:"
   echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
-  echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", \"set-swap-fee\", \"mint-chain-specific\" }"
+  echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", \"set-swap-fee\", \"mint-chain-specific\" }"
   ;;
 
 esac

@@ -31,11 +31,29 @@ setLocalRolesBridgedTokensWrapper() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+unsetLocalRolesBridgedTokensWrapper() {
+    CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS UNIVERSAL_TOKEN BRIDGED_TOKENS_WRAPPER
+    
+    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="unSetSpecialRole" \
+    --arguments str:${UNIVERSAL_TOKEN} ${BRIDGED_TOKENS_WRAPPER} str:ESDTRoleLocalMint str:ESDTRoleLocalBurn\
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 addWrappedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
 
     erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="addWrappedToken" \
+    --arguments str:${UNIVERSAL_TOKEN} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+removeWrappedToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
+
+    erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=6000000 --function="removeWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
@@ -46,6 +64,15 @@ wrapper-whitelistToken() {
     erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="whitelistToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${UNIVERSAL_TOKEN} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+wrapper-blacklistToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN UNIVERSAL_TOKEN
+
+    erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=6000000 --function="blacklistToken" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
