@@ -10,7 +10,7 @@ IMPORTANT: Ticker should always be chosen so that the aggregator has a mapping f
 
 You can find more about how to issue an ESDT token here: https://docs.elrond.com/developers/esdt-tokens/#issuance-of-fungible-esdt-tokens  
 
-Next, we're going to setup the main "controller" contract, which will be a multisig-style SC. You can find more details about this type of smart contract here: https://github.com/ElrondNetwork/elrond-wasm-rs/blob/master/contracts/examples/multisig/README.md  
+Next, we're going to setup the main "controller" contract, which will be a multisig-style SC. You can find more details about this type of smart contract here: https://github.com/multiversx/mx-sdk-rs/blob/master/contracts/examples/multisig/README.md  
 
 Basically, we will have a certain number of board members (in this case we will call them "relayers") which will validate transactions and take the appropriate actions. As this is a multisig contract, at least a certain number of members must agree to the action, otherwise it cannot be performed.  
 
@@ -33,7 +33,7 @@ fn deploy_child_contracts(
 
 The `_code` arguments are the compiled wasm bytecode of the respective contracts. `price_aggregator_contract_address` is the aggregator described in the intro (has to be deployed already). 
 
-`esdt_safe_eth_tx_gas_limit` and `multi_transfer_esdt_eth_tx_gas_limit` are gas limits used for Elrond -> Ethereum tx, and Ethereum -> Elrond tx respectively. This is the gas limit used for processing on the Ethereum side (briding over to Elrond or from Elrond). This cost is used to calculate the fees taken from the bridged token, to be then used as payment/incentive for the relayers.  
+`esdt_safe_eth_tx_gas_limit` and `multi_transfer_esdt_eth_tx_gas_limit` are gas limits used for MultiversX -> Ethereum tx, and Ethereum -> MultiversX tx respectively. This is the gas limit used for processing on the Ethereum side (briding over to MultiversX or from MultiversX). This cost is used to calculate the fees taken from the bridged token, to be then used as payment/incentive for the relayers.  
 
 `wrapped_egld_token_id` is the token identifier of the previously issued "WrappedEgld" token (Note: identifier format is ticker + '-' + 6 random characters). For WrappedEgld, it might look something like "EGLD-123456".  
 
@@ -43,7 +43,7 @@ Once those are setup, the individual contracts will need a bit more setup themse
 
 # EgldEsdtSwap 
 
-Requires having local MINT and local BURN roles for the WrappedEgld token. More info about how to set local roles can be found here: https://docs.elrond.com/developers/esdt-tokens/#setting-and-unsetting-special-roles
+Requires having local MINT and local BURN roles for the WrappedEgld token. More info about how to set local roles can be found here: https://docs.multiversx.com/tokens/esdt-tokens/#setting-and-unsetting-special-roles
 
 # MultiTransferEsdt
 
@@ -55,7 +55,7 @@ Requires local BURN role set for every token added to the whitelist.
 
 # Erc20 to TokenIdentifier mapping
 
-The relayers will need to know the mapping between Erc20 tokens on Ethereum and their respective representation as ESDT on Elrond. This mapping can be added by using the following function:  
+The relayers will need to know the mapping between Erc20 tokens on Ethereum and their respective representation as ESDT on MultiversX. This mapping can be added by using the following function:  
 
 ```
 #[endpoint(addMapping)]
