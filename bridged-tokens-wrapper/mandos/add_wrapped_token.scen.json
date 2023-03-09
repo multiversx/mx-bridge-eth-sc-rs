@@ -59,7 +59,8 @@
                 "to": "sc:bridged_tokens_wrapper",
                 "function": "addWrappedToken",
                 "arguments": [
-                    "str:WUSDC-abcdef"
+                    "str:WUSDC-abcdef",
+                    18
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
