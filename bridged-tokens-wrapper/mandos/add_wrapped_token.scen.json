@@ -23,7 +23,7 @@
                             "balance": "500000000000000"
                         },
                         "str:WUSDC-abcdef": {
-                            "balance": "500000000000000"
+                            "balance": "500"
                         }
                     },
                     "storage": {}
