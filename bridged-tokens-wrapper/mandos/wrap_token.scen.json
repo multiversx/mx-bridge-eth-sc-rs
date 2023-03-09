@@ -15,7 +15,7 @@
                 "function": "wrapTokens",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-bbbbbb",
-                    "value": "300"
+                    "value": "300000000000000"
                 },
                 "arguments": [],
                 "gasLimit": "5,000,000",
@@ -27,7 +27,7 @@
                 "gas": "*",
                 "refund": "*",
                 "out": [
-                    "u8:0|nested:str:USDC-bbbbbb|u64:0|biguint:300"
+                    "u8:0|nested:str:USDC-bbbbbb|u64:0|biguint:300000000000000"
                 ]
             }
         },
@@ -40,7 +40,7 @@
                 "function": "wrapTokens",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-aaaaaa",
-                    "value": "300"
+                    "value": "300000000000000"
                 },
                 "arguments": [],
                 "gasLimit": "5,000,000",
@@ -65,7 +65,7 @@
                 "function": "wrapTokens",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-cccccc",
-                    "value": "100"
+                    "value": "100000000000000"
                 },
                 "arguments": [],
                 "gasLimit": "5,000,000",
@@ -93,13 +93,13 @@
                     "nonce": "4",
                     "esdt": {
                         "str:USDC-aaaaaa": {
-                            "balance": "200"
+                            "balance": "200000000000000"
                         },
                         "str:USDC-bbbbbb": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "400"
+                            "balance": "400000000000000"
                         },
                         "str:WUSDC-abcdef": {
                             "balance": "900"
@@ -144,8 +144,8 @@
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100",
-                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "u32:18",
-                        "str:token_decimals_num|nested:str:USDC-cccccc": "u32:18"
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "0x12",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "0x12"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

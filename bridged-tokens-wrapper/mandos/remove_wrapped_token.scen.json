@@ -15,7 +15,7 @@
                 "function": "addWrappedToken",
                 "arguments": [
                     "str:WUSDC-uvwxyz",
-                    "biguint:18"
+                    "u32:18"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -62,7 +62,7 @@
                             "balance": "300"
                         },
                         "str:USDC-bbbbbb": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:USDC-cccccc": {
                             "balance": "400"
@@ -103,8 +103,8 @@
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-uvwxyz",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100",
-                        "str:token_decimals_num|nested:str:WUSDC-uvwxyz": "u32:18",
-                        "str:token_decimals_num|nested:str:USDC-cccccc": "u32:18"
+                        "str:token_decimals_num|nested:str:WUSDC-uvwxyz": "0x12",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "0x12"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

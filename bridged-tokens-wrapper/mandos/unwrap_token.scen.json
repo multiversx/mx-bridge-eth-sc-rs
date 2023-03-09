@@ -96,7 +96,7 @@
                             "balance": "300"
                         },
                         "str:USDC-bbbbbb": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:USDC-cccccc": {
                             "balance": "400"
@@ -144,9 +144,9 @@
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100",
-                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "u32:18",
-                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "u32:18",
-                        "str:token_decimals_num|nested:str:USDC-cccccc": "u32:18"
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "0x06",
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "0x12",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "0x12"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
