@@ -15,7 +15,7 @@
                 "function": "addWrappedToken",
                 "arguments": [
                     "str:WUSDC-uvwxyz",
-                    18
+                    "biguint:18"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"

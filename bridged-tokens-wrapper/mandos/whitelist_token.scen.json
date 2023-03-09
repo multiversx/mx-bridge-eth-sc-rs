@@ -15,7 +15,7 @@
                 "function": "whitelistToken",
                 "arguments": [
                     "str:USDC-bbbbbb",
-                    18,
+                    "biguint:18",
                     "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
@@ -37,7 +37,7 @@
                 "function": "whitelistToken",
                 "arguments": [
                     "str:USDC-aaaaaa",
-                    18,
+                    "biguint:18",
                     "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
@@ -59,7 +59,7 @@
                 "function": "whitelistToken",
                 "arguments": [
                     "str:USDC-cccccc",
-                    18,
+                    "biguint:18",
                     "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
