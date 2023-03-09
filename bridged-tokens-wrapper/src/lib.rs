@@ -221,7 +221,7 @@ pub trait BridgedTokensWrapper {
         let from_decimals = self.token_decimals_num(&from).get();
         let to_decimals = self.token_decimals_num(&to).get();
         let amount = DFPBigUint::from_raw(amount, from_decimals);
-        amount.convert(to_decimals)
+        amount.convert(to_decimals).to_raw()
     }
 
     fn require_mint_and_burn_roles(&self, token_id: &TokenIdentifier) {

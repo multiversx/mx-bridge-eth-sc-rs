@@ -1,6 +1,7 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
+#[derive(Clone)]
 pub struct DFPBigUint<M: ManagedTypeApi> {
     bu: BigUint<M>,
     num_decimals: u32,
@@ -11,15 +12,25 @@ impl<M: ManagedTypeApi> DFPBigUint<M> {
         DFPBigUint { bu, num_decimals }
     }
 
-    pub fn convert(&self, decimals: u32) -> BigUint<M> {
+    pub fn convert(&self, decimals: u32) -> Self {
         if self.num_decimals < decimals {
             let diff_decimals = decimals - self.num_decimals;
-            return self.bu.clone() * 10u32.pow(diff_decimals);
+            return DFPBigUint {
+                bu: self.bu.clone() * 10u32.pow(diff_decimals),
+                num_decimals: decimals,
+            };
         }
         if self.num_decimals > decimals {
             let diff_decimals = self.num_decimals - decimals;
-            return self.bu.clone() / 10u32.pow(diff_decimals);
+            return DFPBigUint {
+                bu: self.bu.clone() / 10u32.pow(diff_decimals),
+                num_decimals: decimals,
+            };
         }
+        self.clone()
+    }
+
+    pub fn to_raw(&self) -> BigUint<M> {
         self.bu.clone()
     }
 }
