@@ -1,8 +1,13 @@
 #![no_std]
 
+mod dfp_big_uint;
+use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
 elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
+
+impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
 #[elrond_wasm::contract]
 pub trait BridgedTokensWrapper {
@@ -11,10 +16,29 @@ pub trait BridgedTokensWrapper {
 
     #[only_owner]
     #[endpoint(addWrappedToken)]
-    fn add_wrapped_token(&self, universal_bridged_token_ids: TokenIdentifier) {
+    fn add_wrapped_token(&self, universal_bridged_token_ids: TokenIdentifier, num_decimals: u32) {
         self.require_mint_and_burn_roles(&universal_bridged_token_ids);
+        self.token_decimals_num(&universal_bridged_token_ids)
+            .set(num_decimals);
         self.universal_bridged_token_ids()
             .insert(universal_bridged_token_ids);
+    }
+
+    #[only_owner]
+    #[endpoint(updateWrappedToken)]
+    fn update_wrapped_token(
+        &self,
+        universal_bridged_token_ids: TokenIdentifier,
+        num_decimals: u32,
+    ) {
+        require!(
+            !self
+                .universal_bridged_token_ids()
+                .contains(&universal_bridged_token_ids),
+            "Universal token was not added yet"
+        );
+        self.token_decimals_num(&universal_bridged_token_ids)
+            .set(num_decimals);
     }
 
     #[only_owner]
@@ -37,6 +61,7 @@ pub trait BridgedTokensWrapper {
     fn whitelist_token(
         &self,
         chain_specific_token_id: TokenIdentifier,
+        chain_specific_token_decimals: u32,
         universal_bridged_token_ids: TokenIdentifier,
     ) {
         self.require_mint_and_burn_roles(&universal_bridged_token_ids);
@@ -48,6 +73,9 @@ pub trait BridgedTokensWrapper {
             "Chain-specific token is already mapped to another universal token"
         );
 
+        self.token_decimals_num(&chain_specific_token_id)
+            .set(chain_specific_token_decimals);
+
         chain_to_universal_mapper.set(&universal_bridged_token_ids);
 
         let _ = self
@@ -56,6 +84,24 @@ pub trait BridgedTokensWrapper {
 
         self.universal_bridged_token_ids()
             .insert(universal_bridged_token_ids);
+    }
+
+    #[only_owner]
+    #[endpoint(updateWhitelistedToken)]
+    fn update_whitelisted_token(
+        &self,
+        chain_specific_token_id: TokenIdentifier,
+        chain_specific_token_decimals: u32,
+    ) {
+        let chain_to_universal_mapper =
+            self.chain_specific_to_universal_mapping(&chain_specific_token_id);
+        require!(
+            !chain_to_universal_mapper.is_empty(),
+            "Chain-specific token was not whitelisted yet"
+        );
+
+        self.token_decimals_num(&chain_specific_token_id)
+            .set(chain_specific_token_decimals);
     }
 
     #[only_owner]
@@ -99,13 +145,21 @@ pub trait BridgedTokensWrapper {
             // if there is chain specific -> universal mapping, then the token is whitelisted
             let new_payment = if !universal_token_id_mapper.is_empty() {
                 let universal_token_id = universal_token_id_mapper.get();
-                self.send()
-                    .esdt_local_mint(&universal_token_id, 0, &payment.amount);
-
+                self.require_tokens_have_set_decimals_num(
+                    &universal_token_id,
+                    &payment.token_identifier,
+                );
+                let universal_token_decimals = self.token_decimals_num(&universal_token_id).get();
+                let chain_token_decimals = self.token_decimals_num(&payment.token_identifier).get();
                 self.token_liquidity(&payment.token_identifier)
                     .update(|value| *value += &payment.amount);
 
-                EsdtTokenPayment::new(universal_token_id.clone(), 0, payment.amount)
+                let amount = DFPBigUint::from_raw(payment.amount, chain_token_decimals);
+                let converted_amount = amount.convert(universal_token_decimals);
+
+                self.send()
+                    .esdt_local_mint(&universal_token_id, 0, &converted_amount);
+                EsdtTokenPayment::new(universal_token_id, 0, converted_amount)
             } else {
                 payment
             };
@@ -132,15 +186,19 @@ pub trait BridgedTokensWrapper {
             payment_token == universal_bridged_token_ids,
             "Esdt token unavailable"
         );
-
+        self.require_tokens_have_set_decimals_num(&payment_token, &requested_token);
         let chain_specific_token_id = &requested_token;
+        let universal_token_decimals = self.token_decimals_num(&payment_token).get();
+        let chain_token_decimals = self.token_decimals_num(&requested_token).get();
+        let amount = DFPBigUint::from_raw(payment_amount.clone(), universal_token_decimals);
+        let converted_amount = amount.convert(chain_token_decimals);
         self.token_liquidity(chain_specific_token_id).update(|liq| {
             require!(
-                payment_amount <= *liq,
+                converted_amount <= *liq,
                 "Contract does not have enough funds"
             );
 
-            *liq -= &payment_amount;
+            *liq -= &converted_amount;
         });
 
         self.send()
@@ -148,7 +206,7 @@ pub trait BridgedTokensWrapper {
 
         let caller = self.blockchain().get_caller();
         self.send()
-            .direct_esdt(&caller, chain_specific_token_id, 0, &payment_amount, &[]);
+            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount, &[]);
     }
 
     fn require_mint_and_burn_roles(&self, token_id: &TokenIdentifier) {
@@ -157,6 +215,21 @@ pub trait BridgedTokensWrapper {
         require!(
             roles.has_role(&EsdtLocalRole::Mint) && roles.has_role(&EsdtLocalRole::Burn),
             "Must set local role first"
+        );
+    }
+
+    fn require_tokens_have_set_decimals_num(
+        &self,
+        universal_token: &TokenIdentifier,
+        chain_token: &TokenIdentifier,
+    ) {
+        require!(
+            !self.token_decimals_num(universal_token).is_empty(),
+            "Universal token requires updating"
+        );
+        require!(
+            !self.token_decimals_num(chain_token).is_empty(),
+            "Chain-specific token requires updating"
         );
     }
 
@@ -181,4 +254,7 @@ pub trait BridgedTokensWrapper {
         &self,
         universal_token_id: &TokenIdentifier,
     ) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[storage_mapper("token_decimals_num")]
+    fn token_decimals_num(&self, token: &TokenIdentifier) -> SingleValueMapper<u32>;
 }
