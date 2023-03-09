@@ -40,7 +40,7 @@
                 "function": "wrapTokens",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-aaaaaa",
-                    "value": "300000000000000"
+                    "value": "100000000000000"
                 },
                 "arguments": [],
                 "gasLimit": "5,000,000",
@@ -52,7 +52,7 @@
                 "gas": "*",
                 "refund": "*",
                 "out": [
-                    "u8:0|nested:str:WUSDC-abcdef|u64:0|biguint:300"
+                    "u8:0|nested:str:WUSDC-abcdef|u64:0|biguint:100"
                 ]
             }
         },
