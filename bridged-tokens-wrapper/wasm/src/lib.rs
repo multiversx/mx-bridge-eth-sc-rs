@@ -16,8 +16,6 @@ elrond_wasm_node::wasm_endpoints! {
         getchainSpecificTokenIds
         removeWrappedToken
         unwrapToken
-        updateWhitelistedToken
-        updateWrappedToken
         whitelistToken
         wrapTokens
     )

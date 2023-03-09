@@ -1,5 +1,5 @@
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+elrond_wasm::imports!();
+elrond_wasm::derive_imports!();
 
 pub struct DFPBigUint<M: ManagedTypeApi> {
     bu: BigUint<M>,
