@@ -30,6 +30,13 @@ impl<M: ManagedTypeApi> DFPBigUint<M> {
         self.clone()
     }
 
+    pub fn trunc(&self) -> Self {
+        DFPBigUint {
+            bu: self.bu.clone() / 10u32.pow(self.num_decimals),
+            num_decimals: 1,
+        }
+    }
+
     pub fn to_raw(&self) -> BigUint<M> {
         self.bu.clone()
     }
