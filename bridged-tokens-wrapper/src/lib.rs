@@ -1,7 +1,7 @@
 #![no_std]
 
 mod dfp_big_uint;
-use dfp_big_uint::DFPBigUint;
+pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
 elrond_wasm::imports!();
@@ -149,13 +149,13 @@ pub trait BridgedTokensWrapper {
                     &universal_token_id,
                     &payment.token_identifier,
                 );
-                let universal_token_decimals = self.token_decimals_num(&universal_token_id).get();
-                let chain_token_decimals = self.token_decimals_num(&payment.token_identifier).get();
                 self.token_liquidity(&payment.token_identifier)
                     .update(|value| *value += &payment.amount);
-
-                let amount = DFPBigUint::from_raw(payment.amount, chain_token_decimals);
-                let converted_amount = amount.convert(universal_token_decimals);
+                let converted_amount = self.get_converted_amount(
+                    &payment.token_identifier,
+                    &universal_token_id,
+                    payment.amount,
+                );
 
                 self.send()
                     .esdt_local_mint(&universal_token_id, 0, &converted_amount);
@@ -187,11 +187,14 @@ pub trait BridgedTokensWrapper {
             "Esdt token unavailable"
         );
         self.require_tokens_have_set_decimals_num(&payment_token, &requested_token);
+
         let chain_specific_token_id = &requested_token;
-        let universal_token_decimals = self.token_decimals_num(&payment_token).get();
-        let chain_token_decimals = self.token_decimals_num(&requested_token).get();
-        let amount = DFPBigUint::from_raw(payment_amount.clone(), universal_token_decimals);
-        let converted_amount = amount.convert(chain_token_decimals);
+        let converted_amount = self.get_converted_amount(
+            &payment_token,
+            chain_specific_token_id,
+            payment_amount.clone(),
+        );
+
         self.token_liquidity(chain_specific_token_id).update(|liq| {
             require!(
                 converted_amount <= *liq,
@@ -207,6 +210,18 @@ pub trait BridgedTokensWrapper {
         let caller = self.blockchain().get_caller();
         self.send()
             .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount, &[]);
+    }
+
+    fn get_converted_amount(
+        &self,
+        from: &TokenIdentifier,
+        to: &TokenIdentifier,
+        amount: BigUint,
+    ) -> BigUint {
+        let from_decimals = self.token_decimals_num(&from).get();
+        let to_decimals = self.token_decimals_num(&to).get();
+        let amount = DFPBigUint::from_raw(amount, from_decimals);
+        amount.convert(to_decimals)
     }
 
     fn require_mint_and_burn_roles(&self, token_id: &TokenIdentifier) {
