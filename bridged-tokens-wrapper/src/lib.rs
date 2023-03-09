@@ -10,9 +10,11 @@ elrond_wasm::derive_imports!();
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
 #[elrond_wasm::contract]
-pub trait BridgedTokensWrapper {
+pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
     #[init]
-    fn init(&self) {}
+    fn init(&self) {
+        self.set_paused(true);
+    }
 
     #[only_owner]
     #[endpoint(addWrappedToken)]
