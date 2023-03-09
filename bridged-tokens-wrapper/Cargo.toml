@@ -8,7 +8,11 @@ publish = false
 [lib]
 path = "src/lib.rs"
 
-[dependencies.multiversx-sc]
-version = "0.39.5"
-[dev-dependencies.multiversx-sc-scenario]
-version = "0.39.5"
+[dependencies.transaction]
+path = "../common/transaction"
+
+[dependencies.elrond-wasm]
+version = "0.32.0"
+
+[dev-dependencies.elrond-wasm-debug]
+version = "0.32.0"

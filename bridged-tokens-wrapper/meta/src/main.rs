@@ -1,3 +1,3 @@
 fn main() {
-    multiversx_sc_meta::cli_main::<bridged_tokens_wrapper::AbiProvider>();
+    elrond_wasm_debug::meta::perform::<bridged_tokens_wrapper::AbiProvider>();
 }
