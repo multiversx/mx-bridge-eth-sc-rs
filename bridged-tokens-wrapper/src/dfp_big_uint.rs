@@ -1,7 +1,7 @@
 elrond_wasm::imports!();
 elrond_wasm::derive_imports!();
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct DFPBigUint<M: ManagedTypeApi> {
     bu: BigUint<M>,
     num_decimals: u32,
