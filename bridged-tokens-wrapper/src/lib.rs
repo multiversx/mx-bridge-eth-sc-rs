@@ -51,9 +51,12 @@ pub trait BridgedTokensWrapper {
         let mut chain_specific_tokens = self.chain_specific_token_ids(&universal_bridged_token_ids);
         for token in chain_specific_tokens.iter() {
             self.chain_specific_to_universal_mapping(&token).clear();
+            self.token_decimals_num(&token).clear();
         }
 
         chain_specific_tokens.clear();
+        self.token_decimals_num(&universal_bridged_token_ids)
+            .clear();
     }
 
     #[only_owner]
@@ -117,6 +120,7 @@ pub trait BridgedTokensWrapper {
             .swap_remove(&chain_specific_token_id);
 
         chain_to_universal_mapper.clear();
+        self.token_decimals_num(&chain_specific_token_id).clear();
     }
 
     #[payable("*")]
