@@ -2,14 +2,15 @@
 
 mod dfp_big_uint;
 use dfp_big_uint::DFPBigUint;
-use transaction::PaymentsVec;
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
-#[elrond_wasm::contract]
+pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+
+#[multiversx_sc::contract]
 pub trait BridgedTokensWrapper {
     #[init]
     fn init(&self) {}
@@ -168,7 +169,7 @@ pub trait BridgedTokensWrapper {
         }
 
         let caller = self.blockchain().get_caller();
-        self.send().direct_multi(&caller, &new_payments, &[]);
+        self.send().direct_multi(&caller, &new_payments);
 
         new_payments
     }
@@ -206,7 +207,7 @@ pub trait BridgedTokensWrapper {
 
         let caller = self.blockchain().get_caller();
         self.send()
-            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount, &[]);
+            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount);
     }
 
     fn require_mint_and_burn_roles(&self, token_id: &TokenIdentifier) {
