@@ -148,7 +148,10 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
                 self.chain_specific_to_universal_mapping(&payment.token_identifier);
 
             // if there is chain specific -> universal mapping, then the token is whitelisted
-            let new_payment = if !universal_token_id_mapper.is_empty() {
+            if universal_token_id_mapper.is_empty() {
+                new_payments.push(payment);
+                continue;
+            } else {
                 let universal_token_id = universal_token_id_mapper.get();
                 self.require_tokens_have_set_decimals_num(
                     &universal_token_id,
@@ -164,12 +167,12 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
 
                 self.send()
                     .esdt_local_mint(&universal_token_id, 0, &converted_amount);
-                EsdtTokenPayment::new(universal_token_id, 0, converted_amount)
-            } else {
-                payment
-            };
-
-            new_payments.push(new_payment);
+                new_payments.push(EsdtTokenPayment::new(
+                    universal_token_id,
+                    0,
+                    converted_amount,
+                ));
+            }
         }
 
         let caller = self.blockchain().get_caller();
