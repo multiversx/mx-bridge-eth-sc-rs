@@ -223,8 +223,8 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
         to: &TokenIdentifier,
         amount: BigUint,
     ) -> BigUint {
-        let from_decimals = self.token_decimals_num(&from).get();
-        let to_decimals = self.token_decimals_num(&to).get();
+        let from_decimals = self.token_decimals_num(from).get();
+        let to_decimals = self.token_decimals_num(to).get();
         let amount = DFPBigUint::from_raw(amount, from_decimals);
         amount.convert(to_decimals).to_raw()
     }
