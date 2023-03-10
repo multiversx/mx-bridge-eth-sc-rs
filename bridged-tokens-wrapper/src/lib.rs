@@ -151,28 +151,27 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
             if universal_token_id_mapper.is_empty() {
                 new_payments.push(payment);
                 continue;
-            } else {
-                let universal_token_id = universal_token_id_mapper.get();
-                self.require_tokens_have_set_decimals_num(
-                    &universal_token_id,
-                    &payment.token_identifier,
-                );
-                self.token_liquidity(&payment.token_identifier)
-                    .update(|value| *value += &payment.amount);
-                let converted_amount = self.get_converted_amount(
-                    &payment.token_identifier,
-                    &universal_token_id,
-                    payment.amount,
-                );
-
-                self.send()
-                    .esdt_local_mint(&universal_token_id, 0, &converted_amount);
-                new_payments.push(EsdtTokenPayment::new(
-                    universal_token_id,
-                    0,
-                    converted_amount,
-                ));
             }
+            let universal_token_id = universal_token_id_mapper.get();
+            self.require_tokens_have_set_decimals_num(
+                &universal_token_id,
+                &payment.token_identifier,
+            );
+            self.token_liquidity(&payment.token_identifier)
+                .update(|value| *value += &payment.amount);
+            let converted_amount = self.get_converted_amount(
+                &payment.token_identifier,
+                &universal_token_id,
+                payment.amount,
+            );
+
+            self.send()
+                .esdt_local_mint(&universal_token_id, 0, &converted_amount);
+            new_payments.push(EsdtTokenPayment::new(
+                universal_token_id,
+                0,
+                converted_amount,
+            ));
         }
 
         let caller = self.blockchain().get_caller();
