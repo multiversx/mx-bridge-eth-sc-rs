@@ -12,23 +12,23 @@ impl<M: ManagedTypeApi> DFPBigUint<M> {
         DFPBigUint { bu, num_decimals }
     }
 
-    pub fn convert(&self, decimals: u32) -> Self {
-        if self.num_decimals < decimals {
-            let diff_decimals = decimals - self.num_decimals;
-            return DFPBigUint {
-                bu: self.bu.clone() * 10u64.pow(diff_decimals),
+    pub fn convert(self, decimals: u32) -> Self {
+            if self.num_decimals == decimals {
+                 return self;
+            }
+    
+        let new_bu=  if self.num_decimals > decimals { 
+             let diff_decimals = self.num_decimals - decimals;
+             self.bu / 10u64.pow(diff_decimals)
+         else { 
+               let diff_decimals = decimals - self.num_decimals;
+               self.bu * 10u64.pow(diff_decimals)
+         };
+         
+         DFPBigUint {
+                bu: new_bu,
                 num_decimals: decimals,
-            };
-        }
-        if self.num_decimals > decimals {
-            let diff_decimals = self.num_decimals - decimals;
-            return DFPBigUint {
-                bu: self.bu.clone() / 10u64.pow(diff_decimals),
-                num_decimals: decimals,
-            };
-        }
-        self.clone()
-    }
+            }
 
     pub fn trunc(&self) -> Self {
         DFPBigUint {
