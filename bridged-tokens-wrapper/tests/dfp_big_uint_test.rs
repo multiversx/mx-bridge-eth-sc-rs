@@ -17,7 +17,7 @@ fn test_biguint() {
 }
 
 #[test]
-fn test_mandos() {
+fn test_mandos_scenario_values() {
     let _ = DebugApi::dummy();
     let raw = BigUint::<DebugApi>::from(300000000000000u64);
     let dfp = DFPBigUint::from_raw(raw.clone(), 18);
