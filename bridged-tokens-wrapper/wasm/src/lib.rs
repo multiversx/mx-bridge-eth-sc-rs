@@ -14,8 +14,13 @@ elrond_wasm_node::wasm_endpoints! {
         getTokenLiquidity
         getUniversalBridgedTokenIds
         getchainSpecificTokenIds
+        isPaused
+        pause
         removeWrappedToken
+        unpause
         unwrapToken
+        updateWhitelistedToken
+        updateWrappedToken
         whitelistToken
         wrapTokens
     )

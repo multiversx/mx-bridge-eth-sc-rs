@@ -15,6 +15,7 @@
                 "function": "whitelistToken",
                 "arguments": [
                     "str:USDC-bbbbbb",
+                    "u32:18",
                     "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
@@ -36,6 +37,7 @@
                 "function": "whitelistToken",
                 "arguments": [
                     "str:USDC-aaaaaa",
+                    "u32:18",
                     "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
@@ -57,6 +59,7 @@
                 "function": "whitelistToken",
                 "arguments": [
                     "str:USDC-cccccc",
+                    "u32:18",
                     "str:WUSDC-abcdef"
                 ],
                 "gasLimit": "5,000,000",
@@ -81,13 +84,13 @@
                     "nonce": "1",
                     "esdt": {
                         "str:USDC-aaaaaa": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:USDC-bbbbbb": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:WUSDC-abcdef": {
                             "balance": "500"
@@ -123,7 +126,10 @@
                         "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
                         "str:universalBridgedTokenIds.len": "1",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
-                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef"
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

@@ -93,13 +93,13 @@
                     "nonce": "7",
                     "esdt": {
                         "str:USDC-aaaaaa": {
-                            "balance": "300"
+                            "balance": "300000000000000"
                         },
                         "str:USDC-bbbbbb": {
-                            "balance": "500"
+                            "balance": "500000000000000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "400"
+                            "balance": "400000000000000"
                         },
                         "str:WUSDC-abcdef": {
                             "balance": "800"
@@ -125,10 +125,10 @@
                             ]
                         },
                         "str:USDC-aaaaaa": {
-                            "balance": "200"
+                            "balance": "200000000000000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "100"
+                            "balance": "100000000000000"
                         }
                     },
                     "storage": {
@@ -142,8 +142,11 @@
                         "str:universalBridgedTokenIds.len": "1",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
-                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200",
-                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100"
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
