@@ -41,6 +41,15 @@ changeChildContractsOwnershipMultiTransfer() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+clearMapping() {
+    CHECK_VARIABLES ERC20_TOKEN CHAIN_SPECIFIC_TOKEN MULTISIG
+
+    erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="clearMapping" \
+    --arguments ${ERC20_TOKEN} str:${CHAIN_SPECIFIC_TOKEN} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 addMapping() {
     CHECK_VARIABLES ERC20_TOKEN CHAIN_SPECIFIC_TOKEN MULTISIG
 
@@ -56,6 +65,15 @@ addTokenToWhitelist() {
     erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${CHAIN_SPECIFIC_TOKEN_TICKER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+removeTokenFromWhitelist() {
+    CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG
+
+    erdpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="esdtSafeRemoveTokenFromWhitelist" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
