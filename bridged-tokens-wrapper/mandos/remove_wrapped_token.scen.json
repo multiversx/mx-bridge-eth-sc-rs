@@ -103,7 +103,7 @@
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-uvwxyz",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200000000000000",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
-                        "str:token_decimals_num|nested:str:WUSDC-uvwxyz": "0x12"
+                        "str:token_decimals_num|nested:str:WUSDC-uvwxyz": "18"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
