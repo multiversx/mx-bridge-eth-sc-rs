@@ -41,10 +41,19 @@ unsetLocalRolesBridgedTokensWrapper() {
 }
 
 addWrappedToken() {
-    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN NR_DECIMALS_UNIVERSAL
 
     mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="addWrappedToken" \
+    --arguments str:${UNIVERSAL_TOKEN} ${NR_DECIMALS_UNIVERSAL} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+removeWrappedToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=6000000 --function="removeWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
@@ -59,11 +68,11 @@ removeWrappedToken() {
 }
 
 wrapper-whitelistToken() {
-    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN UNIVERSAL_TOKEN
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN NR_DECIMALS_CHAIN_SPECIFIC UNIVERSAL_TOKEN
 
     mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="whitelistToken" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${UNIVERSAL_TOKEN} \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${NR_DECIMALS_CHAIN_SPECIFIC} str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -76,7 +85,42 @@ wrapper-blacklistToken() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-upgradeBridgedTokensWrapper() {
+wrapper-updateWrappedToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN NR_DECIMALS_UNIVERSAL
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=6000000 --function="updateWrappedToken" \
+    --arguments str:${UNIVERSAL_TOKEN} ${NR_DECIMALS_UNIVERSAL} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+wrapper-updateWhitelistedToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN NR_DECIMALS_CHAIN_SPECIFIC
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=6000000 --function="blacklistToken" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${NR_DECIMALS_CHAIN_SPECIFIC} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+
+wrapper-unpause() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="unpause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+wrapper-pause() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+wrapper-upgrade() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGED_TOKENS_WRAPPER_WASM
 
     mxpy --verbose contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce --pem=${ALICE} \

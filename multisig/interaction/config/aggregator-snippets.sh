@@ -16,11 +16,11 @@ deployAggregator() {
 }
 
 submitAggregatorBatch() {
-    CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN FEE_AMOUNT NR_DECIMALS
+    CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN FEE_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC
 
-    FEE=$(echo "$FEE_AMOUNT*10^$NR_DECIMALS" | bc)
+    FEE=$(echo "$FEE_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
 
-    mxdpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
     --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${FEE} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return

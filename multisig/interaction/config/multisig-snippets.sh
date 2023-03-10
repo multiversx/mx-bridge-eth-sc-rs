@@ -9,8 +9,6 @@ deployMultisig() {
     --arguments ${SAFE} ${MULTI_TRANSFER} \
     ${MIN_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
     ${RELAYER_ADDR_0} ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
-    ${RELAYER_ADDR_4} ${RELAYER_ADDR_5} ${RELAYER_ADDR_6} ${RELAYER_ADDR_7} \
-    ${RELAYER_ADDR_8} ${RELAYER_ADDR_9} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
@@ -146,9 +144,9 @@ unpauseEsdtSafe() {
 }
 
 esdtSafeSetMaxBridgedAmountForToken() {
-    CHECK_VARIABLES MAX_AMOUNT NR_DECIMALS CHAIN_SPECIFIC_TOKEN MULTISIG
+    CHECK_VARIABLES MAX_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC CHAIN_SPECIFIC_TOKEN MULTISIG
 
-    MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS" | bc)
+    MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="esdtSafeSetMaxBridgedAmountForToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
@@ -156,9 +154,9 @@ esdtSafeSetMaxBridgedAmountForToken() {
 }
 
 multiTransferEsdtSetMaxBridgedAmountForToken() {
-    CHECK_VARIABLES MAX_AMOUNT NR_DECIMALS CHAIN_SPECIFIC_TOKEN MULTISIG
+    CHECK_VARIABLES MAX_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC CHAIN_SPECIFIC_TOKEN MULTISIG
 
-    MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS" | bc)
+    MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="multiTransferEsdtSetMaxBridgedAmountForToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
