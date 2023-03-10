@@ -125,10 +125,10 @@
                             ]
                         },
                         "str:USDC-aaaaaa": {
-                            "balance": "200"
+                            "balance": "200000000000000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "100"
+                            "balance": "100000000000000"
                         }
                     },
                     "storage": {

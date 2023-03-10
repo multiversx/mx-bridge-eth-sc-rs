@@ -16,14 +16,14 @@ impl<M: ManagedTypeApi> DFPBigUint<M> {
         if self.num_decimals < decimals {
             let diff_decimals = decimals - self.num_decimals;
             return DFPBigUint {
-                bu: self.bu.clone() * 10u32.pow(diff_decimals),
+                bu: self.bu.clone() * 10u64.pow(diff_decimals),
                 num_decimals: decimals,
             };
         }
         if self.num_decimals > decimals {
             let diff_decimals = self.num_decimals - decimals;
             return DFPBigUint {
-                bu: self.bu.clone() / 10u32.pow(diff_decimals),
+                bu: self.bu.clone() / 10u64.pow(diff_decimals),
                 num_decimals: decimals,
             };
         }
@@ -32,7 +32,7 @@ impl<M: ManagedTypeApi> DFPBigUint<M> {
 
     pub fn trunc(&self) -> Self {
         DFPBigUint {
-            bu: self.bu.clone() / 10u32.pow(self.num_decimals),
+            bu: self.bu.clone() / 10u64.pow(self.num_decimals),
             num_decimals: 1,
         }
     }

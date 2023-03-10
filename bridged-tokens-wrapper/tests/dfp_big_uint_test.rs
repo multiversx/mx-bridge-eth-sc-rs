@@ -15,3 +15,11 @@ fn test_biguint() {
     assert!(converted.convert(3).to_raw() == BigUint::<DebugApi>::from(123u64));
     assert!(converted.convert(5).to_raw() == BigUint::<DebugApi>::from(12345u64));
 }
+
+#[test]
+fn test_mandos() {
+    let _ = DebugApi::dummy();
+    let raw = BigUint::<DebugApi>::from(300000000000000u64);
+    let dfp = DFPBigUint::from_raw(raw.clone(), 18);
+    assert!(dfp.convert(6).to_raw() == BigUint::<DebugApi>::from(300u64));
+}
