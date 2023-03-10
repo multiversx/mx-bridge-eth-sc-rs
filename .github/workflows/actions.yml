@@ -10,16 +10,6 @@ on:
 permissions:
   pull-requests: write
 
-# jobs:
-#   contracts:
-#     name: Contracts
-#     uses: multiversx/mx-sc-actions/.github/workflows/contracts.yml@bridge-workaround-2023-03
-#     with:
-#       rust-toolchain: nightly-2022-10-16
-#       vmtools-version: v1.4.60
-#     secrets:
-#       token: ${{ secrets.GITHUB_TOKEN }}
-
 jobs:
   wasm_test:
     name: Wasm tests
@@ -56,7 +46,7 @@ jobs:
       - name: Run the wasm tests
         env:
           RUSTFLAGS: ""
-        run:
+        run: |
           python3 -m multiversx_sdk_cli.cli contract test --directory bridge-tokens-wrapper/mandos
           python3 -m multiversx_sdk_cli.cli contract test --directory esdt-safe/mandos
           python3 -m multiversx_sdk_cli.cli contract test --directory multi-transfer-esdt/mandos
@@ -162,5 +152,5 @@ jobs:
         env:
           RUSTFLAGS: ""
         with:
-          github_token: ${{ secrets.token }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           clippy_flags: --all-targets --all-features
