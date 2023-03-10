@@ -89,7 +89,7 @@ wrapper-updateWhitelistedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN NR_DECIMALS_CHAIN_SPECIFIC
 
     mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=6000000 --function="blacklistToken" \
+    --gas-limit=6000000 --function="updateWhitelistedToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${NR_DECIMALS_CHAIN_SPECIFIC} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
