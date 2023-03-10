@@ -27,7 +27,7 @@
                 "gas": "*",
                 "refund": "*",
                 "out": [
-                    "u8:0|nested:str:USDC-bbbbbb|u64:0|biguint:300000000000000"
+                    "0x"
                 ]
             }
         },
