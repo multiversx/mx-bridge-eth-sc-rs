@@ -13,7 +13,7 @@ permissions:
 jobs:
   contracts:
     name: Contracts
-    uses: multiversx/mx-sc-actions/.github/workflows/contracts.yml@v2.2.6
+    uses: multiversx/mx-sc-actions/.github/workflows/contracts.yml@bridge-workaround-2023-03
     with:
       rust-toolchain: nightly-2022-10-16
       vmtools-version: v1.4.60
