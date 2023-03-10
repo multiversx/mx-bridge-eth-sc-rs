@@ -34,8 +34,7 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
         num_decimals: u32,
     ) {
         require!(
-            !self
-                .universal_bridged_token_ids()
+            self.universal_bridged_token_ids()
                 .contains(&universal_bridged_token_ids),
             "Universal token was not added yet"
         );
