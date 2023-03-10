@@ -47,11 +47,20 @@ jobs:
         env:
           RUSTFLAGS: ""
         run: |
-          python3 -m multiversx_sdk_cli.cli contract test --directory bridge-tokens-wrapper/mandos
-          python3 -m multiversx_sdk_cli.cli contract test --directory esdt-safe/mandos
-          python3 -m multiversx_sdk_cli.cli contract test --directory multi-transfer-esdt/mandos
-          python3 -m multiversx_sdk_cli.cli contract test --directory multisig/mandos
-          python3 -m multiversx_sdk_cli.cli contract test --directory price-aggregator/mandos
+          cd /home/runner/work/mx-bridge-eth-sc-rs/mx-bridge-eth-sc-rs/bridge-tokens-wrapper
+          python3 -m multiversx_sdk_cli.cli contract test --directory mandos
+          
+          cd /home/runner/work/mx-bridge-eth-sc-rs/mx-bridge-eth-sc-rs/esdt-safe
+          python3 -m multiversx_sdk_cli.cli contract test --directory mandos
+
+          cd /home/runner/work/mx-bridge-eth-sc-rs/mx-bridge-eth-sc-rs/multi-transfer-esdt
+          python3 -m multiversx_sdk_cli.cli contract test --directory mandos
+
+          cd /home/runner/work/mx-bridge-eth-sc-rs/mx-bridge-eth-sc-rs/multisig
+          python3 -m multiversx_sdk_cli.cli contract test --directory mandos
+
+          cd /home/runner/work/mx-bridge-eth-sc-rs/mx-bridge-eth-sc-rs/price-aggregator
+          python3 -m multiversx_sdk_cli.cli contract test --directory mandos
 
       - name: Generate the contract report
         env:
