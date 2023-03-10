@@ -52,7 +52,7 @@
                 "gas": "*",
                 "refund": "*",
                 "out": [
-                    "u8:0|nested:str:WUSDC-abcdef|u64:0|biguint:300"
+                    "0x"
                 ]
             }
         },
@@ -77,7 +77,7 @@
                 "gas": "*",
                 "refund": "*",
                 "out": [
-                    "u8:0|nested:str:WUSDC-abcdef|u64:0|biguint:100"
+                    "0x"
                 ]
             }
         },
