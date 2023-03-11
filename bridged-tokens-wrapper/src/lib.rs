@@ -136,7 +136,7 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
     #[payable("*")]
     #[endpoint(wrapTokens)]
     fn wrap_tokens(&self) -> PaymentsVec<Self::Api> {
-        self.require_not_paused();
+        require!(self.not_paused(), "Contract is paused");
         let original_payments = self.call_value().all_esdt_transfers();
         if original_payments.is_empty() {
             return original_payments;
@@ -184,7 +184,7 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
     #[payable("*")]
     #[endpoint(unwrapToken)]
     fn unwrap_token(&self, requested_token: TokenIdentifier) {
-        self.require_not_paused();
+        require!(self.not_paused(), "Contract is paused");
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
 
