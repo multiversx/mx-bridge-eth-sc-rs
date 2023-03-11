@@ -195,9 +195,14 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
             payment_token == universal_bridged_token_ids,
             "Esdt token unavailable"
         );
-        self.require_tokens_have_set_decimals_num(&payment_token, &requested_token);
 
         let chain_specific_token_id = &requested_token;
+
+        self.require_tokens_have_set_decimals_num(
+            &universal_bridged_token_ids,
+            &chain_specific_token_id,
+        );
+
         let converted_amount = self.get_converted_amount(
             &payment_token,
             chain_specific_token_id,
