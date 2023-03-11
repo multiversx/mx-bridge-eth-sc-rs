@@ -27,7 +27,11 @@ issueChainSpecificToken() {
 transferToSC() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN
 
+<<<<<<< HEAD
     VALUE_TO_MINT=$(echo "scale=0; $UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS/1" | bc)
+=======
+    VALUE_TO_MINT=$(echo "$UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+>>>>>>> 7717830 (fix snippet)
 
     mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=5000000 --function="ESDTTransfer" \
@@ -52,7 +56,7 @@ unSetMintRole() {
 mint() {
     CHECK_VARIABLES NR_DECIMALS_CHAIN_SPECIFIC ALICE_ADDRESS CHAIN_SPECIFIC_TOKEN
     read -p "Amount to mint(without decimals): " AMOUNT_TO_MINT
-    VALUE_TO_MINT=$(echo "scale=0; $AMOUNT_TO_MINT*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
+    VALUE_TO_MINT=$(echo "$AMOUNT_TO_MINT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
     mxpy --verbose contract call ${ALICE_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=300000 --function="ESDTLocalMint" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${VALUE_TO_MINT} \
