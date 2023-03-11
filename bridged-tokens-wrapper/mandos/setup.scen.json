@@ -1,0 +1,232 @@
+{
+    "name": "add wrapped token",
+    "gasSchedule": "v4",
+    "steps": [
+        {
+            "step": "setState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "3",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "7",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "300000000000000"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "400000000000000"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "900"
+                        },
+                        "str:WUSDC-ghijkl": {
+                            "balance": "900"
+                        },
+                        "str:WUSDC-mnopqr": {
+                            "balance": "900"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:bridged_tokens_wrapper": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-ghijkl": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-mnopqr": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:USDC-aaaaaa": {
+                            "balance": "300000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "100000000000000"
+                        },
+                        "str:USDC-ffffff": {
+                            "balance": "400000000000000"
+                        },
+                        "str:USDC-eeeeee": {
+                            "balance": "400000000000000"
+                        }
+                    },
+                    "storage": {
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-ghijkl|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-ghijkl|str:.index|nested:str:USDC-ffffff": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-ghijkl|str:.item|u32:1": "str:USDC-ffffff",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-ffffff": "str:WUSDC-ghijkl",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-mnopqr|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-mnopqr|str:.item|u32:1": "str:USDC-eeeeee",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-mnopqr|str:.index|nested:str:USDC-eeeeee": "1",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-eeeeee": "str:WUSDC-mnopqr",
+                        "str:universalBridgedTokenIds.len": "3",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-ghijkl": "2",
+                        "str:universalBridgedTokenIds.item|u32:2": "str:WUSDC-ghijkl",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-mnopqr": "3",
+                        "str:universalBridgedTokenIds.item|u32:3": "str:WUSDC-mnopqr",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
+                        "str:token_decimals_num|nested:str:WUSDC-ghijkl": "6",
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                    },
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "3",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "7",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "300000000000000"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "400000000000000"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "900"
+                        },
+                        "str:WUSDC-ghijkl": {
+                            "balance": "900"
+                        },
+                        "str:WUSDC-mnopqr": {
+                            "balance": "900"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:bridged_tokens_wrapper": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-ghijkl": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-mnopqr": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:USDC-aaaaaa": {
+                            "balance": "300000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "100000000000000"
+                        },
+                        "str:USDC-eeeeee": {
+                            "balance": "400000000000000"
+                        },
+                        "str:USDC-ffffff": {
+                            "balance": "400000000000000"
+                        }
+                    },
+                    "storage": {
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-ghijkl|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-ghijkl|str:.index|nested:str:USDC-ffffff": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-ghijkl|str:.item|u32:1": "str:USDC-ffffff",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-ffffff": "str:WUSDC-ghijkl",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-mnopqr|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-mnopqr|str:.item|u32:1": "str:USDC-eeeeee",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-mnopqr|str:.index|nested:str:USDC-eeeeee": "1",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-eeeeee": "str:WUSDC-mnopqr",
+                        "str:universalBridgedTokenIds.len": "3",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-ghijkl": "2",
+                        "str:universalBridgedTokenIds.item|u32:2": "str:WUSDC-ghijkl",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-mnopqr": "3",
+                        "str:universalBridgedTokenIds.item|u32:3": "str:WUSDC-mnopqr",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
+                        "str:token_decimals_num|nested:str:WUSDC-ghijkl": "6",
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                    },
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        }
+    ]
+}
