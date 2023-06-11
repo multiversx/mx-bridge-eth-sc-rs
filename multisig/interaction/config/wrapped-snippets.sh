@@ -58,6 +58,15 @@ removeWrappedToken() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+removeWrappedToken() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
+
+    erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=6000000 --function="removeWrappedToken" \
+    --arguments str:${UNIVERSAL_TOKEN} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 wrapper-whitelistToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN NR_DECIMALS_CHAIN_SPECIFIC UNIVERSAL_TOKEN
 

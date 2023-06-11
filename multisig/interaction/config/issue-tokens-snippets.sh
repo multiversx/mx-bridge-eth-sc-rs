@@ -27,7 +27,7 @@ issueChainSpecificToken() {
 transferToSC() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN
 
-    VALUE_TO_MINT=$(echo "scale=0; $UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS/1" | bc)
+    VALUE_TO_MINT=$(echo "scale=0; $UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
 
     mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=5000000 --function="ESDTTransfer" \
