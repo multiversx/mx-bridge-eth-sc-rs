@@ -18,7 +18,7 @@ deployAggregator() {
 submitAggregatorBatch() {
     CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN FEE_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC
 
-    FEE=$(echo "$FEE_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    FEE=$(echo "scale=0; $FEE_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
 
     mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
