@@ -146,7 +146,7 @@ unpauseEsdtSafe() {
 esdtSafeSetMaxBridgedAmountForToken() {
     CHECK_VARIABLES MAX_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC CHAIN_SPECIFIC_TOKEN MULTISIG
 
-    MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    MAX=$(echo "scale=0; $MAX_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="esdtSafeSetMaxBridgedAmountForToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
@@ -156,7 +156,7 @@ esdtSafeSetMaxBridgedAmountForToken() {
 multiTransferEsdtSetMaxBridgedAmountForToken() {
     CHECK_VARIABLES MAX_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC CHAIN_SPECIFIC_TOKEN MULTISIG
 
-    MAX=$(echo "$MAX_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    MAX=$(echo "scale=0; $MAX_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="multiTransferEsdtSetMaxBridgedAmountForToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
