@@ -4,7 +4,7 @@ issueUniversalToken() {
     CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS ESDT_ISSUE_COST UNIVERSAL_TOKEN_DISPLAY_NAME \
     UNIVERSAL_TOKEN_TICKER NR_DECIMALS
 
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --value=${ESDT_ISSUE_COST} --function="issue" \
     --arguments str:${UNIVERSAL_TOKEN_DISPLAY_NAME} str:${UNIVERSAL_TOKEN_TICKER} \
     0 ${NR_DECIMALS} str:canAddSpecialRoles str:true \
@@ -17,7 +17,7 @@ issueChainSpecificToken() {
     
     VALUE_TO_MINT=$(echo "$UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS" | bc)
 
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --value=${ESDT_ISSUE_COST} --function="issue" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN_DISPLAY_NAME} str:${CHAIN_SPECIFIC_TOKEN_TICKER} \
     ${VALUE_TO_MINT} ${NR_DECIMALS} str:canAddSpecialRoles str:true \
@@ -29,21 +29,21 @@ transferToSC() {
 
     VALUE_TO_MINT=$(echo "$UNIVERSAL_TOKENS_ALREADY_MINTED*10^$NR_DECIMALS" | bc)
 
-    erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=5000000 --function="ESDTTransfer" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${VALUE_TO_MINT} str:depositLiquidity \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 setMintRole() {
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="setSpecialRole" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 unSetMintRole() {
-    erdpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="unSetSpecialRole" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -53,7 +53,7 @@ mint() {
     CHECK_VARIABLES NR_DECIMALS ALICE_ADDRESS CHAIN_SPECIFIC_TOKEN
     read -p "Amount to mint(without decimals): " AMOUNT_TO_MINT
     VALUE_TO_MINT=$(echo "$AMOUNT_TO_MINT*10^$NR_DECIMALS" | bc)
-    erdpy --verbose contract call ${ALICE_ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${ALICE_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=300000 --function="ESDTLocalMint" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${VALUE_TO_MINT} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
