@@ -1,9 +1,9 @@
-use elrond_wasm::api::ManagedTypeApi;
-use elrond_wasm::types::ManagedVec;
+use multiversx_sc::api::ManagedTypeApi;
+use multiversx_sc::types::ManagedVec;
 use transaction::transaction_status::TransactionStatus;
 use transaction::EthTransaction;
 
-elrond_wasm::derive_imports!();
+multiversx_sc::derive_imports!();
 
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
 pub enum Action<M: ManagedTypeApi> {

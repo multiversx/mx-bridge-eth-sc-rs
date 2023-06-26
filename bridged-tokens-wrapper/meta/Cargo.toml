@@ -3,9 +3,8 @@ name = "bridged-tokens-wrapper-meta"
 version = "0.0.0"
 edition = "2018"
 publish = false
-
 [dependencies.bridged-tokens-wrapper]
 path = ".."
 
-[dependencies.elrond-wasm-debug]
-version = "0.32.0"
+[dependencies.multiversx-sc-meta]
+version = "0.39.8"

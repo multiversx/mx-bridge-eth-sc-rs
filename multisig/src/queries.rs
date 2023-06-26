@@ -1,4 +1,4 @@
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 use crate::{action::Action, user_role::UserRole};
 use transaction::{transaction_status::TransactionStatus, EthTxAsMultiValue, TxBatchSplitInFields};
@@ -6,7 +6,7 @@ use transaction::{transaction_status::TransactionStatus, EthTxAsMultiValue, TxBa
 use tx_batch_module::ProxyTrait as _;
 
 /// Note: Additional queries can be found in the Storage module
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule {
     /// Returns the current EsdtSafe batch.
     ///

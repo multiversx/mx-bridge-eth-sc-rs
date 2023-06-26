@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 use eth_address::EthAddress;
 use transaction::transaction_status::TransactionStatus;
@@ -9,7 +9,7 @@ use crate::user_role::UserRole;
 
 pub type EthBatchHash<M> = ManagedByteArray<M, 32>; // keccak256(ManagedVec<EthTransaction<Self::Api>)
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait StorageModule {
     /// Minimum number of signatures needed to perform any action.
     #[view(getQuorum)]

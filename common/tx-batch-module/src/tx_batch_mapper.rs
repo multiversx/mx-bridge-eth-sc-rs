@@ -1,4 +1,4 @@
-use elrond_wasm::{
+use multiversx_sc::{
     api::{ErrorApiImpl, StorageMapperApi},
     storage::{
         mappers::{StorageClearable, StorageMapper, VecMapper},

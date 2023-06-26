@@ -1,3 +1,3 @@
 fn main() {
-    elrond_wasm_debug::meta::perform::<multi_transfer_esdt::AbiProvider>();
+    multiversx_sc_meta::cli_main::<multi_transfer_esdt::AbiProvider>();
 }

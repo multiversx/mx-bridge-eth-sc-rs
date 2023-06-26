@@ -4,12 +4,8 @@ version = "0.0.0"
 authors = ["Andrei Marinica <andrei.marinica@elrond.com>, Dorin Iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
 publish = false
-
 [dependencies.multisig]
 path = ".."
 
-[dependencies.elrond-wasm]
-version = "0.32.0"
-
-[dependencies.elrond-wasm-debug]
-version = "0.32.0"
+[dependencies.multiversx-sc-meta]
+version = "0.39.8"

@@ -1,11 +1,11 @@
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 pub const GWEI_STRING: &[u8] = b"GWEI";
 
 pub type AggregatorResultAsMultiValue<M> =
     MultiValue5<u32, ManagedBuffer<M>, ManagedBuffer<M>, BigUint<M>, u8>;
 
-#[elrond_wasm::proxy]
+#[multiversx_sc::proxy]
 pub trait Aggregator {
     #[view(latestPriceFeedOptional)]
     fn latest_price_feed_optional(

@@ -1,11 +1,11 @@
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait MultisigGeneralModule:
-    crate::util::UtilModule + crate::storage::StorageModule + elrond_wasm_modules::pause::PauseModule
+    crate::util::UtilModule + crate::storage::StorageModule + multiversx_sc_modules::pause::PauseModule
 {
     /// Used by board members to sign actions.
     #[endpoint]

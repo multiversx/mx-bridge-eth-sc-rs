@@ -1,13 +1,13 @@
 #![no_std]
 
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
@@ -163,7 +163,7 @@ pub trait MultiTransferEsdt:
     ) {
         for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
             self.send()
-                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount, &[]);
+                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount);
         }
     }
 

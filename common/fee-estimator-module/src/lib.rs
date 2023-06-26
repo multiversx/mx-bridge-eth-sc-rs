@@ -1,11 +1,11 @@
 #![no_std]
 
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 mod aggregator_proxy;
 pub use aggregator_proxy::*;
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait FeeEstimatorModule {
     #[only_owner]
     #[endpoint(setFeeEstimatorContractAddress)]
