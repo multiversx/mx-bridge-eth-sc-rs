@@ -1,7 +1,7 @@
 #![no_std]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 pub use batch_status::BatchStatus;
 use transaction::{Transaction, TxBatchSplitInFields, MIN_BLOCKS_FOR_FINALITY};
@@ -10,7 +10,7 @@ use tx_batch_mapper::TxBatchMapper;
 pub mod batch_status;
 pub mod tx_batch_mapper;
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait TxBatchModule {
     // endpoints - owner-only
 

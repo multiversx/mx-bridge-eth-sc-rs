@@ -1,13 +1,12 @@
 [package]
 name = "multi-transfer-esdt"
 version = "0.0.0"
-authors = [ "you",]
+authors = ["you"]
 edition = "2018"
 publish = false
 
 [lib]
 path = "src/lib.rs"
-
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -20,8 +19,7 @@ path = "../common/max-bridged-amount-module"
 [dependencies.bridged-tokens-wrapper]
 path = "../bridged-tokens-wrapper"
 
-[dependencies.elrond-wasm]
-version = "0.32.0"
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.32.0"
+[dependencies.multiversx-sc]
+version = "0.39.8"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.39.8"

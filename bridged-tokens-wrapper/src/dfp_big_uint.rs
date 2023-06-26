@@ -1,5 +1,5 @@
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct DFPBigUint<M: ManagedTypeApi> {

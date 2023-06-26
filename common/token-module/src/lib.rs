@@ -1,8 +1,7 @@
 #![no_std]
-#![feature(generic_associated_types)]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 pub static INVALID_PERCENTAGE_SUM_OVER_ERR_MSG: &[u8] = b"Percentages do not add up to 100%";
@@ -13,7 +12,7 @@ pub struct AddressPercentagePair<M: ManagedTypeApi> {
     pub percentage: u32,
 }
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     // endpoints - owner-only
 
@@ -53,7 +52,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                     remaining_fees -= &amount_to_send;
 
                     self.send()
-                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send, &[]);
+                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send);
                 }
             }
 

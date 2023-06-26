@@ -1,8 +1,8 @@
 #![no_std]
 
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait MaxBridgedAmountModule {
     #[only_owner]
     #[endpoint(setMaxBridgedAmount)]

@@ -1,8 +1,8 @@
 #![no_std]
 #![allow(non_snake_case)]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 use core::convert::TryFrom;
 
@@ -13,13 +13,13 @@ use transaction::{transaction_status::TransactionStatus, Transaction};
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait EsdtSafe:
     fee_estimator_module::FeeEstimatorModule
     + token_module::TokenModule
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
-    + elrond_wasm_modules::pause::PauseModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     /// fee_estimator_contract_address - The address of a Price Aggregator contract,
     /// which will get the price of token A in token B
@@ -218,7 +218,7 @@ pub trait EsdtSafe:
 
         self.refund_amount(&caller, &token_id).clear();
         self.send()
-            .direct_esdt(&caller, &token_id, 0, &refund_amount, &[]);
+            .direct_esdt(&caller, &token_id, 0, &refund_amount);
 
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }

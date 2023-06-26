@@ -1,6 +1,6 @@
 #![feature(associated_type_bounds)]
 use bridged_tokens_wrapper::DFPBigUint;
-use elrond_wasm_debug::DebugApi;
+use multiversx_sc_scenario::DebugApi;
 
 #[test]
 fn test_biguint() {

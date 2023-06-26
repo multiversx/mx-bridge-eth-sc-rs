@@ -7,23 +7,17 @@ publish = false
 
 [lib]
 crate-type = ["cdylib"]
-
 [profile.release]
 codegen-units = 1
 opt-level = "z"
 lto = true
 debug = false
 panic = "abort"
-
 [dependencies.bridged-tokens-wrapper]
 path = ".."
 
-[dependencies.elrond-wasm-node]
-version = "0.32.0"
-
-[dependencies.elrond-wasm-output]
-version = "0.32.0"
-features = ["wasm-output-mode"]
+[dependencies.multiversx-sc-wasm-adapter]
+version = "0.39.8"
 
 [workspace]
 members = ["."]

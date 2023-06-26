@@ -1,14 +1,12 @@
 [package]
 name = "tx-batch-module"
 version = "0.0.0"
-authors = [ "dorin-iancu <dorin.iancu@elrond.com>",]
+authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
-
-[dependencies.elrond-wasm]
-version = "0.32.0"
+[dependencies.multiversx-sc]
+version = "0.39.8"
 
 [dependencies.transaction]
 path = "../transaction"
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.32.0"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.39.8"
