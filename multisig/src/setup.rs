@@ -3,6 +3,7 @@ multiversx_sc::derive_imports!();
 
 use eth_address::EthAddress;
 
+use multiversx_sc_modules::pause::ProxyTrait as _;
 use fee_estimator_module::ProxyTrait as _;
 use max_bridged_amount_module::ProxyTrait as _;
 use multi_transfer_esdt::ProxyTrait as _;
@@ -139,8 +140,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(pauseEsdtSafe)]
     fn pause_esdt_safe(&self) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .pause_endpoint()
             .execute_on_dest_context();
     }
@@ -148,8 +148,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(unpauseEsdtSafe)]
     fn unpause_esdt_safe(&self) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .unpause_endpoint()
             .execute_on_dest_context();
     }
@@ -157,8 +156,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_fee_estimator_contract_address(new_address)
             .execute_on_dest_context();
     }
@@ -172,8 +170,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
     fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_eth_tx_gas_limit(new_gas_limit)
             .execute_on_dest_context();
     }
@@ -183,8 +180,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_default_price_per_gas_unit(token_id, new_value)
             .execute_on_dest_context();
     }
@@ -193,8 +189,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_token_ticker(token_id, new_ticker)
             .execute_on_dest_context();
     }
@@ -207,8 +202,7 @@ pub trait SetupModule:
         ticker: ManagedBuffer,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .add_token_to_whitelist(token_id, ticker, opt_default_price_per_gas_unit)
             .execute_on_dest_context();
     }
@@ -216,8 +210,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
     fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .remove_token_from_whitelist(token_id)
             .execute_on_dest_context();
     }
@@ -228,8 +221,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
     fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .execute_on_dest_context();
     }
@@ -240,8 +232,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .execute_on_dest_context();
     }
@@ -255,8 +246,7 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         max_amount: BigUint,
     ) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .set_max_bridged_amount(token_id, max_amount)
             .execute_on_dest_context();
     }
@@ -269,8 +259,7 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         max_amount: BigUint,
     ) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let _: IgnoreValue = self.get_multi_transfer_esdt_proxy_instance()
             .set_max_bridged_amount(token_id, max_amount)
             .execute_on_dest_context();
     }
@@ -280,8 +269,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]
     fn multi_transfer_esdt_set_max_refund_tx_batch_size(&self, new_max_tx_batch_size: usize) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let _: IgnoreValue = self.get_multi_transfer_esdt_proxy_instance()
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .execute_on_dest_context();
     }
@@ -294,8 +282,7 @@ pub trait SetupModule:
         &self,
         new_max_tx_batch_block_duration: u64,
     ) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let _: IgnoreValue = self.get_multi_transfer_esdt_proxy_instance()
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .execute_on_dest_context();
     }
@@ -313,8 +300,7 @@ pub trait SetupModule:
         &self,
         opt_wrapping_contract_address: OptionalValue<ManagedAddress>,
     ) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let _: IgnoreValue = self.get_multi_transfer_esdt_proxy_instance()
             .set_wrapping_contract_address(opt_wrapping_contract_address)
             .execute_on_dest_context();
     }

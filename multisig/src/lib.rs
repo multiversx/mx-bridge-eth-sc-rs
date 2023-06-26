@@ -117,8 +117,7 @@ pub trait Multisig:
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
 
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
             .distribute_fees(args)
             .execute_on_dest_context();
     }
@@ -274,8 +273,7 @@ pub trait Multisig:
                 refund_batch.push(Transaction::from(tx_fields));
             }
 
-            let _: IgnoreValue = self
-                .get_esdt_safe_proxy_instance()
+            let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
                 .add_refund_batch(refund_batch)
                 .execute_on_dest_context();
         }
@@ -329,8 +327,7 @@ pub trait Multisig:
 
                 action_ids_mapper.clear();
 
-                let _: IgnoreValue = self
-                    .get_esdt_safe_proxy_instance()
+                let _: IgnoreValue = self.get_esdt_safe_proxy_instance()
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
                         MultiValueEncoded::from(tx_batch_status),
@@ -360,8 +357,7 @@ pub trait Multisig:
 
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.into();
-                let _: IgnoreValue = self
-                    .get_multi_transfer_esdt_proxy_instance()
+                    let _: IgnoreValue = self.get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .execute_on_dest_context();
             }

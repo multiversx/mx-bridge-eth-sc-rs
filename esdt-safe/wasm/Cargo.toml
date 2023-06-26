@@ -22,4 +22,8 @@ panic = "abort"
 path = ".."
 
 [dependencies.multiversx-sc-wasm-adapter]
+<<<<<<< HEAD
 version = "0.41.3"
+=======
+version = "0.39.8"
+>>>>>>> 0366fd1 (Rebranding refactor)

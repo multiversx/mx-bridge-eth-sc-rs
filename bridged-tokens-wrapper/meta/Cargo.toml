@@ -7,4 +7,8 @@ publish = false
 path = ".."
 
 [dependencies.multiversx-sc-meta]
+<<<<<<< HEAD
 version = "0.41.3"
+=======
+version = "0.39.8"
+>>>>>>> 0366fd1 (Rebranding refactor)
