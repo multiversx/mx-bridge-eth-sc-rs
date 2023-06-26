@@ -61,7 +61,7 @@ removeWrappedToken() {
 removeWrappedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
 
-    erdpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
     --gas-limit=6000000 --function="removeWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
