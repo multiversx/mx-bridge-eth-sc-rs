@@ -22,7 +22,7 @@ pub trait TxBatchModule {
             "Max tx batch size must be more than 0"
         );
 
-        self.max_tx_batch_size().set(&new_max_tx_batch_size);
+        self.max_tx_batch_size().set(new_max_tx_batch_size);
     }
 
     #[only_owner]
@@ -34,7 +34,7 @@ pub trait TxBatchModule {
         );
 
         self.max_tx_batch_block_duration()
-            .set(&new_max_tx_batch_block_duration);
+            .set(new_max_tx_batch_block_duration);
     }
 
     // views
@@ -237,7 +237,7 @@ pub trait TxBatchModule {
                 *last_batch_id = new_first_batch_id;
             }
         });
-        self.first_batch_id().set(&new_first_batch_id);
+        self.first_batch_id().set(new_first_batch_id);
 
         mapper.clear();
     }
