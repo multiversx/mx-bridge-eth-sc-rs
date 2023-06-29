@@ -26,9 +26,9 @@ path = "../common/tx-batch-module"
 path = "../common/max-bridged-amount-module"
 
 [dependencies.multiversx-sc]
-version = "0.39.8"
+version = "0.41.3"
 
 [dependencies.multiversx-sc-modules]
-version = "0.39.8"
+version = "0.41.3"
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.39.8"
+version = "0.41.3"
