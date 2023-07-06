@@ -17,6 +17,10 @@ case "$1" in
   confirmation deploy-wrapper    
   ;;
 
+'upgrade-wrapper')
+  confirmation upgrade-wrapper    
+  ;;
+
 'deploy-bridge-contracts')
   echo -e 
   echo "PREREQUIREMENTS: AGGREGATOR & BRIDGED_TOKENS_WRAPPER deployed"
@@ -73,16 +77,26 @@ case "$1" in
 'set-swap-fee')
   confirmation set-fee
   ;;
+
 'mint-chain-specific')
   confirmation mint-chain-specific
+  ;;
+
+'upgrade-wrapper-universal-token')
+  confirmation upgrade-wrapper-universal-token   
+  ;;
+
+'upgrade-wrapper-chain-specific-token')
+  confirmation upgrade-wrapper-chain-specific-token  
   ;;
 
 *)
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
-  echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
-  echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", \"set-swap-fee\", \"mint-chain-specific\" }"
+  echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"upgrade-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
+  echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", "
+  echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\" }"
   ;;
 
 esac
