@@ -1,12 +1,11 @@
-elrond_wasm::imports!();
-use elrond_wasm::elrond_codec::TopEncode;
+multiversx_sc::imports!();
 
 use transaction::{EthTransaction, EthTxAsMultiValue};
 
 use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait UtilModule: crate::storage::StorageModule {
     fn get_user_role(&self, user: &ManagedAddress) -> UserRole {
         let user_id = self.user_mapper().get_user_id(user);

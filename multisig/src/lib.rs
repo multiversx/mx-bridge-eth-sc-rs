@@ -21,18 +21,18 @@ use multi_transfer_esdt::ProxyTrait as _;
 use token_module::ProxyTrait as _;
 use tx_batch_module::ProxyTrait as _;
 
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait Multisig:
     multisig_general::MultisigGeneralModule
     + setup::SetupModule
     + storage::StorageModule
     + util::UtilModule
     + queries::QueriesModule
-    + elrond_wasm_modules::pause::PauseModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     /// EsdtSafe and MultiTransferEsdt are expected to be deployed and configured separately,
     /// and then having their ownership changed to this Multisig SC.
@@ -53,7 +53,7 @@ pub trait Multisig:
                 if !new_user {
                     duplicates = true;
                 }
-                self.user_id_to_role(user_id).set(&UserRole::BoardMember);
+                self.user_id_to_role(user_id).set(UserRole::BoardMember);
             });
         require!(!duplicates, "duplicate board member");
 
@@ -117,9 +117,10 @@ pub trait Multisig:
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
 
-        self.get_esdt_safe_proxy_instance()
+        let _: IgnoreValue = self
+            .get_esdt_safe_proxy_instance()
             .distribute_fees(args)
-            .execute_on_dest_context_ignore_result();
+            .execute_on_dest_context();
     }
 
     /// Board members have to stake a certain amount of EGLD
@@ -157,7 +158,7 @@ pub trait Multisig:
         }
 
         self.amount_staked(&caller).set(&remaining_stake);
-        self.send().direct_egld(&caller, &amount, &[]);
+        self.send().direct_egld(&caller, &amount);
     }
 
     // ESDT Safe SC calls
@@ -186,7 +187,7 @@ pub trait Multisig:
         require!(
             self.action_id_for_set_current_transaction_batch_status(esdt_safe_batch_id)
                 .get(&statuses_vec)
-                == None,
+                .is_none(),
             "Action already proposed"
         );
 
@@ -236,7 +237,7 @@ pub trait Multisig:
         require!(
             self.batch_id_to_action_id_mapping(eth_batch_id)
                 .get(&batch_hash)
-                == None,
+                .is_none(),
             "This batch was already proposed"
         );
 
@@ -273,9 +274,10 @@ pub trait Multisig:
                 refund_batch.push(Transaction::from(tx_fields));
             }
 
-            self.get_esdt_safe_proxy_instance()
+            let _: IgnoreValue = self
+                .get_esdt_safe_proxy_instance()
                 .add_refund_batch(refund_batch)
-                .execute_on_dest_context_ignore_result();
+                .execute_on_dest_context();
         }
     }
 
@@ -327,12 +329,13 @@ pub trait Multisig:
 
                 action_ids_mapper.clear();
 
-                self.get_esdt_safe_proxy_instance()
+                let _: IgnoreValue = self
+                    .get_esdt_safe_proxy_instance()
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
                         MultiValueEncoded::from(tx_batch_status),
                     )
-                    .execute_on_dest_context_ignore_result();
+                    .execute_on_dest_context();
             }
             Action::BatchTransferEsdtToken {
                 eth_batch_id,
@@ -353,13 +356,14 @@ pub trait Multisig:
 
                 let last_tx_index = transfers.len() - 1;
                 let last_tx = transfers.get(last_tx_index);
-                self.last_executed_eth_tx_id().set(&last_tx.tx_nonce);
+                self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
 
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.into();
-                self.get_multi_transfer_esdt_proxy_instance()
+                let _: IgnoreValue = self
+                    .get_multi_transfer_esdt_proxy_instance()
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
-                    .execute_on_dest_context_ignore_result();
+                    .execute_on_dest_context();
             }
         }
     }

@@ -7,7 +7,6 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
-
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -32,11 +31,10 @@ path = "../esdt-safe"
 [dependencies.multi-transfer-esdt]
 path = "../multi-transfer-esdt"
 
-[dependencies.elrond-wasm]
-version = "0.32.0"
+[dependencies.multiversx-sc]
+version = "0.41.3"
 
-[dependencies.elrond-wasm-modules]
-version = "0.32.0"
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.32.0"
+[dependencies.multiversx-sc-modules]
+version = "0.41.3"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.41.3"

@@ -1,11 +1,10 @@
 [package]
 name = "eth-address"
 version = "0.0.0"
-authors = [ "dorin-iancu <dorin.iancu@elrond.com>",]
+authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
 
 [lib]
 path = "src/lib.rs"
-
-[dependencies.elrond-wasm]
-version = "0.32.0"
+[dependencies.multiversx-sc]
+version = "0.41.3"

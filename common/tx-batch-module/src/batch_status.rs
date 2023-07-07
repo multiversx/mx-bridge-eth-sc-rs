@@ -1,6 +1,6 @@
-elrond_wasm::derive_imports!();
+multiversx_sc::derive_imports!();
 
-use elrond_wasm::{api::ManagedTypeApi, types::ManagedVec};
+use multiversx_sc::{api::ManagedTypeApi, types::ManagedVec};
 use transaction::{BlockNonce, TxNonce};
 
 #[derive(TopEncode, TopDecode, TypeAbi)]

@@ -1,11 +1,11 @@
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 use crate::action::Action;
 use crate::user_role::UserRole;
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait MultisigGeneralModule:
-    crate::util::UtilModule + crate::storage::StorageModule + elrond_wasm_modules::pause::PauseModule
+    crate::util::UtilModule + crate::storage::StorageModule + multiversx_sc_modules::pause::PauseModule
 {
     /// Used by board members to sign actions.
     #[endpoint]
@@ -54,7 +54,7 @@ pub trait MultisigGeneralModule:
 
         if !old_role.is_board_member() {
             self.num_board_members().update(|value| *value += 1);
-            self.user_id_to_role(user_id).set(&UserRole::BoardMember);
+            self.user_id_to_role(user_id).set(UserRole::BoardMember);
         }
     }
 
@@ -67,7 +67,7 @@ pub trait MultisigGeneralModule:
         let old_role = self.user_id_to_role(user_id).get();
         if old_role.is_board_member() {
             self.num_board_members().update(|value| *value -= 1);
-            self.user_id_to_role(user_id).set(&UserRole::None);
+            self.user_id_to_role(user_id).set(UserRole::None);
         }
     }
 }

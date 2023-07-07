@@ -11,6 +11,6 @@ Cargo.lock
 
 # Local testnet files
 **/deploy-testnet.interaction.json
-**/erdpy.data-storage.json
+**/mxpy.data-storage.json
 **/testnet/
 **/deploy-child-sc-spam.json

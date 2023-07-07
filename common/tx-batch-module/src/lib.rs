@@ -1,7 +1,7 @@
 #![no_std]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 pub use batch_status::BatchStatus;
 use transaction::{Transaction, TxBatchSplitInFields, MIN_BLOCKS_FOR_FINALITY};
@@ -10,7 +10,7 @@ use tx_batch_mapper::TxBatchMapper;
 pub mod batch_status;
 pub mod tx_batch_mapper;
 
-#[elrond_wasm::module]
+#[multiversx_sc::module]
 pub trait TxBatchModule {
     // endpoints - owner-only
 
@@ -22,7 +22,7 @@ pub trait TxBatchModule {
             "Max tx batch size must be more than 0"
         );
 
-        self.max_tx_batch_size().set(&new_max_tx_batch_size);
+        self.max_tx_batch_size().set(new_max_tx_batch_size);
     }
 
     #[only_owner]
@@ -34,7 +34,7 @@ pub trait TxBatchModule {
         );
 
         self.max_tx_batch_block_duration()
-            .set(&new_max_tx_batch_block_duration);
+            .set(new_max_tx_batch_block_duration);
     }
 
     // views
@@ -237,7 +237,7 @@ pub trait TxBatchModule {
                 *last_batch_id = new_first_batch_id;
             }
         });
-        self.first_batch_id().set(&new_first_batch_id);
+        self.first_batch_id().set(new_first_batch_id);
 
         mapper.clear();
     }

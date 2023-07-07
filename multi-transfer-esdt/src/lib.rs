@@ -1,28 +1,28 @@
 #![no_std]
 
-elrond_wasm::imports!();
+multiversx_sc::imports!();
 
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 
-#[elrond_wasm::contract]
+#[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
     fn init(&self, opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
         self.max_tx_batch_size()
-            .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         self.set_wrapping_contract_address(opt_wrapping_contract_address);
 
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(&1);
-        self.last_batch_id().set_if_empty(&1);
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
     }
 
     #[only_owner]
@@ -163,7 +163,7 @@ pub trait MultiTransferEsdt:
     ) {
         for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
             self.send()
-                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount, &[]);
+                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount);
         }
     }
 

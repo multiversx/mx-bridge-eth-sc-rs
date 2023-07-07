@@ -1,16 +1,18 @@
 #![no_std]
 
 mod dfp_big_uint;
+use core::ops::Deref;
+
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
-#[elrond_wasm::contract]
-pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
+#[multiversx_sc::contract]
+pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
     #[init]
     fn init(&self) {
         self.set_paused(true);
@@ -137,7 +139,7 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
     #[endpoint(wrapTokens)]
     fn wrap_tokens(&self) -> PaymentsVec<Self::Api> {
         require!(self.not_paused(), "Contract is paused");
-        let original_payments = self.call_value().all_esdt_transfers();
+        let original_payments = self.call_value().all_esdt_transfers().deref().clone();
         if original_payments.is_empty() {
             return original_payments;
         }
@@ -176,7 +178,7 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
         }
 
         let caller = self.blockchain().get_caller();
-        self.send().direct_multi(&caller, &new_payments, &[]);
+        self.send().direct_multi(&caller, &new_payments);
 
         new_payments
     }
@@ -218,7 +220,7 @@ pub trait BridgedTokensWrapper: elrond_wasm_modules::pause::PauseModule {
 
         let caller = self.blockchain().get_caller();
         self.send()
-            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount, &[]);
+            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount);
     }
 
     fn get_converted_amount(

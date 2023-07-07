@@ -1,8 +1,7 @@
 #![no_std]
-#![feature(generic_associated_types)]
 
-elrond_wasm::derive_imports!();
-use elrond_wasm::{
+multiversx_sc::derive_imports!();
+use multiversx_sc::{
     api::ManagedTypeApi,
     types::{ManagedBuffer, ManagedByteArray},
 };
