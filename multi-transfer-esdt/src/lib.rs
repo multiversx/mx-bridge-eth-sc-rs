@@ -6,6 +6,7 @@ use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
+const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -41,7 +42,7 @@ pub trait MultiTransferEsdt:
 
         for eth_tx in transfers {
             let mut must_refund = false;
-            if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
+            if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             } else if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
@@ -52,6 +53,10 @@ pub trait MultiTransferEsdt:
                 must_refund = true;
             } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
+                must_refund = true;
+            } else if self.blockchain().is_smart_contract(&eth_tx.to)
+                && (eth_tx.data.is_empty() || eth_tx.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL)
+            {
                 must_refund = true;
             }
 
@@ -68,8 +73,16 @@ pub trait MultiTransferEsdt:
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
-            valid_dest_addresses_list.push(eth_tx.to);
-            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
+                let _: IgnoreValue = self
+                    .bridge_proxy()
+                    .deposit(&eth_tx)
+                    .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                    .execute_on_dest_context();
+            } else {
+                valid_dest_addresses_list.push(eth_tx.to);
+                valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            }
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
@@ -178,6 +191,9 @@ pub trait MultiTransferEsdt:
     fn get_wrapping_contract_proxy_instance(&self) -> bridged_tokens_wrapper::Proxy<Self::Api> {
         self.wrapping_contract_proxy(self.wrapping_contract_address().get())
     }
+
+    #[proxy]
+    fn bridge_proxy(&self) -> bridge_proxy::Proxy<Self::Api>;
 
     // storage
 

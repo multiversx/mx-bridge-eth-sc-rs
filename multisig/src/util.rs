@@ -58,7 +58,7 @@ pub trait UtilModule: crate::storage::StorageModule {
                 amount,
                 tx_nonce,
                 data,
-                gas_limit
+                gas_limit,
             });
         }
 

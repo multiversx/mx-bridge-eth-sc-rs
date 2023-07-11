@@ -37,8 +37,15 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub gas_limit: u64,
 }
 
-pub type EthTxAsMultiValue<M> =
-    MultiValue7<EthAddress<M>, ManagedAddress<M>, TokenIdentifier<M>, BigUint<M>, TxNonce, ManagedBuffer<M>, u64>;
+pub type EthTxAsMultiValue<M> = MultiValue7<
+    EthAddress<M>,
+    ManagedAddress<M>,
+    TokenIdentifier<M>,
+    BigUint<M>,
+    TxNonce,
+    ManagedBuffer<M>,
+    u64,
+>;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
