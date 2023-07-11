@@ -32,31 +32,39 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
+name = "bridge-proxy"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
+]
+
+[[package]]
+name = "bridge-proxy-wasm"
+version = "0.0.0"
+dependencies = [
+ "bridge-proxy",
+ "multiversx-sc-wasm-adapter",
+]
+
+[[package]]
 name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
-name = "empty"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
-name = "empty-wasm"
-version = "0.0.0"
-dependencies = [
- "empty",
- "multiversx-sc-wasm-adapter",
-]
-
-[[package]]
 name = "endian-type"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
+
+[[package]]
+name = "eth-address"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "hashbrown"
@@ -82,6 +90,8 @@ checksum = "7ebdb29d2ea9ed0083cd8cece49bbd968021bd99b0849edb4a9a7ee0fdf6a4e0"
 [[package]]
 name = "multiversx-sc"
 version = "0.41.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfbe80ec68fedf299dd65469f8999cf3c0f884ffa497122428f08303bcb8b884"
 dependencies = [
  "bitflags",
  "hashbrown",
@@ -94,6 +104,8 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec"
 version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "71d70ea458247d263b7e9fdfb207530b6a530546247139c162450e515c013a18"
 dependencies = [
  "arrayvec",
  "multiversx-sc-codec-derive",
@@ -102,6 +114,8 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-codec-derive"
 version = "0.17.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ad6920f80fda67fc60fd51aaa9f83ec7e069470f60a068c81205f9da5d05a30"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -112,6 +126,8 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-derive"
 version = "0.41.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1c2b87d817f2176bf1830bef938884f24267516c334a377e71a96bc18ebb09c1"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -123,6 +139,8 @@ dependencies = [
 [[package]]
 name = "multiversx-sc-wasm-adapter"
 version = "0.41.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "932327626de71eeb1dbe86b863cc70cc532f8ceba8e73a059410f6aa56b22a77"
 dependencies = [
  "multiversx-sc",
 ]
@@ -153,18 +171,18 @@ checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.60"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dec2b086b7a862cf4de201096214fa870344cf922b2b30c167badb3af3195406"
+checksum = "78803b62cbf1f46fde80d7c0e803111524b9877184cfe7c3033659490ac7a7da"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.28"
+version = "1.0.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1b9ab9c7eadfd8df19006f1cf1a4aed13540ed5cbc047010ece5826e10825488"
+checksum = "573015e8ab27661678357f27dc26460738fd2b6c86e46f386fde94cb5d913105"
 dependencies = [
  "proc-macro2",
 ]
@@ -181,9 +199,9 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "1.10.0"
+version = "1.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
+checksum = "62bb4feee49fdd9f707ef802e22365a35de4b7b299de4763d44bfea899442ff9"
 
 [[package]]
 name = "syn"
@@ -197,10 +215,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "transaction"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
+ "multiversx-sc",
+]
+
+[[package]]
 name = "unicode-ident"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b15811caf2415fb889178633e7724bad2509101cde276048e013b9def5e51fa0"
+checksum = "22049a19f4a68748a168c0fc439f9516686aa045927ff767eca0a85101fb6e73"
 
 [[package]]
 name = "version_check"
