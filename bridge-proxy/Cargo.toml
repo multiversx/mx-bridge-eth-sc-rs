@@ -1,0 +1,21 @@
+[package]
+name = "bridge-proxy"
+version = "0.0.0"
+authors = ["Costin Carabaș <costin.carabas@gmail.com>"]
+edition = "2018"
+publish = false
+
+[lib]
+path = "src/bridge-proxy.rs"
+
+[dependencies.transaction]
+path = "../common/transaction"
+
+[dev-dependencies]
+num-bigint = "0.4.2"
+
+[dependencies.multiversx-sc]
+version = "0.41.3"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.41.3"
