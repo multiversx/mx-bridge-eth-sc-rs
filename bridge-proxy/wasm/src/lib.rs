@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            8
+// Endpoints:                            7
 // Async Callback:                       1
-// Total number of exported functions:  10
+// Total number of exported functions:   9
 
 #![no_std]
 #![feature(lang_items)]
@@ -19,7 +19,6 @@ multiversx_sc_wasm_adapter::endpoints! {
     bridge_proxy
     (
         deposit
-        execute
         executeWithAsnyc
         refundTransactions
         setupMultiTransfer

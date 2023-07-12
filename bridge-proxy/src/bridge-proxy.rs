@@ -5,8 +5,7 @@ multiversx_sc::derive_imports!();
 
 mod config;
 
-use config::EthTransactionPayment;
-use transaction::EthTransaction;
+use transaction::{EthTransaction, EthTransactionPayment};
 
 /// An empty contract. To be used as a template when starting a new contract from scratch.
 #[multiversx_sc::contract]
@@ -29,28 +28,14 @@ pub trait BridgeProxyContract: config::ConfigModule {
             });
     }
 
-    #[endpoint]
-    fn execute(&self) {
-        for loop_tx in self.eth_transaction_list().iter() {
-            let tx = loop_tx.get_value_as_ref();
-            self.send()
-                .contract_call::<IgnoreValue>(tx.eth_tx.to.clone(), tx.eth_tx.data.clone())
-                .with_esdt_transfer((tx.token_id.clone(), tx.nonce, tx.amount.clone()))
-                .with_gas_limit(tx.eth_tx.gas_limit)
-                .transfer_execute();
-
-            //TODO Check if transaction failed, add it to `eth_failed_transaction_list`
-        }
-    }
-
     #[endpoint(executeWithAsnyc)]
-    fn execute_with_async(&self) {
+    fn execute_with_async(&self, tx_id: u32) {
         let tx_node = self
             .eth_transaction_list()
-            .front()
+            .remove_node_by_id(tx_id)
             .unwrap_or_else(|| sc_panic!("No more ETH transactions!"));
         let tx = tx_node.get_value_as_ref();
-        
+
         self.send()
             .contract_call::<IgnoreValue>(tx.eth_tx.to.clone(), tx.eth_tx.data.clone())
             .with_esdt_transfer((tx.token_id.clone(), tx.nonce, tx.amount.clone()))
@@ -66,5 +51,23 @@ pub trait BridgeProxyContract: config::ConfigModule {
     }
 
     #[endpoint(refundTransactions)]
-    fn refund_transactions(&self) {}
+    fn refund_transactions(&self) -> MultiValueEncoded<EthTransactionPayment<Self::Api>> {
+        // Send Failed Tx Structure
+        let mut result = MultiValueEncoded::new();
+        for tx_loop in self.eth_failed_transaction_list().iter() {
+            let tx = tx_loop.get_value_cloned();
+            result.push(tx);
+        }
+
+        // Send Funds
+        let mut all_payments = ManagedVec::new();
+        for failed_tx_loop in self.eth_failed_transaction_list().into_iter() {
+            let failed_tx = failed_tx_loop.get_value_as_ref();
+
+            all_payments.push(EsdtTokenPayment::new(failed_tx.token_id.clone(), failed_tx.nonce, failed_tx.amount.clone()));
+        }
+        self.send().direct_multi(&self.multi_transfer_address().get(), &all_payments);
+
+        result
+    }
 }

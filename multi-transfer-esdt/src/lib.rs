@@ -2,7 +2,7 @@
 
 multiversx_sc::imports!();
 
-use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
+use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields, EthTransactionPayment};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -121,6 +121,22 @@ pub trait MultiTransferEsdt:
         }
     }
 
+    #[endpoint(getFailedTxFromBridgeProxy)]
+    fn get_failed_tx_from_bridge_proxy(&self) {
+        let mut refund_tx_list = ManagedVec::new();
+
+        let failed_txs: MultiValueEncoded<EthTransactionPayment<Self::Api>> = self
+            .bridge_proxy()
+            .refund_transactions()
+            .execute_on_dest_context();
+
+        for failed_tx in failed_txs {
+            let refund_tx = self.convert_to_refund_tx(failed_tx.eth_tx);
+                refund_tx_list.push(refund_tx);
+        }
+
+        self.add_multiple_tx_to_batch(&refund_tx_list);
+    }
     // private
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {

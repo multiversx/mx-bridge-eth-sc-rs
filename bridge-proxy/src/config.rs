@@ -1,15 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use transaction::EthTransaction;
-
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone)]
-pub struct EthTransactionPayment<M: ManagedTypeApi> {
-    pub token_id: TokenIdentifier<M>,
-    pub nonce: u64,
-    pub amount: BigUint<M>,
-    pub eth_tx: EthTransaction<M>,
-}
+use transaction::EthTransactionPayment;
 
 #[multiversx_sc::module]
 pub trait ConfigModule {
