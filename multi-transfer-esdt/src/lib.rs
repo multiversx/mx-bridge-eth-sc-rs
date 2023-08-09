@@ -90,7 +90,7 @@ pub trait MultiTransferEsdt:
                     .execute_on_dest_context();
             } else {
                 valid_dest_addresses_list.push(eth_tx.to);
-                // valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+                valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
             }
         }
 
