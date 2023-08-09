@@ -15,8 +15,8 @@
                 "function": "batchTransferEsdtToken",
                 "arguments": [
                     "1",
-                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200|u64:1",
-                    "0x0102030405060708091011121314151617181920|sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:500|u64:2"
+                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200|u64:1|nested:str:data|u64:10000000",
+                    "0x0102030405060708091011121314151617181920|sc:multi_transfer_esdt|nested:str:WRAPPED-123456|biguint:500|u64:2|nested:str:getWrappingContractAddress|u64:10000000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -52,16 +52,7 @@
                 "arguments": []
             },
             "expect": {
-                "out": [
-                    "1",
-
-                    "0",
-                    "2",
-                    "0x0102030405060708091011121314151617181920",
-                    "sc:multi_transfer_esdt",
-                    "str:WRAPPED-123456",
-                    "500"
-                ]
+                "out": []
             }
         }
     ]

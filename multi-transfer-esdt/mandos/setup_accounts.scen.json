@@ -25,6 +25,11 @@
                     "creatorAddress": "address:owner",
                     "creatorNonce": "0",
                     "newAddress": "sc:multi_transfer_esdt"
+                },
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "1",
+                    "newAddress": "sc:bridge-proxy"
                 }
             ]
         },
@@ -44,6 +49,82 @@
                 "message": "",
                 "gas": "*",
                 "refund": "*"
+            }
+        },
+        {
+            "step": "scDeploy",
+            "txId": "deploy",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "file:../../bridge-proxy/output/bridge-proxy.wasm",
+                "value": "0",
+                "arguments": ["sc:multi_transfer_esdt"],
+                "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-bridge-proxy-to-multi-transfer",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:multi_transfer_esdt",
+                "function": "setBridgeProxyContractAddress",
+                "arguments": [
+                    "sc:bridge-proxy"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "3",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user1": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user2": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "sc:multi_transfer_esdt": {
+                    "code":"file:../output/multi-transfer-esdt.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
+                        "str:bridgeProxyContractAddress": "sc:bridge-proxy",
+                        "str:maxTxBatchSize": "10",
+                        "str:maxTxBatchBlockDuration": "0xffffffffffffffff"
+                    }
+                },
+                "sc:bridge-proxy": {
+                    "code":"file:../../bridge-proxy/output/bridge-proxy.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": "*"
+                }
             }
         },
         {
@@ -71,7 +152,8 @@
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
                         "str:firstBatchId": "1",
-                        "str:lastBatchId": "1"
+                        "str:lastBatchId": "1",
+                        "str:bridgeProxyContractAddress": "sc:bridge-proxy"
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm",
                     "owner": "address:owner"
