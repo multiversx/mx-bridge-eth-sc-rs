@@ -80,11 +80,9 @@ pub trait MultiTransferEsdt:
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
-
             if self.blockchain().is_smart_contract(&eth_tx.to.clone()) {
-                let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
                 let _: IgnoreValue = self
-                    .bridge_proxy(bridge_proxy_addr)
+                    .get_bridge_proxy_contract_proxy_instance()
                     .deposit(&eth_tx)
                     .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
                     .execute_on_dest_context();
