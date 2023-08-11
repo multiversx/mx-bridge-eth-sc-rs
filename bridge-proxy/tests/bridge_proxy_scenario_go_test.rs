@@ -1,4 +1,10 @@
+use multiversx_sc_scenario::*;
+
+fn world() -> ScenarioWorld {
+    ScenarioWorld::vm_go()
+}
+
 #[test]
 fn bridge_proxy_go() {
-    multiversx_sc_scenario::run_go("scenarios/bridge-proxy.scen.json");
+    world().run("scenarios/bridge-proxy.scen.json");
 }

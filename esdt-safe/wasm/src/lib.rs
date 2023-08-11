@@ -18,38 +18,39 @@ multiversx_sc_wasm_adapter::panic_handler!();
 multiversx_sc_wasm_adapter::endpoints! {
     esdt_safe
     (
-        setTransactionBatchStatus
-        addRefundBatch
-        createTransaction
-        claimRefund
-        getRefundAmounts
-        setFeeEstimatorContractAddress
-        setEthTxGasLimit
-        setDefaultPricePerGasUnit
-        setTokenTicker
-        calculateRequiredFee
-        getFeeEstimatorContractAddress
-        getDefaultPricePerGasUnit
-        getEthTxGasLimit
-        distributeFees
-        addTokenToWhitelist
-        removeTokenFromWhitelist
-        getAllKnownTokens
-        getAccumulatedTransactionFees
-        setMaxTxBatchSize
-        setMaxTxBatchBlockDuration
-        getCurrentTxBatch
-        getFirstBatchAnyStatus
-        getBatch
-        getBatchStatus
-        getFirstBatchId
-        getLastBatchId
-        setMaxBridgedAmount
-        getMaxBridgedAmount
-        pause
-        unpause
-        isPaused
+        init => init
+        setTransactionBatchStatus => set_transaction_batch_status
+        addRefundBatch => add_refund_batch
+        createTransaction => create_transaction
+        claimRefund => claim_refund
+        getRefundAmounts => get_refund_amounts
+        setFeeEstimatorContractAddress => set_fee_estimator_contract_address
+        setEthTxGasLimit => set_eth_tx_gas_limit
+        setDefaultPricePerGasUnit => set_default_price_per_gas_unit
+        setTokenTicker => set_token_ticker
+        calculateRequiredFee => calculate_required_fee
+        getFeeEstimatorContractAddress => fee_estimator_contract_address
+        getDefaultPricePerGasUnit => default_price_per_gas_unit
+        getEthTxGasLimit => eth_tx_gas_limit
+        distributeFees => distribute_fees
+        addTokenToWhitelist => add_token_to_whitelist
+        removeTokenFromWhitelist => remove_token_from_whitelist
+        getAllKnownTokens => token_whitelist
+        getAccumulatedTransactionFees => accumulated_transaction_fees
+        setMaxTxBatchSize => set_max_tx_batch_size
+        setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
+        getCurrentTxBatch => get_current_tx_batch
+        getFirstBatchAnyStatus => get_first_batch_any_status
+        getBatch => get_batch
+        getBatchStatus => get_batch_status
+        getFirstBatchId => first_batch_id
+        getLastBatchId => last_batch_id
+        setMaxBridgedAmount => set_max_bridged_amount
+        getMaxBridgedAmount => max_bridged_amount
+        pause => pause_endpoint
+        unpause => unpause_endpoint
+        isPaused => paused_status
     )
 }
 
-multiversx_sc_wasm_adapter::empty_callback! {}
+multiversx_sc_wasm_adapter::async_callback_empty! {}

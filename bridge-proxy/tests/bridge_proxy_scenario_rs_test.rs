@@ -11,6 +11,6 @@ fn world() -> ScenarioWorld {
 }
 
 #[test]
-fn empty_rs() {
-    multiversx_sc_scenario::run_rs("scenarios/bridge-proxy.scen.json", world());
+fn bridge_proxy_rs() {
+    world().run("scenarios/bridge-proxy.scen.json");
 }

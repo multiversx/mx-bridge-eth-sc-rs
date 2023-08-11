@@ -18,23 +18,24 @@ multiversx_sc_wasm_adapter::panic_handler!();
 multiversx_sc_wasm_adapter::endpoints! {
     bridged_tokens_wrapper
     (
-        addWrappedToken
-        updateWrappedToken
-        removeWrappedToken
-        whitelistToken
-        updateWhitelistedToken
-        blacklistToken
-        depositLiquidity
-        wrapTokens
-        unwrapToken
-        getUniversalBridgedTokenIds
-        getTokenLiquidity
-        getChainSpecificToUniversalMapping
-        getchainSpecificTokenIds
-        pause
-        unpause
-        isPaused
+        init => init
+        addWrappedToken => add_wrapped_token
+        updateWrappedToken => update_wrapped_token
+        removeWrappedToken => remove_wrapped_token
+        whitelistToken => whitelist_token
+        updateWhitelistedToken => update_whitelisted_token
+        blacklistToken => blacklist_token
+        depositLiquidity => deposit_liquidity
+        wrapTokens => wrap_tokens
+        unwrapToken => unwrap_token
+        getUniversalBridgedTokenIds => universal_bridged_token_ids
+        getTokenLiquidity => token_liquidity
+        getChainSpecificToUniversalMapping => chain_specific_to_universal_mapping
+        getchainSpecificTokenIds => chain_specific_token_ids
+        pause => pause_endpoint
+        unpause => unpause_endpoint
+        isPaused => paused_status
     )
 }
 
-multiversx_sc_wasm_adapter::empty_callback! {}
+multiversx_sc_wasm_adapter::async_callback_empty! {}
