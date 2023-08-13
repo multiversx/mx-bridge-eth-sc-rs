@@ -7,13 +7,26 @@ use transaction::EthTransactionPayment;
 pub trait ConfigModule {
     #[only_owner]
     #[endpoint(setupMultiTransfer)]
-    fn setup_multi_transfer(&self, multi_transfer_address: ManagedAddress) {
-        require!(
-            self.blockchain().is_smart_contract(&multi_transfer_address),
-            "Invalid multi-transfer address"
-        );
+    fn set_multi_transfer_contract_address(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
+        match opt_multi_transfer_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid multi-transfer address"
+                );
+                self.multi_transfer_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.multi_transfer_address().clear(),
+        }
+    }
 
-        self.multi_transfer_address().set(&multi_transfer_address);
+    #[view(getEthTransactionById)]
+    fn get_eth_transaction_by_id(&self, id: u32) -> ManagedBuffer<Self::Api> {
+        let eth_tx_list = self.eth_transaction_list();
+        match eth_tx_list.get_node_by_id(id) {
+            Some(tx) => tx.get_value_cloned().eth_tx.data,
+            None => sc_panic!("No transaction with this id!")
+        }
     }
 
     #[view(getMultiTransferAddress)]
