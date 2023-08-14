@@ -25,16 +25,8 @@ use eth_address::*;
 use transaction::{EthTransaction, EthTransactionPayment};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
-const MULTI_TRANSFER_CONTRACT_ADDRESS: &str =
-    "0x0000000000000000000000000000000000000000000000000000000000000000";
-
-const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
-
 const GAS_LIMIT: u64 = 1_000_000;
-
 const BRIDGE_PROXY_PATH_EXPR: &str = "file:output/bridge-proxy.wasm";
-// const MULTI_TRANSFER_PATH_EXPR: &str = "file:../multi-transfer-esdt/output/multi-transfer-esdt.wasm";
-// const ADDER_PATH_EXPR: &str = "file:test-contracts/adder.wasm";
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -44,7 +36,7 @@ fn world() -> ScenarioWorld {
 }
 
 #[test]
-fn basic_setup_test() {
+fn deploy_deposit_test() {
     let mut test = BridgeProxyTestState::setup();
     let bridge_token_id_expr = "str:BRIDGE-123456"; // when specifying the token transfer
 
@@ -77,23 +69,8 @@ fn basic_setup_test() {
         ScQueryStep::new()
             .to(&test.bridge_proxy)
             .call(test.bridge_proxy.get_eth_transaction_by_id(1u32))
-            .expect_value(eth_tx.data));
-        // |tr| {
-        //     let respose: LinkedList<EthTransactionPayment<StaticApi>> = tr.result.unwrap();
-        //     let reponse_eth_tx = respose.pop_front();
-
-        //     let eth_tx_payment = EthTransactionPayment {
-        //         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
-        //         nonce: 0u64,
-        //         amount: BigUint::from(500u64),
-        //         eth_tx,
-        //     };
-        //     match reponse_eth_tx {
-        //         Some(tx) => assert!(tx.eq(&eth_tx_payment), "Transactions not equal!"),
-        //         None => panic!("No transaction registered!"),
-        //     }
-        // },
-    // );
+            .expect_value(eth_tx),
+    );
 }
 
 type BridgeProxyContract = ContractInfo<bridge_proxy::Proxy<StaticApi>>;

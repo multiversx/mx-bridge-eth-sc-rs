@@ -1,7 +1,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use transaction::EthTransactionPayment;
+use transaction::{EthTransactionPayment, EthTransaction};
 
 #[multiversx_sc::module]
 pub trait ConfigModule {
@@ -21,10 +21,10 @@ pub trait ConfigModule {
     }
 
     #[view(getEthTransactionById)]
-    fn get_eth_transaction_by_id(&self, id: u32) -> ManagedBuffer<Self::Api> {
+    fn get_eth_transaction_by_id(&self, id: u32) -> EthTransaction<Self::Api> {
         let eth_tx_list = self.eth_transaction_list();
         match eth_tx_list.get_node_by_id(id) {
-            Some(tx) => tx.get_value_cloned().eth_tx.data,
+            Some(tx) => tx.get_value_cloned().eth_tx,
             None => sc_panic!("No transaction with this id!")
         }
     }
