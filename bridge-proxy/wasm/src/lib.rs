@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            7
+// Endpoints:                            8
 // Async Callback:                       1
-// Total number of exported functions:   9
+// Total number of exported functions:  10
 
 #![no_std]
 #![feature(lang_items)]
@@ -23,6 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         executeWithAsnyc => execute_with_async
         refundTransactions => refund_transactions
         setupMultiTransfer => set_multi_transfer_contract_address
+        getEthTransactionById => get_eth_transaction_by_id
         getMultiTransferAddress => multi_transfer_address
         getEthTransactionList => eth_transaction_list
         getEthFailedTransactionList => eth_failed_transaction_list

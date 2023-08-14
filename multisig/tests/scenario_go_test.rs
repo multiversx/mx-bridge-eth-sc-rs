@@ -3,10 +3,6 @@ use multiversx_sc_scenario::*;
 fn world() -> ScenarioWorld {
     ScenarioWorld::vm_go()
 }
-
-*/
-
-
 #[test]
 fn change_token_config_go() {
     world().run("scenarios/change_token_config.scen.json");
