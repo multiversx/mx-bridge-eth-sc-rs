@@ -103,6 +103,11 @@
                         "str:ETH-123456": "1,000,000"
                     },
                     "storage": {}
+                },
+                "sc:egld_esdt_swap": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "code": "sc:egld_esdt_swap"
                 }
             },
             "newAddresses": [

@@ -19,6 +19,9 @@ path = "../common/max-bridged-amount-module"
 [dependencies.bridged-tokens-wrapper]
 path = "../bridged-tokens-wrapper"
 
+[dependencies.bridge-proxy]
+path = "../bridge-proxy"
+
 [dependencies.multiversx-sc]
 version = "0.41.3"
 [dev-dependencies.multiversx-sc-scenario]

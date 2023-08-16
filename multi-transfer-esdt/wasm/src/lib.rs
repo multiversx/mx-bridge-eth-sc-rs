@@ -5,12 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           14
+// Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  16
+// Total number of exported functions:  19
 
 #![no_std]
-#![feature(alloc_error_handler, lang_items)]
+#![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -21,7 +21,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         batchTransferEsdtToken
         getAndClearFirstRefundBatch
         setWrappingContractAddress
+        setBridgeProxyContractAddress
+        getFailedTxFromBridgeProxy
         getWrappingContractAddress
+        getBridgeProxyContractAddress
         setMaxTxBatchSize
         setMaxTxBatchBlockDuration
         getCurrentTxBatch
