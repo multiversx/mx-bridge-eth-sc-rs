@@ -18,13 +18,15 @@ multiversx_sc_wasm_adapter::panic_handler!();
 multiversx_sc_wasm_adapter::endpoints! {
     bridge_proxy
     (
-        deposit
-        executeWithAsnyc
-        refundTransactions
-        setupMultiTransfer
-        getMultiTransferAddress
-        getEthTransactionList
-        getEthFailedTransactionList
-        callBack
+        init => init
+        deposit => deposit
+        executeWithAsnyc => execute_with_async
+        refundTransactions => refund_transactions
+        setupMultiTransfer => setup_multi_transfer
+        getMultiTransferAddress => multi_transfer_address
+        getEthTransactionList => eth_transaction_list
+        getEthFailedTransactionList => eth_failed_transaction_list
     )
 }
+
+multiversx_sc_wasm_adapter::async_callback! { bridge_proxy }
