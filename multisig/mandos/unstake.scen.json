@@ -95,7 +95,7 @@
                     "balance": "2000",
                     "storage": {
                         "str:quorum": "1",
-                        "str:user_role|u32:1": "2",
+                        "str:user_role|u32:1": "1",
                         "str:user_role|u32:2": "0",
                         "+": ""
                     },
@@ -161,7 +161,7 @@
                     "balance": "1000",
                     "storage": {
                         "str:quorum": "1",
-                        "str:user_role|u32:1": "2",
+                        "str:user_role|u32:1": "1",
                         "str:user_role|u32:2": "0",
                         "+": ""
                     },
@@ -179,14 +179,14 @@
                 "value": "0",
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
-                    "2"
+                    "1"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
             "expect": {
                 "status": "4",
-                "message": "str:only board members and proposers can propose",
+                "message": "str:only board members can propose",
                 "out": [],
                 "gas": "*",
                 "refund": "*"

@@ -1,20 +1,12 @@
 [package]
 name = "esdt-safe"
 version = "0.0.0"
-authors = [ "you",]
+authors = ["you"]
 edition = "2018"
 publish = false
 
 [lib]
 path = "src/lib.rs"
-
-[features]
-wasm-output-mode = [
-  "elrond-wasm-node",
-  "fee-estimator-module/wasm-output-mode",
-  "token-module/wasm-output-mode",
-]
-
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -27,15 +19,16 @@ path = "../common/fee-estimator-module"
 [dependencies.token-module]
 path = "../common/token-module"
 
-[dependencies.elrond-wasm]
-version = "0.18"
+[dependencies.tx-batch-module]
+path = "../common/tx-batch-module"
 
-[dependencies.elrond-wasm-derive]
-version = "0.18"
+[dependencies.max-bridged-amount-module]
+path = "../common/max-bridged-amount-module"
 
-[dependencies.elrond-wasm-node]
-version = "0.18"
-optional = true
+[dependencies.multiversx-sc]
+version = "0.41.3"
 
-[dev-dependencies.elrond-wasm-debug]
-version = "0.18"
+[dependencies.multiversx-sc-modules]
+version = "0.41.3"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.41.3"

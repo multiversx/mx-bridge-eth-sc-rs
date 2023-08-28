@@ -1,0 +1,10 @@
+[package]
+name = "bridged-tokens-wrapper-meta"
+version = "0.0.0"
+edition = "2018"
+publish = false
+[dependencies.bridged-tokens-wrapper]
+path = ".."
+
+[dependencies.multiversx-sc-meta]
+version = "0.41.3"

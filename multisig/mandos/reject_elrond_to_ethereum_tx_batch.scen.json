@@ -14,8 +14,9 @@
                 "value": "0",
                 "function": "proposeEsdtSafeSetCurrentTransactionBatchStatus",
                 "arguments": [
-                    "0",
-                    "4", "4"
+                    "1",
+                    "4",
+                    "4"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -24,22 +25,6 @@
                 "status": "0",
                 "message": "",
                 "out": [
-                    "0",
-
-                    "0",
-                    "1",
-                    "address:user",
-                    "0x0102030405060708091011121314151617181920",
-                    "str:EGLD-123456",
-                    "400",
-
-                    "0",
-                    "2",
-                    "address:user",
-                    "0x0102030405060708091011121314151617181920",
-                    "str:ETH-123456",
-                    "350,000",
-
                     "1"
                 ],
                 "gas": "*",
@@ -54,8 +39,8 @@
                     "balance": "*",
                     "storage": {
                         "str:action_data.item|u32:1": {
-                            "1-action_type": "u8:6",
-                            "2-batch_id": "u64:0",
+                            "1-action_type": "u8:1",
+                            "2-batch_id": "u64:1",
                             "3-tx_batch_status_len": "u32:2",
                             "4-tx_batch_status_vec": "u8:4|u8:4"
                         },
@@ -110,6 +95,69 @@
             }
         },
         {
+            "step": "scQuery",
+            "txId": "user-query-refund-amounts",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getRefundAmounts",
+                "arguments": [
+                    "address:user"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "str:EGLD-123456",
+                    "400",
+                    "str:ETH-123456",
+                    "350,000"
+                ]
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "user-claim-refund-egld",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "claimRefund",
+                "arguments": [
+                    "str:EGLD-123456"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "user-claim-refund-eth",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "claimRefund",
+                "arguments": [
+                    "str:ETH-123456"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": "*",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
             "step": "checkState",
             "comment": "the tokens are returned to the user (except the tx fees)",
             "accounts": {
@@ -139,16 +187,13 @@
                             ]
                         }
                     },
-                    "storage": {                        
+                    "storage": {
                         "str:transactionStatus|address:user|u32:1": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:1": "",
-
                         "str:transactionStatus|address:user|u32:2": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": "",
-
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
-
                         "+": ""
                     },
                     "code": "*"
@@ -165,8 +210,10 @@
                 "value": "0",
                 "function": "distributeFeesFromChildContracts",
                 "arguments": [
-                    "address:relayer1", "4000",
-                    "address:relayer2", "6000"
+                    "address:relayer1",
+                    "4000",
+                    "address:relayer2",
+                    "6000"
                 ],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
@@ -224,10 +271,9 @@
                             ]
                         }
                     },
-                    "storage": {                        
+                    "storage": {
                         "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
-
                         "+": ""
                     },
                     "code": "*"

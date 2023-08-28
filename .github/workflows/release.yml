@@ -1,0 +1,16 @@
+name: On release, build contracts
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: multiversx/mx-sc-actions/.github/workflows/reproducible-build.yml@v2.2.6
+    with:
+      image_tag: v4.1.4
+      attach_to_existing_release: true
+      skip_preliminary_checks: true

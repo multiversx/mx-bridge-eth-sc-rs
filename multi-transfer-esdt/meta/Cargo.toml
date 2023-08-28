@@ -1,0 +1,13 @@
+[package]
+name = "multi-transfer-esdt-meta"
+version = "0.0.0"
+authors = ["you"]
+edition = "2018"
+publish = false
+
+[dev-dependencies]
+[dependencies.multi-transfer-esdt]
+path = ".."
+
+[dependencies.multiversx-sc-meta]
+version = "0.41.3"

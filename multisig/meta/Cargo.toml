@@ -1,0 +1,11 @@
+[package]
+name = "multisig-meta"
+version = "0.0.0"
+authors = ["Andrei Marinica <andrei.marinica@elrond.com>, Dorin Iancu <dorin.iancu@elrond.com>"]
+edition = "2018"
+publish = false
+[dependencies.multisig]
+path = ".."
+
+[dependencies.multiversx-sc-meta]
+version = "0.41.3"

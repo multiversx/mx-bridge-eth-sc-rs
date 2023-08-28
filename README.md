@@ -19,9 +19,10 @@ As said above, we're going to use ESDT to implement wrapped tokens, but how is t
 
 One important thing to note is you can never unwrap your WrappedETH while on the MultiversX blockchain, as that is not a native MultiversX token. You will only be able to unwrap them by transferring them to one of your Ethereum accounts and then unwrapping them there.  
 
+
 ## MultiversX -> Ethereum transaction
 
-To be able to send eGLD to an Ethereum account, we first have to wrap the tokens through the `EgldEsdtSwap` contract.   
+To be able to send EGLD to an Ethereum account, we first have to wrap the tokens through the `EgldEsdtSwap` contract.   
 
 Then you can create a transaction by making a smart contract call to the `EsdtSafe` SC with the tokens you want to transfer and the receiver's address. The tokens will be locked in the contract until the transaction is processed. If the transaction is successful, the tokens on the MultiversX side will be burned. If the transaction fails for whatever reason, you will get your tokens back.  
 
@@ -34,3 +35,4 @@ To be able to transfer your tokens back, you will likely have to use an ERC20 co
 ## Conclusion
 
 And that sums up the MultiversX-Ethereum bridge. It's open source, so if you're interested in the details, you can always check out the implementation. In the future, it will likely be implemented in xPortal, so it will be very straightforward to move your tokens around :)
+

@@ -1,0 +1,123 @@
+{
+    "name": "blacklist token",
+    "gasSchedule": "v4",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "wrap_token.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "blacklist-token",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged_tokens_wrapper",
+                "function": "blacklistToken",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "unwrap-token",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:bridged_tokens_wrapper",
+                "value": "0",
+                "esdt": {
+                    "tokenIdentifier": "str:WUSDC-abcdef",
+                    "value": "100"
+                },
+                "function": "unwrapToken",
+                "arguments": [
+                    "str:USDC-aaaaaa"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Esdt token unavailable",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "4",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "5",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "200000000000000"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "400000000000000"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "900"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:bridged_tokens_wrapper": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:USDC-aaaaaa": {
+                            "balance": "300000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "100000000000000"
+                        }
+                    },
+                    "storage": {
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-cccccc",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenIds.len": "1",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                    },
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        }
+    ]
+}

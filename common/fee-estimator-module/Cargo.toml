@@ -1,21 +1,9 @@
 [package]
 name = "fee-estimator-module"
 version = "0.0.0"
-authors = [ "dorin-iancu <dorin.iancu@elrond.com>",]
+authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
-
-[features]
-wasm-output-mode = ["elrond-wasm-node"]
-
-[dependencies.elrond-wasm]
-version = "0.18"
-
-[dependencies.elrond-wasm-derive]
-version = "0.18"
-
-[dependencies.elrond-wasm-node]
-version = "0.18"
-optional = true
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.18"
+[dependencies.multiversx-sc]
+version = "0.41.3"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.41.3"

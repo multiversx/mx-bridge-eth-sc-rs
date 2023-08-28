@@ -1,0 +1,140 @@
+{
+    "name": "whitelist token",
+    "gasSchedule": "v4",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "add_wrapped_token.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "whitelist-token-fail",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:bridged_tokens_wrapper",
+                "function": "whitelistToken",
+                "arguments": [
+                    "str:USDC-bbbbbb",
+                    "u32:18",
+                    "str:WUSDC-abcdef"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Endpoint can only be called by owner",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "whitelist-token-a",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged_tokens_wrapper",
+                "function": "whitelistToken",
+                "arguments": [
+                    "str:USDC-aaaaaa",
+                    "u32:18",
+                    "str:WUSDC-abcdef"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "whitelist-token-c",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged_tokens_wrapper",
+                "function": "whitelistToken",
+                "arguments": [
+                    "str:USDC-cccccc",
+                    "u32:18",
+                    "str:WUSDC-abcdef"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "3",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user": {
+                    "nonce": "1",
+                    "esdt": {
+                        "str:USDC-aaaaaa": {
+                            "balance": "500000000000000"
+                        },
+                        "str:USDC-bbbbbb": {
+                            "balance": "500000000000000"
+                        },
+                        "str:USDC-cccccc": {
+                            "balance": "500000000000000"
+                        },
+                        "str:WUSDC-abcdef": {
+                            "balance": "500"
+                        }
+                    },
+                    "storage": {}
+                },
+                "sc:bridged_tokens_wrapper": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:WUSDC-abcdef": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WUSDC-uvwxyz": {
+                            "balance": "1",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.len": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-aaaaaa": "1",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.index|nested:str:USDC-cccccc": "2",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:1": "str:USDC-aaaaaa",
+                        "str:chainSpecificTokenIds|nested:str:WUSDC-abcdef|str:.item|u32:2": "str:USDC-cccccc",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-aaaaaa": "str:WUSDC-abcdef",
+                        "str:chainSpecificToUniversalMapping|nested:str:USDC-cccccc": "str:WUSDC-abcdef",
+                        "str:universalBridgedTokenIds.len": "1",
+                        "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
+                        "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
+                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
+                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
+                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                    },
+                    "code": "file:../output/bridged-tokens-wrapper.wasm",
+                    "owner": "address:owner"
+                }
+            }
+        }
+    ]
+}

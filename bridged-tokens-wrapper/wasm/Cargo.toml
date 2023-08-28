@@ -1,0 +1,23 @@
+[package]
+name = "bridged-tokens-wrapper-wasm"
+version = "0.0.0"
+authors = ["Alin Cruceat <alin.cruceat@elrond.com>"]
+edition = "2018"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+[profile.release]
+codegen-units = 1
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+[dependencies.bridged-tokens-wrapper]
+path = ".."
+
+[dependencies.multiversx-sc-wasm-adapter]
+version = "0.41.3"
+
+[workspace]
+members = ["."]

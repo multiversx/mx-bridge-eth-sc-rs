@@ -47,10 +47,31 @@
                 "value": "0",
                 "arguments": [
                     "sc:price_aggregator",
-                    "150,000",
-                    "str:BRIDGE-123456"
+                    "150,000"
                 ],
                 "gasLimit": "20,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-token-1",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "str:BRIDGE-123456",
+                    "str:BRIDGE"
+                ],
+                "gasLimit": "50,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -70,13 +91,37 @@
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
                         "str:ethTxGasLimit": "150,000",
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
+                        "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
+                        "str:tokenTicker|nested:str:GWEI": "str:GWEI",
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:pause_module:paused": "true",
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
                 },
                 "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "unpause",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "out": [],
+                "message": "",
+                "gas": "*",
+                "refund": "*"
             }
         },
         {
@@ -98,16 +143,31 @@
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
                         "str:ethTxGasLimit": "150,000",
-                        "str:tokenWhitelist.value|u32:1": "str:BRIDGE-123456",
-
-                        "str:tokenWhitelist.info": "0x00000001000000010000000100000001",
-                        "str:tokenWhitelist.node_idBRIDGE-123456": "0x01",
-                        "str:tokenWhitelist.node_links|u32:1": "0x0000000000000000"
+                        "str:tokenTicker|nested:str:BRIDGE-123456": "str:BRIDGE",
+                        "str:tokenTicker|nested:str:GWEI": "str:GWEI",
+                        "str:tokenWhitelist.index|nested:str:BRIDGE-123456": "1",
+                        "str:tokenWhitelist.item|u32:1": "str:BRIDGE-123456",
+                        "str:tokenWhitelist.len": "1"
                     },
                     "code": "file:../output/esdt-safe.wasm",
                     "owner": "address:owner"
                 }
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-all-known-tokens",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getAllKnownTokens"
+            },
+            "expect": {
+                "out": [
+                    "str:BRIDGE-123456"
+                ]
             }
         }
     ]

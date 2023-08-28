@@ -22,6 +22,50 @@
             "expect": {
                 "out": []
             }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-first-tx-batch",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatch",
+                "arguments": [
+                    "1"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "1",
+
+                    "0",
+                    "1",
+                    "address:user1",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:BRIDGE-123456",
+                    "400",
+
+                    "0",
+                    "2",
+                    "address:user2",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:BRIDGE-123456",
+                    "900"
+                ]
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-batch-invalid-id",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getBatch",
+                "arguments": [
+                    "2"
+                ]
+            },
+            "expect": {
+                "out": []
+            }
         }
     ]
 }

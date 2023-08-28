@@ -7,14 +7,6 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
-
-[features]
-wasm-output-mode = [
-  "elrond-wasm-node",
-  "fee-estimator-module/wasm-output-mode",
-  "token-module/wasm-output-mode",
-]
-
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -27,8 +19,11 @@ path = "../common/fee-estimator-module"
 [dependencies.token-module]
 path = "../common/token-module"
 
-[dependencies.egld-esdt-swap]
-path = "../egld-esdt-swap"
+[dependencies.tx-batch-module]
+path = "../common/tx-batch-module"
+
+[dependencies.max-bridged-amount-module]
+path = "../common/max-bridged-amount-module"
 
 [dependencies.esdt-safe]
 path = "../esdt-safe"
@@ -36,15 +31,10 @@ path = "../esdt-safe"
 [dependencies.multi-transfer-esdt]
 path = "../multi-transfer-esdt"
 
-[dependencies.elrond-wasm]
-version = "0.18"
+[dependencies.multiversx-sc]
+version = "0.41.3"
 
-[dependencies.elrond-wasm-derive]
-version = "0.18"
-
-[dependencies.elrond-wasm-node]
-version = "0.18"
-optional = true
-
-[dev-dependencies.elrond-wasm-debug]
-version = "0.18"
+[dependencies.multiversx-sc-modules]
+version = "0.41.3"
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.41.3"

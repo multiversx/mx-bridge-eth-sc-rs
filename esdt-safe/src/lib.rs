@@ -1,95 +1,85 @@
 #![no_std]
 #![allow(non_snake_case)]
 
-elrond_wasm::imports!();
-elrond_wasm::derive_imports!();
+multiversx_sc::imports!();
+multiversx_sc::derive_imports!();
+
+use core::convert::TryFrom;
 
 use eth_address::*;
-use transaction::esdt_safe_batch::EsdtSafeTxBatchSplitInFields;
-use transaction::*;
+use fee_estimator_module::GWEI_STRING;
+use transaction::{transaction_status::TransactionStatus, Transaction};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100;
+const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
-#[elrond_wasm_derive::contract]
-pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::TokenModule {
+#[multiversx_sc::contract]
+pub trait EsdtSafe:
+    fee_estimator_module::FeeEstimatorModule
+    + token_module::TokenModule
+    + tx_batch_module::TxBatchModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::pause::PauseModule
+{
+    /// fee_estimator_contract_address - The address of a Price Aggregator contract,
+    /// which will get the price of token A in token B
+    ///
+    /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side.
+    /// Will be used to compute the fees for the transfer
     #[init]
-    fn init(
-        &self,
-        fee_estimator_contract_address: Address,
-        eth_tx_gas_limit: Self::BigUint,
-        #[var_args] token_whitelist: VarArgs<TokenIdentifier>,
-    ) -> SCResult<()> {
+    fn init(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
-        for token in token_whitelist.into_vec() {
-            require!(token.is_valid_esdt_identifier(), "Invalid token ID");
-            let _ = self.token_whitelist().insert(token);
-        }
-
         self.max_tx_batch_size()
-            .set_if_empty(&DEFAULT_MAX_TX_BATCH_SIZE);
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(&DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
-        Ok(())
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
+
+        // set ticker for "GWEI"
+        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
+        self.token_ticker(&gwei_token_id)
+            .set(gwei_token_id.as_managed_buffer());
+
+        self.set_paused(true);
     }
 
-    // endpoints - owner-only
-
-    #[only_owner]
-    #[endpoint(setMaxTxBatchSize)]
-    fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) -> SCResult<()> {
-        require!(
-            new_max_tx_batch_size > 0,
-            "Max tx batch size must be more than 0"
-        );
-
-        self.max_tx_batch_size().set(&new_max_tx_batch_size);
-
-        Ok(())
-    }
-
-    #[only_owner]
-    #[endpoint(setMaxTxBatchBlockDuration)]
-    fn set_max_tx_batch_block_duration(
-        &self,
-        new_max_tx_batch_block_duration: u64,
-    ) -> SCResult<()> {
-        require!(
-            new_max_tx_batch_block_duration > 0,
-            "Max tx batch block duration must be more than 0"
-        );
-
-        self.max_tx_batch_block_duration()
-            .set(&new_max_tx_batch_block_duration);
-
-        Ok(())
-    }
-
+    /// Sets the statuses for the transactions, after they were executed on the Ethereum side.
+    ///
+    /// Only TransactionStatus::Executed (3) and TransactionStatus::Rejected (4) values are allowed.
+    /// Number of provided statuses must be equal to number of transactions in the batch.
     #[only_owner]
     #[endpoint(setTransactionBatchStatus)]
     fn set_transaction_batch_status(
         &self,
         batch_id: u64,
-        #[var_args] tx_statuses: VarArgs<TransactionStatus>,
-    ) -> SCResult<()> {
+        tx_statuses: MultiValueEncoded<TransactionStatus>,
+    ) {
         let first_batch_id = self.first_batch_id().get();
         require!(
             batch_id == first_batch_id,
             "Batches must be processed in order"
         );
 
-        let tx_batch = self.pending_batches(batch_id).get();
+        let mut tx_batch = self.pending_batches(batch_id);
         require!(
             tx_batch.len() == tx_statuses.len(),
             "Invalid number of statuses provided"
         );
 
-        for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.into_vec().iter()) {
-            match *tx_status {
+        for (tx, tx_status) in tx_batch.iter().zip(tx_statuses.to_vec().iter()) {
+            // Since tokens don't exist in the EsdtSafe in the case of a refund transaction
+            // we have no tokens to burn, nor to refund
+            if tx.is_refund_tx {
+                continue;
+            }
+
+            match tx_status {
                 TransactionStatus::Executed => {
                     // local burn role might be removed while tx is executed
                     // tokens will remain locked forever in that case
@@ -99,48 +89,95 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
                     }
                 }
                 TransactionStatus::Rejected => {
-                    self.refund_esdt_token(&tx.from, &tx.token_identifier, &tx.amount);
+                    let addr = ManagedAddress::try_from(tx.from).unwrap();
+                    self.mark_refund(&addr, &tx.token_identifier, &tx.amount);
                 }
                 _ => {
-                    return sc_error!("Transaction status may only be set to Executed or Rejected")
+                    sc_panic!("Transaction status may only be set to Executed or Rejected");
                 }
             }
+
+            self.set_status_event(batch_id, tx.nonce, tx_status);
         }
 
-        let new_first_batch_id = first_batch_id + 1;
+        self.clear_first_batch(&mut tx_batch);
+    }
 
-        // for the case when the last existing batch was processed
-        // otherwise, we'd create a batch with the same ID again
-        self.last_batch_id().update(|last_batch_id| {
-            if *last_batch_id == first_batch_id {
-                *last_batch_id = new_first_batch_id;
+    /// Converts failed Ethereum -> Elrond transactions to Elrond -> Ethereum transaction.
+    /// This is done every now and then to refund the tokens.
+    ///
+    /// As with normal Elrond -> Ethereum transactions, a part of the tokens will be
+    /// subtracted to pay for the fees
+    #[only_owner]
+    #[endpoint(addRefundBatch)]
+    fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
+        let block_nonce = self.blockchain().get_block_nonce();
+        let mut cached_token_ids = ManagedVec::<Self::Api, TokenIdentifier>::new();
+        let mut cached_prices = ManagedVec::<Self::Api, BigUint>::new();
+        let mut new_transactions = ManagedVec::new();
+        let mut original_tx_nonces = ManagedVec::<Self::Api, u64>::new();
+
+        for refund_tx in &refund_transactions {
+            let required_fee = match cached_token_ids
+                .iter()
+                .position(|id| *id == refund_tx.token_identifier)
+            {
+                Some(index) => (*cached_prices.get(index)).clone(),
+                None => {
+                    let queried_fee = self.calculate_required_fee(&refund_tx.token_identifier);
+                    cached_token_ids.push(refund_tx.token_identifier.clone());
+                    cached_prices.push(queried_fee.clone());
+
+                    queried_fee
+                }
+            };
+
+            if refund_tx.amount <= required_fee {
+                continue;
             }
-        });
-        self.first_batch_id().set(&new_first_batch_id);
-        self.pending_batches(batch_id).clear();
 
-        Ok(())
+            let actual_bridged_amount = refund_tx.amount - required_fee;
+            let tx_nonce = self.get_and_save_next_tx_id();
+
+            // "from" and "to" are inverted, since this was initially an Ethereum -> Elrond tx
+            let new_tx = Transaction {
+                block_nonce,
+                nonce: tx_nonce,
+                from: refund_tx.to,
+                to: refund_tx.from,
+                token_identifier: refund_tx.token_identifier,
+                amount: actual_bridged_amount,
+                is_refund_tx: true,
+            };
+            new_transactions.push(new_tx);
+            original_tx_nonces.push(refund_tx.nonce);
+        }
+
+        let batch_ids = self.add_multiple_tx_to_batch(&new_transactions);
+        for (i, tx) in new_transactions.iter().enumerate() {
+            let batch_id = batch_ids.get(i);
+            let original_tx_nonce = original_tx_nonces.get(i);
+
+            self.add_refund_transaction_event(batch_id, tx.nonce, original_tx_nonce);
+        }
     }
 
     // endpoints
 
+    /// Create an Elrond -> Ethereum transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
     #[payable("*")]
     #[endpoint(createTransaction)]
-    fn create_transaction(
-        &self,
-        #[payment_token] payment_token: TokenIdentifier,
-        #[payment_amount] payment_amount: Self::BigUint,
-        to: EthAddress,
-    ) -> SCResult<()> {
-        require!(
-            self.call_value().esdt_token_nonce() == 0,
-            "Only fungible ESDT tokens accepted"
-        );
-        require!(
-            self.token_whitelist().contains(&payment_token),
-            "Payment token is not on whitelist"
-        );
-        require!(!to.is_zero(), "Can't transfer to address zero");
+    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        self.require_token_in_whitelist(&payment_token);
 
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
@@ -148,132 +185,100 @@ pub trait EsdtSafe: fee_estimator_module::FeeEstimatorModule + token_module::Tok
             "Transaction fees cost more than the entire bridged amount"
         );
 
+        self.require_below_max_amount(&payment_token, &payment_amount);
+
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
         let actual_bridged_amount = payment_amount - required_fee;
         let caller = self.blockchain().get_caller();
-        let tx_nonce = self.last_tx_nonce().update(|last_tx_nonce| {
-            *last_tx_nonce += 1;
-            *last_tx_nonce
-        });
+        let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: caller,
-            to,
+            from: caller.as_managed_buffer().clone(),
+            to: to.as_managed_buffer().clone(),
             token_identifier: payment_token,
             amount: actual_bridged_amount,
+            is_refund_tx: false,
         };
 
-        self.add_to_batch(tx);
-
-        Ok(())
+        let batch_id = self.add_to_batch(tx);
+        self.create_transaction_event(batch_id, tx_nonce);
     }
 
-    // views
+    /// Claim funds for failed Elrond -> Ethereum transactions.
+    /// These are not sent automatically to prevent the contract getting stuck.
+    /// For example, if the receiver is a SC, a frozen account, etc.
+    #[endpoint(claimRefund)]
+    fn claim_refund(&self, token_id: TokenIdentifier) -> EsdtTokenPayment<Self::Api> {
+        let caller = self.blockchain().get_caller();
+        let refund_amount = self.refund_amount(&caller, &token_id).get();
+        require!(refund_amount > 0, "Nothing to refund");
 
-    #[view(getCurrentTxBatch)]
-    fn get_current_tx_batch(&self) -> OptionalResult<EsdtSafeTxBatchSplitInFields<Self::BigUint>> {
-        let first_batch_id = self.first_batch_id().get();
-        let first_batch = self.pending_batches(first_batch_id).get();
+        self.refund_amount(&caller, &token_id).clear();
+        self.send()
+            .direct_esdt(&caller, &token_id, 0, &refund_amount);
 
-        if self.is_batch_full(&first_batch) {
-            let batch_len = first_batch.len();
-            let mut result_vec = Vec::with_capacity(batch_len);
-            for tx in first_batch {
-                result_vec.push(tx.into_multiresult());
+        EsdtTokenPayment::new(token_id, 0, refund_amount)
+    }
+
+    /// Query function that lists all refund amounts for a user.
+    /// Useful for knowing which token IDs to pass to the claimRefund endpoint.
+    #[view(getRefundAmounts)]
+    fn get_refund_amounts(
+        &self,
+        address: ManagedAddress,
+    ) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
+        let mut refund_amounts = MultiValueEncoded::new();
+        for token_id in self.token_whitelist().iter() {
+            let amount = self.refund_amount(&address, &token_id).get();
+            if amount > 0u32 {
+                refund_amounts.push((token_id, amount).into());
             }
-
-            return OptionalResult::Some((first_batch_id, result_vec.into()).into());
         }
 
-        OptionalResult::None
+        refund_amounts
     }
 
     // private
 
-    fn add_to_batch(&self, transaction: Transaction<Self::BigUint>) {
-        let last_batch_id = self.last_batch_id().get();
-        let mut last_batch = self.pending_batches(last_batch_id).get();
-
-        if self.is_batch_full(&last_batch) {
-            self.create_new_batch(transaction);
-        } else {
-            last_batch.push(transaction);
-            self.pending_batches(last_batch_id).set(&last_batch);
-        }
-    }
-
-    #[allow(clippy::vec_init_then_push)]
-    fn create_new_batch(&self, transaction: Transaction<Self::BigUint>) {
-        let last_batch_id = self.last_batch_id().get();
-        let new_batch_id = last_batch_id + 1;
-
-        let mut new_batch = Vec::with_capacity(1);
-        new_batch.push(transaction);
-
-        self.pending_batches(new_batch_id).set(&new_batch);
-        self.last_batch_id().set(&new_batch_id);
-    }
-
-    fn is_batch_full(&self, tx_batch: &[Transaction<Self::BigUint>]) -> bool {
-        if tx_batch.is_empty() {
-            return false;
-        }
-
-        let max_batch_size = self.max_tx_batch_size().get();
-        if tx_batch.len() == max_batch_size {
-            return true;
-        }
-
-        let current_block_nonce = self.blockchain().get_block_nonce();
-        let first_tx_in_batch_block_nonce = tx_batch[0].block_nonce;
-        let block_diff = current_block_nonce - first_tx_in_batch_block_nonce;
-        let max_tx_batch_block_duration = self.max_tx_batch_block_duration().get();
-
-        block_diff > max_tx_batch_block_duration
-    }
-
-    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &Self::BigUint) {
+    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         self.send().esdt_local_burn(token_id, 0, amount);
     }
 
-    fn refund_esdt_token(&self, to: &Address, token_id: &TokenIdentifier, amount: &Self::BigUint) {
-        self.send()
-            .direct(to, token_id, 0, amount, self.data_or_empty(to, b"refund"));
+    fn mark_refund(&self, to: &ManagedAddress, token_id: &TokenIdentifier, amount: &BigUint) {
+        self.refund_amount(to, token_id)
+            .update(|refund| *refund += amount);
     }
 
-    fn data_or_empty(&self, to: &Address, data: &'static [u8]) -> &[u8] {
-        if self.blockchain().is_smart_contract(to) {
-            &[]
-        } else {
-            data
-        }
-    }
+    // events
+
+    #[event("createTransactionEvent")]
+    fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("addRefundTransactionEvent")]
+    fn add_refund_transaction_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] original_tx_id: u64,
+    );
+
+    #[event("setStatusEvent")]
+    fn set_status_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] tx_status: TransactionStatus,
+    );
 
     // storage
 
-    #[storage_mapper("firstBatchId")]
-    fn first_batch_id(&self) -> SingleValueMapper<Self::Storage, u64>;
-
-    #[storage_mapper("lastBatchId")]
-    fn last_batch_id(&self) -> SingleValueMapper<Self::Storage, u64>;
-
-    #[storage_mapper("pendingBatches")]
-    fn pending_batches(
+    #[storage_mapper("refundAmount")]
+    fn refund_amount(
         &self,
-        batch_id: u64,
-    ) -> SingleValueMapper<Self::Storage, Vec<Transaction<Self::BigUint>>>;
-
-    #[storage_mapper("lastTxNonce")]
-    fn last_tx_nonce(&self) -> SingleValueMapper<Self::Storage, u64>;
-
-    // configurable
-
-    #[storage_mapper("maxTxBatchSize")]
-    fn max_tx_batch_size(&self) -> SingleValueMapper<Self::Storage, usize>;
-
-    #[storage_mapper("maxTxBatchBlockDuration")]
-    fn max_tx_batch_block_duration(&self) -> SingleValueMapper<Self::Storage, u64>;
+        address: &ManagedAddress,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<BigUint>;
 }

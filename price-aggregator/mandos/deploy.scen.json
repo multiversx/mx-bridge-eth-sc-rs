@@ -31,11 +31,9 @@
                 "contractCode": "file:../price-aggregator.wasm",
                 "value": "0",
                 "arguments": [
-                    "str:EGLD",
-                    "address:oracle",
                     "1",
                     "0",
-                    "0"
+                    "address:oracle"
                 ],
                 "gasLimit": "20,000,000",
                 "gasPrice": "0"
@@ -48,10 +46,30 @@
             }
         },
         {
+            "step": "scCall",
+            "txId": "unpause",
+            "tx": {
+                "from": "address:aggregator-owner",
+                "to": "sc:price_aggregator",
+                "value": "0",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
             "step": "checkState",
             "accounts": {
                 "address:aggregator-owner": {
-                    "nonce": "1",
+                    "nonce": "2",
                     "balance": "0",
                     "storage": {}
                 },
@@ -59,8 +77,6 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:payment_token": "str:EGLD",
-                        "str:query_payment_amount": "0",
                         "str:submission_count": "1",
                         "str:decimals": "0",
                         "str:oracle_status.mapped|address:oracle": {
