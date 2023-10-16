@@ -15,19 +15,11 @@ pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
-    fn init(
-        &self,
-        opt_bridge_proxy_contract_address: OptionalValue<ManagedAddress>,
-        opt_wrapping_contract_address: OptionalValue<ManagedAddress>,
-    ) {
+    fn init(&self) {
         self.max_tx_batch_size()
             .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-
-        self.set_wrapping_contract_address(opt_wrapping_contract_address);
-        self.set_bridge_proxy_contract_address(opt_bridge_proxy_contract_address);
-
         // batch ID 0 is considered invalid
         self.first_batch_id().set_if_empty(1);
         self.last_batch_id().set_if_empty(1);
