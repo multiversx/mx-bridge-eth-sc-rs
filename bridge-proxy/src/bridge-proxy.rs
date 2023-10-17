@@ -3,18 +3,18 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-mod config;
+pub mod config;
 
 use transaction::{EthTransaction, EthTransactionPayment};
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract: config::ConfigModule {
     #[init]
-    fn init(&self, multi_transfer_address: ManagedAddress) {
-        self.multi_transfer_address()
-            .set_if_empty(&multi_transfer_address);
+    fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
+        self.set_multi_transfer_contract_address(opt_multi_transfer_address);
     }
 
+    #[payable("*")]
     #[endpoint]
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         let (token_id, nonce, amount) = self.call_value().single_esdt().into_tuple();
