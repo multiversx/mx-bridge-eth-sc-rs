@@ -67,6 +67,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
+        mint_burn_allowed: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
@@ -76,6 +77,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 .set(&default_price_per_gas_unit);
         }
 
+        self.whitelisted_token_mint_burn(&token_id).set(mint_burn_allowed);
         let _ = self.token_whitelist().insert(token_id);
     }
 
@@ -88,7 +90,31 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         let _ = self.token_whitelist().swap_remove(&token_id);
     }
 
+    #[endpoint(getToken)]
+    fn get_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        let caller = self.blockchain().get_caller();
+        require!(caller == self.multi_transfer_contract_address().get(), "Only MultiTransfer can get tokens");
+        if self.whitelisted_token_mint_burn(token_id).get() == true {
+            self.mint_esdt_token(token_id, amount);
+        }
+
+        self.send().direct_esdt(
+            &self.blockchain().get_caller(),
+            token_id,
+            0,
+            amount,
+        );
+    }
+
     // private
+
+    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        self.send().esdt_local_burn(token_id, 0, amount);
+    }
+
+    fn mint_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        self.send().esdt_local_mint(token_id, 0, amount);
+    }
 
     fn require_token_in_whitelist(&self, token_id: &TokenIdentifier) {
         require!(
@@ -110,11 +136,34 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         roles.has_role(role)
     }
 
+    #[only_owner]
+    #[endpoint(setMultiTransferContractAddress)]
+    fn set_multi_transfer_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid multi transfer contract address"
+                );
+
+                self.multi_transfer_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.multi_transfer_contract_address().clear(),
+        }
+    }
+
     // storage
 
     #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[storage_mapper("whitelistedTokenMintBurn")]
+    fn whitelisted_token_mint_burn(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
+
+    #[view(getMultiTransferContractAddress)]
+    #[storage_mapper("multiTransferContractAddress")]
+    fn multi_transfer_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getAccumulatedTransactionFees)]
     #[storage_mapper("accumulatedTransactionFees")]

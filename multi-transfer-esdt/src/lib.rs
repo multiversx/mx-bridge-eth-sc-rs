@@ -66,8 +66,11 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            self.send()
-                .esdt_local_mint(&eth_tx.token_id, 0, &eth_tx.amount);
+            let _: IgnoreValue = self
+                .get_esdt_safe_contract_proxy_instance()
+                .get_token(&eth_tx.token_id, &eth_tx.amount)
+                .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                .execute_on_dest_context();
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
@@ -133,6 +136,22 @@ pub trait MultiTransferEsdt:
                 self.bridge_proxy_contract_address().set(&sc_addr);
             }
             OptionalValue::None => self.bridge_proxy_contract_address().clear(),
+        }
+    }
+
+    #[only_owner]
+    #[endpoint(setEsdtSafeContractAddress)]
+    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid esdt safe contract address"
+                );
+
+                self.esdt_safe_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.esdt_safe_contract_address().clear(),
         }
     }
 
@@ -231,6 +250,13 @@ pub trait MultiTransferEsdt:
         self.bridge_proxy(self.bridge_proxy_contract_address().get())
     }
 
+    #[proxy]
+    fn esdt_safe(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
+
+    fn get_esdt_safe_contract_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
+        self.esdt_safe(self.esdt_safe_contract_address().get())
+    }
+
     // storage
     #[view(getWrappingContractAddress)]
     #[storage_mapper("wrappingContractAddress")]
@@ -239,6 +265,10 @@ pub trait MultiTransferEsdt:
     #[view(getBridgeProxyContractAddress)]
     #[storage_mapper("bridgeProxyContractAddress")]
     fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getEsdtSafeContractAddress)]
+    #[storage_mapper("esdtSafeContractAddress")]
+    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     // events
 
