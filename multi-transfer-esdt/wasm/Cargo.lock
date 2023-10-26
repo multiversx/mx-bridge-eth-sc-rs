@@ -61,7 +61,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
+name = "esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
+ "fee-estimator-module",
+ "max-bridged-amount-module",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "token-module",
+ "transaction",
+ "tx-batch-module",
+]
+
+[[package]]
 name = "eth-address"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "fee-estimator-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
@@ -101,8 +122,10 @@ version = "0.0.0"
 dependencies = [
  "bridge-proxy",
  "bridged-tokens-wrapper",
+ "esdt-safe",
  "max-bridged-amount-module",
  "multiversx-sc",
+ "token-module",
  "transaction",
  "tx-batch-module",
 ]
@@ -249,6 +272,14 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "token-module"
+version = "0.0.0"
+dependencies = [
+ "fee-estimator-module",
+ "multiversx-sc",
 ]
 
 [[package]]

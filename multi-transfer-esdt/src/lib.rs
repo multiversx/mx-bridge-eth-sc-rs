@@ -5,6 +5,7 @@ multiversx_sc::imports!();
 use transaction::{
     EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields,
 };
+use token_module::ProxyTrait as OtherProxyTrait;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -33,7 +34,7 @@ pub trait MultiTransferEsdt:
         transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
-        let mut valid_dest_addresses_list = ManagedVec::new();
+        let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
@@ -75,20 +76,12 @@ pub trait MultiTransferEsdt:
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
-            if self.blockchain().is_smart_contract(&eth_tx.to.clone()) {
-                let _: IgnoreValue = self
-                    .get_bridge_proxy_contract_proxy_instance()
-                    .deposit(&eth_tx)
-                    .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
-                    .execute_on_dest_context();
-            } else {
-                valid_dest_addresses_list.push(eth_tx.to);
-                valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
-            }
+            valid_tx_list.push(eth_tx.clone());
+            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
-        self.distribute_payments(valid_dest_addresses_list, payments_after_wrapping);
+        self.distribute_payments(valid_tx_list, payments_after_wrapping);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -222,12 +215,21 @@ pub trait MultiTransferEsdt:
 
     fn distribute_payments(
         &self,
-        dest_addresses: ManagedVec<ManagedAddress>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
     ) {
-        for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
-            self.send()
-                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount);
+        for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
+            if self.blockchain().is_smart_contract(&eth_tx.to.clone()) {
+                let _: IgnoreValue = self
+                    .get_bridge_proxy_contract_proxy_instance()
+                    .deposit(&eth_tx)
+                    .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                    .execute_on_dest_context();
+            } else {
+                self.send()
+                    .direct_esdt(&eth_tx.to, &p.token_identifier, 0, &p.amount);
+            }
+
         }
     }
 
