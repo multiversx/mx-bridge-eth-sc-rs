@@ -26,7 +26,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone, PartialEq)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
@@ -47,7 +47,7 @@ pub type EthTxAsMultiValue<M> = MultiValue7<
     u64,
 >;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone, PartialEq)]
 pub struct EthTransactionPayment<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub nonce: u64,
