@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           61
+// Endpoints:                           63
 // Async Callback (empty):               1
-// Total number of exported functions:  63
+// Total number of exported functions:  65
 
 #![no_std]
 #![feature(lang_items)]
@@ -41,6 +41,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
         changeTokenTicker => change_token_ticker
         esdtSafeAddTokenToWhitelist => esdt_safe_add_token_to_whitelist
+        setMultiTransferOnEsdtSafe => set_multi_transfer_on_esdt_safe
+        setEsdtSafeOnMultiTransfer => set_esdt_safe_on_multi_transfer
         esdtSafeRemoveTokenFromWhitelist => esdt_safe_remove_token_from_whitelist
         esdtSafeSetMaxTxBatchSize => esdt_safe_set_max_tx_batch_size
         esdtSafeSetMaxTxBatchBlockDuration => esdt_safe_set_max_tx_batch_block_duration

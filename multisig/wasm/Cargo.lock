@@ -124,8 +124,10 @@ dependencies = [
  "bridge-proxy",
  "bridged-tokens-wrapper",
  "eth-address",
+ "esdt-safe",
  "max-bridged-amount-module",
  "multiversx-sc",
+ "token-module",
  "transaction",
  "tx-batch-module",
 ]

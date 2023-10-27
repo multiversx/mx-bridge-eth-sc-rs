@@ -205,12 +205,12 @@ pub trait SetupModule:
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        mintBurnAllowed: bool,
+        mint_burn_allowed: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
-            .add_token_to_whitelist(token_id, ticker, mintBurnAllowed, opt_default_price_per_gas_unit)
+            .add_token_to_whitelist(token_id, ticker, mint_burn_allowed, opt_default_price_per_gas_unit)
             .execute_on_dest_context();
     }
 
@@ -219,16 +219,16 @@ pub trait SetupModule:
     fn set_multi_transfer_on_esdt_safe(&self) {
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
-            .set_multi_transfer_contract_address(Some(self.multi_transfer_esdt_address().get()))
+            .set_multi_transfer_contract_address(self.multi_transfer_esdt_address().get())
             .execute_on_dest_context();
     }
 
     #[only_owner]
     #[endpoint(setEsdtSafeOnMultiTransfer)]
-    fn set_multi_transfer_on_esdt_safe(&self) {
+    fn set_esdt_safe_on_multi_transfer(&self) {
         let _: IgnoreValue = self
             .get_multi_transfer_esdt_proxy_instance()
-            .set_esdt_safe_contract_address(Some(self.esdt_safe_address().get()))
+            .set_esdt_safe_contract_address(self.esdt_safe_address().get())
             .execute_on_dest_context();
     }
 

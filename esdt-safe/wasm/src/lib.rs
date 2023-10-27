@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           31
+// Endpoints:                           34
 // Async Callback (empty):               1
-// Total number of exported functions:  33
+// Total number of exported functions:  36
 
 #![no_std]
 #![feature(lang_items)]
@@ -35,7 +35,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         distributeFees => distribute_fees
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
+        getToken => get_token
+        setMultiTransferContractAddress => set_multi_transfer_contract_address
         getAllKnownTokens => token_whitelist
+        getMultiTransferContractAddress => multi_transfer_contract_address
         getAccumulatedTransactionFees => accumulated_transaction_fees
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
