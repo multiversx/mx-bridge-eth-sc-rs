@@ -94,7 +94,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     fn get_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         let caller = self.blockchain().get_caller();
         require!(caller == self.multi_transfer_contract_address().get(), "Only MultiTransfer can get tokens");
-        if self.whitelisted_token_mint_burn(token_id).get() == true {
+        if self.whitelisted_token_mint_burn(token_id).get() {
             self.mint_esdt_token(token_id, amount);
         }
 

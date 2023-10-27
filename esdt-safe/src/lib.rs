@@ -84,10 +84,10 @@ pub trait EsdtSafe:
                     // local burn role might be removed while tx is executed
                     // tokens will remain locked forever in that case
                     // otherwise, the whole batch would fail
-                    if self.whitelisted_token_mint_burn(&tx.token_identifier).get() == true {
-                        if self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn) {
-                            self.burn_esdt_token(&tx.token_identifier, &tx.amount);
-                        }
+                    if self.whitelisted_token_mint_burn(&tx.token_identifier).get()
+                        && self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn)
+                    {
+                        self.burn_esdt_token(&tx.token_identifier, &tx.amount);
                     }
                 }
                 TransactionStatus::Rejected => {
