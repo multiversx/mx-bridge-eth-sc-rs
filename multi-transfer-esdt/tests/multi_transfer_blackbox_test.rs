@@ -1,11 +1,12 @@
 #![allow(unused)]
 
 use bridge_proxy::ProxyTrait as _;
-use esdt_safe::{EsdtSafe, ProxyTrait};
+use bridged_tokens_wrapper::ProxyTrait as _;
+use esdt_safe::{EsdtSafe, ProxyTrait as _};
 use multi_transfer_esdt::ProxyTrait as _;
 
 use multiversx_sc::{
-    api::ManagedTypeApi,
+    api::{HandleConstraints, ManagedTypeApi},
     codec::multi_types::{MultiValueVec, OptionalValue},
     storage::mappers::SingleValue,
     types::{
@@ -14,16 +15,18 @@ use multiversx_sc::{
     },
 };
 use multiversx_sc_scenario::{
-    api::StaticApi,
+    api::{StaticApi, VMHooksApi},
     scenario_format::interpret_trait::{InterpretableFrom, InterpreterContext},
     scenario_model::*,
-    ContractInfo, ScenarioWorld,
+    ContractInfo, DebugApi, ScenarioWorld,
 };
 
 use eth_address::*;
 use transaction::{EthTransaction, EthTransactionPayment};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
+const BRIDGE_TOKEN_ID_EXPR: &str = "str:BRIDGE-123456";
+
 const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
 
 const GAS_LIMIT: u64 = 1_000_000;
@@ -36,12 +39,13 @@ const BRIDGED_TOKENS_WRAPPER_PATH_EXPR: &str =
 const PRICE_AGGREGATOR_PATH_EXPR: &str = "file:../price-aggregator/price-aggregator.wasm";
 
 const MULTI_TRANSFER_ADDRESS_EXPR: &str = "sc:multi_transfer";
-const BRIDGE_PROXY_ADDRESS_EXPR: &str = "sc_bridge_proxy";
+const BRIDGE_PROXY_ADDRESS_EXPR: &str = "sc:bridge_proxy";
 const ESDT_SAFE_ADDRESS_EXPR: &str = "sc:esdt_safe";
 const BRIDGED_TOKENS_WRAPPER_ADDRESS_EXPR: &str = "sc:bridged_tokens_wrapper";
 const PRICE_AGGREGATOR_ADDRESS_EXPR: &str = "sc:price_aggregator";
 
 const ORACLE_ADDRESS_EXPR: &str = "address:oracle";
+const OWNER_ADDRESS_EXPR: &str = "address:owner";
 
 const ESDT_SAFE_ETH_TX_GAS_LIMIT: u64 = 150_000;
 
@@ -55,6 +59,15 @@ fn world() -> ScenarioWorld {
         MULTI_TRANSFER_PATH_EXPR,
         multi_transfer_esdt::ContractBuilder,
     );
+    blockchain.register_contract(BRIDGE_PROXY_PATH_EXPR, bridge_proxy::ContractBuilder);
+
+    blockchain.register_contract(ESDT_SAFE_PATH_EXPR, esdt_safe::ContractBuilder);
+
+    blockchain.register_contract(
+        BRIDGED_TOKENS_WRAPPER_PATH_EXPR,
+        bridged_tokens_wrapper::ContractBuilder,
+    );
+
     blockchain
 }
 
@@ -62,7 +75,7 @@ type MultiTransferContract = ContractInfo<multi_transfer_esdt::Proxy<StaticApi>>
 type BridgeProxyContract = ContractInfo<bridge_proxy::Proxy<StaticApi>>;
 type EsdtSafeContract = ContractInfo<esdt_safe::Proxy<StaticApi>>;
 type BridgedTokensWrapperContract = ContractInfo<bridged_tokens_wrapper::Proxy<StaticApi>>;
-type PriceAggregatorContract = ContractInfo<price_aggregator::Proxy<StaticApi>>;
+// type PriceAggregatorContract = ContractInfo<price_aggregator::Proxy<StaticApi>>;
 
 struct MultiTransferTestState<M: ManagedTypeApi> {
     world: ScenarioWorld,
@@ -74,7 +87,7 @@ struct MultiTransferTestState<M: ManagedTypeApi> {
     bridge_proxy: BridgeProxyContract,
     esdt_safe: EsdtSafeContract,
     bridged_tokens_wrapper: BridgedTokensWrapperContract,
-    price_aggregator: PriceAggregatorContract,
+    // price_aggregator: PriceAggregatorContract,
 }
 
 impl<M: ManagedTypeApi> MultiTransferTestState<M> {
@@ -94,7 +107,7 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
             bridge_proxy: BridgeProxyContract::new("sc:bridge_proxy"),
             esdt_safe: EsdtSafeContract::new("sc:esdt_safe"),
             bridged_tokens_wrapper: BridgedTokensWrapperContract::new("sc:bridged_tokens_wrapper"),
-            price_aggregator: PriceAggregatorContract::new("sc:price_aggregator"),
+            // price_aggregator: PriceAggregatorContract::new("sc:price_aggregator"),
         };
 
         state.world.set_state_step(
@@ -113,7 +126,7 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
     fn multi_transfer_deploy(&mut self) -> &mut Self {
         self.world.set_state_step(
             SetStateStep::new()
-                .put_account(&self.owner, Account::new().nonce(1))
+                .put_account(OWNER_ADDRESS_EXPR, Account::new().nonce(1))
                 .new_address(&self.owner, 1, MULTI_TRANSFER_ADDRESS_EXPR),
         );
 
@@ -135,68 +148,68 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
     }
 
     fn bridge_proxy_deploy(&mut self) -> &mut Self {
-        self.world.set_state_step(
-            SetStateStep::new()
-                .put_account(&self.owner, Account::new().nonce(1))
-                .new_address(&self.owner, 2, BRIDGE_PROXY_ADDRESS_EXPR),
-        );
+        self.world.set_state_step(SetStateStep::new().new_address(
+            &self.owner,
+            2,
+            BRIDGE_PROXY_ADDRESS_EXPR,
+        ));
 
         let ic = &self.world.interpreter_context();
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(self.owner.clone())
                 .code(self.world.code_expression(BRIDGE_PROXY_PATH_EXPR))
-                .call(self.bridge_proxy.init(self.multi_transfer.address)),
+                .call(self.bridge_proxy.init(self.multi_transfer.to_address())),
         );
 
         self
     }
 
-    fn price_aggregator_deploy(&mut self) -> &mut Self {
-        self.world.set_state_step(
-            SetStateStep::new()
-                .put_account(&self.owner, Account::new().nonce(1))
-                .new_address(&self.owner, 3, PRICE_AGGREGATOR_ADDRESS_EXPR),
-        );
+    // fn price_aggregator_deploy(&mut self) -> &mut Self {
+    //     self.world.set_state_step(
+    //         SetStateStep::new()
+    //             .put_account(&self.owner, Account::new().nonce(1))
+    //             .new_address(&self.owner, 3, PRICE_AGGREGATOR_ADDRESS_EXPR),
+    //     );
 
-        let ic = &self.world.interpreter_context();
-        self.world.sc_deploy(
-            ScDeployStep::new()
-                .from(self.owner.clone())
-                .code(self.world.code_expression(PRICE_AGGREGATOR_PATH_EXPR))
-                .call(self.price_aggregator.init(1, 0, ORACLE_ADDRESS_EXPR)),
-        );
+    //     let ic = &self.world.interpreter_context();
+    //     self.world.sc_deploy(
+    //         ScDeployStep::new()
+    //             .from(self.owner.clone())
+    //             .code(self.world.code_expression(PRICE_AGGREGATOR_PATH_EXPR))
+    //             .call(self.price_aggregator.init(1, 0, ORACLE_ADDRESS_EXPR)),
+    //     );
 
-        self
-    }
+    //     self
+    // }
 
     fn safe_deploy(&mut self, price_aggregator_contract_address: Address) -> &mut Self {
-        self.world.set_state_step(
-            SetStateStep::new()
-                .put_account(&self.owner, Account::new().nonce(1))
-                .new_address(&self.owner, 4, ESDT_SAFE_ADDRESS_EXPR),
-        );
+        self.world.set_state_step(SetStateStep::new().new_address(
+            &self.owner,
+            3,
+            ESDT_SAFE_ADDRESS_EXPR,
+        ));
 
         let ic = &self.world.interpreter_context();
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(self.owner.clone())
                 .code(self.world.code_expression(ESDT_SAFE_PATH_EXPR))
-                .call(self.esdt_safe.init(
-                    price_aggregator_contract_address,
-                    ESDT_SAFE_ETH_TX_GAS_LIMIT,
-                )),
+                .call(
+                    self.esdt_safe
+                        .init(ManagedAddress::zero(), ESDT_SAFE_ETH_TX_GAS_LIMIT),
+                ),
         );
 
         self
     }
 
     fn bridged_tokens_wrapper_deploy(&mut self) -> &mut Self {
-        self.world.set_state_step(
-            SetStateStep::new()
-                .put_account(&self.owner, Account::new().nonce(1))
-                .new_address(&self.owner, 5, &self.bridged_tokens_wrapper),
-        );
+        self.world.set_state_step(SetStateStep::new().new_address(
+            &self.owner,
+            4,
+            &self.bridged_tokens_wrapper,
+        ));
 
         let ic = &self.world.interpreter_context();
         self.world.sc_deploy(
@@ -243,8 +256,8 @@ fn basic_setup_test() {
 
     test.multi_transfer_deploy();
     test.bridge_proxy_deploy();
-    test.price_aggregator_deploy();
-    test.safe_deploy(test.price_aggregator.to_address());
+    // test.price_aggregator_deploy();
+    test.safe_deploy(Address::zero());
     test.config_multi_transfer(
         test.bridged_tokens_wrapper.to_address(),
         test.bridge_proxy.to_address(),
@@ -265,11 +278,18 @@ fn basic_setup_test() {
         gas_limit: GAS_LIMIT,
     };
 
-    test.world
-        .check_state_step(CheckStateStep::new().put_account(
+    test.world.check_state_step(
+        CheckStateStep::new().put_account(
             &test.multi_transfer,
-            CheckAccount::new().check_storage("bridgeProxyContractAddress", "sc:bridge-proxy"),
-        ));
+            CheckAccount::new()
+                .check_storage("str:bridgeProxyContractAddress", "sc:bridge_proxy")
+                .check_storage("str:lastBatchId", "0x01")
+                .check_storage("str:wrappingContractAddress", "sc:bridged_tokens_wrapper")
+                .check_storage("str:maxTxBatchBlockDuration", "0xffffffffffffffff")
+                .check_storage("str:maxTxBatchSize", "10")
+                .check_storage("str:firstBatchId", "0x01"),
+        ),
+    );
 
     let mut transfers = MultiValueEncoded::new();
     transfers.push(eth_tx);
