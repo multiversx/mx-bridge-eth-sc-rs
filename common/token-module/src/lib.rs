@@ -77,7 +77,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 .set(&default_price_per_gas_unit);
         }
 
-        self.whitelisted_token_mint_burn(&token_id).set(mint_burn_allowed);
+        self.mint_burn_allowed(&token_id).set(mint_burn_allowed);
         let _ = self.token_whitelist().insert(token_id);
     }
 
@@ -90,11 +90,13 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         let _ = self.token_whitelist().swap_remove(&token_id);
     }
 
-    #[endpoint(getToken)]
-    fn get_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+    #[endpoint(mintToken)]
+    fn mint_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         let caller = self.blockchain().get_caller();
         require!(caller == self.multi_transfer_contract_address().get(), "Only MultiTransfer can get tokens");
-        if self.whitelisted_token_mint_burn(token_id).get() {
+        if self.mint_burn_allowed(token_id).get() {
+            self.accumulated_burned_tokens(token_id)
+                .update(|burned| *burned -= amount);
             self.mint_esdt_token(token_id, amount);
         }
 
@@ -158,8 +160,9 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
 
-    #[storage_mapper("whitelistedTokenMintBurn")]
-    fn whitelisted_token_mint_burn(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
+    #[view(isMintBurnAllowed)]
+    #[storage_mapper("mintBurnAllowed")]
+    fn mint_burn_allowed(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
 
     #[view(getMultiTransferContractAddress)]
     #[storage_mapper("multiTransferContractAddress")]
@@ -168,6 +171,13 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[view(getAccumulatedTransactionFees)]
     #[storage_mapper("accumulatedTransactionFees")]
     fn accumulated_transaction_fees(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<BigUint>;
+
+    #[view(getAccumulatedBurnedTokens)]
+    #[storage_mapper("accumulatedBurnedTokens")]
+    fn accumulated_burned_tokens(
         &self,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;

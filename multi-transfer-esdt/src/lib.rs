@@ -69,7 +69,7 @@ pub trait MultiTransferEsdt:
 
             let _: IgnoreValue = self
                 .get_esdt_safe_contract_proxy_instance()
-                .get_token(&eth_tx.token_id, &eth_tx.amount)
+                .mint_token(&eth_tx.token_id, &eth_tx.amount)
                 .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
                 .execute_on_dest_context();
 
