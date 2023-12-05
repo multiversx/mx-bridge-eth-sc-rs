@@ -7,13 +7,15 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
+
 [dependencies.transaction]
 path = "../common/transaction"
 
 [dependencies.multiversx-sc]
-version = "0.43.5"
+version = "0.45.1"
 
 [dependencies.multiversx-sc-modules]
-version = "0.43.5"
+version = "0.45.1"
+
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.43.5"
+version = "0.45.1"

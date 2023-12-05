@@ -7,6 +7,7 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
+
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -32,9 +33,10 @@ path = "../esdt-safe"
 path = "../multi-transfer-esdt"
 
 [dependencies.multiversx-sc]
-version = "0.43.5"
+version = "0.45.1"
 
 [dependencies.multiversx-sc-modules]
-version = "0.43.5"
+version = "0.45.1"
+
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.43.5"
+version = "0.45.1"
