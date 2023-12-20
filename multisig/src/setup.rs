@@ -33,7 +33,7 @@ pub trait SetupModule:
         }
 
         let gas = self.blockchain().get_gas_left();
-        Self::Api::send_api_impl().upgrade_from_source_contract(
+        self.send_raw().upgrade_from_source_contract(
             &child_sc_address,
             gas,
             &BigUint::zero(),
