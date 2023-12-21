@@ -85,6 +85,9 @@ pub trait Multisig:
         self.set_paused(true);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     /// Distributes the accumulated fees to the given addresses.
     /// Expected arguments are pairs of (address, percentage),
     /// where percentages must add up to the PERCENTAGE_TOTAL constant

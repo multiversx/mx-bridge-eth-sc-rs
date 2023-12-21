@@ -18,6 +18,9 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
         self.set_paused(true);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     #[only_owner]
     #[endpoint(addWrappedToken)]
     fn add_wrapped_token(&self, universal_bridged_token_ids: TokenIdentifier, num_decimals: u32) {
