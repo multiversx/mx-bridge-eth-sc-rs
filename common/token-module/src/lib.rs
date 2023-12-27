@@ -92,21 +92,27 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     }
 
     #[endpoint(mintToken)]
-    fn mint_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+    fn mint_token(&self, token_id: &TokenIdentifier, amount: &BigUint) -> EsdtTokenPayment {
         let caller = self.blockchain().get_caller();
-        require!(caller == self.multi_transfer_contract_address().get(), "Only MultiTransfer can get tokens");
+        require!(
+            caller == self.multi_transfer_contract_address().get(),
+            "Only MultiTransfer can get tokens"
+        );
         if self.mint_burn_allowed(token_id).get() {
-            self.accumulated_burned_tokens(token_id)
-                .update(|burned| *burned -= amount);
+            let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
+            require!(
+                !accumulated_burned_tokens_mapper.is_empty(),
+                "Accumulated burned tokens storage is not initialized!"
+            );
+            accumulated_burned_tokens_mapper.update(|burned| {
+                require!(*burned >= *amount, "Not enough accumulated burned tokens!");
+                *burned -= amount;
+            });
             self.mint_esdt_token(token_id, amount);
         }
 
-        self.send().direct_esdt(
-            &caller,
-            token_id,
-            0,
-            amount,
-        );
+        self.send().direct_esdt(&caller, token_id, 0, amount);
+        EsdtTokenPayment::new(token_id.clone(), 0, amount.clone())
     }
 
     // private
@@ -144,11 +150,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     fn set_multi_transfer_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
         match opt_new_address {
             OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid multi transfer contract address"
-                );
-
                 self.multi_transfer_contract_address().set(&sc_addr);
             }
             OptionalValue::None => self.multi_transfer_contract_address().clear(),
@@ -178,8 +179,5 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[view(getAccumulatedBurnedTokens)]
     #[storage_mapper("accumulatedBurnedTokens")]
-    fn accumulated_burned_tokens(
-        &self,
-        token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<BigUint>;
+    fn accumulated_burned_tokens(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 }

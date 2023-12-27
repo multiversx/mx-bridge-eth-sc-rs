@@ -41,7 +41,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         mintToken => mint_token
         setMultiTransferContractAddress => set_multi_transfer_contract_address
         getAllKnownTokens => token_whitelist
-        isWhitelistedTokenMintBurn => mint_burn_allowed
+        isMintBurnAllowed => mint_burn_allowed
         getMultiTransferContractAddress => multi_transfer_contract_address
         getAccumulatedTransactionFees => accumulated_transaction_fees
         getAccumulatedBurnedTokens => accumulated_burned_tokens

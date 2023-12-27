@@ -2,10 +2,10 @@
 
 multiversx_sc::imports!();
 
+use token_module::ProxyTrait as OtherProxyTrait;
 use transaction::{
     EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields,
 };
-use token_module::ProxyTrait as OtherProxyTrait;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -67,7 +67,7 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let _: IgnoreValue = self
+            let minted_token = self
                 .get_esdt_safe_contract_proxy_instance()
                 .mint_token(&eth_tx.token_id, &eth_tx.amount)
                 .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
@@ -77,7 +77,7 @@ pub trait MultiTransferEsdt:
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
             valid_tx_list.push(eth_tx.clone());
-            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            valid_payments_list.push(minted_token);
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
@@ -137,11 +137,6 @@ pub trait MultiTransferEsdt:
     fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
         match opt_new_address {
             OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid esdt safe contract address"
-                );
-
                 self.esdt_safe_contract_address().set(&sc_addr);
             }
             OptionalValue::None => self.esdt_safe_contract_address().clear(),
@@ -219,7 +214,7 @@ pub trait MultiTransferEsdt:
         payments: PaymentsVec<Self::Api>,
     ) {
         for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
-            if self.blockchain().is_smart_contract(&eth_tx.to.clone()) {
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
                 let _: IgnoreValue = self
                     .get_bridge_proxy_contract_proxy_instance()
                     .deposit(&eth_tx)
@@ -229,7 +224,6 @@ pub trait MultiTransferEsdt:
                 self.send()
                     .direct_esdt(&eth_tx.to, &p.token_identifier, 0, &p.amount);
             }
-
         }
     }
 

@@ -210,7 +210,12 @@ pub trait SetupModule:
     ) {
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
-            .add_token_to_whitelist(token_id, ticker, mint_burn_allowed, opt_default_price_per_gas_unit)
+            .add_token_to_whitelist(
+                token_id,
+                ticker,
+                mint_burn_allowed,
+                opt_default_price_per_gas_unit,
+            )
             .execute_on_dest_context();
     }
 

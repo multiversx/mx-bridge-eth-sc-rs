@@ -9,7 +9,9 @@ use multiversx_sc::{
 pub const ETH_ADDRESS_LEN: usize = 20;
 
 /// Wrapper over a 20-byte array
-#[derive(TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+#[derive(
+    TypeAbi, TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq,
+)]
 pub struct EthAddress<M: ManagedTypeApi> {
     pub raw_addr: ManagedByteArray<M, ETH_ADDRESS_LEN>,
 }
@@ -24,5 +26,4 @@ impl<M: ManagedTypeApi> EthAddress<M> {
     pub fn as_managed_buffer(&self) -> &ManagedBuffer<M> {
         self.raw_addr.as_managed_buffer()
     }
-
 }

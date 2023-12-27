@@ -63,9 +63,14 @@ pub trait BridgeProxyContract: config::ConfigModule {
         for failed_tx_loop in self.eth_failed_transaction_list().into_iter() {
             let failed_tx = failed_tx_loop.get_value_as_ref();
 
-            all_payments.push(EsdtTokenPayment::new(failed_tx.token_id.clone(), failed_tx.nonce, failed_tx.amount.clone()));
+            all_payments.push(EsdtTokenPayment::new(
+                failed_tx.token_id.clone(),
+                failed_tx.nonce,
+                failed_tx.amount.clone(),
+            ));
         }
-        self.send().direct_multi(&self.multi_transfer_address().get(), &all_payments);
+        self.send()
+            .direct_multi(&self.multi_transfer_address().get(), &all_payments);
 
         result
     }

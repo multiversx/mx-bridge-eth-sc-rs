@@ -316,8 +316,7 @@ fn basic_transfer_test() {
             .call(
                 test.multi_transfer
                     .batch_transfer_esdt_token(1u32, transfers),
-            )
-            // .esdt_transfer(BRIDGE_TOKEN_ID_EXPR, 0u64, BALANCE),
+            ), // .esdt_transfer(BRIDGE_TOKEN_ID_EXPR, 0u64, BALANCE),
     );
 
     test.world
