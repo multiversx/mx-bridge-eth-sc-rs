@@ -13,12 +13,14 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "function": "wrapTokens",
-                "esdt": {
-                    "tokenIdentifier": "str:USDC-bbbbbb",
-                    "value": "300000000000000"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:USDC-bbbbbb",
+                        "value": "300,000,000,000,000"
+                    }
+                ],
                 "arguments": [],
-                "gasLimit": "5,000,000",
+                "gasLimit": "100,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -38,10 +40,12 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "function": "wrapTokens",
-                "esdt": {
-                    "tokenIdentifier": "str:USDC-aaaaaa",
-                    "value": "300000000000000"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:USDC-aaaaaa",
+                        "value": "300,000,000,000,000"
+                    }
+                ],
                 "arguments": [],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -63,10 +67,12 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "function": "wrapTokens",
-                "esdt": {
-                    "tokenIdentifier": "str:USDC-cccccc",
-                    "value": "100000000000000"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:USDC-cccccc",
+                        "value": "100,000,000,000,000"
+                    }
+                ],
                 "arguments": [],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"

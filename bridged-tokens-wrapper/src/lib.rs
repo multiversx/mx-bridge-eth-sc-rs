@@ -1,7 +1,6 @@
 #![no_std]
 
 mod dfp_big_uint;
-use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
@@ -142,7 +141,7 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
     #[endpoint(wrapTokens)]
     fn wrap_tokens(&self) -> PaymentsVec<Self::Api> {
         require!(self.not_paused(), "Contract is paused");
-        let original_payments = self.call_value().all_esdt_transfers().deref().clone();
+        let original_payments = self.call_value().all_esdt_transfers().clone_value();
         if original_payments.is_empty() {
             return original_payments;
         }

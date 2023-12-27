@@ -83,18 +83,10 @@
                 "address:user": {
                     "nonce": "1",
                     "esdt": {
-                        "str:USDC-aaaaaa": {
-                            "balance": "500000000000000"
-                        },
-                        "str:USDC-bbbbbb": {
-                            "balance": "500000000000000"
-                        },
-                        "str:USDC-cccccc": {
-                            "balance": "500000000000000"
-                        },
-                        "str:WUSDC-abcdef": {
-                            "balance": "500"
-                        }
+                        "str:USDC-aaaaaa": "500,000,000,000,000",
+                        "str:USDC-bbbbbb": "500,000,000,000,000",
+                        "str:USDC-cccccc": "500,000,000,000,000",
+                        "str:WUSDC-abcdef": "500"
                     },
                     "storage": {}
                 },

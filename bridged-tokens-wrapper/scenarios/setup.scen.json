@@ -13,24 +13,12 @@
                 "address:user": {
                     "nonce": "7",
                     "esdt": {
-                        "str:USDC-aaaaaa": {
-                            "balance": "300000000000000"
-                        },
-                        "str:USDC-bbbbbb": {
-                            "balance": "500000000000000"
-                        },
-                        "str:USDC-cccccc": {
-                            "balance": "400000000000000"
-                        },
-                        "str:WUSDC-abcdef": {
-                            "balance": "900"
-                        },
-                        "str:WUSDC-ghijkl": {
-                            "balance": "900"
-                        },
-                        "str:WUSDC-mnopqr": {
-                            "balance": "900"
-                        }
+                        "str:USDC-aaaaaa": "300,000,000,000,000",
+                        "str:USDC-bbbbbb": "500,000,000,000,000",
+                        "str:USDC-cccccc": "400,000,000,000,000",
+                        "str:WUSDC-abcdef": "900",
+                        "str:WUSDC-ghijkl": "900",
+                        "str:WUSDC-mnopqr": "900"
                     },
                     "storage": {}
                 },
@@ -66,16 +54,16 @@
                             ]
                         },
                         "str:USDC-aaaaaa": {
-                            "balance": "300000000000000"
+                            "balance": "300,000,000,000,000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "100000000000000"
+                            "balance": "100,000,000,000,000"
                         },
                         "str:USDC-ffffff": {
-                            "balance": "400000000000000"
+                            "balance": "400,000,000,000,000"
                         },
                         "str:USDC-eeeeee": {
-                            "balance": "400000000000000"
+                            "balance": "400,000,000,000,000"
                         }
                     },
                     "storage": {
@@ -101,10 +89,10 @@
                         "str:universalBridgedTokenIds.item|u32:2": "str:WUSDC-ghijkl",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-mnopqr": "3",
                         "str:universalBridgedTokenIds.item|u32:3": "str:WUSDC-mnopqr",
-                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
-                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
-                        "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
-                        "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300,000,000,000,000",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100,000,000,000,000",
+                        "str:tokenLiquidity|nested:str:USDC-eeeeee": "400,000,000,000,000",
+                        "str:tokenLiquidity|nested:str:USDC-ffffff": "400,000,000,000,000",
                         "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
                         "str:token_decimals_num|nested:str:WUSDC-ghijkl": "6",
                         "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
@@ -126,24 +114,12 @@
                 "address:user": {
                     "nonce": "7",
                     "esdt": {
-                        "str:USDC-aaaaaa": {
-                            "balance": "300000000000000"
-                        },
-                        "str:USDC-bbbbbb": {
-                            "balance": "500000000000000"
-                        },
-                        "str:USDC-cccccc": {
-                            "balance": "400000000000000"
-                        },
-                        "str:WUSDC-abcdef": {
-                            "balance": "900"
-                        },
-                        "str:WUSDC-ghijkl": {
-                            "balance": "900"
-                        },
-                        "str:WUSDC-mnopqr": {
-                            "balance": "900"
-                        }
+                        "str:USDC-aaaaaa": "300,000,000,000,000",
+                        "str:USDC-bbbbbb": "500,000,000,000,000",
+                        "str:USDC-cccccc": "400,000,000,000,000",
+                        "str:WUSDC-abcdef": "900",
+                        "str:WUSDC-ghijkl": "900",
+                        "str:WUSDC-mnopqr": "900"
                     },
                     "storage": {}
                 },
@@ -179,16 +155,16 @@
                             ]
                         },
                         "str:USDC-aaaaaa": {
-                            "balance": "300000000000000"
+                            "balance": "300,000,000,000,000"
                         },
                         "str:USDC-cccccc": {
-                            "balance": "100000000000000"
+                            "balance": "100,000,000,000,000"
                         },
                         "str:USDC-eeeeee": {
-                            "balance": "400000000000000"
+                            "balance": "400,000,000,000,000"
                         },
                         "str:USDC-ffffff": {
-                            "balance": "400000000000000"
+                            "balance": "400,000,000,000,000"
                         }
                     },
                     "storage": {
@@ -214,10 +190,10 @@
                         "str:universalBridgedTokenIds.item|u32:2": "str:WUSDC-ghijkl",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-mnopqr": "3",
                         "str:universalBridgedTokenIds.item|u32:3": "str:WUSDC-mnopqr",
-                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
-                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
-                        "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
-                        "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300,000,000,000,000",
+                        "str:tokenLiquidity|nested:str:USDC-cccccc": "100,000,000,000,000",
+                        "str:tokenLiquidity|nested:str:USDC-eeeeee": "400,000,000,000,000",
+                        "str:tokenLiquidity|nested:str:USDC-ffffff": "400,000,000,000,000",
                         "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
                         "str:token_decimals_num|nested:str:WUSDC-ghijkl": "6",
                         "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",

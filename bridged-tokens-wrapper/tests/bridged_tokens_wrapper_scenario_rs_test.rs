@@ -1,7 +1,11 @@
 use multiversx_sc_scenario::*;
 
 fn world() -> ScenarioWorld {
-    todo!()
+    let mut blockchain = ScenarioWorld::new();
+    blockchain.set_current_dir_from_workspace("bridged-tokens-wrapper/");
+
+    blockchain.register_contract("file:output/bridged-tokens-wrapper.wasm", bridged_tokens_wrapper::ContractBuilder);
+    blockchain
 }
 
 #[test]

@@ -33,10 +33,10 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
-                "esdt": {
+                "esdtValue": [{
                     "tokenIdentifier": "str:WUSDC-abcdef",
                     "value": "100"
-                },
+                }],
                 "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-aaaaaa"

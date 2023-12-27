@@ -13,10 +13,12 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
-                "esdt": {
-                    "tokenIdentifier": "str:WUSDC-abcdef",
-                    "value": "300"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:WUSDC-abcdef",
+                        "value": "300"
+                    }
+                ],
                 "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-bbbbbb"
@@ -38,10 +40,12 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
-                "esdt": {
-                    "tokenIdentifier": "str:WUSDC-abcdef",
-                    "value": "500"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:WUSDC-abcdef",
+                        "value": "500"
+                    }
+                ],
                 "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-aaaaaa"
@@ -63,10 +67,12 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
-                "esdt": {
-                    "tokenIdentifier": "str:WUSDC-mnopqr",
-                    "value": "500"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:WUSDC-mnopqr",
+                        "value": "500"
+                    }
+                ],
                 "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-eeeeee"
@@ -88,10 +94,12 @@
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
-                "esdt": {
-                    "tokenIdentifier": "str:WUSDC-ghijkl",
-                    "value": "500"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:WUSDC-ghijkl",
+                        "value": "500"
+                    }
+                ],
                 "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-ffffff"
@@ -108,15 +116,44 @@
         },
         {
             "step": "scCall",
+            "txId": "wrap-token-a",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:bridged_tokens_wrapper",
+                "function": "wrapTokens",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:USDC-aaaaaa",
+                        "value": "100,000,000,000,000"
+                    }
+                ],
+                "arguments": [],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*",
+                "out": [
+                    "nested:str:WUSDC-abcdef|u64:0|biguint:100"
+                ]
+            }
+        },
+        {
+            "step": "scCall",
             "txId": "unwrap-token",
             "tx": {
                 "from": "address:user",
                 "to": "sc:bridged_tokens_wrapper",
                 "value": "0",
-                "esdt": {
-                    "tokenIdentifier": "str:WUSDC-abcdef",
-                    "value": "100"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:WUSDC-abcdef",
+                        "value": "100"
+                    }
+                ],
                 "function": "unwrapToken",
                 "arguments": [
                     "str:USDC-aaaaaa"
@@ -140,27 +177,17 @@
                     "storage": {}
                 },
                 "address:user": {
-                    "nonce": "12",
-                    "esdt": {
-                        "str:USDC-aaaaaa": {
-                            "balance": "400000000000000"
-                        },
-                        "str:USDC-bbbbbb": {
-                            "balance": "500000000000000"
-                        },
-                        "str:USDC-cccccc": {
-                            "balance": "400000000000000"
-                        },
-                        "str:WUSDC-abcdef": {
-                            "balance": "800"
-                        },
-                        "str:WUSDC-ghijkl": {
-                            "balance": "900"
-                        },
-                        "str:WUSDC-mnopqr": {
-                            "balance": "900"
+                    "nonce": "13",
+                    "esdtValue": [
+                        {
+                            "str:USDC-aaaaaa": "400,000,000,000,000",
+                            "str:USDC-bbbbbb": "500,000,000,000,000",
+                            "str:USDC-cccccc": "400,000,000,000,000",
+                            "str:WUSDC-abcdef": "800",
+                            "str:WUSDC-ghijkl": "900",
+                            "str:WUSDC-mnopqr": "900"
                         }
-                    },
+                    ],
                     "storage": {}
                 },
                 "sc:bridged_tokens_wrapper": {
@@ -230,7 +257,7 @@
                         "str:universalBridgedTokenIds.item|u32:2": "str:WUSDC-ghijkl",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-mnopqr": "3",
                         "str:universalBridgedTokenIds.item|u32:3": "str:WUSDC-mnopqr",
-                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "200000000000000",
+                        "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
                         "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
                         "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
