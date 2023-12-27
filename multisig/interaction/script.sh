@@ -45,6 +45,14 @@ case "$1" in
   confirmation whitelist-token
   ;;
 
+'whitelist-native-token')
+  echo -e 
+  echo "Check and update TOKENS SETTINGS section in configs.cfg"
+  source $SCRIPTPATH/config/configs.cfg
+  echo -e
+  confirmation whitelist-native-token
+  ;;
+
 'remove-whitelist-token')
   echo -e 
   echo "PREREQUIREMENTS: BRIDGED_TOKENS_WRAPPER needs to have MINT+BURN role for the UNIVERSAL TOKEN"
