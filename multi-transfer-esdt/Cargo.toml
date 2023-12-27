@@ -7,6 +7,7 @@ publish = false
 
 [lib]
 path = "src/lib.rs"
+
 [dependencies.transaction]
 path = "../common/transaction"
 
@@ -26,6 +27,7 @@ path = "../bridged-tokens-wrapper"
 path = "../bridge-proxy"
 
 [dependencies.multiversx-sc]
-version = "0.42.0"
+version = "0.45.2"
+
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.42.0"
+version = "0.45.2"

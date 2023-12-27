@@ -6,8 +6,9 @@ edition = "2018"
 
 [lib]
 path = "src/lib.rs"
+
 [dependencies.eth-address]
 path = "../eth-address"
 
 [dependencies.multiversx-sc]
-version = "0.42.0"
+version = "0.45.2"

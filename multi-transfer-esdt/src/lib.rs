@@ -25,6 +25,9 @@ pub trait MultiTransferEsdt:
         self.last_batch_id().set_if_empty(1);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
     fn batch_transfer_esdt_token(

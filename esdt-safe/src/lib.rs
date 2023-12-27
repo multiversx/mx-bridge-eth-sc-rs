@@ -49,6 +49,9 @@ pub trait EsdtSafe:
         self.set_paused(true);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {}
+
     /// Sets the statuses for the transactions, after they were executed on the Ethereum side.
     ///
     /// Only TransactionStatus::Executed (3) and TransactionStatus::Rejected (4) values are allowed.
