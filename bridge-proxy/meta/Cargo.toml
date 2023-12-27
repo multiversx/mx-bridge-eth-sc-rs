@@ -6,8 +6,9 @@ publish = false
 authors = ["you"]
 
 [dev-dependencies]
+
 [dependencies.bridge-proxy]
 path = ".."
 
 [dependencies.multiversx-sc-meta]
-version = "0.42.0"
+version = "0.45.2"

@@ -39,6 +39,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "327762f6e5a765692301e5bb513e0d9fef63be86bbc14528052b1cd3e6f03e07"
 
 [[package]]
+name = "bridge-proxy"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
+ "multiversx-sc",
+ "transaction",
+]
+
+[[package]]
 name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
@@ -120,7 +129,9 @@ dependencies = [
 name = "multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
+ "bridge-proxy",
  "bridged-tokens-wrapper",
+ "eth-address",
  "max-bridged-amount-module",
  "multiversx-sc",
  "transaction",
