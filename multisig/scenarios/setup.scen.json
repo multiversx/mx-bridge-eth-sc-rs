@@ -3,7 +3,7 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "../../price-aggregator/mandos/oracle_gwei_in_eth_and_egld_submit.scen.json"
+            "path": "../../price-aggregator/scenarios/oracle_gwei_in_eth_and_egld_submit.scen.json"
         },
         {
             "step": "setState",

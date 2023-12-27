@@ -1,7 +1,11 @@
 use multiversx_sc_scenario::*;
 
 fn world() -> ScenarioWorld {
-    todo!()
+    let mut blockchain = ScenarioWorld::new();
+    blockchain.set_current_dir_from_workspace("multisig/");
+
+    blockchain.register_contract("file:output/multisig.wasm", multisig::ContractBuilder);
+    blockchain
 }
 
 #[test]
