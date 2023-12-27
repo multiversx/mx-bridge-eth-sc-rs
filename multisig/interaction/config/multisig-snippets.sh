@@ -19,12 +19,22 @@ deployMultisig() {
 
     echo ""
     echo "Multisig contract address: ${ADDRESS}"
+    update-config MULTISIG ${ADDRESS}
 }
 
 changeChildContractsOwnershipSafe() {
     CHECK_VARIABLES SAFE MULTISIG
 
     mxpy --verbose contract call ${SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=10000000 --function="ChangeOwnerAddress" \
+    --arguments ${MULTISIG} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+changeChildContractsOwnershipProxy() {
+    CHECK_VARIABLES BRIDGE_PROXY MULTISIG
+
+    mxpy --verbose contract call ${BRIDGE_PROXY} --recall-nonce --pem=${ALICE} \
     --gas-limit=10000000 --function="ChangeOwnerAddress" \
     --arguments ${MULTISIG} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -58,11 +68,11 @@ addMapping() {
 }
 
 addTokenToWhitelist() {
-    CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG
+    CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG MINTBURN_WHITELIST
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${CHAIN_SPECIFIC_TOKEN_TICKER} \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${MINTBURN_WHITELIST} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -160,5 +170,22 @@ multiTransferEsdtSetMaxBridgedAmountForToken() {
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="multiTransferEsdtSetMaxBridgedAmountForToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+
+setMultiTransferOnEsdtSafe() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setMultiTransferOnEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setEsdtSafeOnMultiTransfer() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setEsdtSafeOnMultiTransfer" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
