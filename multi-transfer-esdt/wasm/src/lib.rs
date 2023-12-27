@@ -5,12 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           18
+// Endpoints:                           20
 // Async Callback (empty):               1
-// Total number of exported functions:  20
+// Total number of exported functions:  22
 
 #![no_std]
-#![allow(internal_features)]
+
 // Configuration that works with rustc < 1.73.0.
 // TODO: Recommended rustc version: 1.73.0 or newer.
 #![feature(lang_items)]

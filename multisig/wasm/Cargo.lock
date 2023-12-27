@@ -131,9 +131,12 @@ version = "0.0.0"
 dependencies = [
  "bridge-proxy",
  "bridged-tokens-wrapper",
+ "esdt-safe",
  "eth-address",
  "max-bridged-amount-module",
  "multiversx-sc",
+ "multiversx-sc-modules",
+ "token-module",
  "transaction",
  "tx-batch-module",
 ]
