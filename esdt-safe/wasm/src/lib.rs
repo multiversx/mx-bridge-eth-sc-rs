@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           36
+// Endpoints:                           37
 // Async Callback (empty):               1
-// Total number of exported functions:  38
+// Total number of exported functions:  39
 
 #![no_std]
 
@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     esdt_safe
     (
         init => init
+        upgrade => upgrade
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
         createTransaction => create_transaction

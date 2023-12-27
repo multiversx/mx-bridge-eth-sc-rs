@@ -34,9 +34,9 @@ checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
 
 [[package]]
 name = "bitflags"
-version = "1.3.2"
+version = "2.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+checksum = "327762f6e5a765692301e5bb513e0d9fef63be86bbc14528052b1cd3e6f03e07"
 
 [[package]]
 name = "bridge-proxy"
@@ -98,9 +98,9 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "multiversx-sc"
-version = "0.45.1"
+version = "0.45.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f11b51d6a2ab0218585ed58e100c5ac2218de09490fbfc4243b5ecd0ca7f5cbc"
+checksum = "9b2bdb196b3ff2b9f8c744ec2e026c22c8e02bc91e5c6ed09951415c47fef6b8"
 dependencies = [
  "bitflags",
  "hashbrown",
@@ -112,9 +112,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-codec"
-version = "0.18.2"
+version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "327b0ad1c3477cab0d7c84391439ba302238f738ef3c6e1fcd18e247fba84875"
+checksum = "19908153158c03df4582af08f47c0eb39fb52a7dff4736b301a66acbbb9955d3"
 dependencies = [
  "arrayvec",
  "multiversx-sc-codec-derive",
@@ -122,9 +122,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-codec-derive"
-version = "0.18.2"
+version = "0.18.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f444038e0043b8eda816b26952479c2aca3c4a643580f4337f71fb362a586db5"
+checksum = "d3b03b43f9cad320992f54ed162de2ed63e3ec83ed01361e57ee9c1865fba5a2"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -134,9 +134,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.45.1"
+version = "0.45.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "784f0fc505806102fe6f808b368e12fcb13096dd73c5678f09c5663230724d6f"
+checksum = "2e60b5dce707f61376f74d713218f75326121d9f6a5f09a3a63de7aea2a92be9"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -147,9 +147,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-wasm-adapter"
-version = "0.45.1"
+version = "0.45.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5afb8b8cc380eabd82dc8f9b02afbab3dce16fc2b5de1dbc601fcfcf261278ba"
+checksum = "c4299660d5413d9f120bfddda8105b1f9d28f0345a72f53e5dc90732c4983e45"
 dependencies = [
  "multiversx-sc",
 ]
@@ -180,9 +180,9 @@ checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.70"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39278fbbf5fb4f646ce651690877f89d1c5811a3d4acb27700c1cb3cdb78fd3b"
+checksum = "75cb1540fadbd5b8fbccc4dddad2734eba435053f725621c070711a14bb5f4b8"
 dependencies = [
  "unicode-ident",
 ]
@@ -214,9 +214,9 @@ checksum = "4dccd0940a2dcdf68d092b8cbab7dc0ad8fa938bf95787e1b916b0e3d0e8e970"
 
 [[package]]
 name = "syn"
-version = "1.0.109"
+version = "2.0.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b64191b275b66ffe2469e8af2c1cfe3bafa67b529ead792a6d0160888b4237"
+checksum = "ee659fb5f3d355364e1f3e5bc10fb82068efbf824a1e9d1c9504244a6469ad53"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -256,20 +256,20 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "zerocopy"
-version = "0.7.28"
+version = "0.7.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d6f15f7ade05d2a4935e34a457b936c23dc70a05cc1d97133dc99e7a3fe0f0e"
+checksum = "74d4d3961e53fa4c9a25a8637fc2bfaf2595b3d3ae34875568a5cf64787716be"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.7.28"
+version = "0.7.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbbad221e3f78500350ecbd7dfa4e63ef945c05f4c61cb7f4d3f84cd0bba649b"
+checksum = "9ce1b18ccd8e73a9321186f97e46f9f04b778851177567b1975109d26a08d2a6"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.39",
+ "syn",
 ]

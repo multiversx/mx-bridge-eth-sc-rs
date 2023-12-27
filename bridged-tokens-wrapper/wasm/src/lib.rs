@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           16
+// Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  18
+// Total number of exported functions:  19
 
 #![no_std]
 
@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     bridged_tokens_wrapper
     (
         init => init
+        upgrade => upgrade
         addWrappedToken => add_wrapped_token
         updateWrappedToken => update_wrapped_token
         removeWrappedToken => remove_wrapped_token

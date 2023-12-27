@@ -5,12 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           19
+// Endpoints:                           18
 // Async Callback (empty):               1
-// Total number of exported functions:  21
+// Total number of exported functions:  20
 
 #![no_std]
-
+#![allow(internal_features)]
 // Configuration that works with rustc < 1.73.0.
 // TODO: Recommended rustc version: 1.73.0 or newer.
 #![feature(lang_items)]
@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     multi_transfer_esdt
     (
         init => init
+        upgrade => upgrade
         batchTransferEsdtToken => batch_transfer_esdt_token
         getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
         setWrappingContractAddress => set_wrapping_contract_address
