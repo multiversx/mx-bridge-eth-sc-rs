@@ -27,7 +27,15 @@ pub trait MultiTransferEsdt:
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(&self) {
+        self.max_tx_batch_size()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_block_duration()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
+    }
 
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
@@ -47,9 +55,6 @@ pub trait MultiTransferEsdt:
             let mut must_refund = false;
             if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
-                self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
                 self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
@@ -73,7 +78,7 @@ pub trait MultiTransferEsdt:
             let minted_token = self
                 .get_esdt_safe_contract_proxy_instance()
                 .mint_token(&eth_tx.token_id, &eth_tx.amount)
-                .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                // .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
                 .execute_on_dest_context();
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well

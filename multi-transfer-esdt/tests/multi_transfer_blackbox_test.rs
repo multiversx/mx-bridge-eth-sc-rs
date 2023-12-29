@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use bridge_proxy::ProxyTrait as _;
+use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
 use bridged_tokens_wrapper::ProxyTrait as _;
 use esdt_safe::{EsdtSafe, ProxyTrait as _};
 use multi_transfer_esdt::ProxyTrait as _;
@@ -26,6 +26,7 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
+use token_module::ProxyTrait as _;
 use transaction::{EthTransaction, EthTransactionPayment};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
@@ -33,7 +34,7 @@ const BRIDGE_TOKEN_ID_EXPR: &str = "str:BRIDGE-123456";
 
 const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
 
-const GAS_LIMIT: u64 = 1_000_000;
+const GAS_LIMIT: u64 = 100_000_000;
 
 const MULTI_TRANSFER_PATH_EXPR: &str = "file:output/multi-transfer-esdt.wasm";
 const BRIDGE_PROXY_PATH_EXPR: &str = "file:../bridge-proxy/output/bridge-proxy.wasm";
@@ -110,6 +111,18 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
             bridged_tokens_wrapper: BridgedTokensWrapperContract::new("sc:bridged_tokens_wrapper"),
         };
 
+        let multi_transfer_code = state.world.code_expression(MULTI_TRANSFER_PATH_EXPR);
+        let bridge_proxy_code = state.world.code_expression(BRIDGE_PROXY_PATH_EXPR);
+        let esdt_safe_code = state.world.code_expression(ESDT_SAFE_PATH_EXPR);
+        let bridged_tokens_wrapper_code = state
+            .world
+            .code_expression(BRIDGED_TOKENS_WRAPPER_PATH_EXPR);
+
+        let roles = vec![
+            "ESDTRoleLocalMint".to_string(),
+            "ESDTRoleLocalBurn".to_string(),
+        ];
+
         state.world.set_state_step(
             SetStateStep::new()
                 .put_account(
@@ -123,19 +136,20 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
                 .new_address(&state.owner, 1, MULTI_TRANSFER_ADDRESS_EXPR)
                 .new_address(&state.owner, 2, BRIDGE_PROXY_ADDRESS_EXPR)
                 .new_address(&state.owner, 3, ESDT_SAFE_ADDRESS_EXPR)
+                .put_account(
+                    ESDT_SAFE_ADDRESS_EXPR,
+                    Account::new()
+                        .code(&esdt_safe_code)
+                        .owner(&state.owner)
+                        .esdt_roles(BRIDGE_TOKEN_ID_EXPR, roles)
+                        .esdt_balance(BRIDGE_TOKEN_ID_EXPR, "1_000"),
+                )
                 .new_address(&state.owner, 4, BRIDGED_TOKENS_WRAPPER_ADDRESS_EXPR),
         );
-
         state
     }
 
     fn multi_transfer_deploy(&mut self) -> &mut Self {
-        // let bridge_proxy_addr = self
-        //     .bridge_proxy
-        //     .address
-        //     .clone()
-        //     .unwrap_or_sc_panic("Cannot get Bridge Proxy Contract address!");
-
         self.world.sc_deploy(
             ScDeployStep::new()
                 .from(self.owner.clone())
@@ -158,14 +172,11 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
     }
 
     fn safe_deploy(&mut self, price_aggregator_contract_address: Address) -> &mut Self {
-        self.world.sc_deploy(
-            ScDeployStep::new()
-                .from(self.owner.clone())
-                .code(self.world.code_expression(ESDT_SAFE_PATH_EXPR))
-                .call(
-                    self.esdt_safe
-                        .init(ManagedAddress::zero(), ESDT_SAFE_ETH_TX_GAS_LIMIT),
-                ),
+        self.world.sc_call(
+            ScCallStep::new().from(self.owner.clone()).call(
+                self.esdt_safe
+                    .upgrade(ManagedAddress::zero(), ESDT_SAFE_ETH_TX_GAS_LIMIT),
+            ),
         );
 
         self
@@ -182,30 +193,77 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
         self
     }
 
-    fn config_multi_transfer(
-        &mut self,
-        bridged_tokens_wrapper_contract_address: Address,
-        bridge_proxy_contract_address: Address,
-    ) {
-        self.world.sc_call(
-            ScCallStep::new()
-                .from(self.owner.clone())
-                .to(&self.multi_transfer)
-                .call(
-                    self.multi_transfer
-                        .set_wrapping_contract_address(bridged_tokens_wrapper_contract_address),
-                ),
-        );
+    fn config_multi_transfer(&mut self) {
+        self.world
+            .sc_call(
+                ScCallStep::new()
+                    .from(self.owner.clone())
+                    .to(&self.multi_transfer)
+                    .call(
+                        self.multi_transfer.set_wrapping_contract_address(
+                            self.bridged_tokens_wrapper.to_address(),
+                        ),
+                    ),
+            )
+            .sc_call(
+                ScCallStep::new()
+                    .from(self.owner.clone())
+                    .to(&self.multi_transfer)
+                    .call(
+                        self.multi_transfer
+                            .set_bridge_proxy_contract_address(self.bridge_proxy.to_address()),
+                    ),
+            )
+            .sc_call(
+                ScCallStep::new()
+                    .from(self.owner.clone())
+                    .to(&self.multi_transfer)
+                    .call(
+                        self.multi_transfer
+                            .set_esdt_safe_contract_address(self.esdt_safe.to_address()),
+                    ),
+            )
+            .sc_call(
+                ScCallStep::new()
+                    .from(self.owner.clone())
+                    .to(&self.esdt_safe)
+                    .call(
+                        self.esdt_safe
+                            .set_multi_transfer_contract_address(self.multi_transfer.to_address()),
+                    ),
+            )
+            .sc_call(
+                ScCallStep::new()
+                    .from(self.owner.clone())
+                    .to(&self.esdt_safe)
+                    .call(self.esdt_safe.add_token_to_whitelist(
+                        TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
+                        "BRIDGE",
+                        true,
+                        BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT),
+                    )),
+            )
+            .sc_call(
+                ScCallStep::new()
+                    .from(self.owner.clone())
+                    .to(&self.esdt_safe)
+                    .call(self.esdt_safe.set_accumulated_burned_tokens(
+                        TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
+                        BigUint::from(1_000u64),
+                    )),
+            );
 
-        self.world.sc_call(
-            ScCallStep::new()
-                .from(self.owner.clone())
-                .to(&self.multi_transfer)
-                .call(
-                    self.multi_transfer
-                        .set_bridge_proxy_contract_address(bridge_proxy_contract_address),
-                ),
-        );
+        //mint_burn_allowed
+
+        // .sc_call(
+        //     ScCallStep::new()
+        //         .from(self.owner.clone())
+        //         .to(&self.bridge_proxy)
+        //         .call(
+        //             self.bridge_proxy
+        //                 .set_multi_transfer_contract_address(self.multi_transfer.to_address()),
+        //         ),
+        // );
     }
 }
 
@@ -216,13 +274,9 @@ fn basic_setup_test() {
 
     test.multi_transfer_deploy();
     test.bridge_proxy_deploy();
-    // test.price_aggregator_deploy();
     test.safe_deploy(Address::zero());
     test.bridged_tokens_wrapper_deploy();
-    test.config_multi_transfer(
-        test.bridged_tokens_wrapper.to_address(),
-        test.bridge_proxy.to_address(),
-    );
+    test.config_multi_transfer();
 
     test.world.set_state_step(SetStateStep::new().put_account(
         &test.owner,
@@ -248,7 +302,8 @@ fn basic_setup_test() {
                 .check_storage("str:wrappingContractAddress", "sc:bridged_tokens_wrapper")
                 .check_storage("str:maxTxBatchBlockDuration", "0xffffffffffffffff")
                 .check_storage("str:maxTxBatchSize", "10")
-                .check_storage("str:firstBatchId", "0x01"),
+                .check_storage("str:firstBatchId", "0x01")
+                .check_storage("str:esdtSafeContractAddress", "sc:esdt_safe"),
         ),
     );
 }
@@ -260,13 +315,9 @@ fn basic_transfer_test() {
 
     test.multi_transfer_deploy();
     test.bridge_proxy_deploy();
-    // test.price_aggregator_deploy();
     test.safe_deploy(Address::zero());
     test.bridged_tokens_wrapper_deploy();
-    test.config_multi_transfer(
-        test.bridged_tokens_wrapper.to_address(),
-        test.bridge_proxy.to_address(),
-    );
+    test.config_multi_transfer();
 
     let eth_tx = EthTransaction {
         from: test.eth_user,
@@ -287,27 +338,32 @@ fn basic_transfer_test() {
                 .check_storage("str:wrappingContractAddress", "sc:bridged_tokens_wrapper")
                 .check_storage("str:maxTxBatchBlockDuration", "0xffffffffffffffff")
                 .check_storage("str:maxTxBatchSize", "10")
-                .check_storage("str:firstBatchId", "0x01"),
+                .check_storage("str:firstBatchId", "0x01")
+                .check_storage("str:esdtSafeContractAddress", "sc:esdt_safe"),
         ),
     );
 
     let mut transfers = MultiValueEncoded::new();
-    // transfers.push(eth_tx);
+    transfers.push(eth_tx);
 
     test.world.sc_call(
         ScCallStep::new()
             .from(&test.owner)
             .to(&test.esdt_safe)
-            .call(test.esdt_safe.unpause_endpoint()), // .esdt_transfer(bridge_token_id_expr, 0u64, 500u64),
+            .call(test.esdt_safe.unpause_endpoint()),
     );
 
     test.world.sc_call(
         ScCallStep::new()
             .from(&test.owner)
             .to(&test.bridged_tokens_wrapper)
-            .call(test.bridged_tokens_wrapper.unpause_endpoint()), // .esdt_transfer(bridge_token_id_expr, 0u64, 500u64),
+            .call(test.bridged_tokens_wrapper.unpause_endpoint()),
     );
     test.world.dump_state_step();
+    let roles = vec![
+        "ESDTRoleLocalMint".to_string(),
+        "ESDTRoleLocalBurn".to_string(),
+    ];
 
     test.world.sc_call(
         ScCallStep::new()
@@ -316,7 +372,7 @@ fn basic_transfer_test() {
             .call(
                 test.multi_transfer
                     .batch_transfer_esdt_token(1u32, transfers),
-            ), // .esdt_transfer(BRIDGE_TOKEN_ID_EXPR, 0u64, BALANCE),
+            ),
     );
 
     test.world
@@ -324,11 +380,4 @@ fn basic_transfer_test() {
             test.user1,
             CheckAccount::new().esdt_balance(BRIDGE_TOKEN_ID_EXPR, token_amount),
         ));
-
-    // test.world.sc_query(
-    //     ScQueryStep::new()
-    //         .to(&test.multi_transfer)
-    //         .call(test.multi_transfer.get_eth_transaction_by_id(1u32))
-    //         .expect_value(eth_tx),
-    // );
 }

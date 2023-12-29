@@ -50,7 +50,27 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
+        self.fee_estimator_contract_address()
+            .set(&fee_estimator_contract_address);
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
+
+        self.max_tx_batch_size()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_block_duration()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
+
+        // set ticker for "GWEI"
+        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
+        self.token_ticker(&gwei_token_id)
+            .set(gwei_token_id.as_managed_buffer());
+
+        self.set_paused(true);
+    }
 
     /// Sets the statuses for the transactions, after they were executed on the Ethereum side.
     ///

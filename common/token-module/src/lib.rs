@@ -100,10 +100,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         );
         if self.mint_burn_allowed(token_id).get() {
             let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
-            require!(
-                !accumulated_burned_tokens_mapper.is_empty(),
-                "Accumulated burned tokens storage is not initialized!"
-            );
             accumulated_burned_tokens_mapper.update(|burned| {
                 require!(*burned >= *amount, "Not enough accumulated burned tokens!");
                 *burned -= amount;
@@ -154,6 +150,12 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             }
             OptionalValue::None => self.multi_transfer_contract_address().clear(),
         }
+    }
+
+    #[only_owner]
+    #[endpoint(setAccumulatedBurnedTokens)]
+    fn set_accumulated_burned_tokens(&self, token_id: &TokenIdentifier, value: BigUint) {
+        self.accumulated_burned_tokens(token_id).set_if_empty(value);
     }
 
     // storage
