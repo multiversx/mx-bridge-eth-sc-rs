@@ -3,7 +3,7 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "../../price-aggregator/mandos/get_latest_price_feed.scen.json"
+            "path": "../../price-aggregator/scenarios/get_latest_price_feed.scen.json"
         },
         {
             "step": "setState",
