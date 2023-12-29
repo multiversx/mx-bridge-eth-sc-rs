@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           37
+// Endpoints:                           38
 // Async Callback (empty):               1
-// Total number of exported functions:  39
+// Total number of exported functions:  40
 
 #![no_std]
 
@@ -41,6 +41,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeTokenFromWhitelist => remove_token_from_whitelist
         mintToken => mint_token
         setMultiTransferContractAddress => set_multi_transfer_contract_address
+        setAccumulatedBurnedTokens => set_accumulated_burned_tokens
         getAllKnownTokens => token_whitelist
         isMintBurnAllowed => mint_burn_allowed
         getMultiTransferContractAddress => multi_transfer_contract_address

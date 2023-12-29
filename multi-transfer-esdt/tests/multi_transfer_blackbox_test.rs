@@ -359,11 +359,6 @@ fn basic_transfer_test() {
             .to(&test.bridged_tokens_wrapper)
             .call(test.bridged_tokens_wrapper.unpause_endpoint()),
     );
-    test.world.dump_state_step();
-    let roles = vec![
-        "ESDTRoleLocalMint".to_string(),
-        "ESDTRoleLocalBurn".to_string(),
-    ];
 
     test.world.sc_call(
         ScCallStep::new()

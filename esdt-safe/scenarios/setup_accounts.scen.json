@@ -69,7 +69,8 @@
                 "function": "addTokenToWhitelist",
                 "arguments": [
                     "str:BRIDGE-123456",
-                    "str:BRIDGE"
+                    "str:BRIDGE",
+                    "true"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"

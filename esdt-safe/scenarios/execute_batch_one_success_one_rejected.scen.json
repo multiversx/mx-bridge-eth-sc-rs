@@ -94,7 +94,7 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "3,000,000",
+                            "balance": "3,000,400",
                             "roles": [
                                 "ESDTRoleLocalBurn"
                             ]
