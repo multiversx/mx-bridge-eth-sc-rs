@@ -18,7 +18,57 @@
                     "str:BRIDGE",
                     "u64:0",
                     "10",
-                    "0"
+                    "6"
+                ],
+                "gasLimit": "40,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "oracle-submit",
+            "tx": {
+                "from": "address:oracle2",
+                "to": "sc:price_aggregator",
+                "value": "0",
+                "function": "submit",
+                "arguments": [
+                    "str:GWEI",
+                    "str:BRIDGE",
+                    "u64:0",
+                    "10",
+                    "6"
+                ],
+                "gasLimit": "40,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "oracle-submit",
+            "tx": {
+                "from": "address:oracle3",
+                "to": "sc:price_aggregator",
+                "value": "0",
+                "function": "submit",
+                "arguments": [
+                    "str:GWEI",
+                    "str:BRIDGE",
+                    "u64:0",
+                    "10",
+                    "6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"

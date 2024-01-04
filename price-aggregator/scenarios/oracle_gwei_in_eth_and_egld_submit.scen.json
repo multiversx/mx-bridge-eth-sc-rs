@@ -18,7 +18,7 @@
                     "str:BRIDGE",
                     "u64:0",
                     "1",
-                    "0"
+                    "6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
@@ -40,10 +40,10 @@
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
-                    "str:EGLD",
+                    "str:WEGLD-123456",
                     "u64:0",
                     "10",
-                    "0"
+                    "6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"

@@ -16,12 +16,12 @@
                 },
                 "address:oracle2": {
                     "nonce": "0",
-                    "balance": "0",
+                    "balance": "100",
                     "storage": {}
                 },
                 "address:oracle3": {
                     "nonce": "0",
-                    "balance": "0",
+                    "balance": "100",
                     "storage": {}
                 },
                 "address:oracle4": {
@@ -83,7 +83,7 @@
                 "arguments": [
                     "str:GWEI",
                     "str:BRIDGE",
-                    "u8:0"
+                    "u8:6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
@@ -105,8 +105,8 @@
                 "function": "setPairDecimals",
                 "arguments": [
                     "str:GWEI",
-                    "str:EGLD",
-                    "u8:0"
+                    "str:WEGLD-123456",
+                    "u8:6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
