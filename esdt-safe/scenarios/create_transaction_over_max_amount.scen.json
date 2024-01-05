@@ -33,10 +33,12 @@
             "tx": {
                 "from": "address:user1",
                 "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:BRIDGE-123456",
-                    "value": "1,800,000"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:BRIDGE-123456",
+                        "value": "1,800,000"
+                    }
+                ],
                 "function": "createTransaction",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
@@ -57,10 +59,12 @@
             "tx": {
                 "from": "address:user1",
                 "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:BRIDGE-123456",
-                    "value": "1,600,000"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:BRIDGE-123456",
+                        "value": "1,600,000"
+                    }
+                ],
                 "function": "createTransaction",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
@@ -70,9 +74,7 @@
             },
             "expect": {
                 "status": "0",
-                "out": [
-                    
-                ],
+                "out": [],
                 "message": "",
                 "gas": "*",
                 "refund": "*"

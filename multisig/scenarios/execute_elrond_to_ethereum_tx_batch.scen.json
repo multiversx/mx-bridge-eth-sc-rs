@@ -103,7 +103,7 @@
                 "value": "0",
                 "function": "claimRefund",
                 "arguments": [
-                    "str:EGLD-123456"
+                    "str:WEGLD-123456"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -144,15 +144,17 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "1,500,000",
+                        "str:WEGLD-123456": {
+                            "balance": "75,000,000,000",
                             "roles": [
+                                "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "150,000",
+                            "balance": "75,000,000,000",
                             "roles": [
+                                "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         }
@@ -162,8 +164,8 @@
                         "str:transactionsByNonce|address:user|str:.item|u32:1": "",
                         "str:transactionStatus|address:user|u32:2": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": "",
-                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "1,500,000",
-                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "150,000",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "75,000,000,000",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "75,000,000,000",
                         "+": ""
                     },
                     "code": "*"
@@ -202,11 +204,11 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "600,000"
+                        "str:WEGLD-123456": {
+                            "balance": "30,000,000,000"
                         },
                         "str:ETH-123456": {
-                            "balance": "60,000"
+                            "balance": "30,000,000,000"
                         }
                     },
                     "storage": {}
@@ -215,11 +217,11 @@
                     "nonce": "*",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
-                            "balance": "900,000"
+                        "str:WEGLD-123456": {
+                            "balance": "45,000,000,000"
                         },
                         "str:ETH-123456": {
-                            "balance": "90,000"
+                            "balance": "45,000,000,000"
                         }
                     },
                     "storage": {}
@@ -228,21 +230,23 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
+                        "str:WEGLD-123456": {
                             "balance": "0",
                             "roles": [
+                                "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
                             "balance": "0",
                             "roles": [
+                                "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         }
                     },
                     "storage": {
-                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
                         "+": ""
                     },

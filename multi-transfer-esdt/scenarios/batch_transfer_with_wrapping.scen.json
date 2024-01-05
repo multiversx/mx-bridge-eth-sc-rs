@@ -79,27 +79,6 @@
             }
         },
         {
-            "step": "scDeploy",
-            "txId": "deploy-esdt-safe",
-            "tx": {
-                "from": "address:owner",
-                "contractCode": "file:../../esdt-safe/output/esdt-safe.wasm",
-                "value": "0",
-                "arguments": [
-                    "sc:price_aggregator",
-                    "150,000"
-                ],
-                "gasLimit": "20,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
             "step": "setState",
             "comment": "setting local mint role",
             "accounts": {
@@ -262,7 +241,7 @@
                 "function": "setAccumulatedBurnedTokens",
                 "arguments": [
                     "str:USDC-aaaaaa",
-                    "500"
+                    "500,000,000,000,000"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -283,7 +262,7 @@
                 "function": "setAccumulatedBurnedTokens",
                 "arguments": [
                     "str:USDC-cccccc",
-                    "1,000"
+                    "1,000,000,000,000,000"
                 ],
                 "gasLimit": "5,000,000",
                 "gasPrice": "0"
@@ -305,8 +284,9 @@
                 "function": "batchTransferEsdtToken",
                 "arguments": [
                     "1",
-                    "0x0102030405060708091011121314151617181920|address:user2|nested:str:USDC-aaaaaa|biguint:500|u64:2|nested:str:data|u64:2000000",
-                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:USDC-cccccc|biguint:1000|u64:3|nested:str:data|u64:2000000"
+                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:BRIDGE-123456|biguint:100,200|u64:1|nested:str:data|u64:2000000",
+                    "0x0102030405060708091011121314151617181920|address:user2|nested:str:USDC-aaaaaa|biguint:500,000,000,000,000|u64:2|nested:str:data|u64:2000000",
+                    "0x0102030405060708091011121314151617181920|address:user1|nested:str:USDC-cccccc|biguint:1,000,000,000,000,000|u64:3|nested:str:data|u64:2000000"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -356,8 +336,8 @@
                                 "ESDTRoleLocalBurn"
                             ]
                         },
-                        "str:USDC-aaaaaa": "500",
-                        "str:USDC-cccccc": "1,000"
+                        "str:USDC-aaaaaa": "500,000,000,000,000",
+                        "str:USDC-cccccc": "1,000,000,000,000,000"
                     },
                     "storage": "*",
                     "code": "*"

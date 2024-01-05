@@ -98,7 +98,16 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             caller == self.multi_transfer_contract_address().get(),
             "Only MultiTransfer can get tokens"
         );
+
         if self.mint_burn_allowed(token_id).get() {
+            if !self
+                .blockchain()
+                .get_esdt_local_roles(token_id)
+                .has_role(&EsdtLocalRole::Mint)
+            {
+                return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
+            }
+
             let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
             accumulated_burned_tokens_mapper.update(|burned| {
                 require!(*burned >= *amount, "Not enough accumulated burned tokens!");
@@ -107,7 +116,12 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             self.mint_esdt_token(token_id, amount);
         }
 
-        self.send().direct_esdt(&caller, token_id, 0, amount);
+        let current_balance =
+            self.blockchain()
+                .get_esdt_balance(&self.blockchain().get_sc_address(), token_id, 0);
+        if &current_balance >= amount {
+            self.send().direct_esdt(&caller, token_id, 0, amount);
+        }
         EsdtTokenPayment::new(token_id.clone(), 0, amount.clone())
     }
 

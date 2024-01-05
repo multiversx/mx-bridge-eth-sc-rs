@@ -136,7 +136,8 @@
                         "str:BRIDGE-123456": {
                             "balance": "0",
                             "roles": [
-                                "ESDTRoleLocalBurn"
+                                "ESDTRoleLocalBurn",
+                                "ESDTRoleLocalMint"
                             ]
                         }
                     },

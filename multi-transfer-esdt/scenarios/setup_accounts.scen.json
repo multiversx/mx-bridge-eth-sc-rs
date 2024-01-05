@@ -98,27 +98,6 @@
             }
         },
         {
-            "step": "scDeploy",
-            "txId": "deploy-esdt-safe",
-            "tx": {
-                "from": "address:owner",
-                "contractCode": "file:../../esdt-safe/output/esdt-safe.wasm",
-                "value": "0",
-                "arguments": [
-                    "sc:price_aggregator",
-                    "150,000"
-                ],
-                "gasLimit": "20,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
             "step": "scCall",
             "txId": "add-bridge-proxy-to-multi-transfer",
             "tx": {
@@ -273,7 +252,7 @@
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "10",
+                    "nonce": "9",
                     "balance": "0",
                     "storage": {}
                 },

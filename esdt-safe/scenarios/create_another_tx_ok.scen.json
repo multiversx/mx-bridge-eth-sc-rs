@@ -11,10 +11,12 @@
             "tx": {
                 "from": "address:user2",
                 "to": "sc:esdt_safe",
-                "esdt": {
-                    "tokenIdentifier": "str:BRIDGE-123456",
-                    "value": "1,500,900"
-                },
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:BRIDGE-123456",
+                        "value": "1,500,900"
+                    }
+                ],
                 "function": "createTransaction",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920"
@@ -24,9 +26,7 @@
             },
             "expect": {
                 "status": "0",
-                "out": [
-                    
-                ],
+                "out": [],
                 "message": "",
                 "gas": "*",
                 "refund": "*"
@@ -71,7 +71,8 @@
                         "str:BRIDGE-123456": {
                             "balance": "3,001,300",
                             "roles": [
-                                "ESDTRoleLocalBurn"
+                                "ESDTRoleLocalBurn",
+                                "ESDTRoleLocalMint"
                             ]
                         }
                     },

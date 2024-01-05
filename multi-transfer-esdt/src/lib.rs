@@ -75,11 +75,17 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let minted_token = self
+            let minted_token: EsdtTokenPayment = self
                 .get_esdt_safe_contract_proxy_instance()
                 .mint_token(&eth_tx.token_id, &eth_tx.amount)
-                // .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
                 .execute_on_dest_context();
+
+            if minted_token.amount == BigUint::zero() {
+                let refund_tx = self.convert_to_refund_tx(eth_tx);
+                refund_tx_list.push(refund_tx);
+
+                continue;
+            }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
