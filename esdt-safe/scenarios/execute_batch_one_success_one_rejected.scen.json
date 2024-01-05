@@ -15,7 +15,8 @@
                 "function": "setTransactionBatchStatus",
                 "arguments": [
                     "1",
-                    "3", "4"
+                    "3",
+                    "4"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -96,7 +97,8 @@
                         "str:BRIDGE-123456": {
                             "balance": "3,000,400",
                             "roles": [
-                                "ESDTRoleLocalBurn"
+                                "ESDTRoleLocalBurn",
+                                "ESDTRoleLocalMint"
                             ]
                         }
                     },
@@ -104,9 +106,7 @@
                         "str:pendingBatches|u64:1": "",
                         "str:firstBatchId": "2",
                         "str:lastBatchId": "2",
-
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "3,000,000",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"

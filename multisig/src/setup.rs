@@ -171,7 +171,7 @@ pub trait SetupModule:
     /// where price_per_gas_unit is queried from the aggregator (fee estimator SC)
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
-    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
+    fn change_multiversx_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
             .set_eth_tx_gas_limit(new_gas_limit)

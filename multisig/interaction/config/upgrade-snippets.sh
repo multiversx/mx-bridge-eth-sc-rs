@@ -2,7 +2,7 @@
 deploySafeForUpgrade() {
     getAggregatorAddressHex
 
-    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 200$ for elrond->eth
+    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 200$ for multiversx->eth
 
     mxpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
