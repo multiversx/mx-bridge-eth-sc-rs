@@ -33,10 +33,10 @@ path = "../esdt-safe"
 path = "../common/token-module"
 
 [dependencies.multiversx-sc]
-version = "0.45.2"
-
-[dev-dependencies.multiversx-sc-scenario]
-version = "0.45.2"
+version = "0.46.0"
 
 [dependencies.multiversx-sc-modules]
-version = "0.45.2"
+version = "0.46.0"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.46.0"
