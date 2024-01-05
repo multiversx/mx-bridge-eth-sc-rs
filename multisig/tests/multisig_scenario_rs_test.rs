@@ -18,23 +18,23 @@ fn change_token_config_rs() {
 }
 
 #[test]
-fn create_elrond_to_ethereum_tx_batch_rs() {
-    world().run("scenarios/create_elrond_to_ethereum_tx_batch.scen.json");
+fn create_multiversx_to_ethereum_tx_batch_rs() {
+    world().run("scenarios/create_multiversx_to_ethereum_tx_batch.scen.json");
 }
 
 #[test]
-fn ethereum_to_elrond_tx_batch_ok_rs() {
-    world().run("scenarios/ethereum_to_elrond_tx_batch_ok.scen.json");
+fn ethereum_to_multiversx_tx_batch_ok_rs() {
+    world().run("scenarios/ethereum_to_multiversx_tx_batch_ok.scen.json");
 }
 
 #[test]
-fn ethereum_to_elrond_tx_batch_rejected_rs() {
-    world().run("scenarios/ethereum_to_elrond_tx_batch_rejected.scen.json");
+fn ethereum_to_multiversx_tx_batch_rejected_rs() {
+    world().run("scenarios/ethereum_to_multiversx_tx_batch_rejected.scen.json");
 }
 
 #[test]
-fn execute_elrond_to_ethereum_tx_batch_rs() {
-    world().run("scenarios/execute_elrond_to_ethereum_tx_batch.scen.json");
+fn execute_multiversx_to_ethereum_tx_batch_rs() {
+    world().run("scenarios/execute_multiversx_to_ethereum_tx_batch.scen.json");
 }
 
 #[test]
@@ -43,8 +43,8 @@ fn get_empty_batch_rs() {
 }
 
 #[test]
-fn reject_elrond_to_ethereum_tx_batch_rs() {
-    world().run("scenarios/reject_elrond_to_ethereum_tx_batch.scen.json");
+fn reject_multiversx_to_ethereum_tx_batch_rs() {
+    world().run("scenarios/reject_multiversx_to_ethereum_tx_batch.scen.json");
 }
 
 #[test]

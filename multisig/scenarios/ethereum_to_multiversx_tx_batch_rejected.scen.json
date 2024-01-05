@@ -1,5 +1,5 @@
 {
-    "name": "create ethereum to elrond tx batch - rejected",
+    "name": "create ethereum to MultiversX tx batch - rejected",
     "steps": [
         {
             "step": "externalSteps",
