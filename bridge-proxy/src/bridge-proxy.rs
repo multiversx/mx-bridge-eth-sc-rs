@@ -32,11 +32,12 @@ pub trait BridgeProxyContract: config::ConfigModule {
         let tx_node = self
             .eth_transaction_list()
             .remove_node_by_id(tx_id)
-            .unwrap_or_else(|| sc_panic!("No more ETH transactions!"));
+            .unwrap_or_else(|| sc_panic!("Invalid ETH transaction!"));
         let tx = tx_node.get_value_as_ref();
 
         self.send()
             .contract_call::<IgnoreValue>(tx.eth_tx.to.clone(), tx.eth_tx.data.clone())
+            .with_raw_arguments(tx.eth_tx.args.clone().into())
             .with_esdt_transfer((tx.token_id.clone(), tx.nonce, tx.amount.clone()))
             .with_gas_limit(tx.eth_tx.gas_limit)
             .async_call()

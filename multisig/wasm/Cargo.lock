@@ -3,6 +3,14 @@
 version = 3
 
 [[package]]
+name = "adder"
+version = "0.0.0"
+source = "git+https://github.com/multiversx/mx-contracts-rs?rev=64e8926#64e892655f9c59b2aafe07800af61d0fa41c6ddc"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -24,6 +32,7 @@ checksum = "327762f6e5a765692301e5bb513e0d9fef63be86bbc14528052b1cd3e6f03e07"
 name = "bridge-proxy"
 version = "0.0.0"
 dependencies = [
+ "adder",
  "eth-address",
  "multiversx-sc",
  "transaction",

@@ -252,18 +252,6 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
                         BigUint::from(1_000u64),
                     )),
             );
-
-        //mint_burn_allowed
-
-        // .sc_call(
-        //     ScCallStep::new()
-        //         .from(self.owner.clone())
-        //         .to(&self.bridge_proxy)
-        //         .call(
-        //             self.bridge_proxy
-        //                 .set_multi_transfer_contract_address(self.multi_transfer.to_address()),
-        //         ),
-        // );
     }
 }
 
