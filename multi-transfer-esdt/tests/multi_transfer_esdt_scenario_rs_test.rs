@@ -43,6 +43,11 @@ fn setup_accounts_rs() {
 }
 
 #[test]
+fn transfer_fail_mint_burn_not_allowed_rs() {
+    world().run("scenarios/transfer_fail_mint_burn_not_allowed.scen.json");
+}
+
+#[test]
 fn transfer_ok_rs() {
     world().run("scenarios/transfer_ok.scen.json");
 }
