@@ -27,6 +27,10 @@
             }
         },
         {
+            "step": "dumpState",
+            "comment": "all accounts beginning"
+        },
+        {
             "step": "scCall",
             "txId": "transfer-ok",
             "tx": {
@@ -50,23 +54,69 @@
             }
         },
         {
-            "step": "scQuery",
-            "txId": "get-current-refund-tx-batch",
-            "tx": {
-                "to": "sc:multi_transfer_esdt",
-                "function": "getFirstBatchAnyStatus",
-                "arguments": []
-            },
-            "expect": {
-                "out": [
-                    "1",
-                    "0",
-                    "1",
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user1",
-                    "str:BRIDGE-123456",
-                    "100,200"
-                ]
+            "step": "checkState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "11",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:user1": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "100,200"
+                        }
+                    },
+                    "storage": {}
+                },
+                "address:user2": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "sc:multi_transfer_esdt": {
+                    "code": "file:../output/multi-transfer-esdt.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
+                        "str:bridgeProxyContractAddress": "sc:bridge-proxy",
+                        "str:maxTxBatchSize": "10",
+                        "str:maxTxBatchBlockDuration": "3600",
+                        "str:esdtSafeContractAddress": "sc:esdt-safe"
+                    }
+                },
+                "sc:bridge-proxy": {
+                    "code": "file:../../bridge-proxy/output/bridge-proxy.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": "*"
+                },
+                "sc:esdt-safe": {
+                    "code": "file:../../esdt-safe/output/esdt-safe.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "899,800",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WRAPPED-123456": {
+                            "balance": "1,000,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": "*"
+                }
             }
         }
     ]
