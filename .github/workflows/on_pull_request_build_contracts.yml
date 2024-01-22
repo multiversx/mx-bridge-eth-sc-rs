@@ -1,8 +1,7 @@
-name: On release, build contracts
+name: On pull request, build contracts
 
 on:
-  release:
-    types: [published]
+  pull_request:
 
 permissions:
   contents: write
@@ -12,5 +11,4 @@ jobs:
     uses: multiversx/mx-sc-actions/.github/workflows/reproducible-build.yml@v2.3.5
     with:
       image_tag: v6.1.0
-      attach_to_existing_release: true
       package_whole_project_src: true
