@@ -3,7 +3,7 @@
     "steps": [
         {
             "step": "externalSteps",
-            "path": "../../price-aggregator/mandos/get_latest_price_feed.scen.json"
+            "path": "../../price-aggregator/scenarios/get_latest_price_feed.scen.json"
         },
         {
             "step": "setState",
@@ -69,7 +69,8 @@
                 "function": "addTokenToWhitelist",
                 "arguments": [
                     "str:BRIDGE-123456",
-                    "str:BRIDGE"
+                    "str:BRIDGE",
+                    "true"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -135,7 +136,8 @@
                         "str:BRIDGE-123456": {
                             "balance": "0",
                             "roles": [
-                                "ESDTRoleLocalBurn"
+                                "ESDTRoleLocalBurn",
+                                "ESDTRoleLocalMint"
                             ]
                         }
                     },

@@ -35,6 +35,11 @@ fn setup_accounts_go() {
 }
 
 #[test]
+fn transfer_fail_mint_burn_not_allowed_go() {
+    world().run("scenarios/transfer_fail_mint_burn_not_allowed.scen.json");
+}
+
+#[test]
 fn transfer_ok_go() {
     world().run("scenarios/transfer_ok.scen.json");
 }

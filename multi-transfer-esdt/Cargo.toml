@@ -26,8 +26,17 @@ path = "../bridged-tokens-wrapper"
 [dependencies.bridge-proxy]
 path = "../bridge-proxy"
 
+[dependencies.esdt-safe]
+path = "../esdt-safe"
+
+[dependencies.token-module]
+path = "../common/token-module"
+
 [dependencies.multiversx-sc]
-version = "0.45.2"
+version = "0.46.1"
+
+[dependencies.multiversx-sc-modules]
+version = "0.46.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.45.2"
+version = "0.46.1"

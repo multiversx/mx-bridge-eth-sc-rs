@@ -154,7 +154,7 @@
                 "function": "addMapping",
                 "arguments": [
                     "0x0102030405060708091011121314151617181999",
-                    "str:EGLD-123456"
+                    "str:WEGLD-123456"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -177,7 +177,7 @@
                 "function": "addMapping",
                 "arguments": [
                     "0x0000030405060708091011121314151617181999",
-                    "str:EGLD-123456"
+                    "str:WEGLD-123456"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -202,7 +202,7 @@
             },
             "expect": {
                 "out": [
-                    "str:EGLD-123456"
+                    "str:WEGLD-123456"
                 ]
             }
         },
@@ -213,7 +213,7 @@
                 "to": "sc:multisig",
                 "function": "getErc20AddressForTokenId",
                 "arguments": [
-                    "str:EGLD-123456"
+                    "str:WEGLD-123456"
                 ]
             },
             "expect": {
@@ -232,7 +232,7 @@
                 "function": "clearMapping",
                 "arguments": [
                     "0x0102030405060708091011121314151617181920",
-                    "str:EGLD-123456"
+                    "str:WEGLD-123456"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"

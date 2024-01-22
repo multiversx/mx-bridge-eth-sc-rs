@@ -1,5 +1,5 @@
 {
-    "name": "create ethereum to elrond tx batch - rejected",
+    "name": "create ethereum to MultiversX tx batch - rejected",
     "steps": [
         {
             "step": "externalSteps",
@@ -17,18 +17,20 @@
                     "2",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
-                    "str:EGLD-123456",
-                    "2,000,000",
+                    "str:WEGLD-123456",
+                    "76,000,000,000",
                     "str:data",
                     "u64:2,000,000",
                     "u64:1",
+                    "0",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
                     "str:ETH-123456",
-                    "2,000,000",
+                    "76,000,000,000",
                     "u64:2",
                     "str:data",
-                    "u64:2,000,000"
+                    "u64:2,000,000",
+                    "0"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -53,18 +55,20 @@
                     "1",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
-                    "str:EGLD-123456",
-                    "2,000,000",
+                    "str:WEGLD-123456",
+                    "76,000,000,000",
                     "u64:2",
                     "str:data",
                     "u64:2,000,000",
+                    "0",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
                     "str:ETH-123456",
-                    "2,000,000",
+                    "76,000,000,000",
                     "u64:3",
                     "str:data",
-                    "u64:2,000,000"
+                    "u64:2,000,000",
+                    "0"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -89,18 +93,20 @@
                     "1",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
-                    "str:EGLD-123456",
-                    "2,000,000",
+                    "str:WEGLD-123456",
+                    "76,000,000,000",
                     "u64:1",
                     "str:data",
                     "u64:2,000,000",
+                    "0",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
                     "str:ETH-123456",
-                    "2,000,000",
+                    "76,000,000,000",
                     "u64:2",
                     "str:data",
-                    "u64:2,000,000"
+                    "u64:2,000,000",
+                    "0"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -130,20 +136,22 @@
                                 {
                                     "1-from": "0x0102030405060708091011121314151617181920",
                                     "2-to": "sc:egld_esdt_swap",
-                                    "3-token_id": "nested:str:EGLD-123456",
-                                    "4-amount": "biguint:2,000,000",
+                                    "3-token_id": "nested:str:WEGLD-123456",
+                                    "4-amount": "biguint:76,000,000,000",
                                     "5-tx_id": "u64:1",
                                     "6-data": "nested:str:data",
-                                    "7-gas_limit": "u64:2,000,000"
+                                    "7-gas_limit": "u64:2,000,000",
+                                    "8-args": "nested:0"
                                 },
                                 {
                                     "1-from": "0x0102030405060708091011121314151617181920",
                                     "2-to": "sc:egld_esdt_swap",
                                     "3-token_id": "nested:str:ETH-123456",
-                                    "4-amount": "biguint:2,000,000",
+                                    "4-amount": "biguint:76,000,000,000",
                                     "5-tx_id": "u64:2",
                                     "6-data": "nested:str:data",
-                                    "7-gas_limit": "u64:2,000,000"
+                                    "7-gas_limit": "u64:2,000,000",
+                                    "8-args": "nested:0"
                                 }
                             ]
                         },
@@ -214,14 +222,14 @@
                     "1",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
-                    "str:EGLD-123456",
-                    "2,000,000",
+                    "str:WEGLD-123456",
+                    "76,000,000,000",
                     "0",
                     "2",
                     "0x0102030405060708091011121314151617181920",
                     "sc:egld_esdt_swap",
                     "str:ETH-123456",
-                    "2,000,000"
+                    "76,000,000,000"
                 ]
             }
         },
@@ -264,15 +272,17 @@
                     "nonce": "0",
                     "balance": "0",
                     "esdt": {
-                        "str:EGLD-123456": {
+                        "str:WEGLD-123456": {
                             "balance": "0",
                             "roles": [
+                                "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
                             "balance": "0",
                             "roles": [
+                                "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         }
@@ -283,8 +293,8 @@
                             "2-nonce": "u64:1",
                             "3-from": "u32:32|sc:egld_esdt_swap",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
-                            "5-token_identifier": "nested:str:EGLD-123456",
-                            "6-amount": "biguint:500,000",
+                            "5-token_identifier": "nested:str:WEGLD-123456",
+                            "6-amount": "biguint:1,000,000,000",
                             "7-is_refund_tx": "u8:1"
                         },
                         "str:pendingBatches|u64:1|str:.item|u32:2": {
@@ -293,12 +303,12 @@
                             "3-from": "u32:32|sc:egld_esdt_swap",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:ETH-123456",
-                            "6-amount": "biguint:1,850,000",
+                            "6-amount": "biguint:1,000,000,000",
                             "7-is_refund_tx": "u8:1"
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:accumulatedTransactionFees|nested:str:EGLD-123456": "0",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "0",
                         "str:accumulatedTransactionFees|nested:str:ETH-123456": "0",
                         "+": ""
                     },

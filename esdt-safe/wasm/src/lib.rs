@@ -5,14 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           32
+// Endpoints:                           38
 // Async Callback (empty):               1
-// Total number of exported functions:  34
+// Total number of exported functions:  40
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
+#![allow(internal_features)]
 #![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
@@ -39,8 +37,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         distributeFees => distribute_fees
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
+        mintToken => mint_token
+        setMultiTransferContractAddress => set_multi_transfer_contract_address
+        setAccumulatedBurnedTokens => set_accumulated_burned_tokens
         getAllKnownTokens => token_whitelist
+        isMintBurnAllowed => mint_burn_allowed
+        getMultiTransferContractAddress => multi_transfer_contract_address
         getAccumulatedTransactionFees => accumulated_transaction_fees
+        getAccumulatedBurnedTokens => accumulated_burned_tokens
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch

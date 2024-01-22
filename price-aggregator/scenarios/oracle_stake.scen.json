@@ -1,25 +1,19 @@
 {
-    "name": "oracle submit",
+    "name": "oracle stake",
     "steps": [
         {
             "step": "externalSteps",
-            "path": "oracle_stake.scen.json"
+            "path": "deploy.scen.json"
         },
         {
             "step": "scCall",
-            "txId": "oracle-submit",
+            "txId": "oracle-stake",
             "tx": {
                 "from": "address:oracle",
                 "to": "sc:price_aggregator",
-                "value": "0",
-                "function": "submit",
-                "arguments": [
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "u64:0",
-                    "10",
-                    "6"
-                ],
+                "value": "100",
+                "function": "stake",
+                "arguments": [],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
@@ -32,19 +26,13 @@
         },
         {
             "step": "scCall",
-            "txId": "oracle-submit",
+            "txId": "oracle-stake",
             "tx": {
                 "from": "address:oracle2",
                 "to": "sc:price_aggregator",
-                "value": "0",
-                "function": "submit",
-                "arguments": [
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "u64:0",
-                    "10",
-                    "6"
-                ],
+                "value": "100",
+                "function": "stake",
+                "arguments": [],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },
@@ -57,19 +45,13 @@
         },
         {
             "step": "scCall",
-            "txId": "oracle-submit",
+            "txId": "oracle-stake",
             "tx": {
                 "from": "address:oracle3",
                 "to": "sc:price_aggregator",
-                "value": "0",
-                "function": "submit",
-                "arguments": [
-                    "str:GWEI",
-                    "str:BRIDGE",
-                    "u64:0",
-                    "10",
-                    "6"
-                ],
+                "value": "100",
+                "function": "stake",
+                "arguments": [],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
             },

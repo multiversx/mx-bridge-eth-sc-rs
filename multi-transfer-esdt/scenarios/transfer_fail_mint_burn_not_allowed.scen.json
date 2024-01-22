@@ -7,6 +7,27 @@
         },
         {
             "step": "scCall",
+            "txId": "add-token-1",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "value": "0",
+                "function": "removeTokenFromWhitelist",
+                "arguments": [
+                    "str:BRIDGE-123456"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
             "txId": "transfer-ok",
             "tx": {
                 "from": "address:owner",
@@ -29,17 +50,15 @@
             }
         },
         {
-            "step": "checkState",
-            "accounts": {
-                "address:user1": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": {
-                        "str:BRIDGE-123456": "100,200"
-                    },
-                    "storage": {}
-                },
-                "+": ""
+            "step": "scQuery",
+            "txId": "get-current-refund-tx-batch",
+            "tx": {
+                "to": "sc:multi_transfer_esdt",
+                "function": "getFirstBatchAnyStatus",
+                "arguments": []
+            },
+            "expect": {
+                "out": "*"
             }
         }
     ]

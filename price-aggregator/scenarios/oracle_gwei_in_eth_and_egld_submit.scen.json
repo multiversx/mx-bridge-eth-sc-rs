@@ -15,8 +15,10 @@
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
-                    "str:ETH",
-                    "1"
+                    "str:BRIDGE",
+                    "u64:0",
+                    "1",
+                    "6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
@@ -38,8 +40,10 @@
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
-                    "str:EGLD",
-                    "10"
+                    "str:WEGLD-123456",
+                    "u64:0",
+                    "10",
+                    "6"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"

@@ -22,8 +22,9 @@
                     "1",
                     "str:GWEI",
                     "str:BRIDGE",
+                    "0",
                     "10",
-                    "0"
+                    "6"
                 ]
             }
         },
@@ -47,8 +48,9 @@
                     "1",
                     "str:GWEI",
                     "str:BRIDGE",
+                    "0",
                     "10",
-                    "0"
+                    "6"
                 ],
                 "status": "0",
                 "message": "",
@@ -66,7 +68,7 @@
                 "function": "latestPriceFeedOptional",
                 "arguments": [
                     "str:RAND-TOKEN",
-                    "str:EGLD"
+                    "str:WEGLD-123456"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"

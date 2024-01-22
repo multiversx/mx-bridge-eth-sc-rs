@@ -5,14 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           62
+// Endpoints:                           64
 // Async Callback (empty):               1
-// Total number of exported functions:  64
+// Total number of exported functions:  66
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
+#![allow(internal_features)]
 #![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
@@ -41,10 +39,12 @@ multiversx_sc_wasm_adapter::endpoints! {
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
-        changeElrondToEthGasLimit => change_elrond_to_eth_gas_limit
+        changeElrondToEthGasLimit => change_multiversx_to_eth_gas_limit
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
         changeTokenTicker => change_token_ticker
         esdtSafeAddTokenToWhitelist => esdt_safe_add_token_to_whitelist
+        setMultiTransferOnEsdtSafe => set_multi_transfer_on_esdt_safe
+        setEsdtSafeOnMultiTransfer => set_esdt_safe_on_multi_transfer
         esdtSafeRemoveTokenFromWhitelist => esdt_safe_remove_token_from_whitelist
         esdtSafeSetMaxTxBatchSize => esdt_safe_set_max_tx_batch_size
         esdtSafeSetMaxTxBatchBlockDuration => esdt_safe_set_max_tx_batch_block_duration

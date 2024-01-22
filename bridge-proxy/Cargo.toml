@@ -15,10 +15,14 @@ path = "../common/transaction"
 path = "../common/eth-address"
 
 [dependencies.multiversx-sc]
-version = "0.45.2"
+version = "0.46.1"
+
+[dependencies.adder]
+git = "https://github.com/multiversx/mx-contracts-rs"
+rev = "64e8926"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.45.2"
+version = "0.46.1"

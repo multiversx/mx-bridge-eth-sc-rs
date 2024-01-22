@@ -18,6 +18,27 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {}
+                },
+                "sc:esdt-safe": {
+                    "nonce": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "1,000,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WRAPPED-123456": {
+                            "balance": "1,000,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "code": "file:../../esdt-safe/output/esdt-safe.wasm",
+                    "owner": "address:owner"
                 }
             },
             "newAddresses": [
@@ -30,6 +51,11 @@
                     "creatorAddress": "address:owner",
                     "creatorNonce": "1",
                     "newAddress": "sc:bridge-proxy"
+                },
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "2",
+                    "newAddress": "sc:esdt-safe"
                 }
             ]
         },
@@ -53,12 +79,14 @@
         },
         {
             "step": "scDeploy",
-            "txId": "deploy",
+            "txId": "deploy-bridge-proxy",
             "tx": {
                 "from": "address:owner",
                 "contractCode": "file:../../bridge-proxy/output/bridge-proxy.wasm",
                 "value": "0",
-                "arguments": ["sc:multi_transfer_esdt"],
+                "arguments": [
+                    "sc:multi_transfer_esdt"
+                ],
                 "gasLimit": "20,000,000",
                 "gasPrice": "0"
             },
@@ -90,10 +118,141 @@
             }
         },
         {
+            "step": "scCall",
+            "txId": "add-token-1",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "value": "0",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "str:BRIDGE-123456",
+                    "str:BRIDGE",
+                    "true",
+                    "150,000"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-token-1",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "value": "0",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "str:WRAPPED-123456",
+                    "str:WRAPPED",
+                    "true",
+                    "1,000"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "set-multi-transfer-contract-address",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "value": "0",
+                "function": "setMultiTransferContractAddress",
+                "arguments": [
+                    "sc:multi_transfer_esdt"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-bridge-proxy-to-multi-transfer",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:multi_transfer_esdt",
+                "function": "setEsdtSafeContractAddress",
+                "arguments": [
+                    "sc:esdt-safe"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "set-accumulated-burned-tokens",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "function": "setAccumulatedBurnedTokens",
+                "arguments": [
+                    "str:BRIDGE-123456",
+                    "1_000_000"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "set-accumulated-burned-tokens",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "function": "setAccumulatedBurnedTokens",
+                "arguments": [
+                    "str:WRAPPED-123456",
+                    "1_000"
+                ],
+                "gasLimit": "5,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "3",
+                    "nonce": "9",
                     "balance": "0",
                     "storage": {}
                 },
@@ -108,7 +267,7 @@
                     "storage": {}
                 },
                 "sc:multi_transfer_esdt": {
-                    "code":"file:../output/multi-transfer-esdt.wasm",
+                    "code": "file:../output/multi-transfer-esdt.wasm",
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
@@ -116,13 +275,36 @@
                         "str:lastBatchId": "1",
                         "str:bridgeProxyContractAddress": "sc:bridge-proxy",
                         "str:maxTxBatchSize": "10",
-                        "str:maxTxBatchBlockDuration": "0xffffffffffffffff"
+                        "str:maxTxBatchBlockDuration": "0xffffffffffffffff",
+                        "str:esdtSafeContractAddress": "sc:esdt-safe"
                     }
                 },
                 "sc:bridge-proxy": {
-                    "code":"file:../../bridge-proxy/output/bridge-proxy.wasm",
+                    "code": "file:../../bridge-proxy/output/bridge-proxy.wasm",
                     "nonce": "0",
                     "balance": "0",
+                    "storage": "*"
+                },
+                "sc:esdt-safe": {
+                    "code": "file:../../esdt-safe/output/esdt-safe.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "1,000,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:WRAPPED-123456": {
+                            "balance": "1,000,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
                     "storage": "*"
                 }
             }
@@ -134,26 +316,13 @@
                 "sc:multi_transfer_esdt": {
                     "nonce": "0",
                     "balance": "0",
-                    "esdt": {
-                        "str:BRIDGE-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalMint"
-                            ]
-                        },
-                        "str:WRAPPED-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalMint"
-                            ]
-                        }
-                    },
                     "storage": {
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:bridgeProxyContractAddress": "sc:bridge-proxy"
+                        "str:bridgeProxyContractAddress": "sc:bridge-proxy",
+                        "str:esdtSafeContractAddress": "sc:esdt-safe"
                     },
                     "code": "file:../output/multi-transfer-esdt.wasm",
                     "owner": "address:owner"

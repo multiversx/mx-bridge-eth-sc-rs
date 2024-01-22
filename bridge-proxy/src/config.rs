@@ -1,13 +1,16 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
-use transaction::{EthTransactionPayment, EthTransaction};
+use transaction::{EthTransaction, EthTransactionPayment};
 
 #[multiversx_sc::module]
 pub trait ConfigModule {
     #[only_owner]
     #[endpoint(setupMultiTransfer)]
-    fn set_multi_transfer_contract_address(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
+    fn set_multi_transfer_contract_address(
+        &self,
+        opt_multi_transfer_address: OptionalValue<ManagedAddress>,
+    ) {
         match opt_multi_transfer_address {
             OptionalValue::Some(sc_addr) => {
                 require!(
@@ -25,7 +28,7 @@ pub trait ConfigModule {
         let eth_tx_list = self.eth_transaction_list();
         match eth_tx_list.get_node_by_id(id) {
             Some(tx) => tx.get_value_cloned().eth_tx,
-            None => sc_panic!("No transaction with this id!")
+            None => sc_panic!("No transaction with this id!"),
         }
     }
 

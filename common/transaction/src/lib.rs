@@ -26,7 +26,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone, PartialEq)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
@@ -35,9 +35,10 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub tx_nonce: TxNonce,
     pub data: ManagedBuffer<M>,
     pub gas_limit: u64,
+    pub args: ManagedVec<M, ManagedBuffer<M>>,
 }
 
-pub type EthTxAsMultiValue<M> = MultiValue7<
+pub type EthTxAsMultiValue<M> = MultiValue8<
     EthAddress<M>,
     ManagedAddress<M>,
     TokenIdentifier<M>,
@@ -45,9 +46,10 @@ pub type EthTxAsMultiValue<M> = MultiValue7<
     TxNonce,
     ManagedBuffer<M>,
     u64,
+    ManagedVec<M, ManagedBuffer<M>>,
 >;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone, PartialEq)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone)]
 pub struct EthTransactionPayment<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub nonce: u64,
