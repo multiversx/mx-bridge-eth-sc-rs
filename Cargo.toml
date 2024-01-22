@@ -1,5 +1,7 @@
 [workspace]
 members = [
+  "bridge-proxy",
+    "bridge-proxy/meta",
   "esdt-safe",
   "esdt-safe/meta",
   "multi-transfer-esdt",

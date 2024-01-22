@@ -67,6 +67,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
+        mint_burn_allowed: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
@@ -76,6 +77,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 .set(&default_price_per_gas_unit);
         }
 
+        self.mint_burn_allowed(&token_id).set(mint_burn_allowed);
         let _ = self.token_whitelist().insert(token_id);
     }
 
@@ -85,10 +87,55 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         self.token_ticker(&token_id).clear();
         self.default_price_per_gas_unit(&token_id).clear();
 
-        let _ = self.token_whitelist().swap_remove(&token_id);
+        self.mint_burn_allowed(&token_id).clear();
+        self.token_whitelist().swap_remove(&token_id);
+    }
+
+    #[endpoint(mintToken)]
+    fn mint_token(&self, token_id: &TokenIdentifier, amount: &BigUint) -> EsdtTokenPayment {
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.multi_transfer_contract_address().get(),
+            "Only MultiTransfer can get tokens"
+        );
+
+        if self.mint_burn_allowed(token_id).get() {
+            if !self
+                .blockchain()
+                .get_esdt_local_roles(token_id)
+                .has_role(&EsdtLocalRole::Mint)
+            {
+                return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
+            }
+
+            let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
+            accumulated_burned_tokens_mapper.update(|burned| {
+                require!(*burned >= *amount, "Not enough accumulated burned tokens!");
+                *burned -= amount;
+            });
+            self.mint_esdt_token(token_id, amount);
+        }
+
+        let current_balance =
+            self.blockchain()
+                .get_esdt_balance(&self.blockchain().get_sc_address(), token_id, 0);
+        if &current_balance >= amount {
+            self.send().direct_esdt(&caller, token_id, 0, amount);
+        }  else {
+             return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
+        }
+        EsdtTokenPayment::new(token_id.clone(), 0, amount.clone())
     }
 
     // private
+
+    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        self.send().esdt_local_burn(token_id, 0, amount);
+    }
+
+    fn mint_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        self.send().esdt_local_mint(token_id, 0, amount);
+    }
 
     fn require_token_in_whitelist(&self, token_id: &TokenIdentifier) {
         require!(
@@ -110,11 +157,36 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         roles.has_role(role)
     }
 
+    #[only_owner]
+    #[endpoint(setMultiTransferContractAddress)]
+    fn set_multi_transfer_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                self.multi_transfer_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.multi_transfer_contract_address().clear(),
+        }
+    }
+
+    #[only_owner]
+    #[endpoint(setAccumulatedBurnedTokens)]
+    fn set_accumulated_burned_tokens(&self, token_id: &TokenIdentifier, value: BigUint) {
+        self.accumulated_burned_tokens(token_id).set_if_empty(value);
+    }
+
     // storage
 
     #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[view(isMintBurnAllowed)]
+    #[storage_mapper("mintBurnAllowed")]
+    fn mint_burn_allowed(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
+
+    #[view(getMultiTransferContractAddress)]
+    #[storage_mapper("multiTransferContractAddress")]
+    fn multi_transfer_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getAccumulatedTransactionFees)]
     #[storage_mapper("accumulatedTransactionFees")]
@@ -122,4 +194,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
+
+    #[view(getAccumulatedBurnedTokens)]
+    #[storage_mapper("accumulatedBurnedTokens")]
+    fn accumulated_burned_tokens(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 }

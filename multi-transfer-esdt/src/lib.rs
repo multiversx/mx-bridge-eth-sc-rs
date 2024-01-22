@@ -2,31 +2,40 @@
 
 multiversx_sc::imports!();
 
-use transaction::{EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields};
+use token_module::ProxyTrait as OtherProxyTrait;
+use transaction::{
+    EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields,
+};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
+const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
 {
     #[init]
-    fn init(&self, opt_wrapping_contract_address: OptionalValue<ManagedAddress>) {
+    fn init(&self) {
         self.max_tx_batch_size()
             .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
             .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-
-        self.set_wrapping_contract_address(opt_wrapping_contract_address);
-
         // batch ID 0 is considered invalid
         self.first_batch_id().set_if_empty(1);
         self.last_batch_id().set_if_empty(1);
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(&self) {
+        self.max_tx_batch_size()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_block_duration()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
+    }
 
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
@@ -36,7 +45,7 @@ pub trait MultiTransferEsdt:
         transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
-        let mut valid_dest_addresses_list = ManagedVec::new();
+        let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
@@ -44,17 +53,18 @@ pub trait MultiTransferEsdt:
 
         for eth_tx in transfers {
             let mut must_refund = false;
-            if eth_tx.to.is_zero() || self.blockchain().is_smart_contract(&eth_tx.to) {
+            if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if !self.is_local_role_set(&eth_tx.token_id, &EsdtLocalRole::Mint) {
-                self.transfer_failed_invalid_token(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
                 self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
+                must_refund = true;
+            } else if self.blockchain().is_smart_contract(&eth_tx.to)
+                && (eth_tx.data.is_empty() || eth_tx.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL)
+            {
                 must_refund = true;
             }
 
@@ -65,18 +75,27 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            self.send()
-                .esdt_local_mint(&eth_tx.token_id, 0, &eth_tx.amount);
+            let minted_token: EsdtTokenPayment = self
+                .get_esdt_safe_contract_proxy_instance()
+                .mint_token(&eth_tx.token_id, &eth_tx.amount)
+                .execute_on_dest_context();
+
+            if minted_token.amount == BigUint::zero() {
+                let refund_tx = self.convert_to_refund_tx(eth_tx);
+                refund_tx_list.push(refund_tx);
+
+                continue;
+            }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
-            valid_dest_addresses_list.push(eth_tx.to);
-            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            valid_tx_list.push(eth_tx.clone());
+            valid_payments_list.push(minted_token);
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
-        self.distribute_payments(valid_dest_addresses_list, payments_after_wrapping);
+        self.distribute_payments(valid_tx_list, payments_after_wrapping);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -111,6 +130,50 @@ pub trait MultiTransferEsdt:
         }
     }
 
+    #[only_owner]
+    #[endpoint(setBridgeProxyContractAddress)]
+    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid bridge proxy contract address"
+                );
+
+                self.bridge_proxy_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
+        }
+    }
+
+    #[only_owner]
+    #[endpoint(setEsdtSafeContractAddress)]
+    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                self.esdt_safe_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.esdt_safe_contract_address().clear(),
+        }
+    }
+
+    #[endpoint(getFailedTxFromBridgeProxy)]
+    fn get_failed_tx_from_bridge_proxy(&self) {
+        let mut refund_tx_list = ManagedVec::new();
+
+        let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
+        let failed_txs: MultiValueEncoded<EthTransactionPayment<Self::Api>> = self
+            .bridge_proxy(bridge_proxy_addr)
+            .refund_transactions()
+            .execute_on_dest_context();
+
+        for failed_tx in failed_txs {
+            let refund_tx = self.convert_to_refund_tx(failed_tx.eth_tx);
+            refund_tx_list.push(refund_tx);
+        }
+
+        self.add_multiple_tx_to_batch(&refund_tx_list);
+    }
     // private
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
@@ -161,12 +224,20 @@ pub trait MultiTransferEsdt:
 
     fn distribute_payments(
         &self,
-        dest_addresses: ManagedVec<ManagedAddress>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
     ) {
-        for (dest, p) in dest_addresses.iter().zip(payments.iter()) {
-            self.send()
-                .direct_esdt(&dest, &p.token_identifier, 0, &p.amount);
+        for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
+                let _: IgnoreValue = self
+                    .get_bridge_proxy_contract_proxy_instance()
+                    .deposit(&eth_tx)
+                    .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                    .execute_on_dest_context();
+            } else {
+                self.send()
+                    .direct_esdt(&eth_tx.to, &p.token_identifier, 0, &p.amount);
+            }
         }
     }
 
@@ -182,11 +253,32 @@ pub trait MultiTransferEsdt:
         self.wrapping_contract_proxy(self.wrapping_contract_address().get())
     }
 
-    // storage
+    #[proxy]
+    fn bridge_proxy(&self, sc_address: ManagedAddress) -> bridge_proxy::Proxy<Self::Api>;
 
+    fn get_bridge_proxy_contract_proxy_instance(&self) -> bridge_proxy::Proxy<Self::Api> {
+        self.bridge_proxy(self.bridge_proxy_contract_address().get())
+    }
+
+    #[proxy]
+    fn esdt_safe(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
+
+    fn get_esdt_safe_contract_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
+        self.esdt_safe(self.esdt_safe_contract_address().get())
+    }
+
+    // storage
     #[view(getWrappingContractAddress)]
     #[storage_mapper("wrappingContractAddress")]
     fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getBridgeProxyContractAddress)]
+    #[storage_mapper("bridgeProxyContractAddress")]
+    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getEsdtSafeContractAddress)]
+    #[storage_mapper("esdtSafeContractAddress")]
+    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     // events
 

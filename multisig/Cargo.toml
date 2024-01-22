@@ -33,10 +33,13 @@ path = "../esdt-safe"
 path = "../multi-transfer-esdt"
 
 [dependencies.multiversx-sc]
-version = "0.45.2"
+version = "0.46.1"
+
+[dependencies.multiversx-price-aggregator-sc]
+version = "0.46.1"
 
 [dependencies.multiversx-sc-modules]
-version = "0.45.2"
+version = "0.46.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.45.2"
+version = "0.46.1"

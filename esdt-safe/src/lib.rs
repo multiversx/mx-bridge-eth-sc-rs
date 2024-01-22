@@ -50,7 +50,27 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
+        self.fee_estimator_contract_address()
+            .set(&fee_estimator_contract_address);
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
+
+        self.max_tx_batch_size()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_block_duration()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
+
+        // set ticker for "GWEI"
+        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
+        self.token_ticker(&gwei_token_id)
+            .set(gwei_token_id.as_managed_buffer());
+
+        self.set_paused(true);
+    }
 
     /// Sets the statuses for the transactions, after they were executed on the Ethereum side.
     ///
@@ -87,8 +107,12 @@ pub trait EsdtSafe:
                     // local burn role might be removed while tx is executed
                     // tokens will remain locked forever in that case
                     // otherwise, the whole batch would fail
-                    if self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn) {
+                    if self.mint_burn_allowed(&tx.token_identifier).get()
+                        && self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn)
+                    {
                         self.burn_esdt_token(&tx.token_identifier, &tx.amount);
+                        self.accumulated_burned_tokens(&tx.token_identifier)
+                            .update(|burned| *burned += &tx.amount);
                     }
                 }
                 TransactionStatus::Rejected => {
@@ -245,10 +269,6 @@ pub trait EsdtSafe:
     }
 
     // private
-
-    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.send().esdt_local_burn(token_id, 0, amount);
-    }
 
     fn mark_refund(&self, to: &ManagedAddress, token_id: &TokenIdentifier, amount: &BigUint) {
         self.refund_amount(to, token_id)

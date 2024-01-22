@@ -1,46 +1,49 @@
+use multiversx_sc_scenario::*;
+
+fn world() -> ScenarioWorld {
+    ScenarioWorld::vm_go()
+}
 #[test]
-fn create_elrond_to_ethereum_tx_batch_go() {
-    multiversx_sc_scenario::run_go("mandos/create_elrond_to_ethereum_tx_batch.scen.json");
+fn change_token_config_go() {
+    world().run("scenarios/change_token_config.scen.json");
 }
 
 #[test]
-fn ethereum_to_elrond_tx_batch_ok_go() {
-    multiversx_sc_scenario::run_go("mandos/ethereum_to_elrond_tx_batch_ok.scen.json");
+fn create_multiversx_to_ethereum_tx_batch_go() {
+    world().run("scenarios/create_multiversx_to_ethereum_tx_batch.scen.json");
 }
 
 #[test]
-fn ethereum_to_elrond_tx_batch_rejected_go() {
-    multiversx_sc_scenario::run_go("mandos/ethereum_to_elrond_tx_batch_rejected.scen.json");
+fn ethereum_to_multiversx_tx_batch_ok_go() {
+    world().run("scenarios/ethereum_to_multiversx_tx_batch_ok.scen.json");
 }
 
 #[test]
-fn execute_elrond_to_ethereum_tx_batch_go() {
-    multiversx_sc_scenario::run_go("mandos/execute_elrond_to_ethereum_tx_batch.scen.json");
+fn ethereum_to_multiversx_tx_batch_rejected_go() {
+    world().run("scenarios/ethereum_to_multiversx_tx_batch_rejected.scen.json");
+}
+
+#[test]
+fn execute_multiversx_to_ethereum_tx_batch_go() {
+    world().run("scenarios/execute_multiversx_to_ethereum_tx_batch.scen.json");
 }
 
 #[test]
 fn get_empty_batch_go() {
-    multiversx_sc_scenario::run_go("mandos/get_empty_batch.scen.json");
+    world().run("scenarios/get_empty_batch.scen.json");
 }
 
 #[test]
-fn reject_elrond_to_ethereum_tx_batch_go() {
-    multiversx_sc_scenario::run_go("mandos/reject_elrond_to_ethereum_tx_batch.scen.json");
+fn reject_multiversx_to_ethereum_tx_batch_go() {
+    world().run("scenarios/reject_multiversx_to_ethereum_tx_batch.scen.json");
 }
 
 #[test]
 fn setup_go() {
-    multiversx_sc_scenario::run_go("mandos/setup.scen.json");
+    world().run("scenarios/setup.scen.json");
 }
 
 #[test]
 fn unstake_go() {
-    multiversx_sc_scenario::run_go("mandos/unstake.scen.json");
+    world().run("scenarios/unstake.scen.json");
 }
-
-/*
-#[test]
-fn upgrade_child_sc_go() {
-    multiversx_sc_scenario::run_go("mandos/upgrade_child_sc.scen.json");
-}
-*/

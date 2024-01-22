@@ -14,14 +14,29 @@ path = "../common/transaction"
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 
+[dependencies.eth-address]
+path = "../common/eth-address"
+
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
 [dependencies.bridged-tokens-wrapper]
 path = "../bridged-tokens-wrapper"
 
+[dependencies.bridge-proxy]
+path = "../bridge-proxy"
+
+[dependencies.esdt-safe]
+path = "../esdt-safe"
+
+[dependencies.token-module]
+path = "../common/token-module"
+
 [dependencies.multiversx-sc]
-version = "0.45.2"
+version = "0.46.1"
+
+[dependencies.multiversx-sc-modules]
+version = "0.46.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.45.2"
+version = "0.46.1"
