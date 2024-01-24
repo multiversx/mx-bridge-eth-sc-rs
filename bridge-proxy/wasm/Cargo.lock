@@ -35,6 +35,7 @@ dependencies = [
  "adder",
  "eth-address",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "transaction",
 ]
 
@@ -117,6 +118,15 @@ dependencies = [
  "quote",
  "radix_trie",
  "syn",
+]
+
+[[package]]
+name = "multiversx-sc-modules"
+version = "0.46.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c63ffaba95e630ff75981e2f5f50da64f523219b52f484234c66f3adc248885f"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]

@@ -190,6 +190,7 @@ dependencies = [
  "adder",
  "eth-address",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "transaction",
