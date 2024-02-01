@@ -171,7 +171,6 @@ fn deploy_deposit_test() {
     );
 }
 
-
 #[test]
 fn multiple_deposit_test() {
     let mut test = BridgeProxyTestState::setup();
@@ -270,5 +269,4 @@ fn multiple_deposit_test() {
             .call(test.adder_contract.sum())
             .expect_value(SingleValue::from(BigUint::from(20u32))),
     );
-
 }

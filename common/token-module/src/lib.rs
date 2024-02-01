@@ -121,8 +121,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 .get_esdt_balance(&self.blockchain().get_sc_address(), token_id, 0);
         if &current_balance >= amount {
             self.send().direct_esdt(&caller, token_id, 0, amount);
-        }  else {
-             return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
+        } else {
+            return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
         }
         EsdtTokenPayment::new(token_id.clone(), 0, amount.clone())
     }

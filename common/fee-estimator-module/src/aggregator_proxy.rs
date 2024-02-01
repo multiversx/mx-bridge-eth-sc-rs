@@ -26,7 +26,8 @@ pub struct AggregatorResult<M: ManagedTypeApi> {
 
 impl<M: ManagedTypeApi> From<AggregatorResultAsMultiValue<M>> for AggregatorResult<M> {
     fn from(multi_result: AggregatorResultAsMultiValue<M>) -> Self {
-        let (round_id, from_token_name, to_token_name, timestamp, price, decimals) = multi_result.into_tuple();
+        let (round_id, from_token_name, to_token_name, timestamp, price, decimals) =
+            multi_result.into_tuple();
 
         AggregatorResult {
             round_id,
