@@ -4,6 +4,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 use eth_address::EthAddress;
+use multiversx_sc::codec::{EncodeErrorHandler, NestedDecodeInput, TopEncodeOutput};
 
 pub mod transaction_status;
 
@@ -26,7 +27,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
+#[derive(NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
@@ -36,6 +37,68 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub data: ManagedBuffer<M>,
     pub gas_limit: u64,
     pub args: ManagedVec<M, ManagedBuffer<M>>,
+}
+
+impl<M: ManagedTypeApi> TopEncode for EthTransaction<M> {
+    fn top_encode_or_handle_err<O, H>(&self, output: O, h: H) -> Result<(), H::HandledErr>
+    where
+        O: TopEncodeOutput,
+        H: EncodeErrorHandler,
+    {
+        let mut nested_buffer = output.start_nested_encode();
+        self.from.dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        self.to.dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        self.token_id
+            .dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        self.amount
+            .dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        self.tx_nonce
+            .dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        self.data.dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        self.gas_limit
+            .dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        for arg in &self.args {
+            arg.dep_encode_or_handle_err(&mut nested_buffer, h)?;
+        }
+        output.finalize_nested_encode(nested_buffer);
+        Result::Ok(())
+    }
+}
+
+impl<M: ManagedTypeApi> TopDecode for EthTransaction<M> {
+    fn top_decode_or_handle_err<I, H>(input: I, h: H) -> Result<Self, H::HandledErr>
+    where
+        I: codec::TopDecodeInput,
+        H: codec::DecodeErrorHandler,
+    {
+        let mut nested_buffer = input.into_nested_buffer();
+        let from = EthAddress::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let to = ManagedAddress::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let token_id = TokenIdentifier::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let amount = BigUint::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let tx_nonce = TxNonce::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let data = ManagedBuffer::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let gas_limit = u64::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let mut args = ManagedVec::new();
+
+        while !nested_buffer.is_depleted() {
+            args.push(ManagedBuffer::dep_decode_or_handle_err(
+                &mut nested_buffer,
+                h,
+            )?);
+        }
+
+        Result::Ok(EthTransaction {
+            from,
+            to,
+            token_id,
+            amount,
+            tx_nonce,
+            data,
+            gas_limit,
+            args,
+        })
+    }
 }
 
 pub type EthTxAsMultiValue<M> = MultiValue8<

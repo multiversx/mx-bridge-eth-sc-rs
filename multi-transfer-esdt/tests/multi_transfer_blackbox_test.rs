@@ -14,7 +14,7 @@ use multiversx_sc::{
     storage::mappers::SingleValue,
     types::{
         Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        MultiValueEncoded, TokenIdentifier, ManagedVec,
+        ManagedVec, MultiValueEncoded, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::pause::ProxyTrait;
@@ -279,7 +279,7 @@ fn basic_setup_test() {
         tx_nonce: 1u64,
         data: ManagedBuffer::from("data"),
         gas_limit: GAS_LIMIT,
-        args: ManagedVec::new()
+        args: ManagedVec::new(),
     };
 
     test.world.check_state_step(
@@ -316,7 +316,7 @@ fn basic_transfer_test() {
         tx_nonce: 1u64,
         data: ManagedBuffer::from("data"),
         gas_limit: GAS_LIMIT,
-        args: ManagedVec::new()
+        args: ManagedVec::new(),
     };
 
     test.world.check_state_step(

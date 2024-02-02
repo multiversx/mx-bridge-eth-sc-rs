@@ -5,10 +5,12 @@ fn world() -> ScenarioWorld {
     blockchain.set_current_dir_from_workspace("esdt-safe/");
 
     blockchain.register_contract("file:output/esdt-safe.wasm", esdt_safe::ContractBuilder);
-    blockchain.register_contract("file:../price-aggregator/multiversx-price-aggregator-sc.wasm", multiversx_price_aggregator_sc::ContractBuilder);
+    blockchain.register_contract(
+        "file:../price-aggregator/multiversx-price-aggregator-sc.wasm",
+        multiversx_price_aggregator_sc::ContractBuilder,
+    );
 
     blockchain
-
 }
 
 #[test]

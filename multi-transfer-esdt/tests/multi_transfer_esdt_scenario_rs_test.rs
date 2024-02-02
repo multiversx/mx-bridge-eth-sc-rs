@@ -4,10 +4,22 @@ fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
     blockchain.set_current_dir_from_workspace("multi-transfer-esdt/");
 
-    blockchain.register_contract("file:output/multi-transfer-esdt.wasm", multi_transfer_esdt::ContractBuilder);
-    blockchain.register_contract("file:../esdt-safe/output/esdt-safe.wasm", esdt_safe::ContractBuilder);
-    blockchain.register_contract("file:../bridge-proxy/output/bridge-proxy.wasm", bridge_proxy::ContractBuilder);
-    blockchain.register_contract("file:../bridged-tokens-wrapper/output/bridged-tokens-wrapper.wasm", bridged_tokens_wrapper::ContractBuilder);
+    blockchain.register_contract(
+        "file:output/multi-transfer-esdt.wasm",
+        multi_transfer_esdt::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "file:../esdt-safe/output/esdt-safe.wasm",
+        esdt_safe::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "file:../bridge-proxy/output/bridge-proxy.wasm",
+        bridge_proxy::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "file:../bridged-tokens-wrapper/output/bridged-tokens-wrapper.wasm",
+        bridged_tokens_wrapper::ContractBuilder,
+    );
 
     blockchain
 }

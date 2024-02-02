@@ -5,9 +5,18 @@ fn world() -> ScenarioWorld {
     blockchain.set_current_dir_from_workspace("multisig/");
 
     blockchain.register_contract("file:output/multisig.wasm", multisig::ContractBuilder);
-    blockchain.register_contract("file:../multi-transfer-esdt/output/multi-transfer-esdt.wasm", multi_transfer_esdt::ContractBuilder);
-    blockchain.register_contract("file:../esdt-safe/output/esdt-safe.wasm", esdt_safe::ContractBuilder);
-    blockchain.register_contract("file:../price-aggregator/multiversx-price-aggregator-sc.wasm", multiversx_price_aggregator_sc::ContractBuilder);
+    blockchain.register_contract(
+        "file:../multi-transfer-esdt/output/multi-transfer-esdt.wasm",
+        multi_transfer_esdt::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "file:../esdt-safe/output/esdt-safe.wasm",
+        esdt_safe::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "file:../price-aggregator/multiversx-price-aggregator-sc.wasm",
+        multiversx_price_aggregator_sc::ContractBuilder,
+    );
 
     blockchain
 }
