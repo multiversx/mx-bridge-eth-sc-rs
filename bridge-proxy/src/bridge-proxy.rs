@@ -8,7 +8,9 @@ pub mod config;
 use transaction::{EthTransaction, EthTransactionPayment};
 
 #[multiversx_sc::contract]
-pub trait BridgeProxyContract: config::ConfigModule {
+pub trait BridgeProxyContract: 
+    config::ConfigModule 
+    + multiversx_sc_modules::pause::PauseModule {
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
         self.set_multi_transfer_contract_address(opt_multi_transfer_address);
@@ -29,6 +31,7 @@ pub trait BridgeProxyContract: config::ConfigModule {
 
     #[endpoint(executeWithAsnyc)]
     fn execute_with_async(&self, tx_id: u32) {
+        require!(self.not_paused(), "Contract is paused");
         let tx_node = self
             .eth_transaction_list()
             .remove_node_by_id(tx_id)

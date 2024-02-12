@@ -5,12 +5,14 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                            8
+// Endpoints:                           11
 // Async Callback:                       1
-// Total number of exported functions:  10
+// Total number of exported functions:  13
 
 #![no_std]
-#![allow(internal_features)]
+
+// Configuration that works with rustc < 1.73.0.
+// TODO: Recommended rustc version: 1.73.0 or newer.
 #![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
@@ -28,6 +30,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getMultiTransferAddress => multi_transfer_address
         getEthTransactionList => eth_transaction_list
         getEthFailedTransactionList => eth_failed_transaction_list
+        pause => pause_endpoint
+        unpause => unpause_endpoint
+        isPaused => paused_status
     )
 }
 
