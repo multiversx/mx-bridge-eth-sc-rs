@@ -35,6 +35,7 @@ dependencies = [
  "adder",
  "eth-address",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "transaction",
 ]
 
