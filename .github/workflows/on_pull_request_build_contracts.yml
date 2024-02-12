@@ -12,3 +12,4 @@ jobs:
     with:
       image_tag: next
       package_whole_project_src: true
+      skip_preliminary_checks: true
