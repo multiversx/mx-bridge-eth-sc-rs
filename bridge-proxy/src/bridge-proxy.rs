@@ -51,12 +51,9 @@ pub trait BridgeProxyContract: config::ConfigModule {
         #[call_result] result: ManagedAsyncCallResult<()>,
         tx: &EthTransactionPayment<Self::Api>,
     ) {
-        match result {
-            ManagedAsyncCallResult::Ok(_) => {}
-            ManagedAsyncCallResult::Err(_) => {
-                self.eth_failed_transaction_list().push_back(tx.clone());
-            }
-        }
+        if result.is_err() {
+            self.eth_failed_transaction_list().push_back(tx.clone());
+        }   
     }
 
     #[endpoint(refundTransactions)]
