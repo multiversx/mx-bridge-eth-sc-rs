@@ -10,5 +10,5 @@ jobs:
   build:
     uses: multiversx/mx-sc-actions/.github/workflows/reproducible-build.yml@v2.3.5
     with:
-      image_tag: next
+      image_tag: v6.1.0
       package_whole_project_src: true
