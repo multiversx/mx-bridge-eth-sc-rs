@@ -49,8 +49,14 @@ pub trait BridgeProxyContract:
     }
 
     #[callback]
-    fn failed_execution_callback(&self, tx: &EthTransactionPayment<Self::Api>) {
-        self.eth_failed_transaction_list().push_back(tx.clone());
+    fn failed_execution_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        tx: &EthTransactionPayment<Self::Api>,
+    ) {
+        if result.is_err() {
+            self.eth_failed_transaction_list().push_back(tx.clone());
+        }   
     }
 
     #[endpoint(refundTransactions)]
