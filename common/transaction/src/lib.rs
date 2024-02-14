@@ -77,16 +77,25 @@ impl<M: ManagedTypeApi> TopDecode for EthTransaction<M> {
         let token_id = TokenIdentifier::dep_decode_or_handle_err(&mut nested_buffer, h)?;
         let amount = BigUint::dep_decode_or_handle_err(&mut nested_buffer, h)?;
         let tx_nonce = TxNonce::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-        let data = ManagedBuffer::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-        let gas_limit = u64::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+
+        let mut data = ManagedBuffer::new();
+        let mut gas_limit = 0u64;
         let mut args = ManagedVec::new();
 
-        while !nested_buffer.is_depleted() {
-            args.push(ManagedBuffer::dep_decode_or_handle_err(
-                &mut nested_buffer,
-                h,
-            )?);
+        if !nested_buffer.is_depleted() {
+            data = ManagedBuffer::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+            gas_limit = u64::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+            args = ManagedVec::new();
+    
+            while !nested_buffer.is_depleted() {
+                args.push(ManagedBuffer::dep_decode_or_handle_err(
+                    &mut nested_buffer,
+                    h,
+                )?);
+            }
+    
         }
+
 
         Result::Ok(EthTransaction {
             from,
