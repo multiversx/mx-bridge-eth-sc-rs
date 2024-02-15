@@ -42,6 +42,11 @@ fn ethereum_to_multiversx_tx_batch_rejected_rs() {
 }
 
 #[test]
+fn ethereum_to_multiversx_tx_batch_without_data_rs() {
+    world().run("scenarios/ethereum_to_multiversx_tx_batch_without_data.scen.json");
+}
+
+#[test]
 fn execute_multiversx_to_ethereum_tx_batch_rs() {
     world().run("scenarios/execute_multiversx_to_ethereum_tx_batch.scen.json");
 }

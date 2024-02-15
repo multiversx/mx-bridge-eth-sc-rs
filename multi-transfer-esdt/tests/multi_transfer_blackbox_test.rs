@@ -27,7 +27,7 @@ use multiversx_sc_scenario::{
 
 use eth_address::*;
 use token_module::ProxyTrait as _;
-use transaction::{EthTransaction, EthTransactionPayment};
+use transaction::{CallData, EthTransaction, EthTransactionPayment};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
 const BRIDGE_TOKEN_ID_EXPR: &str = "str:BRIDGE-123456";
@@ -277,9 +277,11 @@ fn basic_setup_test() {
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
-        data: ManagedBuffer::from("data"),
-        gas_limit: GAS_LIMIT,
-        args: ManagedVec::new(),
+        call_data: Some(CallData {
+            endpoint: ManagedBuffer::from("data"),
+            gas_limit: GAS_LIMIT,
+            args: ManagedVec::new(),
+        }),
     };
 
     test.world.check_state_step(
@@ -314,9 +316,11 @@ fn basic_transfer_test() {
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        data: ManagedBuffer::from("data"),
-        gas_limit: GAS_LIMIT,
-        args: ManagedVec::new(),
+        call_data: Some(CallData {
+            endpoint: ManagedBuffer::from("data"),
+            gas_limit: GAS_LIMIT,
+            args: ManagedVec::new(),
+        }),
     };
 
     test.world.check_state_step(
