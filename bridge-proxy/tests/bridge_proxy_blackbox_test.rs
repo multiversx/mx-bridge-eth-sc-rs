@@ -27,7 +27,7 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
-use transaction::{EthTransaction, EthTransactionPayment};
+use transaction::{CallData, EthTransaction, EthTransactionPayment};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
 const GAS_LIMIT: u64 = 1_000_000;
@@ -131,9 +131,11 @@ fn deploy_deposit_test() {
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
-        data: ManagedBuffer::from(b"add"),
-        gas_limit: GAS_LIMIT,
-        args,
+        call_data: Some(CallData {
+            endpoint: ManagedBuffer::from(b"add"),
+            gas_limit: GAS_LIMIT,
+            args,
+        }),
     };
 
     test.world.set_state_step(SetStateStep::new().put_account(
@@ -188,9 +190,11 @@ fn multiple_deposit_test() {
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
-        data: ManagedBuffer::from(b"add"),
-        gas_limit: GAS_LIMIT,
-        args: args1,
+        call_data: Some(CallData {
+            endpoint: ManagedBuffer::from(b"add"),
+            gas_limit: GAS_LIMIT,
+            args: args1,
+        }),
     };
 
     let mut args2 = ManagedVec::new();
@@ -202,9 +206,11 @@ fn multiple_deposit_test() {
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::zero(),
         tx_nonce: 1u64,
-        data: ManagedBuffer::from(b"add"),
-        gas_limit: GAS_LIMIT,
-        args: args2,
+        call_data: Some(CallData {
+            endpoint: ManagedBuffer::from(b"add"),
+            gas_limit: GAS_LIMIT,
+            args: args2,
+        }),
     };
 
     test.world.set_state_step(SetStateStep::new().put_account(

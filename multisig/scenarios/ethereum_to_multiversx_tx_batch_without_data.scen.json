@@ -1,0 +1,73 @@
+{
+    "name": "create ethereum to MultiversX tx batch",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "setup.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "propose-transfer-ok",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "proposeMultiTransferEsdtBatch",
+                "arguments": [
+                    "1",
+                    "0x0102030405060708091011121314151617181920",
+                    "address:user",
+                    "str:WEGLD-123456",
+                    "76,000,000,000",
+                    "1",
+                    "0x",
+                    "0x0102030405060708091011121314151617181920",
+                    "address:user",
+                    "str:ETH-123456",
+                    "76,000,000,000",
+                    "2",
+                    "0x"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "1"
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-current-tx-batch",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "wasTransferActionProposed",
+                "arguments": [
+                    "1",
+                    "0x0102030405060708091011121314151617181920",
+                    "address:user",
+                    "str:WEGLD-123456",
+                    "76,000,000,000",
+                    "1",
+                    "0x",
+                    "0x0102030405060708091011121314151617181920",
+                    "address:user",
+                    "str:ETH-123456",
+                    "76,000,000,000",
+                    "2",
+                    "0x"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "1"
+                ]
+            }
+        }
+    ]
+}

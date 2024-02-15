@@ -8,9 +8,9 @@ pub mod config;
 use transaction::{EthTransaction, EthTransactionPayment};
 
 #[multiversx_sc::contract]
-pub trait BridgeProxyContract: 
-    config::ConfigModule 
-    + multiversx_sc_modules::pause::PauseModule {
+pub trait BridgeProxyContract:
+    config::ConfigModule + multiversx_sc_modules::pause::PauseModule
+{
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
         self.set_multi_transfer_contract_address(opt_multi_transfer_address);
@@ -38,11 +38,17 @@ pub trait BridgeProxyContract:
             .unwrap_or_else(|| sc_panic!("Invalid ETH transaction!"));
         let tx = tx_node.get_value_as_ref();
 
+        require!(tx.eth_tx.call_data.is_some(), "There is no data for a SC call!");
+
+        let call_data = unsafe { tx.eth_tx.call_data.clone().unwrap_unchecked() };
         self.send()
-            .contract_call::<IgnoreValue>(tx.eth_tx.to.clone(), tx.eth_tx.data.clone())
-            .with_raw_arguments(tx.eth_tx.args.clone().into())
+            .contract_call::<IgnoreValue>(
+                tx.eth_tx.to.clone(),
+                call_data.endpoint.clone(),
+            )
+            .with_raw_arguments(call_data.args.clone().into())
             .with_esdt_transfer((tx.token_id.clone(), tx.nonce, tx.amount.clone()))
-            .with_gas_limit(tx.eth_tx.gas_limit)
+            .with_gas_limit(call_data.gas_limit)
             .async_call()
             .with_callback(self.callbacks().failed_execution_callback(tx))
             .call_and_exit();
@@ -56,7 +62,7 @@ pub trait BridgeProxyContract:
     ) {
         if result.is_err() {
             self.eth_failed_transaction_list().push_back(tx.clone());
-        }   
+        }
     }
 
     #[endpoint(refundTransactions)]

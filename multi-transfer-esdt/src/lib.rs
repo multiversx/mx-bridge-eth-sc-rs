@@ -53,6 +53,7 @@ pub trait MultiTransferEsdt:
 
         for eth_tx in transfers {
             let mut must_refund = false;
+
             if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
@@ -63,9 +64,15 @@ pub trait MultiTransferEsdt:
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             } else if self.blockchain().is_smart_contract(&eth_tx.to)
-                && (eth_tx.data.is_empty() || eth_tx.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL)
             {
-                must_refund = true;
+                match &eth_tx.call_data {
+                    Some(call_data) => {
+                        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL {
+                            must_refund = true;
+                        }
+                    }
+                    None => must_refund = true,
+                }
             }
 
             if must_refund {
