@@ -68,6 +68,7 @@ pub trait MultiTransferEsdt:
             } else if is_dest_sc {
                 match &eth_tx.call_data {
                     Some(call_data) => {
+                        #[allow(clippy::if_same_then_else)]
                         if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
                             || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
                         {
