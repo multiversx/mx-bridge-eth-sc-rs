@@ -10,6 +10,7 @@ use transaction::{
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 600_000_000;
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -53,6 +54,7 @@ pub trait MultiTransferEsdt:
 
         for eth_tx in transfers {
             let mut must_refund = false;
+            let is_dest_sc = self.blockchain().is_smart_contract(&eth_tx.to);
 
             if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
@@ -63,16 +65,23 @@ pub trait MultiTransferEsdt:
             } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
-            } else if self.blockchain().is_smart_contract(&eth_tx.to)
-            {
+            } else if is_dest_sc {
                 match &eth_tx.call_data {
                     Some(call_data) => {
-                        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL {
+                        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
+                            || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
+                        {
+                            must_refund = true;
+                        } else if call_data.endpoint.len() > u8::MAX as usize {
+                            must_refund = true;
+                        } else if call_data.args.len() > u8::MAX as usize {
                             must_refund = true;
                         }
                     }
                     None => must_refund = true,
                 }
+            } else if is_dest_sc && eth_tx.call_data.is_some() {
+                must_refund = true;
             }
 
             if must_refund {
@@ -87,7 +96,7 @@ pub trait MultiTransferEsdt:
                 .mint_token(&eth_tx.token_id, &eth_tx.amount)
                 .execute_on_dest_context();
 
-            if minted_token.amount == BigUint::zero() {
+            if minted_token.amount == 0 {
                 let refund_tx = self.convert_to_refund_tx(eth_tx);
                 refund_tx_list.push(refund_tx);
 
