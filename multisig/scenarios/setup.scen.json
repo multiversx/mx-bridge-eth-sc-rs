@@ -323,6 +323,7 @@
                     "str:WEGLD-123456",
                     "str:WEGLD",
                     "true",
+                    "false",
                     "500,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -347,6 +348,7 @@
                     "str:ETH-123456",
                     "str:ETH",
                     "true",
+                    "false",
                     "500,000"
                 ],
                 "gasLimit": "50,000,000",

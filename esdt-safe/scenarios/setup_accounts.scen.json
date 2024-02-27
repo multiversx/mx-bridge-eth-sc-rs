@@ -70,7 +70,8 @@
                 "arguments": [
                     "str:BRIDGE-123456",
                     "str:BRIDGE",
-                    "true"
+                    "true",
+                    "false"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"

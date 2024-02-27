@@ -225,13 +225,13 @@ pub trait EsdtSafe:
             nonce: tx_nonce,
             from: caller.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
-            token_identifier: payment_token,
-            amount: actual_bridged_amount,
+            token_identifier: payment_token.clone(),
+            amount: actual_bridged_amount.clone(),
             is_refund_tx: false,
         };
 
         let batch_id = self.add_to_batch(tx);
-        self.create_transaction_event(batch_id, tx_nonce);
+        self.create_transaction_event(batch_id, tx_nonce, payment_token, actual_bridged_amount);
     }
 
     /// Claim funds for failed Elrond -> Ethereum transactions.
@@ -247,6 +247,7 @@ pub trait EsdtSafe:
         self.send()
             .direct_esdt(&caller, &token_id, 0, &refund_amount);
 
+        self.claim_refund_transaction_event(&token_id);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
@@ -278,7 +279,13 @@ pub trait EsdtSafe:
     // events
 
     #[event("createTransactionEvent")]
-    fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn create_transaction_event(
+        &self, 
+        #[indexed] batch_id: u64, 
+        #[indexed] tx_id: u64, 
+        #[indexed] token_id: TokenIdentifier, 
+        #[indexed] amount: BigUint,
+    );
 
     #[event("addRefundTransactionEvent")]
     fn add_refund_transaction_event(
@@ -286,6 +293,12 @@ pub trait EsdtSafe:
         #[indexed] batch_id: u64,
         #[indexed] tx_id: u64,
         #[indexed] original_tx_id: u64,
+    );
+
+    #[event("claimRefundTransactionEvent")]
+    fn claim_refund_transaction_event(
+        &self,
+        #[indexed] token_id: &TokenIdentifier, 
     );
 
     #[event("setStatusEvent")]

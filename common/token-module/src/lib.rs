@@ -68,6 +68,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
         mint_burn_allowed: bool,
+        is_native_token: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
@@ -78,7 +79,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         }
 
         self.mint_burn_allowed(&token_id).set(mint_burn_allowed);
-        let _ = self.token_whitelist().insert(token_id);
+        let _ = self.token_whitelist().insert(token_id.clone());
+        if is_native_token {
+            let _ = self.token_native().insert(token_id);
+        }
     }
 
     #[only_owner]
@@ -89,6 +93,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
         self.mint_burn_allowed(&token_id).clear();
         self.token_whitelist().swap_remove(&token_id);
+        self.token_native().swap_remove(&token_id);
     }
 
     #[endpoint(mintToken)]
@@ -108,11 +113,13 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
             }
 
-            let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
-            accumulated_burned_tokens_mapper.update(|burned| {
-                require!(*burned >= *amount, "Not enough accumulated burned tokens!");
-                *burned -= amount;
-            });
+            if !self.token_native().contains(token_id) {
+                let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
+                accumulated_burned_tokens_mapper.update(|burned| {
+                    require!(*burned >= *amount, "Not enough accumulated burned tokens!");
+                    *burned -= amount;
+                });
+            }
             self.mint_esdt_token(token_id, amount);
         }
 
@@ -179,6 +186,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[view(getAllKnownTokens)]
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
+
+    #[view(getAllNativeTokens)]
+    #[storage_mapper("nativeTokens")]
+    fn token_native(&self) -> UnorderedSetMapper<TokenIdentifier>;
 
     #[view(isMintBurnAllowed)]
     #[storage_mapper("mintBurnAllowed")]

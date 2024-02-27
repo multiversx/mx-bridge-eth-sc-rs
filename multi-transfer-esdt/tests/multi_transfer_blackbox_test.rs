@@ -240,6 +240,7 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
                         TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
                         "BRIDGE",
                         true,
+                        false,
                         BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT),
                     )),
             )
