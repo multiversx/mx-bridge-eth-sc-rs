@@ -65,10 +65,6 @@ impl<M: ManagedTypeApi> NestedDecode for CallData<M> {
             args.push(arg);
         }
 
-        if !input.is_depleted() {
-            return core::result::Result::Err(DecodeError::from("Input too long"));
-        }
-
         core::result::Result::Ok(Self {
             endpoint: endpoint_name,
             gas_limit,
