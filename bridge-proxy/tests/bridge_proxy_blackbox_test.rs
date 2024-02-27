@@ -27,7 +27,7 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
-use transaction::{CallData, EthTransaction, EthTransactionPayment};
+use transaction::{call_data::CallData, EthTransaction, EthTransactionPayment};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
 const GAS_LIMIT: u64 = 1_000_000;

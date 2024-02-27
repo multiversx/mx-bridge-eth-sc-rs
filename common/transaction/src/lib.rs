@@ -3,7 +3,11 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+use call_data::CallData;
 use eth_address::EthAddress;
+
+pub mod call_data;
+pub mod custom_buffer;
 pub mod transaction_status;
 
 // revert protection
@@ -25,24 +29,7 @@ pub type TxAsMultiValue<M> = MultiValue6<
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
-pub struct CallData<M: ManagedTypeApi> {
-    pub endpoint: ManagedBuffer<M>,
-    pub gas_limit: u64,
-    pub args: ManagedVec<M, ManagedBuffer<M>>,
-}
-
-impl<M: ManagedTypeApi> Default for CallData<M> {
-    #[inline]
-    fn default() -> Self {
-        Self {
-            endpoint: ManagedBuffer::new(),
-            gas_limit: 0,
-            args: ManagedVec::new(),
-        }
-    }
-}
-#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
