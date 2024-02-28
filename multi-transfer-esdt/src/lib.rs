@@ -61,7 +61,7 @@ pub trait MultiTransferEsdt:
             } else if is_dest_sc {
                 match &eth_tx.call_data {
                     Some(call_data) => {
-                        if self.must_refund_tx_with_call_data(&call_data) {
+                        if self.must_refund_tx_with_call_data(call_data) {
                             must_refund = true;
                         }
                     }
