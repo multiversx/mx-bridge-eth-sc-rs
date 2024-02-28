@@ -20,9 +20,9 @@ version = "=0.47.4"
 [dependencies.multiversx-sc-modules]
 version = "=0.47.4"
 
-[dependencies.adder]
+[dev-dependencies.adder]
 git = "https://github.com/multiversx/mx-contracts-rs"
-rev = "64e8926"
+rev = "8df9f67"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
