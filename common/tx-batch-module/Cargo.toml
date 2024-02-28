@@ -2,13 +2,13 @@
 name = "tx-batch-module"
 version = "0.0.0"
 authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies.multiversx-sc]
-version = "=0.46.1"
+version = "=0.47.4"
 
 [dependencies.transaction]
 path = "../transaction"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.46.1"
+version = "=0.47.4"

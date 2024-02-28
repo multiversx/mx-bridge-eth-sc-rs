@@ -2,7 +2,7 @@
 name = "multi-transfer-esdt"
 version = "0.0.0"
 authors = ["you"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [lib]
@@ -33,10 +33,10 @@ path = "../esdt-safe"
 path = "../common/token-module"
 
 [dependencies.multiversx-sc]
-version = "=0.46.1"
+version = "=0.47.4"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.46.1"
+version = "=0.47.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.46.1"
+version = "=0.47.4"

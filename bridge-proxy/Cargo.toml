@@ -2,7 +2,7 @@
 name = "bridge-proxy"
 version = "0.0.0"
 authors = ["Costin Carabaș <costin.carabas@gmail.com>"]
-edition = "2018"
+edition = "2021"
 publish = false
 
 [lib]
@@ -15,10 +15,10 @@ path = "../common/transaction"
 path = "../common/eth-address"
 
 [dependencies.multiversx-sc]
-version = "=0.46.1"
+version = "=0.47.4"
 
 [dependencies.multiversx-sc-modules]
-version = "0.46.1"
+version = "=0.47.4"
 
 [dependencies.adder]
 git = "https://github.com/multiversx/mx-contracts-rs"
@@ -28,4 +28,4 @@ rev = "64e8926"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.46.1"
+version = "=0.47.4"
