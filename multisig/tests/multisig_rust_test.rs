@@ -47,8 +47,7 @@ fn eth_to_mx_transfer_both_rejected_test() {
                 let mut transfers = MultiValueEncoded::new();
                 let user_eth_addr = EthAddress {
                     raw_addr: ManagedByteArray::new_from_bytes(&[
-                        01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
-                        20,
+                        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
                     ]),
                 };
                 transfers.push(
