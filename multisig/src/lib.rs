@@ -1,13 +1,13 @@
 #![no_std]
 #![allow(clippy::too_many_arguments)]
 
-mod action;
-mod multisig_general;
-mod queries;
-mod setup;
-mod storage;
-mod user_role;
-mod util;
+pub mod action;
+pub mod multisig_general;
+pub mod queries;
+pub mod setup;
+pub mod storage;
+pub mod user_role;
+pub mod util;
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};

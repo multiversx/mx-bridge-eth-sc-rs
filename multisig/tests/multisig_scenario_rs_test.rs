@@ -36,10 +36,10 @@ fn ethereum_to_multiversx_tx_batch_ok_rs() {
     world().run("scenarios/ethereum_to_multiversx_tx_batch_ok.scen.json");
 }
 
-// #[test]
-// fn ethereum_to_multiversx_tx_batch_rejected_rs() {
-//     world().run("scenarios/ethereum_to_multiversx_tx_batch_rejected.scen.json");
-// }
+#[test]
+fn ethereum_to_multiversx_tx_batch_rejected_rs() {
+    world().run("scenarios/ethereum_to_multiversx_tx_batch_rejected.scen.json");
+}
 
 #[test]
 fn ethereum_to_multiversx_tx_batch_without_data_rs() {

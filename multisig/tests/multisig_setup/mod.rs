@@ -46,6 +46,9 @@ pub struct MultisigSetup<
     pub multi_transfer_wrapper:
         ContractObjWrapper<multi_transfer_esdt::ContractObj<DebugApi>, MultiTransferBuilder>,
     pub multisig_wrapper: ContractObjWrapper<multisig::ContractObj<DebugApi>, MultisigBuilder>,
+    pub relayer_1: Address,
+    pub relayer_2: Address,
+    pub user: Address,
 }
 
 impl<PriceAggregatorBuilder, EsdtSafeBuilder, MultiTransferBuilder, MultisigBuilder>
@@ -324,6 +327,9 @@ where
             esdt_safe_wrapper,
             multi_transfer_wrapper,
             multisig_wrapper,
+            relayer_1,
+            relayer_2,
+            user,
         }
     }
 }
