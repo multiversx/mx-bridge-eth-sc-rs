@@ -2,7 +2,7 @@
 name = "transaction"
 version = "0.0.0"
 authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 path = "src/lib.rs"
@@ -11,4 +11,4 @@ path = "src/lib.rs"
 path = "../eth-address"
 
 [dependencies.multiversx-sc]
-version = "=0.46.1"
+version = "=0.47.4"

@@ -4,12 +4,15 @@ multiversx_sc::imports!();
 
 use token_module::ProxyTrait as OtherProxyTrait;
 use transaction::{
-    EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields,
+    call_data::CallData, EthTransaction, EthTransactionPayment, PaymentsVec, Transaction,
+    TxBatchSplitInFields,
 };
+use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 600_000_000;
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -17,25 +20,16 @@ pub trait MultiTransferEsdt:
 {
     #[init]
     fn init(&self) {
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
+        self.first_batch_id().set(FIRST_BATCH_ID);
+        self.last_batch_id().set(FIRST_BATCH_ID);
     }
 
     #[upgrade]
-    fn upgrade(&self) {
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
-        self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-        // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
-    }
+    fn upgrade(&self) {}
 
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
@@ -53,6 +47,7 @@ pub trait MultiTransferEsdt:
 
         for eth_tx in transfers {
             let mut must_refund = false;
+            let is_dest_sc = self.blockchain().is_smart_contract(&eth_tx.to);
 
             if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
@@ -63,16 +58,17 @@ pub trait MultiTransferEsdt:
             } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
-            } else if self.blockchain().is_smart_contract(&eth_tx.to)
-            {
+            } else if is_dest_sc {
                 match &eth_tx.call_data {
                     Some(call_data) => {
-                        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL {
+                        if self.must_refund_tx_with_call_data(call_data) {
                             must_refund = true;
                         }
                     }
                     None => must_refund = true,
                 }
+            } else if is_dest_sc && eth_tx.call_data.is_some() {
+                must_refund = true;
             }
 
             if must_refund {
@@ -87,7 +83,7 @@ pub trait MultiTransferEsdt:
                 .mint_token(&eth_tx.token_id, &eth_tx.amount)
                 .execute_on_dest_context();
 
-            if minted_token.amount == BigUint::zero() {
+            if minted_token.amount == 0 {
                 let refund_tx = self.convert_to_refund_tx(eth_tx);
                 refund_tx_list.push(refund_tx);
 
@@ -97,7 +93,7 @@ pub trait MultiTransferEsdt:
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
-            valid_tx_list.push(eth_tx.clone());
+            valid_tx_list.push(eth_tx);
             valid_payments_list.push(minted_token);
         }
 
@@ -181,7 +177,22 @@ pub trait MultiTransferEsdt:
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
+
     // private
+
+    fn must_refund_tx_with_call_data(&self, call_data: &CallData<Self::Api>) -> bool {
+        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
+            || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
+        {
+            return true;
+        }
+
+        if call_data.endpoint.len() > u8::MAX as usize {
+            return true;
+        }
+
+        call_data.args.len() > u8::MAX as usize
+    }
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
         Transaction {
@@ -275,6 +286,7 @@ pub trait MultiTransferEsdt:
     }
 
     // storage
+
     #[view(getWrappingContractAddress)]
     #[storage_mapper("wrappingContractAddress")]
     fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;

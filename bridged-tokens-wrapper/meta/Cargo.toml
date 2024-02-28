@@ -1,12 +1,12 @@
 [package]
 name = "bridged-tokens-wrapper-meta"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 publish = false
 
 [dependencies.bridged-tokens-wrapper]
 path = ".."
 
 [dependencies.multiversx-sc-meta]
-version = "=0.46.1"
+version = "=0.47.4"
 default-features = false
