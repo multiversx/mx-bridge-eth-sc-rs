@@ -112,17 +112,17 @@ where
             })
             .assert_ok();
 
-        for i in 0..2 {
+        for oracle in oracles.iter().take(2) {
             b_mock
-                .execute_tx(&oracles[i], &price_agg_wrapper, &rust_biguint!(100), |sc| {
+                .execute_tx(oracle, &price_agg_wrapper, &rust_biguint!(100), |sc| {
                     sc.stake();
                 })
                 .assert_ok();
         }
 
-        for i in 0..2 {
+        for oracle in oracles.iter().take(2) {
             b_mock
-                .execute_tx(&oracles[i], &price_agg_wrapper, &rust_zero, |sc| {
+                .execute_tx(oracle, &price_agg_wrapper, &rust_zero, |sc| {
                     sc.submit(
                         managed_buffer!(GWEI_TOKEN_ID),
                         managed_buffer!(BRIDGE_TOKEN_ID),
@@ -316,8 +316,6 @@ where
                 },
             )
             .assert_ok();
-
-        // Do I need EGLD-ESDT swap?
 
         Self {
             b_mock,
