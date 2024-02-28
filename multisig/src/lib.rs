@@ -57,8 +57,7 @@ pub trait Multisig:
             });
         require!(!duplicates, "duplicate board member");
 
-        self.num_board_members()
-            .update(|nr_board_members| *nr_board_members += board_len);
+        self.num_board_members().set(board_len);
         self.change_quorum(quorum);
 
         require!(
@@ -130,7 +129,8 @@ pub trait Multisig:
     /// before being allowed to sign actions
     #[payable("EGLD")]
     #[endpoint]
-    fn stake(&self, #[payment] payment: BigUint) {
+    fn stake(&self) {
+        let payment = self.call_value().egld_value().clone_value();
         let caller = self.blockchain().get_caller();
         let caller_role = self.user_role(&caller);
         require!(

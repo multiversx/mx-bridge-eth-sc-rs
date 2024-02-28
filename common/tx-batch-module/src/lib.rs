@@ -10,6 +10,8 @@ use tx_batch_mapper::TxBatchMapper;
 pub mod batch_status;
 pub mod tx_batch_mapper;
 
+pub const FIRST_BATCH_ID: u64 = 1;
+
 #[multiversx_sc::module]
 pub trait TxBatchModule {
     // endpoints - owner-only

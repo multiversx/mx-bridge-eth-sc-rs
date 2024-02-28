@@ -9,6 +9,7 @@ use core::convert::TryFrom;
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
 use transaction::{transaction_status::TransactionStatus, Transaction};
+use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
@@ -29,17 +30,16 @@ pub trait EsdtSafe:
     #[init]
     fn init(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
         self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
+            .set(fee_estimator_contract_address);
+        self.eth_tx_gas_limit().set(eth_tx_gas_limit);
 
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
 
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
+        self.first_batch_id().set(FIRST_BATCH_ID);
+        self.last_batch_id().set(FIRST_BATCH_ID);
 
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
@@ -50,25 +50,7 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
-
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
-        self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-
-        // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
-
-        // set ticker for "GWEI"
-        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
-        self.token_ticker(&gwei_token_id)
-            .set(gwei_token_id.as_managed_buffer());
-
+    fn upgrade(&self) {
         self.set_paused(true);
     }
 
@@ -116,7 +98,7 @@ pub trait EsdtSafe:
                     }
                 }
                 TransactionStatus::Rejected => {
-                    let addr = ManagedAddress::try_from(tx.from).unwrap();
+                    let addr = unsafe { ManagedAddress::try_from(tx.from).unwrap_unchecked() };
                     self.mark_refund(&addr, &tx.token_identifier, &tx.amount);
                 }
                 _ => {

@@ -170,8 +170,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[only_owner]
     #[endpoint(setAccumulatedBurnedTokens)]
-    fn set_accumulated_burned_tokens(&self, token_id: &TokenIdentifier, value: BigUint) {
-        self.accumulated_burned_tokens(token_id).set_if_empty(value);
+    fn set_accumulated_burned_tokens(&self, token_id: TokenIdentifier, value: BigUint) {
+        self.accumulated_burned_tokens(&token_id).set_if_empty(value);
     }
 
     // storage

@@ -4,8 +4,10 @@ multiversx_sc::imports!();
 
 use token_module::ProxyTrait as OtherProxyTrait;
 use transaction::{
-    EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields,
+    call_data::CallData, EthTransaction, EthTransactionPayment, PaymentsVec, Transaction,
+    TxBatchSplitInFields,
 };
+use tx_batch_module::FIRST_BATCH_ID;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -18,25 +20,16 @@ pub trait MultiTransferEsdt:
 {
     #[init]
     fn init(&self) {
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_size().set(DEFAULT_MAX_TX_BATCH_SIZE);
         self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+            .set(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
         // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
+        self.first_batch_id().set(FIRST_BATCH_ID);
+        self.last_batch_id().set(FIRST_BATCH_ID);
     }
 
     #[upgrade]
-    fn upgrade(&self) {
-        self.max_tx_batch_size()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
-        self.max_tx_batch_block_duration()
-            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
-        // batch ID 0 is considered invalid
-        self.first_batch_id().set_if_empty(1);
-        self.last_batch_id().set_if_empty(1);
-    }
+    fn upgrade(&self) {}
 
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
@@ -68,14 +61,7 @@ pub trait MultiTransferEsdt:
             } else if is_dest_sc {
                 match &eth_tx.call_data {
                     Some(call_data) => {
-                        #[allow(clippy::if_same_then_else)]
-                        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
-                            || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
-                        {
-                            must_refund = true;
-                        } else if call_data.endpoint.len() > u8::MAX as usize {
-                            must_refund = true;
-                        } else if call_data.args.len() > u8::MAX as usize {
+                        if self.must_refund_tx_with_call_data(&call_data) {
                             must_refund = true;
                         }
                     }
@@ -107,7 +93,7 @@ pub trait MultiTransferEsdt:
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
-            valid_tx_list.push(eth_tx.clone());
+            valid_tx_list.push(eth_tx);
             valid_payments_list.push(minted_token);
         }
 
@@ -191,7 +177,22 @@ pub trait MultiTransferEsdt:
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
+
     // private
+
+    fn must_refund_tx_with_call_data(&self, call_data: &CallData<Self::Api>) -> bool {
+        if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
+            || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
+        {
+            return true;
+        }
+
+        if call_data.endpoint.len() > u8::MAX as usize {
+            return true;
+        }
+
+        call_data.args.len() > u8::MAX as usize
+    }
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
         Transaction {
@@ -285,6 +286,7 @@ pub trait MultiTransferEsdt:
     }
 
     // storage
+
     #[view(getWrappingContractAddress)]
     #[storage_mapper("wrappingContractAddress")]
     fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
