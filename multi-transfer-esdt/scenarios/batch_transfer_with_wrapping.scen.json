@@ -110,6 +110,7 @@
                     "str:BRIDGE-123456",
                     "str:BRIDGE",
                     "true",
+                    "false",
                     "2,000,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -134,6 +135,7 @@
                     "str:USDC-aaaaaa",
                     "str:USDC",
                     "true",
+                    "false",
                     "2,000,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -158,6 +160,7 @@
                     "str:USDC-cccccc",
                     "str:USDC",
                     "true",
+                    "false",
                     "2,000,000"
                 ],
                 "gasLimit": "50,000,000",
