@@ -82,12 +82,12 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let minted_token: EsdtTokenPayment = self
+            let is_success: bool = self
                 .get_esdt_safe_contract_proxy_instance()
-                .mint_token(&eth_tx.token_id, &eth_tx.amount)
+                .get_tokens(&eth_tx.token_id, &eth_tx.amount)
                 .execute_on_dest_context();
 
-            if minted_token.amount == BigUint::zero() {
+            if !is_success {
                 let refund_tx = self.convert_to_refund_tx(eth_tx);
                 refund_tx_list.push(refund_tx);
 
@@ -98,7 +98,7 @@ pub trait MultiTransferEsdt:
             self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
 
             valid_tx_list.push(eth_tx.clone());
-            valid_payments_list.push(minted_token);
+            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);

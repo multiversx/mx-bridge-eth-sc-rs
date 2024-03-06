@@ -104,16 +104,6 @@ pub trait EsdtSafe:
 
             match tx_status {
                 TransactionStatus::Executed => {
-                    // local burn role might be removed while tx is executed
-                    // tokens will remain locked forever in that case
-                    // otherwise, the whole batch would fail
-                    if self.mint_burn_allowed(&tx.token_identifier).get()
-                        && self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn)
-                    {
-                        self.burn_esdt_token(&tx.token_identifier, &tx.amount);
-                        self.accumulated_burned_tokens(&tx.token_identifier)
-                            .update(|burned| *burned += &tx.amount);
-                    }
                 }
                 TransactionStatus::Rejected => {
                     let addr = ManagedAddress::try_from(tx.from).unwrap();
@@ -231,6 +221,22 @@ pub trait EsdtSafe:
         };
 
         let batch_id = self.add_to_batch(tx);
+        if !self.mint_burn_allowed(&payment_token).get() {
+            self.total_balances(&payment_token).update(|total| {
+                *total += &actual_bridged_amount;
+            });
+        } else {
+            let burn_balances_mapper = self.burn_balances(&payment_token);
+            let mint_balances_mapper = self.mint_balances(&payment_token);
+            if self.token_native().contains(&payment_token) {
+                require!(mint_balances_mapper.get() >= &burn_balances_mapper.get() + &actual_bridged_amount, "Not enough minted tokens!");
+            }
+            let burn_executed = self.internal_burn(&payment_token, &actual_bridged_amount);
+            require!(burn_executed, "Cannot do the burn action!");
+            burn_balances_mapper.update(|burned| {
+                *burned += &actual_bridged_amount;
+            });
+        }
         self.create_transaction_event(batch_id, tx_nonce, payment_token, actual_bridged_amount);
     }
 
@@ -244,6 +250,8 @@ pub trait EsdtSafe:
         require!(refund_amount > 0, "Nothing to refund");
 
         self.refund_amount(&caller, &token_id).clear();
+        let mint_executed = self.internal_mint(&token_id, &refund_amount);
+        require!(mint_executed, "Cannot do the mint action!");
         self.send()
             .direct_esdt(&caller, &token_id, 0, &refund_amount);
 
