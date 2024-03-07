@@ -67,8 +67,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        mint_burn_allowed: bool,
-        is_native_token: bool,
+        mint_burn_token: bool,
+        native_token: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
@@ -77,14 +77,12 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             self.default_price_per_gas_unit(&token_id)
                 .set(&default_price_per_gas_unit);
         }
-        if !mint_burn_allowed {
-            require!(is_native_token, "Only native tokens can be stored!");
+        if !mint_burn_token {
+            require!(native_token, "Only native tokens can be stored!");
         }
-        self.mint_burn_allowed(&token_id).set(mint_burn_allowed);
+        self.mint_burn_token(&token_id).set(mint_burn_token);
+        self.native_token(&token_id).set(native_token);
         let _ = self.token_whitelist().insert(token_id.clone());
-        if is_native_token {
-            let _ = self.token_native().insert(token_id);
-        }
     }
 
     #[only_owner]
@@ -93,9 +91,9 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         self.token_ticker(&token_id).clear();
         self.default_price_per_gas_unit(&token_id).clear();
 
-        self.mint_burn_allowed(&token_id).clear();
+        self.mint_burn_token(&token_id).clear();
+        self.native_token(&token_id).clear();
         self.token_whitelist().swap_remove(&token_id);
-        self.token_native().swap_remove(&token_id);
     }
 
     #[endpoint(getTokens)]
@@ -106,7 +104,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             "Only MultiTransfer can get tokens"
         );
 
-        if !self.mint_burn_allowed(token_id).get() {
+        if !self.mint_burn_token(token_id).get() {
             let total_balances_mapper = self.total_balances(token_id);
             if &total_balances_mapper.get() >= amount {
                 total_balances_mapper.update(|total| {
@@ -121,7 +119,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
         let burn_balances_mapper = self.burn_balances(token_id);
         let mint_balances_mapper = self.mint_balances(token_id);
-        if self.token_native().contains(token_id) {
+        if self.native_token(token_id).get() {
             require!(burn_balances_mapper.get() >= &mint_balances_mapper.get() + amount, "Not enough burned tokens!");
         }
 
@@ -211,13 +209,13 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
 
-    #[view(getAllNativeTokens)]
+    #[view(isNativeToken)]
     #[storage_mapper("nativeTokens")]
-    fn token_native(&self) -> UnorderedSetMapper<TokenIdentifier>;
+    fn native_token(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
 
-    #[view(isMintBurnAllowed)]
-    #[storage_mapper("mintBurnAllowed")]
-    fn mint_burn_allowed(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
+    #[view(isMintBurnToken)]
+    #[storage_mapper("mintBurnToken")]
+    fn mint_burn_token(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
 
     #[view(getMultiTransferContractAddress)]
     #[storage_mapper("multiTransferContractAddress")]

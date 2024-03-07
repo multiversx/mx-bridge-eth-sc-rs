@@ -221,14 +221,14 @@ pub trait EsdtSafe:
         };
 
         let batch_id = self.add_to_batch(tx);
-        if !self.mint_burn_allowed(&payment_token).get() {
+        if !self.mint_burn_token(&payment_token).get() {
             self.total_balances(&payment_token).update(|total| {
                 *total += &actual_bridged_amount;
             });
         } else {
             let burn_balances_mapper = self.burn_balances(&payment_token);
             let mint_balances_mapper = self.mint_balances(&payment_token);
-            if self.token_native().contains(&payment_token) {
+            if self.native_token(&payment_token).get() {
                 require!(mint_balances_mapper.get() >= &burn_balances_mapper.get() + &actual_bridged_amount, "Not enough minted tokens!");
             }
             let burn_executed = self.internal_burn(&payment_token, &actual_bridged_amount);
