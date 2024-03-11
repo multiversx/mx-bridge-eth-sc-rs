@@ -38,14 +38,14 @@ pub trait BridgeProxyContract:
             .unwrap_or_else(|| sc_panic!("Invalid ETH transaction!"));
         let tx = tx_node.get_value_as_ref();
 
-        require!(tx.eth_tx.call_data.is_some(), "There is no data for a SC call!");
+        require!(
+            tx.eth_tx.call_data.is_some(),
+            "There is no data for a SC call!"
+        );
 
         let call_data = unsafe { tx.eth_tx.call_data.clone().unwrap_unchecked() };
         self.send()
-            .contract_call::<IgnoreValue>(
-                tx.eth_tx.to.clone(),
-                call_data.endpoint.clone(),
-            )
+            .contract_call::<IgnoreValue>(tx.eth_tx.to.clone(), call_data.endpoint.clone())
             .with_raw_arguments(call_data.args.clone().into())
             .with_esdt_transfer((tx.token_id.clone(), tx.nonce, tx.amount.clone()))
             .with_gas_limit(call_data.gas_limit)

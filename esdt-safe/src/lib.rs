@@ -103,8 +103,7 @@ pub trait EsdtSafe:
             }
 
             match tx_status {
-                TransactionStatus::Executed => {
-                }
+                TransactionStatus::Executed => {}
                 TransactionStatus::Rejected => {
                     let addr = ManagedAddress::try_from(tx.from).unwrap();
                     self.mark_refund(&addr, &tx.token_identifier, &tx.amount);
@@ -229,7 +228,11 @@ pub trait EsdtSafe:
             let burn_balances_mapper = self.burn_balances(&payment_token);
             let mint_balances_mapper = self.mint_balances(&payment_token);
             if self.native_token(&payment_token).get() {
-                require!(mint_balances_mapper.get() >= &burn_balances_mapper.get() + &actual_bridged_amount, "Not enough minted tokens!");
+                require!(
+                    mint_balances_mapper.get()
+                        >= &burn_balances_mapper.get() + &actual_bridged_amount,
+                    "Not enough minted tokens!"
+                );
             }
             let burn_executed = self.internal_burn(&payment_token, &actual_bridged_amount);
             require!(burn_executed, "Cannot do the burn action!");
@@ -288,10 +291,10 @@ pub trait EsdtSafe:
 
     #[event("createTransactionEvent")]
     fn create_transaction_event(
-        &self, 
-        #[indexed] batch_id: u64, 
-        #[indexed] tx_id: u64, 
-        #[indexed] token_id: TokenIdentifier, 
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] token_id: TokenIdentifier,
         #[indexed] amount: BigUint,
     );
 
@@ -304,10 +307,7 @@ pub trait EsdtSafe:
     );
 
     #[event("claimRefundTransactionEvent")]
-    fn claim_refund_transaction_event(
-        &self,
-        #[indexed] token_id: &TokenIdentifier, 
-    );
+    fn claim_refund_transaction_event(&self, #[indexed] token_id: &TokenIdentifier);
 
     #[event("setStatusEvent")]
     fn set_status_event(

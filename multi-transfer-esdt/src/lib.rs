@@ -63,8 +63,7 @@ pub trait MultiTransferEsdt:
             } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
-            } else if self.blockchain().is_smart_contract(&eth_tx.to)
-            {
+            } else if self.blockchain().is_smart_contract(&eth_tx.to) {
                 match &eth_tx.call_data {
                     Some(call_data) => {
                         if call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL {

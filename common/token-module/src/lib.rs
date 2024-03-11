@@ -120,7 +120,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         let burn_balances_mapper = self.burn_balances(token_id);
         let mint_balances_mapper = self.mint_balances(token_id);
         if self.native_token(token_id).get() {
-            require!(burn_balances_mapper.get() >= &mint_balances_mapper.get() + amount, "Not enough burned tokens!");
+            require!(
+                burn_balances_mapper.get() >= &mint_balances_mapper.get() + amount,
+                "Not enough burned tokens!"
+            );
         }
 
         let mint_executed = self.internal_mint(token_id, amount);
@@ -139,8 +142,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     // private
 
     fn internal_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
-        if !self.is_local_role_set(token_id, &EsdtLocalRole::Mint)
-        {
+        if !self.is_local_role_set(token_id, &EsdtLocalRole::Mint) {
             return false;
         }
         self.send().esdt_local_mint(token_id, 0, amount);
@@ -148,8 +150,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     }
 
     fn internal_burn(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
-        if !self.is_local_role_set(token_id, &EsdtLocalRole::Burn)
-        {
+        if !self.is_local_role_set(token_id, &EsdtLocalRole::Burn) {
             return false;
         }
         self.send().esdt_local_burn(token_id, 0, amount);
