@@ -367,7 +367,7 @@
             "tx": {
                 "from": "sc:multisig",
                 "to": "sc:esdt_safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:WEGLD-123456",
                     "500,000,000,000"
@@ -388,7 +388,7 @@
             "tx": {
                 "from": "sc:multisig",
                 "to": "sc:esdt_safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:ETH-123456",
                     "500,000,000,000"

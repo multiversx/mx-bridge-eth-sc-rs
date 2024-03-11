@@ -214,7 +214,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:BRIDGE-123456",
                     "1_000_000"
@@ -235,7 +235,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:WRAPPED-123456",
                     "1_000"

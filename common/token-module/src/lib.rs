@@ -127,6 +127,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         if !mint_executed {
             return false;
         }
+        self.send().direct_esdt(&caller, token_id, 0, amount);
+
         mint_balances_mapper.update(|minted| {
             *minted += amount;
         });
