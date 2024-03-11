@@ -43,7 +43,7 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "400",
+                            "balance": "1,300",
                             "roles": [
                                 "ESDTRoleLocalBurn","ESDTRoleLocalMint"
                             ]
