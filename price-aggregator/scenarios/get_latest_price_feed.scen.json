@@ -74,11 +74,8 @@
                 "gasPrice": "0"
             },
             "expect": {
-                "out": [],
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
+                "status": "4",
+                "message": "str:token pair not found"
             }
         }
     ]

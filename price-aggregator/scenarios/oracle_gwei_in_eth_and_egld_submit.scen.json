@@ -40,10 +40,10 @@
                 "function": "submit",
                 "arguments": [
                     "str:GWEI",
-                    "str:WEGLD-123456",
+                    "str:WEGLD",
                     "u64:0",
                     "10",
-                    "6"
+                    "9"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"

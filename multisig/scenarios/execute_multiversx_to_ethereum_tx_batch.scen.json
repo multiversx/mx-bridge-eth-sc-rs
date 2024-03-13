@@ -146,14 +146,14 @@
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": {
-                            "balance": "75,000,000,000",
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "75,000,000,000",
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
@@ -165,8 +165,8 @@
                         "str:transactionsByNonce|address:user|str:.item|u32:1": "",
                         "str:transactionStatus|address:user|u32:2": "",
                         "str:transactionsByNonce|address:user|str:.item|u32:2": "",
-                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "75,000,000,000",
-                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "75,000,000,000",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "1,500,000",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "1,500,000",
                         "+": ""
                     },
                     "code": "*"
@@ -206,10 +206,10 @@
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": {
-                            "balance": "30,000,000,000"
+                            "balance": "600,000"
                         },
                         "str:ETH-123456": {
-                            "balance": "30,000,000,000"
+                            "balance": "600,000"
                         }
                     },
                     "storage": {}
@@ -219,10 +219,10 @@
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": {
-                            "balance": "45,000,000,000"
+                            "balance": "900,000"
                         },
                         "str:ETH-123456": {
-                            "balance": "45,000,000,000"
+                            "balance": "900,000"
                         }
                     },
                     "storage": {}

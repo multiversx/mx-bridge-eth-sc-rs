@@ -50,7 +50,7 @@
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": {
-                            "balance": "85,000,000,000",
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
@@ -71,12 +71,12 @@
                             "3-from": "u32:32|address:user",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:WEGLD-123456",
-                            "6-amount": "biguint:10,000,000,000",
+                            "6-amount": "biguint:84,998,500,000",
                             "7-is_refund_tx": "u8:0"
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "75,000,000,000",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "1,500,000",
                         "+": ""
                     },
                     "code": "*"
@@ -128,14 +128,14 @@
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": {
-                            "balance": "85,000,000,000",
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "95,000,000,000",
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
@@ -149,7 +149,7 @@
                             "3-from": "u32:32|address:user",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:WEGLD-123456",
-                            "6-amount": "biguint:10,000,000,000",
+                            "6-amount": "biguint:84,998,500,000",
                             "7-is_refund_tx": "u8:0"
                         },
                         "str:pendingBatches|u64:1|str:.item|u32:2": {
@@ -158,13 +158,13 @@
                             "3-from": "u32:32|address:user",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:ETH-123456",
-                            "6-amount": "biguint:20,000,000,000",
+                            "6-amount": "biguint:94,998,500,000",
                             "7-is_refund_tx": "u8:0"
                         },
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "75,000,000,000",
-                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "75,000,000,000",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "1,500,000",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "1,500,000",
                         "+": ""
                     },
                     "code": "*"
@@ -194,13 +194,13 @@
                     "address:user",
                     "0x0102030405060708091011121314151617181920",
                     "str:WEGLD-123456",
-                    "10,000,000,000",
+                    "84,998,500,000",
                     "0",
                     "2",
                     "address:user",
                     "0x0102030405060708091011121314151617181920",
                     "str:ETH-123456",
-                    "20,000,000,000"
+                    "94,998,500,000"
                 ]
             }
         }

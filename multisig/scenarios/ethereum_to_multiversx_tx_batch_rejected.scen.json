@@ -278,7 +278,7 @@
                             "3-from": "u32:32|sc:egld_esdt_swap",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:WEGLD-123456",
-                            "6-amount": "biguint:1,000,000,000",
+                            "6-amount": "biguint:75,998,500,000",
                             "7-is_refund_tx": "u8:1"
                         },
                         "str:pendingBatches|u64:1|str:.item|u32:2": {
@@ -287,7 +287,7 @@
                             "3-from": "u32:32|sc:egld_esdt_swap",
                             "4-to": "u32:20|0x0102030405060708091011121314151617181920",
                             "5-token_identifier": "nested:str:ETH-123456",
-                            "6-amount": "biguint:1,000,000,000",
+                            "6-amount": "biguint:75,998,500,000",
                             "7-is_refund_tx": "u8:1"
                         },
                         "str:firstBatchId": "1",
