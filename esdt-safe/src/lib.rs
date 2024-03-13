@@ -262,6 +262,29 @@ pub trait EsdtSafe:
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
+    #[endpoint(initSupply)]
+    fn init_supply(&self, token_id: TokenIdentifier, amount: BigUint) {
+        self.require_token_in_whitelist(&token_id);
+        if !self.mint_burn_token(&token_id).get() {
+            self.total_balances(&token_id).update(|total| {
+                *total += &amount;
+            });
+        }
+
+        let mint_balances_mapper = self.mint_balances(&token_id);
+        let burn_balances_mapper = self.burn_balances(&token_id);
+
+        if self.native_token(&token_id).get() {
+            require!(
+                mint_balances_mapper.get() >= &burn_balances_mapper.get() + &amount,
+                "Not enough minted tokens!"
+            );
+        }
+        burn_balances_mapper.update(|burned| {
+            *burned += &amount;
+        });
+    }
+
     /// Query function that lists all refund amounts for a user.
     /// Useful for knowing which token IDs to pass to the claimRefund endpoint.
     #[view(getRefundAmounts)]

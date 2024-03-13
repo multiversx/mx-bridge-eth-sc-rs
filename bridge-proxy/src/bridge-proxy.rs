@@ -17,6 +17,11 @@ pub trait BridgeProxyContract:
         self.set_paused(true);
     }
 
+    #[upgrade]
+    fn upgrade(&self) {
+        self.set_paused(true);
+    }
+
     #[payable("*")]
     #[endpoint]
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {

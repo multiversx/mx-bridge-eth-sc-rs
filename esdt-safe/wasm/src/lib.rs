@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           43
+// Endpoints:                           44
 // Async Callback (empty):               1
-// Total number of exported functions:  45
+// Total number of exported functions:  46
 
 #![no_std]
 #![allow(internal_features)]
@@ -25,6 +25,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         addRefundBatch => add_refund_batch
         createTransaction => create_transaction
         claimRefund => claim_refund
+        initSupply => init_supply
         getRefundAmounts => get_refund_amounts
         setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit
