@@ -14,11 +14,13 @@ pub trait BridgeProxyContract:
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
         self.set_multi_transfer_contract_address(opt_multi_transfer_address);
+        self.set_paused(true);
     }
 
     #[payable("*")]
     #[endpoint]
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
+        self.require_not_paused();
         let (token_id, nonce, amount) = self.call_value().single_esdt().into_tuple();
         self.eth_transaction_list()
             .push_back(EthTransactionPayment {
@@ -31,7 +33,7 @@ pub trait BridgeProxyContract:
 
     #[endpoint(executeWithAsnyc)]
     fn execute_with_async(&self, tx_id: u32) {
-        require!(self.not_paused(), "Contract is paused");
+        self.require_not_paused();
         let tx_node = self
             .eth_transaction_list()
             .remove_node_by_id(tx_id)
@@ -67,6 +69,7 @@ pub trait BridgeProxyContract:
 
     #[endpoint(refundTransactions)]
     fn refund_transactions(&self) -> MultiValueEncoded<EthTransactionPayment<Self::Api>> {
+        self.require_not_paused();
         // Send Failed Tx Structure
         let mut result = MultiValueEncoded::new();
         for tx_loop in self.eth_failed_transaction_list().iter() {
