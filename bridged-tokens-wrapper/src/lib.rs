@@ -1,6 +1,7 @@
 #![no_std]
 
 mod dfp_big_uint;
+mod events;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
@@ -12,7 +13,9 @@ multiversx_sc::derive_imports!();
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
 #[multiversx_sc::contract]
-pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
+pub trait BridgedTokensWrapper:
+    multiversx_sc_modules::pause::PauseModule + events::EventsModule
+{
     #[init]
     fn init(&self) {
         self.set_paused(true);
@@ -174,10 +177,11 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
             self.send()
                 .esdt_local_mint(&universal_token_id, 0, &converted_amount);
             new_payments.push(EsdtTokenPayment::new(
-                universal_token_id,
+                universal_token_id.clone(),
                 0,
-                converted_amount,
+                converted_amount.clone(),
             ));
+            self.wrap_tokens_event(universal_token_id, converted_amount);
         }
 
         let caller = self.blockchain().get_caller();
@@ -224,6 +228,8 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
         let caller = self.blockchain().get_caller();
         self.send()
             .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount);
+
+        self.wrap_tokens_event(chain_specific_token_id.clone(), converted_amount);
     }
 
     fn get_converted_amount(

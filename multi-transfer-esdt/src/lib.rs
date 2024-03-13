@@ -2,9 +2,10 @@
 
 multiversx_sc::imports!();
 
+use eth_address::EthAddress;
 use token_module::ProxyTrait as OtherProxyTrait;
 use transaction::{
-    EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields,
+    EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields, TxNonce,
 };
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
@@ -94,7 +95,14 @@ pub trait MultiTransferEsdt:
             }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(batch_id, eth_tx.tx_nonce);
+            self.transfer_performed_event(
+                batch_id,
+                eth_tx.from.clone(),
+                eth_tx.to.clone(),
+                eth_tx.token_id.clone(),
+                eth_tx.amount.clone(),
+                eth_tx.tx_nonce,
+            );
 
             valid_tx_list.push(eth_tx.clone());
             valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
@@ -289,7 +297,15 @@ pub trait MultiTransferEsdt:
     // events
 
     #[event("transferPerformedEvent")]
-    fn transfer_performed_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_performed_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] from: EthAddress<Self::Api>,
+        #[indexed] to: ManagedAddress,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] tx_id: TxNonce,
+    );
 
     #[event("transferFailedInvalidDestination")]
     fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
