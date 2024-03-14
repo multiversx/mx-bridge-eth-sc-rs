@@ -219,7 +219,7 @@ pub trait EsdtSafe:
             is_refund_tx: false,
         };
 
-        let batch_id = self.add_to_batch(tx);
+        let batch_id = self.add_to_batch(tx.clone());
         if !self.mint_burn_token(&payment_token).get() {
             self.total_balances(&payment_token).update(|total| {
                 *total += &actual_bridged_amount;
@@ -246,6 +246,8 @@ pub trait EsdtSafe:
             payment_token,
             actual_bridged_amount,
             required_fee,
+            tx.to,
+            tx.from
         );
     }
 
@@ -327,6 +329,8 @@ pub trait EsdtSafe:
         #[indexed] token_id: TokenIdentifier,
         #[indexed] amount: BigUint,
         #[indexed] fee: BigUint,
+        #[indexed] sender: ManagedBuffer,
+        #[indexed] recipient: ManagedBuffer,
     );
 
     #[event("addRefundTransactionEvent")]
