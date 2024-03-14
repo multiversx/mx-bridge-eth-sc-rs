@@ -229,7 +229,7 @@ pub trait BridgedTokensWrapper:
         self.send()
             .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount);
 
-        self.wrap_tokens_event(chain_specific_token_id.clone(), converted_amount);
+        self.unwrap_tokens_event(chain_specific_token_id.clone(), converted_amount);
     }
 
     fn get_converted_amount(

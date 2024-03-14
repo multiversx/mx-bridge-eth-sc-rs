@@ -263,7 +263,8 @@ pub trait EsdtSafe:
     }
 
     #[endpoint(initSupply)]
-    fn init_supply(&self, token_id: TokenIdentifier, amount: BigUint) {
+    fn init_supply(&self) {
+        let (token_id, amount) = self.call_value().single_fungible_esdt();
         self.require_token_in_whitelist(&token_id);
         if !self.mint_burn_token(&token_id).get() {
             self.total_balances(&token_id).update(|total| {
