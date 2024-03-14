@@ -206,7 +206,7 @@ pub trait EsdtSafe:
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
-        let actual_bridged_amount = payment_amount - required_fee;
+        let actual_bridged_amount = payment_amount - required_fee.clone();
         let caller = self.blockchain().get_caller();
         let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
@@ -240,7 +240,13 @@ pub trait EsdtSafe:
                 *burned += &actual_bridged_amount;
             });
         }
-        self.create_transaction_event(batch_id, tx_nonce, payment_token, actual_bridged_amount);
+        self.create_transaction_event(
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+        );
     }
 
     /// Claim funds for failed Elrond -> Ethereum transactions.
@@ -320,6 +326,7 @@ pub trait EsdtSafe:
         #[indexed] tx_id: u64,
         #[indexed] token_id: TokenIdentifier,
         #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
     );
 
     #[event("addRefundTransactionEvent")]
