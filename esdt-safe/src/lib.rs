@@ -266,7 +266,7 @@ pub trait EsdtSafe:
         self.send()
             .direct_esdt(&caller, &token_id, 0, &refund_amount);
 
-        self.claim_refund_transaction_event(&token_id);
+        self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
@@ -342,7 +342,7 @@ pub trait EsdtSafe:
     );
 
     #[event("claimRefundTransactionEvent")]
-    fn claim_refund_transaction_event(&self, #[indexed] token_id: &TokenIdentifier);
+    fn claim_refund_transaction_event(&self, #[indexed] token_id: &TokenIdentifier, #[indexed] caller: ManagedAddress);
 
     #[event("setStatusEvent")]
     fn set_status_event(
