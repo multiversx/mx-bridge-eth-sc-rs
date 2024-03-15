@@ -129,6 +129,7 @@
                     "str:BRIDGE-123456",
                     "str:BRIDGE",
                     "true",
+                    "false",
                     "150,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -153,6 +154,7 @@
                     "str:WRAPPED-123456",
                     "str:WRAPPED",
                     "true",
+                    "false",
                     "1,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -212,7 +214,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:BRIDGE-123456",
                     "1_000_000"
@@ -233,7 +235,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:WRAPPED-123456",
                     "1_000"

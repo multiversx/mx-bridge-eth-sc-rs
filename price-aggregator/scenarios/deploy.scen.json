@@ -105,8 +105,31 @@
                 "function": "setPairDecimals",
                 "arguments": [
                     "str:GWEI",
-                    "str:WEGLD-123456",
-                    "u8:6"
+                    "str:WEGLD",
+                    "u8:9"
+                ],
+                "gasLimit": "40,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "oracle-set-pair",
+            "tx": {
+                "from": "address:aggregator-owner",
+                "to": "sc:price_aggregator",
+                "value": "0",
+                "function": "setPairDecimals",
+                "arguments": [
+                    "str:GWEI",
+                    "str:ETH",
+                    "u8:9"
                 ],
                 "gasLimit": "40,000,000",
                 "gasPrice": "0"
@@ -142,7 +165,7 @@
             "step": "checkState",
             "accounts": {
                 "address:aggregator-owner": {
-                    "nonce": "4",
+                    "nonce": "5",
                     "balance": "0",
                     "storage": {}
                 },

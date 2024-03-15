@@ -15,6 +15,7 @@ pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
     + crate::storage::StorageModule
     + crate::util::UtilModule
+    + crate::events::EventsModule
     + multiversx_sc_modules::pause::PauseModule
 {
     #[only_owner]
@@ -110,6 +111,7 @@ pub trait SetupModule:
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
+        self.add_mapping_event(erc20_address, token_id);
     }
 
     #[only_owner]
@@ -134,6 +136,7 @@ pub trait SetupModule:
 
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
+        self.clear_mapping_event(erc20_address, token_id);
     }
 
     #[only_owner]
@@ -143,6 +146,7 @@ pub trait SetupModule:
             .get_esdt_safe_proxy_instance()
             .pause_endpoint()
             .execute_on_dest_context();
+        self.pause_esdt_safe_event();
     }
 
     #[only_owner]
@@ -152,6 +156,7 @@ pub trait SetupModule:
             .get_esdt_safe_proxy_instance()
             .unpause_endpoint()
             .execute_on_dest_context();
+        self.unpause_esdt_safe_event();
     }
 
     #[only_owner]
@@ -206,6 +211,7 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
         mint_burn_allowed: bool,
+        is_native_token: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         let _: IgnoreValue = self
@@ -214,6 +220,7 @@ pub trait SetupModule:
                 token_id,
                 ticker,
                 mint_burn_allowed,
+                is_native_token,
                 opt_default_price_per_gas_unit,
             )
             .execute_on_dest_context();

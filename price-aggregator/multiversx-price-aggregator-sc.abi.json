@@ -1,20 +1,20 @@
 {
     "buildInfo": {
         "rustc": {
-            "version": "1.71.0-nightly",
-            "commitHash": "a2b1646c597329d0a25efa3889b66650f65de1de",
-            "commitDate": "2023-05-25",
+            "version": "1.76.0-nightly",
+            "commitHash": "d86d65bbc19b928387f68427fcc3a0da498d8a19",
+            "commitDate": "2023-12-10",
             "channel": "Nightly",
-            "short": "rustc 1.71.0-nightly (a2b1646c5 2023-05-25)"
+            "short": "rustc 1.76.0-nightly (d86d65bbc 2023-12-10)"
         },
         "contractCrate": {
             "name": "multiversx-price-aggregator-sc",
-            "version": "0.45.2",
-            "gitVersion": "v0.45.2-2-g3aa173014"
+            "version": "0.47.5",
+            "gitVersion": "v0.47.5-22-g58af3f6e0"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.45.2"
+            "version": "0.47.5"
         }
     },
     "name": "PriceAggregator",

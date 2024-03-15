@@ -67,7 +67,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
-        mint_burn_allowed: bool,
+        mint_burn_token: bool,
+        native_token: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         self.token_ticker(&token_id).set(&ticker);
@@ -76,9 +77,12 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             self.default_price_per_gas_unit(&token_id)
                 .set(&default_price_per_gas_unit);
         }
-
-        self.mint_burn_allowed(&token_id).set(mint_burn_allowed);
-        let _ = self.token_whitelist().insert(token_id);
+        if !mint_burn_token {
+            require!(native_token, "Only native tokens can be stored!");
+        }
+        self.mint_burn_token(&token_id).set(mint_burn_token);
+        self.native_token(&token_id).set(native_token);
+        let _ = self.token_whitelist().insert(token_id.clone());
     }
 
     #[only_owner]
@@ -87,54 +91,70 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         self.token_ticker(&token_id).clear();
         self.default_price_per_gas_unit(&token_id).clear();
 
-        self.mint_burn_allowed(&token_id).clear();
+        self.mint_burn_token(&token_id).clear();
+        self.native_token(&token_id).clear();
         self.token_whitelist().swap_remove(&token_id);
     }
 
-    #[endpoint(mintToken)]
-    fn mint_token(&self, token_id: &TokenIdentifier, amount: &BigUint) -> EsdtTokenPayment {
+    #[endpoint(getTokens)]
+    fn get_tokens(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
         let caller = self.blockchain().get_caller();
         require!(
             caller == self.multi_transfer_contract_address().get(),
             "Only MultiTransfer can get tokens"
         );
 
-        if self.mint_burn_allowed(token_id).get() {
-            if !self
-                .blockchain()
-                .get_esdt_local_roles(token_id)
-                .has_role(&EsdtLocalRole::Mint)
-            {
-                return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
+        if !self.mint_burn_token(token_id).get() {
+            let total_balances_mapper = self.total_balances(token_id);
+            if &total_balances_mapper.get() >= amount {
+                total_balances_mapper.update(|total| {
+                    *total -= amount;
+                });
+                self.send().direct_esdt(&caller, token_id, 0, amount);
+                return true;
+            } else {
+                return false;
             }
-
-            let accumulated_burned_tokens_mapper = self.accumulated_burned_tokens(token_id);
-            accumulated_burned_tokens_mapper.update(|burned| {
-                require!(*burned >= *amount, "Not enough accumulated burned tokens!");
-                *burned -= amount;
-            });
-            self.mint_esdt_token(token_id, amount);
         }
 
-        let current_balance =
-            self.blockchain()
-                .get_esdt_balance(&self.blockchain().get_sc_address(), token_id, 0);
-        if &current_balance >= amount {
-            self.send().direct_esdt(&caller, token_id, 0, amount);
-        } else {
-            return EsdtTokenPayment::new(token_id.clone(), 0, BigUint::zero());
+        let burn_balances_mapper = self.burn_balances(token_id);
+        let mint_balances_mapper = self.mint_balances(token_id);
+        if self.native_token(token_id).get() {
+            require!(
+                burn_balances_mapper.get() >= &mint_balances_mapper.get() + amount,
+                "Not enough burned tokens!"
+            );
         }
-        EsdtTokenPayment::new(token_id.clone(), 0, amount.clone())
+
+        let mint_executed = self.internal_mint(token_id, amount);
+        if !mint_executed {
+            return false;
+        }
+        self.send().direct_esdt(&caller, token_id, 0, amount);
+
+        mint_balances_mapper.update(|minted| {
+            *minted += amount;
+        });
+
+        true
     }
 
     // private
 
-    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.send().esdt_local_burn(token_id, 0, amount);
+    fn internal_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
+        if !self.is_local_role_set(token_id, &EsdtLocalRole::Mint) {
+            return false;
+        }
+        self.send().esdt_local_mint(token_id, 0, amount);
+        return true;
     }
 
-    fn mint_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.send().esdt_local_mint(token_id, 0, amount);
+    fn internal_burn(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
+        if !self.is_local_role_set(token_id, &EsdtLocalRole::Burn) {
+            return false;
+        }
+        self.send().esdt_local_burn(token_id, 0, amount);
+        return true;
     }
 
     fn require_token_in_whitelist(&self, token_id: &TokenIdentifier) {
@@ -169,9 +189,21 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     }
 
     #[only_owner]
-    #[endpoint(setAccumulatedBurnedTokens)]
-    fn set_accumulated_burned_tokens(&self, token_id: &TokenIdentifier, value: BigUint) {
-        self.accumulated_burned_tokens(token_id).set_if_empty(value);
+    #[endpoint(setTotalBalances)]
+    fn set_total_balances(&self, token_id: &TokenIdentifier, value: BigUint) {
+        self.total_balances(token_id).set_if_empty(value);
+    }
+
+    #[only_owner]
+    #[endpoint(setMintBalances)]
+    fn set_mint_balances(&self, token_id: &TokenIdentifier, value: BigUint) {
+        self.mint_balances(token_id).set_if_empty(value);
+    }
+
+    #[only_owner]
+    #[endpoint(setBurnBalances)]
+    fn set_burn_balances(&self, token_id: &TokenIdentifier, value: BigUint) {
+        self.burn_balances(token_id).set_if_empty(value);
     }
 
     // storage
@@ -180,9 +212,13 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[storage_mapper("tokenWhitelist")]
     fn token_whitelist(&self) -> UnorderedSetMapper<TokenIdentifier>;
 
-    #[view(isMintBurnAllowed)]
-    #[storage_mapper("mintBurnAllowed")]
-    fn mint_burn_allowed(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
+    #[view(isNativeToken)]
+    #[storage_mapper("nativeTokens")]
+    fn native_token(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
+
+    #[view(isMintBurnToken)]
+    #[storage_mapper("mintBurnToken")]
+    fn mint_burn_token(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
 
     #[view(getMultiTransferContractAddress)]
     #[storage_mapper("multiTransferContractAddress")]
@@ -195,7 +231,15 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
 
-    #[view(getAccumulatedBurnedTokens)]
-    #[storage_mapper("accumulatedBurnedTokens")]
-    fn accumulated_burned_tokens(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+    #[view(getTotalBalances)]
+    #[storage_mapper("totalBalances")]
+    fn total_balances(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+
+    #[view(getMintBalances)]
+    #[storage_mapper("mintBalances")]
+    fn mint_balances(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+
+    #[view(getBurnBalances)]
+    #[storage_mapper("burnBalances")]
+    fn burn_balances(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 }

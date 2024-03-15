@@ -240,6 +240,7 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
                         TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
                         "BRIDGE",
                         true,
+                        false,
                         BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT),
                     )),
             )
@@ -247,7 +248,7 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
                 ScCallStep::new()
                     .from(self.owner.clone())
                     .to(&self.esdt_safe)
-                    .call(self.esdt_safe.set_accumulated_burned_tokens(
+                    .call(self.esdt_safe.set_mint_balances(
                         TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
                         BigUint::from(1_000u64),
                     )),

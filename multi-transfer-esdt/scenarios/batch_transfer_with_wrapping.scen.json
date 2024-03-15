@@ -110,6 +110,7 @@
                     "str:BRIDGE-123456",
                     "str:BRIDGE",
                     "true",
+                    "false",
                     "2,000,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -134,6 +135,7 @@
                     "str:USDC-aaaaaa",
                     "str:USDC",
                     "true",
+                    "false",
                     "2,000,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -158,6 +160,7 @@
                     "str:USDC-cccccc",
                     "str:USDC",
                     "true",
+                    "false",
                     "2,000,000"
                 ],
                 "gasLimit": "50,000,000",
@@ -217,7 +220,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:BRIDGE-123456",
                     "2,000,000"
@@ -238,7 +241,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:USDC-aaaaaa",
                     "500,000,000,000,000"
@@ -259,7 +262,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:esdt-safe",
-                "function": "setAccumulatedBurnedTokens",
+                "function": "setMintBalances",
                 "arguments": [
                     "str:USDC-cccccc",
                     "1,000,000,000,000,000"
