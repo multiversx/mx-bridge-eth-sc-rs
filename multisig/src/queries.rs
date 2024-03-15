@@ -55,7 +55,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
         self.is_valid_action_id(action_id)
     }
 
-    /// Used for Ethereum -> Elrond batches.
+    /// Used for Ethereum -> MultiversX batches.
     /// If `wasActionExecuted` returns true, then this can be used to get the action ID.
     /// Will return 0 if the transfers were not proposed
     #[view(getActionIdForTransferBatch)]
@@ -72,7 +72,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .unwrap_or(0)
     }
 
-    /// Used for Elrond -> Ethereum batches.
+    /// Used for MultiversX -> Ethereum batches.
     /// Returns "true" if an action was already proposed for the given batch,
     /// with these exact transaction statuses, in this exact order
     #[view(wasSetCurrentTransactionBatchStatusActionProposed)]

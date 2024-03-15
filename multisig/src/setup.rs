@@ -15,6 +15,7 @@ pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
     + crate::storage::StorageModule
     + crate::util::UtilModule
+    + crate::events::EventsModule
     + multiversx_sc_modules::pause::PauseModule
 {
     #[only_owner]
@@ -110,6 +111,7 @@ pub trait SetupModule:
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
+        self.add_mapping_event(erc20_address, token_id);
     }
 
     #[only_owner]
@@ -134,6 +136,7 @@ pub trait SetupModule:
 
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
+        self.clear_mapping_event(erc20_address, token_id);
     }
 
     #[only_owner]
@@ -143,6 +146,7 @@ pub trait SetupModule:
             .get_esdt_safe_proxy_instance()
             .pause_endpoint()
             .execute_on_dest_context();
+        self.pause_esdt_safe_event();
     }
 
     #[only_owner]
@@ -152,6 +156,7 @@ pub trait SetupModule:
             .get_esdt_safe_proxy_instance()
             .unpause_endpoint()
             .execute_on_dest_context();
+        self.unpause_esdt_safe_event();
     }
 
     #[only_owner]
@@ -171,7 +176,7 @@ pub trait SetupModule:
     /// where price_per_gas_unit is queried from the aggregator (fee estimator SC)
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
-    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
+    fn change_multiversx_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
             .set_eth_tx_gas_limit(new_gas_limit)
@@ -205,11 +210,37 @@ pub trait SetupModule:
         &self,
         token_id: TokenIdentifier,
         ticker: ManagedBuffer,
+        mint_burn_allowed: bool,
+        is_native_token: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
-            .add_token_to_whitelist(token_id, ticker, opt_default_price_per_gas_unit)
+            .add_token_to_whitelist(
+                token_id,
+                ticker,
+                mint_burn_allowed,
+                is_native_token,
+                opt_default_price_per_gas_unit,
+            )
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(setMultiTransferOnEsdtSafe)]
+    fn set_multi_transfer_on_esdt_safe(&self) {
+        let _: IgnoreValue = self
+            .get_esdt_safe_proxy_instance()
+            .set_multi_transfer_contract_address(self.multi_transfer_esdt_address().get())
+            .execute_on_dest_context();
+    }
+
+    #[only_owner]
+    #[endpoint(setEsdtSafeOnMultiTransfer)]
+    fn set_esdt_safe_on_multi_transfer(&self) {
+        let _: IgnoreValue = self
+            .get_multi_transfer_esdt_proxy_instance()
+            .set_esdt_safe_contract_address(self.esdt_safe_address().get())
             .execute_on_dest_context();
     }
 

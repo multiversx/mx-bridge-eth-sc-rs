@@ -2,6 +2,7 @@
 #![allow(clippy::too_many_arguments)]
 
 mod action;
+mod events;
 mod multisig_general;
 mod queries;
 mod setup;
@@ -28,6 +29,7 @@ multiversx_sc::imports!();
 #[multiversx_sc::contract]
 pub trait Multisig:
     multisig_general::MultisigGeneralModule
+    + events::EventsModule
     + setup::SetupModule
     + storage::StorageModule
     + util::UtilModule
@@ -282,6 +284,7 @@ pub trait Multisig:
                 .add_refund_batch(refund_batch)
                 .execute_on_dest_context();
         }
+        self.move_refund_batch_to_safe_event();
     }
 
     /// Proposers and board members use this to launch signed actions.
