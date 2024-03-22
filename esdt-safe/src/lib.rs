@@ -153,6 +153,8 @@ pub trait EsdtSafe:
             }
 
             let actual_bridged_amount = refund_tx.amount - required_fee;
+            self.total_fees_on_ethereum(&refund_tx.token_identifier)
+                .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
 
             // "from" and "to" are inverted, since this was initially an Ethereum -> Elrond tx
@@ -227,7 +229,7 @@ pub trait EsdtSafe:
         } else {
             let burn_balances_mapper = self.burn_balances(&payment_token);
             let mint_balances_mapper = self.mint_balances(&payment_token);
-            if self.native_token(&payment_token).get() {
+            if !self.native_token(&payment_token).get() {
                 require!(
                     mint_balances_mapper.get()
                         >= &burn_balances_mapper.get() + &actual_bridged_amount,
@@ -261,8 +263,10 @@ pub trait EsdtSafe:
         require!(refund_amount > 0, "Nothing to refund");
 
         self.refund_amount(&caller, &token_id).clear();
-        let mint_executed = self.internal_mint(&token_id, &refund_amount);
-        require!(mint_executed, "Cannot do the mint action!");
+        self.total_refund_amount(&token_id)
+            .update(|total| *total -= &refund_amount);
+        self.rebalance_for_refund(&token_id, &refund_amount);
+
         self.send()
             .direct_esdt(&caller, &token_id, 0, &refund_amount);
 
@@ -312,11 +316,46 @@ pub trait EsdtSafe:
         refund_amounts
     }
 
+    // views
+
+    #[view(getTotalRefundAmounts)]
+    fn getTotalRefundAmounts($self) {
+        let mut refund_amounts = MultiValueEncoded::new();
+        for token_id in self.token_whitelist().iter() {
+            let amount = self.total_refund_amount(&token_id).get();
+            if amount > 0u32 {
+                refund_amounts.push((token_id, amount).into());
+            }
+        }
+
+        refund_amounts
+    }
+
     // private
+
+    fn rebalance_for_refund(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        let mintBurnToken = self.mint_burn_token(token_id).get();
+        if !mintBurnToken {
+            let total_balances_mapper = self.total_balances(token_id); 
+            total_balances_mapper.update(|total| {
+                *total -= amount;
+            });
+        } else {
+            let mint_balances_mapper = self.mint_balances(token_id);
+            let mint_executed = self.internal_mint(token_id, amount);
+            require!(mint_executed, "Cannot do the mint action!");
+    
+            mint_balances_mapper.update(|minted| {
+                *minted += amount;
+            });
+        }
+    }
 
     fn mark_refund(&self, to: &ManagedAddress, token_id: &TokenIdentifier, amount: &BigUint) {
         self.refund_amount(to, token_id)
             .update(|refund| *refund += amount);
+        self.total_refund_amount(token_id)
+            .update(|total| *total += amount);
     }
 
     // events
@@ -353,6 +392,18 @@ pub trait EsdtSafe:
     );
 
     // storage
+
+    #[storage_mapper("totalRefundAmount")]
+    fn total_refund_amount(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<BigUint>;
+
+    #[storage_mapper("totalFeesOnEthereum")]
+    fn total_fees_on_ethereum(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<BigUint>;
 
     #[storage_mapper("refundAmount")]
     fn refund_amount(
