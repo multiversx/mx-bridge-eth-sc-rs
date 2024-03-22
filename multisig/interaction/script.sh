@@ -28,6 +28,10 @@ case "$1" in
   confirmation deploy-bridge-contracts
   ;;
 
+'upgrade-bridge-contracts')
+  confirmation upgrade-bridge-contracts
+  ;;
+
 'add-relayer')
   confirmation addBoardMember
   ;;
@@ -104,7 +108,7 @@ case "$1" in
   echo "Choose from:"
   echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"upgrade-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
   echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", "
-  echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\" }"
+  echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\", \"upgrade-bridge-contracts\" }"
   ;;
 
 esac

@@ -1,61 +1,64 @@
 #TODO: check & updates upgrade snippets
 deploySafeForUpgrade() {
-    getAggregatorAddressHex
+    CHECK_VARIABLES SAFE_WASM AGGREGATOR
 
-    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000 # gives us 200$ for multiversx->eth
-
-    mxpy --verbose contract deploy --project=${PROJECT_SAFE} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract deploy --bytecode=${SAFE_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
-    --arguments 0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
+    --arguments ${AGGREGATOR} 1 \
     --send --outfile="deploy-safe-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
 
+deployMultiTransferForUpgrade() {
+    CHECK_VARIABLES MULTI_TRANSFER_WASM
+
+    mxpy --verbose contract deploy --bytecode=${MULTI_TRANSFER_WASM} --recall-nonce --pem=${ALICE} \
+    --gas-limit=100000000 --metadata-payable \
+    --send --outfile="deploy-multitransfer-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+deployBridgeProxyForUpgrade() {
+    CHECK_VARIABLES PROXY_WASM MULTI_TRANSFER
+
+    mxpy --verbose contract deploy --bytecode=${PROXY_WASM} --recall-nonce --pem=${ALICE} \
+    --gas-limit=200000000 \
+    --arguments ${MULTI_TRANSFER} \
+    --send --outfile="deploy-proxy-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+upgradeSafe() {
+    CHECK_VARIABLES MULTISIG SAFE AGGREGATOR
     ADDRESS=$(mxpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
 
-    echo ""
-    echo "Safe contract address: ${ADDRESS}"
-}
-
-
-upgradeSafeContract() {
-    getEsdtSafeAddressHex
-    getAggregatorAddressHex
-    local ESDT_SAFE_ETH_TX_GAS_LIMIT=20000
-
-    local NEW_SAFE_BECH=$(mxpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
-    local NEW_SAFE_ADDR=$(mxpy wallet bech32 --decode $NEW_SAFE_BECH)
-
-
-
-    mxpy --verbose contract call ${ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=400000000 --function="upgradeChildContractFromSource" \
-    --arguments 0x${ESDT_SAFE_ADDRESS_HEX} 0x${NEW_SAFE_ADDR} 0x00 \
-    0x${AGGREGATOR_ADDRESS_HEX} ${ESDT_SAFE_ETH_TX_GAS_LIMIT} \
-    --send --outfile="upgradesafe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
+    --arguments ${SAFE} ${ADDRESS} 0 ${AGGREGATOR} 1 \
+    --send --outfile="upgrade-safe-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-upgrade() {
-    mxpy --verbose contract upgrade ${ADDRESS} --project=${PROJECT} --recall-nonce --pem=${ALICE} \
-    --gas-limit=100000000 --send --outfile="upgrade.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+upgradeMultiTransfer() {
+    CHECK_VARIABLES MULTISIG MULTI_TRANSFER
+    ADDRESS=$(mxpy data parse --file="./deploy-multitransfer-upgrade.interaction.json" --expression="data['contractAddress']")
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
+    --arguments ${MULTI_TRANSFER} ${ADDRESS} 0 \
+    --send --outfile="upgrade-multitransfer-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+upgradeBridgeProxy() {
+    CHECK_VARIABLES MULTISIG BRIDGE_PROXY
+    ADDRESS=$(mxpy data parse --file="./deploy-proxy-upgrade.interaction.json" --expression="data['contractAddress']")
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
+    --arguments ${BRIDGE_PROXY} ${ADDRESS} 0 \
+    --send --outfile="upgrade-proxy-child-sc-spam.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 upgradeMultisig() {
-    CHECK_VARIABLES RELAYER_ADDR_0 RELAYER_ADDR_1 RELAYER_ADDR_2 RELAYER_ADDR_3 \
-    RELAYER_ADDR_4 RELAYER_ADDR_5 RELAYER_ADDR_6 RELAYER_ADDR_7 RELAYER_ADDR_8 \
-    RELAYER_ADDR_9 SAFE MULTI_TRANSFER RELAYER_REQUIRED_STAKE SLASH_AMOUNT QUORUM MULTISIG MULTISIG_WASM
+    CHECK_VARIABLES MULTISIG MULTISIG_WASM
 
-    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     mxpy --verbose contract upgrade ${MULTISIG} --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
-    --arguments ${SAFE} ${MULTI_TRANSFER} \
-    ${MIN_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
-    --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
-
-    TRANSACTION=$(mxpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
-    ADDRESS=$(mxpy data parse --file="./deploy-testnet.interaction.json" --expression="data['contractAddress']")
-
-    mxpy data store --key=address-testnet-multisig --value=${ADDRESS}
-    mxpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
-
-    echo ""
-    echo "Multisig contract address: ${ADDRESS}"
+    --send --outfile="upgrade-multisig.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }

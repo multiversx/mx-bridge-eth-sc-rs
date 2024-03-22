@@ -20,6 +20,7 @@ deployBridgedTokensWrapper() {
 
     echo ""
     echo "Bridged tokens wrapper SC: ${ADDRESS}"
+    update-config BRIDGED_TOKENS_WRAPPER ${ADDRESS}
 }
 
 setLocalRolesBridgedTokensWrapper() {

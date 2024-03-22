@@ -23,10 +23,10 @@ setBridgeProxyContractAddress() {
 }
 
 setWrappingContractAddress() {
-    CHECK_VARIABLES MULTI_TRANSFER BRIDGED_TOKENS_WRAPPER
+    CHECK_VARIABLES MULTISIG BRIDGED_TOKENS_WRAPPER
 
-    mxpy --verbose contract call ${MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setWrappingContractAddress" \
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="multiTransferEsdtSetWrappingContractAddress" \
     --arguments ${BRIDGED_TOKENS_WRAPPER} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
