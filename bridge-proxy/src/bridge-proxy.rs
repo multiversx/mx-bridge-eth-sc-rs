@@ -29,7 +29,7 @@ pub trait BridgeProxyContract:
         let (token_id, amount) = self.call_value().single_fungible_esdt().into_tuple();
         require!(token_id == eth_tx.token_id, "Invalid token id");
         require!(amount == eth_tx.amount, "Invalid amount");
-        self.pending_transactions().push(eth_tx);
+        self.pending_transactions().push(&eth_tx);
     }
 
     #[endpoint(executeWithAsnyc)]
@@ -45,7 +45,7 @@ pub trait BridgeProxyContract:
         self.send()
             .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint.clone())
             .with_raw_arguments(call_data.args.clone().into())
-            .with_esdt_transfer((tx.token_id.clone(), tx.nonce, tx.amount.clone()))
+            .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
             .with_gas_limit(call_data.gas_limit)
             .async_call()
             .with_callback(self.callbacks().execution_callback(tx_id))

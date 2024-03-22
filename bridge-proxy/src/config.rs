@@ -2,6 +2,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 use transaction::EthTransaction;
+use esdt_safe::ProxyTrait as _;
 
 #[multiversx_sc::module]
 pub trait ConfigModule {
@@ -58,5 +59,5 @@ pub trait ConfigModule {
 
     #[view(getPendingTransactions)]
     #[storage_mapper("pending_transactions")]
-    fn pending_transactions(&self) -> VecMapper<<EthTransaction<Self::Api>>;
+    fn pending_transactions(&self) -> VecMapper<EthTransaction<Self::Api>>;
 }
