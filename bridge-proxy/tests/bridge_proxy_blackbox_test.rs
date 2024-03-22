@@ -27,7 +27,7 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
-use transaction::{CallData, EthTransaction, EthTransactionPayment};
+use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
 const GAS_LIMIT: u64 = 1_000_000;
@@ -161,7 +161,7 @@ fn deploy_deposit_test() {
     test.world.sc_query(
         ScQueryStep::new()
             .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.get_eth_transaction_by_id(1u32))
+            .call(test.bridge_proxy_contract.get_pending_transaction_by_id(1u32))
             .expect_value(eth_tx),
     );
 
@@ -251,14 +251,14 @@ fn multiple_deposit_test() {
     test.world.sc_query(
         ScQueryStep::new()
             .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.get_eth_transaction_by_id(1u32))
+            .call(test.bridge_proxy_contract.get_pending_transaction_by_id(1u32))
             .expect_value(eth_tx1),
     );
 
     test.world.sc_query(
         ScQueryStep::new()
             .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.get_eth_transaction_by_id(2u32))
+            .call(test.bridge_proxy_contract.get_pending_transaction_by_id(2u32))
             .expect_value(eth_tx2),
     );
 

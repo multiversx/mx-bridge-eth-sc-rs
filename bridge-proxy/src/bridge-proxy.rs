@@ -5,6 +5,7 @@ multiversx_sc::derive_imports!();
 
 pub mod config;
 
+use esdt_safe::ProxyTrait as _;
 use transaction::EthTransaction;
 
 #[multiversx_sc::contract]
@@ -26,16 +27,17 @@ pub trait BridgeProxyContract:
     #[endpoint]
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         self.require_not_paused();
-        let (token_id, amount) = self.call_value().single_fungible_esdt().into_tuple();
+        let (token_id, amount) = self.call_value().single_fungible_esdt();
         require!(token_id == eth_tx.token_id, "Invalid token id");
         require!(amount == eth_tx.amount, "Invalid amount");
         self.pending_transactions().push(&eth_tx);
     }
 
     #[endpoint(executeWithAsnyc)]
-    fn execute_with_async(&self, tx_id: u64) {
+    fn execute_with_async(&self, tx_id: usize) {
         self.require_not_paused();
-        let tx = self.pending_transactions().get_or_else(tx_id, || panic!("Invalid tx id"));
+        let tx = self.get_pending_transaction_by_id(tx_id);
+
         require!(
             tx.call_data.is_some(),
             "There is no data for a SC call!"
@@ -56,7 +58,7 @@ pub trait BridgeProxyContract:
     fn execution_callback(
         &self,
         #[call_result] result: ManagedAsyncCallResult<()>,
-        tx_id: u64,
+        tx_id: usize,
     ) {
         if result.is_err() {
             self.refund_transaction(tx_id);
@@ -64,8 +66,8 @@ pub trait BridgeProxyContract:
         self.pending_transactions().clear_entry_unchecked(tx_id);
     }
 
-    fn refund_transaction(&self, tx_id: u64) {
-        let tx = self.eth_transaction().get(tx_id);
+    fn refund_transaction(&self, tx_id: usize) {
+        let tx = self.get_pending_transaction_by_id(tx_id);
 
         let _: IgnoreValue = self
             .get_esdt_safe_proxy_instance()
@@ -73,4 +75,10 @@ pub trait BridgeProxyContract:
             .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
             .execute_on_dest_context();
     }
+
+    #[view(getPendingTransactionById)]
+    fn get_pending_transaction_by_id(&self, tx_id: usize) -> EthTransaction<Self::Api> {
+        self.pending_transactions().get_or_else(tx_id, || panic!("Invalid tx id"))
+    }
+
 }
