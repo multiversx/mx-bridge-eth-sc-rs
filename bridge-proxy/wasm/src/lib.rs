@@ -6,8 +6,9 @@
 
 // Init:                                 1
 // Endpoints:                           12
-// Async Callback:                       1
-// Total number of exported functions:  14
+// Async Callback (empty):               1
+// Promise callbacks:                    1
+// Total number of exported functions:  15
 
 #![no_std]
 #![allow(internal_features)]
@@ -32,7 +33,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
+        execution_callback => execution_callback
     )
 }
 
-multiversx_sc_wasm_adapter::async_callback! { bridge_proxy }
+multiversx_sc_wasm_adapter::async_callback_empty! {}

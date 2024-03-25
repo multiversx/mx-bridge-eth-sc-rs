@@ -49,12 +49,12 @@ pub trait BridgeProxyContract:
             .with_raw_arguments(call_data.args.clone().into())
             .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
             .with_gas_limit(call_data.gas_limit)
-            .async_call()
+            .async_call_promise()
             .with_callback(self.callbacks().execution_callback(tx_id))
-            .call_and_exit();
+            .register_promise();
     }
 
-    #[callback]
+    #[promises_callback]
     fn execution_callback(
         &self,
         #[call_result] result: ManagedAsyncCallResult<()>,
