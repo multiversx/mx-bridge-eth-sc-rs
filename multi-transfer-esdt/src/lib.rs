@@ -5,7 +5,7 @@ multiversx_sc::imports!();
 use eth_address::EthAddress;
 use token_module::ProxyTrait as OtherProxyTrait;
 use transaction::{
-    EthTransaction, EthTransactionPayment, PaymentsVec, Transaction, TxBatchSplitInFields, TxNonce,
+    EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields, TxNonce,
 };
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
@@ -171,23 +171,6 @@ pub trait MultiTransferEsdt:
         }
     }
 
-    #[endpoint(getFailedTxFromBridgeProxy)]
-    fn get_failed_tx_from_bridge_proxy(&self) {
-        let mut refund_tx_list = ManagedVec::new();
-
-        let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
-        let failed_txs: MultiValueEncoded<EthTransactionPayment<Self::Api>> = self
-            .bridge_proxy(bridge_proxy_addr)
-            .refund_transactions()
-            .execute_on_dest_context();
-
-        for failed_tx in failed_txs {
-            let refund_tx = self.convert_to_refund_tx(failed_tx.eth_tx);
-            refund_tx_list.push(refund_tx);
-        }
-
-        self.add_multiple_tx_to_batch(&refund_tx_list);
-    }
     // private
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {

@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           20
+// Endpoints:                           19
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Total number of exported functions:  21
 
 #![no_std]
 #![allow(internal_features)]
@@ -26,7 +26,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         setWrappingContractAddress => set_wrapping_contract_address
         setBridgeProxyContractAddress => set_bridge_proxy_contract_address
         setEsdtSafeContractAddress => set_esdt_safe_contract_address
-        getFailedTxFromBridgeProxy => get_failed_tx_from_bridge_proxy
         getWrappingContractAddress => wrapping_contract_address
         getBridgeProxyContractAddress => bridge_proxy_contract_address
         getEsdtSafeContractAddress => esdt_safe_contract_address
