@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           44
+// Endpoints:                           46
 // Async Callback (empty):               1
-// Total number of exported functions:  46
+// Total number of exported functions:  48
 
 #![no_std]
 #![allow(internal_features)]
@@ -26,7 +26,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         createTransaction => create_transaction
         claimRefund => claim_refund
         initSupply => init_supply
+        computeTotalAmmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
+        getTotalRefundAmounts => getTotalRefundAmounts
         setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit
         setDefaultPricePerGasUnit => set_default_price_per_gas_unit

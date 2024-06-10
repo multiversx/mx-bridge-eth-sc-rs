@@ -9,9 +9,12 @@ use core::convert::TryFrom;
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
 use transaction::{transaction_status::TransactionStatus, Transaction};
+use core::ops::Deref;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
+
+pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
@@ -124,16 +127,32 @@ pub trait EsdtSafe:
     ///
     /// As with normal Elrond -> Ethereum transactions, a part of the tokens will be
     /// subtracted to pay for the fees
-    #[only_owner]
+    #[payable("*")]
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
+        let caller = self.blockchain().get_caller();
+        let multi_transfer_address = self.multi_transfer_contract_address().get();
+        require!(caller == multi_transfer_address, "Invalid caller");
+
+        let refund_payments = self.call_value().all_esdt_transfers().deref().clone();
+        require!(refund_payments.is_empty(), "Cannot refund with no payments");
+
         let block_nonce = self.blockchain().get_block_nonce();
         let mut cached_token_ids = ManagedVec::<Self::Api, TokenIdentifier>::new();
         let mut cached_prices = ManagedVec::<Self::Api, BigUint>::new();
         let mut new_transactions = ManagedVec::new();
         let mut original_tx_nonces = ManagedVec::<Self::Api, u64>::new();
 
-        for refund_tx in &refund_transactions {
+        for (refund_tx, refund_payment) in refund_transactions.iter().zip(refund_payments.iter()) {
+            require!(
+                refund_tx.token_identifier == refund_payment.token_identifier,
+                "Token identifiers do not match"
+            );
+            require!(
+                refund_tx.amount == refund_payment.amount,
+                "Amounts do not match"
+            );
+
             let required_fee = match cached_token_ids
                 .iter()
                 .position(|id| *id == refund_tx.token_identifier)
@@ -152,7 +171,7 @@ pub trait EsdtSafe:
                 continue;
             }
 
-            let actual_bridged_amount = refund_tx.amount - required_fee;
+            let actual_bridged_amount = refund_tx.amount - &required_fee;
             self.total_fees_on_ethereum(&refund_tx.token_identifier)
                 .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
@@ -274,6 +293,7 @@ pub trait EsdtSafe:
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
+    #[only_owner]
     #[endpoint(initSupply)]
     fn init_supply(&self) {
         let (token_id, amount) = self.call_value().single_fungible_esdt();
@@ -298,6 +318,38 @@ pub trait EsdtSafe:
         });
     }
 
+    #[view(computeTotalAmmountsFromIndex)]
+    fn compute_total_amounts_from_index(&self, startIndex: u64, endIndex: u64) -> PaymentsVec<Self::Api> {
+        let mut all_payments = PaymentsVec::new();
+        for index in startIndex..endIndex {
+            let last_batch = self.pending_batches(index);
+            for tx in last_batch.iter() {
+                let new_payment = EsdtTokenPayment::new(tx.token_identifier, 0, tx.amount);
+                let len = all_payments.len();
+
+                let mut updated = false;
+                for i in 0..len {
+                    let mut current_payment = all_payments.get(i);
+                    if current_payment.token_identifier != new_payment.token_identifier {
+                        continue;
+                    }
+        
+                    current_payment.amount += &new_payment.amount;
+                    let _ = all_payments.set(i, &current_payment);
+        
+                    updated = true;
+                    break;
+                }
+                if updated == false {
+                    all_payments.push(new_payment);
+                }
+                
+            }
+        }
+
+        all_payments
+    }
+
     /// Query function that lists all refund amounts for a user.
     /// Useful for knowing which token IDs to pass to the claimRefund endpoint.
     #[view(getRefundAmounts)]
@@ -319,7 +371,7 @@ pub trait EsdtSafe:
     // views
 
     #[view(getTotalRefundAmounts)]
-    fn getTotalRefundAmounts($self) {
+    fn getTotalRefundAmounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = MultiValueEncoded::new();
         for token_id in self.token_whitelist().iter() {
             let amount = self.total_refund_amount(&token_id).get();
@@ -392,7 +444,7 @@ pub trait EsdtSafe:
     );
 
     // storage
-
+    
     #[storage_mapper("totalRefundAmount")]
     fn total_refund_amount(
         &self,

@@ -196,8 +196,11 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[only_owner]
     #[endpoint(setMintBalances)]
-    fn set_mint_balances(&self, token_id: &TokenIdentifier, value: BigUint) {
-        self.mint_balances(token_id).set_if_empty(value);
+    fn set_mint_balances(&self, token_id: TokenIdentifier, amount: BigUint) {
+        self.require_token_in_whitelist(&token_id);
+        require!(self.mint_burn_token(&token_id).get(), "Token is not mintable");
+        require!(self.mint_balances(&token_id).get() == 0, "Mint balance already set");
+        self.mint_balances(&token_id).set(&amount);
     }
 
     #[only_owner]
