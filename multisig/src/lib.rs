@@ -273,6 +273,18 @@ pub trait Multisig:
         self.move_refund_batch_to_safe_event();
     }
 
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupplyFromChildContract)]
+    fn init_supply_from_child_contract(&self) {
+        let payment = self.call_value().single_esdt();
+        let _: IgnoreValue = self
+            .get_esdt_safe_proxy_instance()
+            .init_supply()
+            .with_esdt_transfer(payment)
+            .execute_on_dest_context();
+    }
+
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) {

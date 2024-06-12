@@ -22,7 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         batchTransferEsdtToken => batch_transfer_esdt_token
-        getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
+        moveRefundBatchToSafe => move_refund_batch_to_safe
         setWrappingContractAddress => set_wrapping_contract_address
         setBridgeProxyContractAddress => set_bridge_proxy_contract_address
         setEsdtSafeContractAddress => set_esdt_safe_contract_address
