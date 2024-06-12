@@ -294,6 +294,7 @@ pub trait EsdtSafe:
     }
 
     #[only_owner]
+    #[payable("*")]
     #[endpoint(initSupply)]
     fn init_supply(&self) {
         let (token_id, amount) = self.call_value().single_fungible_esdt();
