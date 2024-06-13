@@ -294,26 +294,29 @@ pub trait EsdtSafe:
     }
 
     #[only_owner]
+    #[payable("*")]
     #[endpoint(initSupply)]
-    fn init_supply(&self) {
-        let (token_id, amount) = self.call_value().single_fungible_esdt();
+    fn init_supply(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        require!(token_id == payment_token, "Invalid token ID");
+        require!(amount == payment_amount, "Invalid amount");
+
         self.require_token_in_whitelist(&token_id);
         if !self.mint_burn_token(&token_id).get() {
             self.total_balances(&token_id).update(|total| {
                 *total += &amount;
             });
+            return;
         }
 
-        let mint_balances_mapper = self.mint_balances(&token_id);
-        let burn_balances_mapper = self.burn_balances(&token_id);
+        require!(
+            self.native_token(&token_id).get(),
+            "Cannot init for non native tokens"
+        );
 
-        if self.native_token(&token_id).get() {
-            require!(
-                mint_balances_mapper.get() >= &burn_balances_mapper.get() + &amount,
-                "Not enough minted tokens!"
-            );
-        }
-        burn_balances_mapper.update(|burned| {
+        let burn_executed = self.internal_burn(&token_id, &amount);
+        require!(burn_executed, "Cannot do the burn action!");
+        self.burn_balances(&token_id).update(|burned| {
             *burned += &amount;
         });
     }
