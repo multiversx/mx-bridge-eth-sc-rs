@@ -5,9 +5,9 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           65
+// Endpoints:                           66
 // Async Callback (empty):               1
-// Total number of exported functions:  67
+// Total number of exported functions:  68
 
 #![no_std]
 #![allow(internal_features)]
@@ -67,6 +67,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getEsdtSafeAddress => esdt_safe_address
         getMultiTransferEsdtAddress => multi_transfer_esdt_address
         getCurrentTxBatch => get_current_tx_batch
+        getBatch => get_batch
         getCurrentRefundBatch => get_current_refund_batch
         wasActionExecuted => was_action_executed
         wasTransferActionProposed => was_transfer_action_proposed

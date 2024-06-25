@@ -21,6 +21,19 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .execute_on_dest_context()
     }
 
+    /// Returns the EsdtSafe batch that has the provided batch_id.
+    ///
+    /// First result is the batch ID, then pairs of 6 results, representing transactions
+    /// split by fields:
+    ///
+    /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token ID, Amount
+    #[view(getBatch)]
+    fn get_batch(&self, batch_id: u64) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
+        self.get_esdt_safe_proxy_instance()
+            .get_batch(batch_id)
+            .execute_on_dest_context()
+    }
+
     /// Returns a batch of failed Ethereum -> Elrond transactions.
     /// The result format is the same as getCurrentTxBatch
     #[view(getCurrentRefundBatch)]
