@@ -343,7 +343,7 @@ pub trait EsdtSafe:
                     updated = true;
                     break;
                 }
-                if updated == false {
+                if !updated {
                     all_payments.push(new_payment);
                 }
                 
