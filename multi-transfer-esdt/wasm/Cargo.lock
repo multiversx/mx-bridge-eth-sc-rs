@@ -33,6 +33,7 @@ name = "bridge-proxy"
 version = "0.0.0"
 dependencies = [
  "adder",
+ "esdt-safe",
  "eth-address",
  "multiversx-sc",
  "multiversx-sc-modules",
