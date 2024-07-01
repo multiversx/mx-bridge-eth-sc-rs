@@ -1923,6 +1923,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "test-caller"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "test-caller-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc-meta",
+ "test-caller",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

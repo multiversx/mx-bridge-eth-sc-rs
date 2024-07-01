@@ -9,5 +9,7 @@ members = [
   "multisig",
   "multisig/meta",
   "bridged-tokens-wrapper",
-  "bridged-tokens-wrapper/meta"
+  "bridged-tokens-wrapper/meta",
+  "test-caller",
+  "test-caller/meta"
 ]

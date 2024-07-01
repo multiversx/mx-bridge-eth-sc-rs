@@ -1,0 +1,21 @@
+[package]
+name = "test-caller"
+version = "0.0.0"
+authors = ["Iulian Pascalau <iulian.pascalau@multiversx.com>"]
+edition = "2018"
+publish = false
+
+[lib]
+path = "src/test-caller.rs"
+
+[dependencies.multiversx-sc]
+version = "=0.47.5"
+
+[dependencies.multiversx-sc-modules]
+version = "0.47.5"
+
+[dev-dependencies]
+num-bigint = "0.4.2"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "=0.47.5"
