@@ -257,14 +257,14 @@
                     "balance": "0",
                     "esdt": {
                         "str:WEGLD-123456": {
-                            "balance": "0",
+                            "balance": "76,000,000,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
                             ]
                         },
                         "str:ETH-123456": {
-                            "balance": "0",
+                            "balance": "76,000,000,000",
                             "roles": [
                                 "ESDTRoleLocalMint",
                                 "ESDTRoleLocalBurn"
