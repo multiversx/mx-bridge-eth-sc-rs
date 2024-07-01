@@ -237,7 +237,7 @@ pub trait MultiTransferEsdt:
                 let _: IgnoreValue = self
                     .get_bridge_proxy_contract_proxy_instance()
                     .deposit(&eth_tx)
-                    .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                    .with_esdt_transfer((p.token_identifier, 0, p.amount))
                     .execute_on_dest_context();
             } else {
                 self.send()
