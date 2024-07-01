@@ -7,6 +7,11 @@
                 "address:owner": {
                     "nonce": "0",
                     "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "10,000,000"
+                        }
+                    },
                     "storage": {}
                 },
                 "address:user1": {
@@ -36,6 +41,9 @@
                                 "ESDTRoleLocalBurn"
                             ]
                         }
+                    },
+                    "storage": {
+                        "str:feeEstimatorContractAddress": "0x0000000000000000000000000000000000000000000000000000000000000000"
                     },
                     "code": "file:../../esdt-safe/output/esdt-safe.wasm",
                     "owner": "address:owner"
@@ -209,53 +217,16 @@
             }
         },
         {
-            "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:BRIDGE-123456",
-                    "1_000_000"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:WRAPPED-123456",
-                    "1_000"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "9",
+                    "nonce": "7",
                     "balance": "0",
+                    "esdt": {
+                        "str:BRIDGE-123456": {
+                            "balance": "10,000,000"
+                        }
+                    },
                     "storage": {}
                 },
                 "address:user1": {

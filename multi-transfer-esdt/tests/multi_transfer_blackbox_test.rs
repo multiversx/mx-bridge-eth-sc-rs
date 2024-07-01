@@ -243,15 +243,6 @@ impl<M: ManagedTypeApi> MultiTransferTestState<M> {
                         false,
                         BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT),
                     )),
-            )
-            .sc_call(
-                ScCallStep::new()
-                    .from(self.owner.clone())
-                    .to(&self.esdt_safe)
-                    .call(self.esdt_safe.set_mint_balances(
-                        TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
-                        BigUint::from(1_000u64),
-                    )),
             );
     }
 }

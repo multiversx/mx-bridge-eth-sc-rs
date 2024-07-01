@@ -224,7 +224,7 @@
                 "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "moveRefundBatchToSafe",
+                "function": "moveRefundBatchToSafeFromChildContract",
                 "arguments": [],
                 "gasLimit": "200,000,000",
                 "gasPrice": "0"
