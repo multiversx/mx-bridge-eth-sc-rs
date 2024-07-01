@@ -4,9 +4,7 @@ multiversx_sc::imports!();
 
 use eth_address::EthAddress;
 use token_module::ProxyTrait as OtherProxyTrait;
-use transaction::{
-    EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields, TxNonce,
-};
+use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -133,7 +131,7 @@ pub trait MultiTransferEsdt:
                     .add_refund_batch(refund_batch)
                     .with_multi_token_transfer(refund_payments)
                     .execute_on_dest_context();
-            },
+            }
             OptionalValue::None => {}
         }
     }
