@@ -43,15 +43,15 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "1,300",
+                            "balance": "400",
                             "roles": [
-                                "ESDTRoleLocalBurn","ESDTRoleLocalMint"
+                                "ESDTRoleLocalBurn",
+                                "ESDTRoleLocalMint"
                             ]
                         }
                     },
                     "storage": {
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"
