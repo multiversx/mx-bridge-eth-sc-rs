@@ -6,7 +6,7 @@ multiversx_sc::derive_imports!();
 pub mod config;
 
 use esdt_safe::ProxyTrait as _;
-use transaction::EthTransaction;
+use transaction::{CallData, EthTransaction};
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -43,7 +43,7 @@ pub trait BridgeProxyContract:
             "There is no data for a SC call!"
         );
 
-        let call_data = unsafe { tx.call_data.clone().unwrap_unchecked() };
+        let call_data = CallData::from(tx.call_data.clone());
         self.send()
             .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint.clone())
             .with_raw_arguments(call_data.args.clone().into())

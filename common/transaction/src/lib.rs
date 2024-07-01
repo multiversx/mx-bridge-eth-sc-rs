@@ -42,6 +42,16 @@ impl<M: ManagedTypeApi> Default for CallData<M> {
         }
     }
 }
+
+impl<M: ManagedTypeApi> From<ManagedBuffer<M>> for CallData<M> {
+    #[inline]
+    fn from(buffer: ManagedBuffer<M>) -> Self {
+        Self {
+            ..Default::default()
+        }
+    }
+}
+
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
@@ -49,7 +59,7 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
     pub tx_nonce: TxNonce,
-    pub call_data: Option<CallData<M>>,
+    pub call_data: ManagedBuffer<M>,
 }
 
 pub type EthTxAsMultiValue<M> = MultiValue6<
@@ -58,7 +68,7 @@ pub type EthTxAsMultiValue<M> = MultiValue6<
     TokenIdentifier<M>,
     BigUint<M>,
     TxNonce,
-    Option<CallData<M>>,
+    ManagedBuffer<M>,
 >;
 
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
