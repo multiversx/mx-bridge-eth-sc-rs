@@ -216,69 +216,6 @@
         },
         {
             "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:BRIDGE-123456",
-                    "2,000,000"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:USDC-aaaaaa",
-                    "500,000,000,000,000"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:USDC-cccccc",
-                    "1,000,000,000,000,000"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
             "txId": "batch-transfer-both-executed",
             "tx": {
                 "from": "address:owner",

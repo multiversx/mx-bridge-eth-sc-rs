@@ -26,7 +26,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         createTransaction => create_transaction
         claimRefund => claim_refund
         initSupply => init_supply
+        computeTotalAmmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
+        getTotalRefundAmounts => getTotalRefundAmounts
         setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit
         setDefaultPricePerGasUnit => set_default_price_per_gas_unit
@@ -41,8 +43,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokens => get_tokens
         setMultiTransferContractAddress => set_multi_transfer_contract_address
         setTotalBalances => set_total_balances
-        setMintBalances => set_mint_balances
-        setBurnBalances => set_burn_balances
         getAllKnownTokens => token_whitelist
         isNativeToken => native_token
         isMintBurnToken => mint_burn_token

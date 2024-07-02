@@ -90,27 +90,6 @@
                     },
                     "storage": {}
                 },
-                "sc:esdt_safe": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": {
-                        "str:BRIDGE-123456": {
-                            "balance": "3,001,300",
-                            "roles": [
-                                "ESDTRoleLocalBurn",
-                                "ESDTRoleLocalMint"
-                            ]
-                        }
-                    },
-                    "storage": {
-                        "str:pendingBatches|u64:1": "",
-                        "str:firstBatchId": "2",
-                        "str:lastBatchId": "2",
-                        "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "3,000,000",
-                        "+": ""
-                    },
-                    "code": "file:../output/esdt-safe.wasm"
-                },
                 "+": {}
             }
         }

@@ -40,14 +40,12 @@
             "expect": {
                 "out": [
                     "1",
-
                     "0",
                     "1",
                     "0x0102030405060708091011121314151617181920",
                     "sc:multi_transfer_esdt",
                     "str:BRIDGE-123456",
                     "100,200",
-
                     "0",
                     "2",
                     "0x0102030405060708091011121314151617181920",
@@ -64,7 +62,7 @@
                 "from": "address:owner",
                 "to": "sc:multi_transfer_esdt",
                 "value": "0",
-                "function": "getAndClearFirstRefundBatch",
+                "function": "moveRefundBatchToSafe",
                 "arguments": [],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -72,23 +70,7 @@
             "expect": {
                 "status": "0",
                 "message": "",
-                "out": [
-                    "1",
-
-                    "0",
-                    "1",
-                    "0x0102030405060708091011121314151617181920",
-                    "sc:multi_transfer_esdt",
-                    "str:BRIDGE-123456",
-                    "100,200",
-
-                    "0",
-                    "2",
-                    "0x0102030405060708091011121314151617181920",
-                    "sc:multi_transfer_esdt",
-                    "str:WRAPPED-123456",
-                    "100,500"
-                ],
+                "out": [],
                 "gas": "*",
                 "refund": "*"
             }

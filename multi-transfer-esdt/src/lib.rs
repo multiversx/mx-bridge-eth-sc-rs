@@ -4,9 +4,7 @@ multiversx_sc::imports!();
 
 use eth_address::EthAddress;
 use token_module::ProxyTrait as OtherProxyTrait;
-use transaction::{
-    EthTransaction, PaymentsVec, Transaction, TxBatchSplitInFields, TxNonce,
-};
+use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -53,8 +51,14 @@ pub trait MultiTransferEsdt:
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
         for eth_tx in transfers {
-            let mut must_refund = false;
+            let is_success: bool = self
+                .get_esdt_safe_contract_proxy_instance()
+                .get_tokens(&eth_tx.token_id, &eth_tx.amount)
+                .execute_on_dest_context();
 
+            require!(is_success, "Invalid token or amount");
+
+            let mut must_refund = false;
             if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
@@ -82,18 +86,6 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let is_success: bool = self
-                .get_esdt_safe_contract_proxy_instance()
-                .get_tokens(&eth_tx.token_id, &eth_tx.amount)
-                .execute_on_dest_context();
-
-            if !is_success {
-                let refund_tx = self.convert_to_refund_tx(eth_tx);
-                refund_tx_list.push(refund_tx);
-
-                continue;
-            }
-
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             self.transfer_performed_event(
                 batch_id,
@@ -115,17 +107,33 @@ pub trait MultiTransferEsdt:
     }
 
     #[only_owner]
-    #[endpoint(getAndClearFirstRefundBatch)]
-    fn get_and_clear_first_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
+    #[endpoint(moveRefundBatchToSafe)]
+    fn move_refund_batch_to_safe(&self) {
         let opt_current_batch = self.get_first_batch_any_status();
-        if matches!(opt_current_batch, OptionalValue::Some(_)) {
-            let first_batch_id = self.first_batch_id().get();
-            let mut first_batch = self.pending_batches(first_batch_id);
+        match opt_current_batch {
+            OptionalValue::Some(current_batch) => {
+                let first_batch_id = self.first_batch_id().get();
+                let mut first_batch = self.pending_batches(first_batch_id);
 
-            self.clear_first_batch(&mut first_batch);
+                self.clear_first_batch(&mut first_batch);
+                let (_batch_id, all_tx_fields) = current_batch.into_tuple();
+                let mut refund_batch = ManagedVec::new();
+                let mut refund_payments = ManagedVec::new();
+
+                for tx_fields in all_tx_fields {
+                    let (_, _, _, _, token_identifier, amount) = tx_fields.clone().into_tuple();
+                    refund_batch.push(Transaction::from(tx_fields));
+                    refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
+                }
+
+                let _: IgnoreValue = self
+                    .get_esdt_safe_contract_proxy_instance()
+                    .add_refund_batch(refund_batch)
+                    .with_multi_token_transfer(refund_payments)
+                    .execute_on_dest_context();
+            }
+            OptionalValue::None => {}
         }
-
-        opt_current_batch
     }
 
     #[only_owner]
@@ -229,7 +237,7 @@ pub trait MultiTransferEsdt:
                 let _: IgnoreValue = self
                     .get_bridge_proxy_contract_proxy_instance()
                     .deposit(&eth_tx)
-                    .with_esdt_transfer((eth_tx.token_id.clone(), 0, eth_tx.amount.clone()))
+                    .with_esdt_transfer((p.token_identifier, 0, p.amount))
                     .execute_on_dest_context();
             } else {
                 self.send()

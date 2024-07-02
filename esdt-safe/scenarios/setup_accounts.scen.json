@@ -35,6 +35,11 @@
                     "creatorAddress": "address:owner",
                     "creatorNonce": "0",
                     "newAddress": "sc:esdt_safe"
+                },
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "1",
+                    "newAddress": "sc:multi_transfer"
                 }
             ]
         },
@@ -47,6 +52,7 @@
                 "value": "0",
                 "arguments": [
                     "sc:price_aggregator",
+                    "sc:multi_transfer",
                     "150,000"
                 ],
                 "gasLimit": "20,000,000",
@@ -91,6 +97,7 @@
                     "balance": "0",
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
+                        "str:multiTransferContractAddress": "sc:multi_transfer",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:firstBatchId": "1",
@@ -144,6 +151,7 @@
                     },
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
+                        "str:multiTransferContractAddress": "sc:multi_transfer",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:firstBatchId": "1",

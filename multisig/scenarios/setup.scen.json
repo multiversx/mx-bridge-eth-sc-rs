@@ -28,10 +28,8 @@
                     },
                     "storage": {
                         "str:esdtSafeContractAddress": "sc:esdt_safe",
-                        
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
-
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1"
                     },
@@ -63,19 +61,18 @@
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:ethTxGasLimit": "150,000",
-
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
                         "str:tokenTicker|nested:str:WEGLD-123456": "str:WEGLD",
                         "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
-
                         "str:tokenWhitelist.index|nested:str:WEGLD-123456": "1",
                         "str:tokenWhitelist.item|u32:1": "str:WEGLD-123456",
                         "str:tokenWhitelist.index|nested:str:ETH-123456": "2",
                         "str:tokenWhitelist.item|u32:2": "str:ETH-123456",
-                        "str:tokenWhitelist.len": "2"
+                        "str:tokenWhitelist.len": "2",
+                        "str:mintBalances|nested:str:WEGLD-123456": "500,000,000,000",
+                        "str:mintBalances|nested:str:ETH-123456": "500,000,000,000"
                     },
                     "owner": "sc:multisig",
                     "code": "file:../../esdt-safe/output/esdt-safe.wasm"
@@ -158,20 +155,17 @@
                     "storage": {
                         "str:esdtSafeAddress": "sc:esdt_safe",
                         "str:multiTransferEsdtAddress": "sc:multi_transfer",
-
                         "str:num_board_members": "2",
                         "str:quorum": "2",
                         "str:requiredStakeAmount": "1000",
                         "str:slashAmount": "500",
                         "str:user_role|u32:1": "1",
                         "str:user_role|u32:2": "1",
-
                         "str:user_address_to_id|address:relayer1": "1",
                         "str:user_address_to_id|address:relayer2": "2",
                         "str:user_count": "2",
                         "str:user_id_to_address|u32:1": "address:relayer1",
                         "str:user_id_to_address|u32:2": "address:relayer2",
-
                         "str:pause_module:paused": "true"
                     },
                     "code": "file:../output/multisig.wasm"
@@ -352,48 +346,6 @@
                     "500,000"
                 ],
                 "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "sc:multisig",
-                "to": "sc:esdt_safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:WEGLD-123456",
-                    "500,000,000,000"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "set-accumulated-burned-tokens",
-            "tx": {
-                "from": "sc:multisig",
-                "to": "sc:esdt_safe",
-                "function": "setMintBalances",
-                "arguments": [
-                    "str:ETH-123456",
-                    "500,000,000,000"
-                ],
-                "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
             "expect": {

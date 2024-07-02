@@ -264,27 +264,25 @@ pub trait Multisig:
     /// converting the transactions into Elrond -> Ethereum transactions
     /// and adding them into EsdtSafe batches
     #[only_owner]
-    #[endpoint(moveRefundBatchToSafe)]
-    fn move_refund_batch_to_safe(&self) {
-        let opt_refund_batch_fields: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
+    #[endpoint(moveRefundBatchToSafeFromChildContract)]
+    fn move_refund_batch_to_safe_from_child_contract(&self) {
+        let _: IgnoreValue = self
             .get_multi_transfer_esdt_proxy_instance()
-            .get_and_clear_first_refund_batch()
+            .move_refund_batch_to_safe()
             .execute_on_dest_context();
-
-        if let OptionalValue::Some(refund_batch_fields) = opt_refund_batch_fields {
-            let (_batch_id, all_tx_fields) = refund_batch_fields.into_tuple();
-            let mut refund_batch = ManagedVec::new();
-
-            for tx_fields in all_tx_fields {
-                refund_batch.push(Transaction::from(tx_fields));
-            }
-
-            let _: IgnoreValue = self
-                .get_esdt_safe_proxy_instance()
-                .add_refund_batch(refund_batch)
-                .execute_on_dest_context();
-        }
         self.move_refund_batch_to_safe_event();
+    }
+
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupplyFromChildContract)]
+    fn init_supply_from_child_contract(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        let _: IgnoreValue = self
+            .get_esdt_safe_proxy_instance()
+            .init_supply(token_id, amount)
+            .with_esdt_transfer((payment_token, 0, payment_amount))
+            .execute_on_dest_context();
     }
 
     /// Proposers and board members use this to launch signed actions.
