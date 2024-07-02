@@ -83,4 +83,13 @@ pub trait BridgeProxyContract:
         self.pending_transactions().get_or_else(tx_id, || panic!("Invalid tx id"))
     }
 
+    #[view(getPendingTransactions)]
+    fn get_pending_transactions(&self) -> MultiValueEncoded<MultiArg2<usize, EthTransaction<Self::Api>>> {
+        let transactions = MultiValueEncoded::new();
+        for (index, tx) in self.pending_transactions().iter().enumerate() {
+            transactions.push((index, tx.clone()));
+        }
+        transactions
+    }
+
 }
