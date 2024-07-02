@@ -84,10 +84,13 @@ pub trait BridgeProxyContract:
     }
 
     #[view(getPendingTransactions)]
-    fn get_pending_transactions(&self) -> MultiValueEncoded<MultiArg2<usize, EthTransaction<Self::Api>>> {
-        let transactions = MultiValueEncoded::new();
+    fn get_pending_transactions(&self) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
+        let mut transactions = MultiValueEncoded::new();
         for (index, tx) in self.pending_transactions().iter().enumerate() {
-            transactions.push((index, tx.clone()));
+            transactions.push(MultiValue2((
+                index,
+                tx,
+            )));
         }
         transactions
     }
