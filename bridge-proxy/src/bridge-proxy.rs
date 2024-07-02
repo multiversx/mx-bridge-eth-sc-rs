@@ -27,7 +27,11 @@ pub trait BridgeProxyContract:
     #[endpoint]
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         self.require_not_paused();
-        let (token_id, amount) = self.call_value().single_fungible_esdt();
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.multi_transfer_address().get(),
+            "Only MultiTransfer can do deposits"
+        );
         self.pending_transactions().push(&eth_tx);
     }
 
