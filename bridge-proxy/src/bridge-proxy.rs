@@ -28,8 +28,6 @@ pub trait BridgeProxyContract:
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         self.require_not_paused();
         let (token_id, amount) = self.call_value().single_fungible_esdt();
-        require!(token_id == eth_tx.token_id, "Invalid token id");
-        require!(amount == eth_tx.amount, "Invalid amount");
         self.pending_transactions().push(&eth_tx);
     }
 
