@@ -27,7 +27,7 @@ path = "../common/tx-batch-module"
 path = "../common/max-bridged-amount-module"
 
 [dependencies.multiversx-price-aggregator-sc]
-version = "=0.47.5"
+version = "=0.50.4"
 
 [dependencies.multiversx-sc]
 version = "=0.50.4"
