@@ -56,7 +56,9 @@ pub trait ConfigModule {
     #[proxy]
     fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
 
-    #[view(getPendingTransactions)]
     #[storage_mapper("pending_transactions")]
     fn pending_transactions(&self) -> VecMapper<EthTransaction<Self::Api>>;
+
+    #[storage_mapper("lowest_tx_id")]
+    fn lowest_tx_id(&self) -> SingleValueMapper<usize>;
 }

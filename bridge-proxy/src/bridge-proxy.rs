@@ -15,6 +15,7 @@ pub trait BridgeProxyContract:
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
         self.set_multi_transfer_contract_address(opt_multi_transfer_address);
+        self.lowest_tx_id().set(1);
         self.set_paused(true);
     }
 
@@ -35,8 +36,8 @@ pub trait BridgeProxyContract:
         self.pending_transactions().push(&eth_tx);
     }
 
-    #[endpoint(executeWithAsnyc)]
-    fn execute_with_async(&self, tx_id: usize) {
+    #[endpoint(execute)]
+    fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
 
@@ -65,6 +66,10 @@ pub trait BridgeProxyContract:
         if result.is_err() {
             self.refund_transaction(tx_id);
         }
+        let lowest_tx_id = self.lowest_tx_id().get();
+        if tx_id < lowest_tx_id {
+            self.lowest_tx_id().set(tx_id + 1);
+        }
         self.pending_transactions().clear_entry_unchecked(tx_id);
     }
 
@@ -81,6 +86,25 @@ pub trait BridgeProxyContract:
     #[view(getPendingTransactionById)]
     fn get_pending_transaction_by_id(&self, tx_id: usize) -> EthTransaction<Self::Api> {
         self.pending_transactions().get_or_else(tx_id, || panic!("Invalid tx id"))
+    }
+
+    #[view(getPendingTransactions)]
+    fn get_pending_transactions(&self) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
+        let lowest_tx_id = self.lowest_tx_id().get();
+        let len = self.pending_transactions().len();
+        
+        let mut transactions = MultiValueEncoded::new();
+        for i in lowest_tx_id..=len {
+            if self.pending_transactions().item_is_empty(i) {
+                continue;
+            }
+            let tx = self.pending_transactions().get_unchecked(i);
+            transactions.push(MultiValue2((
+                i,
+                tx,
+            )));
+        }
+        transactions
     }
 
 }

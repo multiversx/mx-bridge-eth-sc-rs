@@ -169,7 +169,7 @@ fn deploy_deposit_test() {
         ScCallStep::new()
             .from(&test.owner)
             .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.execute_with_async(1u32)),
+            .call(test.bridge_proxy_contract.execute(1u32)),
     );
 
     test.world.sc_query(
@@ -266,7 +266,7 @@ fn multiple_deposit_test() {
         ScCallStep::new()
             .from(&test.owner)
             .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.execute_with_async(1u32)),
+            .call(test.bridge_proxy_contract.execute(1u32)),
     );
 
     test.world.sc_query(
@@ -280,7 +280,7 @@ fn multiple_deposit_test() {
         ScCallStep::new()
             .from(&test.owner)
             .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.execute_with_async(2u32)),
+            .call(test.bridge_proxy_contract.execute(2u32)),
     );
 
     test.world.sc_query(
