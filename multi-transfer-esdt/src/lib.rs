@@ -232,7 +232,9 @@ pub trait MultiTransferEsdt:
         transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
     ) {
-        for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
+        for (mut eth_tx, p) in transfers.iter().zip(payments.iter()) {
+            eth_tx.amount = p.amount.clone();
+            eth_tx.token_id = p.token_identifier.clone();
             if self.blockchain().is_smart_contract(&eth_tx.to) {
                 let _: IgnoreValue = self
                     .get_bridge_proxy_contract_proxy_instance()

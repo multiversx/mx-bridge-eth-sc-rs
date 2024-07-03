@@ -88,7 +88,7 @@ pub trait BridgeProxyContract:
         let mut transactions = MultiValueEncoded::new();
         for (index, tx) in self.pending_transactions().iter().enumerate() {
             transactions.push(MultiValue2((
-                index,
+                index + 1,
                 tx,
             )));
         }
