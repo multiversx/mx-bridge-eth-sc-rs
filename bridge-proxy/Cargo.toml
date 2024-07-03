@@ -18,10 +18,10 @@ path = "../common/eth-address"
 path = "../esdt-safe"
 
 [dependencies.multiversx-sc]
-version = "=0.47.5"
+version = "=0.50.4"
 
 [dependencies.multiversx-sc-modules]
-version = "0.47.5"
+version = "0.50.4"
 
 [dependencies.adder]
 git = "https://github.com/multiversx/mx-contracts-rs"
@@ -31,4 +31,4 @@ rev = "a2d5eac"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.47.5"
+version = "=0.50.4"
