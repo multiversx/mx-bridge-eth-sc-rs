@@ -36,8 +36,8 @@ pub trait BridgeProxyContract:
         self.pending_transactions().push(&eth_tx);
     }
 
-    #[endpoint(executeWithAsnyc)]
-    fn execute_with_async(&self, tx_id: usize) {
+    #[endpoint(execute)]
+    fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
 
@@ -68,7 +68,7 @@ pub trait BridgeProxyContract:
         }
         let lowest_tx_id = self.lowest_tx_id().get();
         if tx_id < lowest_tx_id {
-            self.lowest_tx_id().set(tx_id);
+            self.lowest_tx_id().set(tx_id + 1);
         }
         self.pending_transactions().clear_entry_unchecked(tx_id);
     }
