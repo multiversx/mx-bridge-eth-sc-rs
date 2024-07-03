@@ -58,4 +58,7 @@ pub trait ConfigModule {
 
     #[storage_mapper("pending_transactions")]
     fn pending_transactions(&self) -> VecMapper<EthTransaction<Self::Api>>;
+
+    #[storage_mapper("lowest_tx_id")]
+    fn lowest_tx_id(&self) -> SingleValueMapper<usize>;
 }
