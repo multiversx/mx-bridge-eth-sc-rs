@@ -225,7 +225,9 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "token-module",
  "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]
