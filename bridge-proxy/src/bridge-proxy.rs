@@ -71,11 +71,7 @@ pub trait BridgeProxyContract:
             .to(ToCaller)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(tx.from)
-            .egld_or_single_esdt(
-                &EgldOrEsdtTokenIdentifier::esdt(tx.token_id),
-                0,
-                &BigUint::from(tx.amount),
-            )
+            .egld_or_single_esdt(&EgldOrEsdtTokenIdentifier::esdt(tx.token_id), 0, &tx.amount)
             .sync_call();
     }
 
