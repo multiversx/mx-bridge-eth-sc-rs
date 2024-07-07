@@ -14,6 +14,12 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
+[dependencies.token-module]
+path = "../common/token-module"
+
+[dependencies.tx-batch-module]
+path = "../common/tx-batch-module"
+
 [dependencies.esdt-safe]
 path = "../esdt-safe"
 
