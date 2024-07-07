@@ -7,8 +7,7 @@ use core::ops::Deref;
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 

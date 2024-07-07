@@ -1,4 +1,3 @@
-#![feature(associated_type_bounds)]
 use bridged_tokens_wrapper::DFPBigUint;
 use multiversx_sc_scenario::DebugApi;
 

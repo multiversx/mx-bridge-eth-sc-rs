@@ -1,4 +1,4 @@
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 pub const GWEI_STRING: &[u8] = b"GWEI";
 
