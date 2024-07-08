@@ -1,6 +1,7 @@
 #![no_std]
 use multiversx_sc::imports::*;
 
+pub mod bridge_proxy_contract_proxy;
 pub mod config;
 pub mod esdt_safe_proxy;
 

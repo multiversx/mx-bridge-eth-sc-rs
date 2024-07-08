@@ -2,10 +2,11 @@
 
 use std::collections::LinkedList;
 
-use adder::{Adder, ProxyTrait as _};
-use bridge_proxy::config::ProxyTrait as _;
+use adder::{adder_proxy, Adder, ProxyTrait as _};
 use bridge_proxy::ProxyTrait;
+use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _};
 
+use multiversx_sc::types::{ReturnsNewAddress, TestAddress};
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
     codec::{
@@ -18,6 +19,7 @@ use multiversx_sc::{
         ManagedByteArray, ManagedVec, TokenIdentifier,
     },
 };
+use multiversx_sc_scenario::imports::MxscPath;
 use multiversx_sc_scenario::{
     api::StaticApi,
     rust_biguint,
@@ -25,14 +27,20 @@ use multiversx_sc_scenario::{
     scenario_model::*,
     ContractInfo, ScenarioWorld,
 };
+use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
 use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
 const GAS_LIMIT: u64 = 1_000_000;
-const BRIDGE_PROXY_PATH_EXPR: &str = "file:output/bridge-proxy.wasm";
-const ADDER_BOGUS_PATH_EXPR: &str = "file:bogus-path.wasm";
+
+const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
+const BRIDGE_PROXY_ADDRESS: TestAddress = TestAddress::new("bridge-proxy");
+const ADDER_ADDRESS: TestAddress = TestAddress::new("adder");
+
+const BRIDGE_PROXY_PATH_EXPR: MxscPath = MxscPath::new("output/bridge-proxy.mxsc.json");
+const ADDER_BOGUS_PATH_EXPR: MxscPath = MxscPath::new("test-contract/adder.mxsc.json");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -79,37 +87,56 @@ impl<M: ManagedTypeApi> BridgeProxyTestState<M> {
     }
 
     fn bridge_proxy_deploy(&mut self) -> &mut Self {
-        self.world.set_state_step(
-            SetStateStep::new()
-                .put_account(&self.owner, Account::new().nonce(1))
-                .new_address(&self.owner, 1, &self.bridge_proxy_contract),
-        );
+        // self.world.set_state_step(
+        //     SetStateStep::new()
+        //         .put_account(&self.owner, Account::new().nonce(1))
+        //         .new_address(&self.owner, 1, &self.bridge_proxy_contract),
+        // );
 
-        let ic = &self.world.interpreter_context();
-        self.world.sc_deploy(
-            ScDeployStep::new()
-                .from(self.owner.clone())
-                .code(self.world.code_expression(BRIDGE_PROXY_PATH_EXPR))
-                .call(self.bridge_proxy_contract.init(ManagedAddress::zero())),
-        );
+        self.world.account(OWNER_ADDRESS).nonce(1);
+
+        // let ic = &self.world.interpreter_context();
+        // self.world.sc_deploy(
+        //     ScDeployStep::new()
+        //         .from(self.owner.clone())
+        //         .code(self.world.code_expression(BRIDGE_PROXY_PATH_EXPR))
+        //         .call(self.bridge_proxy_contract.init(ManagedAddress::zero())),
+        // );
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .init(OptionalValue::Some(ManagedAddress::default()))
+            .code(BRIDGE_PROXY_PATH_EXPR)
+            .new_address(BRIDGE_PROXY_ADDRESS)
+            .run();
 
         self
     }
 
     fn deploy_adder(&mut self) -> &mut Self {
-        self.world.set_state_step(SetStateStep::new().new_address(
-            &self.owner,
-            2,
-            &self.adder_contract,
-        ));
+        // self.world.set_state_step(SetStateStep::new().new_address(
+        //     &self.owner,
+        //     2,
+        //     &self.adder_contract,
+        // ));
 
-        self.world.sc_deploy(
-            ScDeployStep::new()
-                .from(self.owner.clone())
-                .code(self.world.code_expression(ADDER_BOGUS_PATH_EXPR))
-                .call(self.adder_contract.init(BigUint::zero())),
-        );
+        // self.world.sc_deploy(
+        //     ScDeployStep::new()
+        //         .from(self.owner.clone())
+        //         .code(self.world.code_expression(ADDER_BOGUS_PATH_EXPR))
+        //         .call(self.adder_contract.init(BigUint::zero())),
+        // );
 
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .typed(adder_proxy::AdderProxy)
+            .init(BigUint::zero())
+            .code(ADDER_BOGUS_PATH_EXPR)
+            .new_address(ADDER_ADDRESS)
+            .run();
         self
     }
 }
@@ -117,7 +144,7 @@ impl<M: ManagedTypeApi> BridgeProxyTestState<M> {
 // #[test]
 fn deploy_deposit_test() {
     let mut test = BridgeProxyTestState::setup();
-    let bridge_token_id_expr = "str:BRIDGE-123456"; // when specifying the token transfer
+    let bridge_token_id_expr: &str = "str:BRIDGE-123456"; // when specifying the token transfer
 
     test.bridge_proxy_deploy();
     test.deploy_adder();
@@ -144,40 +171,46 @@ fn deploy_deposit_test() {
             args,
         }),
     };
+    test.world
+        .account(OWNER_ADDRESS)
+        .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 1_000u64);
 
-    test.world.set_state_step(SetStateStep::new().put_account(
-        &test.owner,
-        Account::new().esdt_balance(bridge_token_id_expr, 1_000u64),
-    ));
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx)
+        .single_esdt(
+            &TokenIdentifier::from(BRIDGE_TOKEN_ID),
+            0u64,
+            &BigUint::from(500u64),
+        )
+        .run();
 
-    test.world.sc_call(
-        ScCallStep::new()
-            .from(&test.owner)
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.deposit(&eth_tx))
-            .esdt_transfer(bridge_token_id_expr, 0u64, 500u64),
-    );
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
 
-    test.world.sc_query(
-        ScQueryStep::new()
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.get_pending_transaction_by_id(1u32))
-            .expect_value(eth_tx),
-    );
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
 
-    test.world.sc_call(
-        ScCallStep::new()
-            .from(&test.owner)
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.execute(1u32)),
-    );
-
-    test.world.sc_query(
-        ScQueryStep::new()
-            .to(&test.adder_contract)
-            .call(test.adder_contract.sum())
-            .expect_value(SingleValue::from(BigUint::from(5u32))),
-    );
+    test.world
+        .query()
+        .to(ADDER_ADDRESS)
+        .typed(adder_proxy::AdderProxy)
+        .sum()
+        .returns(ExpectValue(BigUint::from(5u32)))
+        .run();
 }
 
 // #[test]
@@ -187,13 +220,6 @@ fn multiple_deposit_test() {
 
     test.bridge_proxy_deploy();
     test.deploy_adder();
-
-    // test.world.sc_call(
-    //     ScCallStep::new()
-    //         .from(&test.owner)
-    //         .to(&test.bridge_proxy_contract)
-    //         .call(test.bridge_proxy_contract.unpause())
-    // );
 
     let mut args1 = ManagedVec::new();
     args1.push(ManagedBuffer::from(&[5u8]));
@@ -227,66 +253,73 @@ fn multiple_deposit_test() {
         }),
     };
 
-    test.world.set_state_step(SetStateStep::new().put_account(
-        &test.owner,
-        Account::new().esdt_balance(bridge_token_id_expr, 1_000u64),
-    ));
+    test.world
+        .account(OWNER_ADDRESS)
+        .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 1_000u64);
 
-    test.world.sc_call(
-        ScCallStep::new()
-            .from(&test.owner)
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.deposit(&eth_tx1))
-            .esdt_transfer(bridge_token_id_expr, 0u64, 500u64),
-    );
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx1)
+        .single_esdt(
+            &TokenIdentifier::from(BRIDGE_TOKEN_ID),
+            0u64,
+            &BigUint::from(500u64),
+        )
+        .run();
 
-    test.world.sc_call(
-        ScCallStep::new()
-            .from(&test.owner)
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.deposit(&eth_tx2))
-            .esdt_transfer(bridge_token_id_expr, 0u64, 0u64),
-    );
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx2)
+        .single_esdt(
+            &TokenIdentifier::from(BRIDGE_TOKEN_ID),
+            0u64,
+            &BigUint::zero(),
+        )
+        .run();
 
-    test.world.sc_query(
-        ScQueryStep::new()
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.get_pending_transaction_by_id(1u32))
-            .expect_value(eth_tx1),
-    );
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx1))
+        .run();
 
-    test.world.sc_query(
-        ScQueryStep::new()
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.get_pending_transaction_by_id(2u32))
-            .expect_value(eth_tx2),
-    );
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
 
-    test.world.sc_call(
-        ScCallStep::new()
-            .from(&test.owner)
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.execute(1u32)),
-    );
+    test.world
+        .query()
+        .to(ADDER_ADDRESS)
+        .typed(adder_proxy::AdderProxy)
+        .sum()
+        .returns(ExpectValue(BigUint::from(5u32)))
+        .run();
 
-    test.world.sc_query(
-        ScQueryStep::new()
-            .to(&test.adder_contract)
-            .call(test.adder_contract.sum())
-            .expect_value(SingleValue::from(BigUint::from(5u32))),
-    );
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(2u32)
+        .run();
 
-    test.world.sc_call(
-        ScCallStep::new()
-            .from(&test.owner)
-            .to(&test.bridge_proxy_contract)
-            .call(test.bridge_proxy_contract.execute(2u32)),
-    );
-
-    test.world.sc_query(
-        ScQueryStep::new()
-            .to(&test.adder_contract)
-            .call(test.adder_contract.sum())
-            .expect_value(SingleValue::from(BigUint::from(20u32))),
-    );
+    test.world
+        .query()
+        .to(ADDER_ADDRESS)
+        .typed(adder_proxy::AdderProxy)
+        .sum()
+        .returns(ExpectValue(BigUint::from(20u32)))
+        .run();
 }
