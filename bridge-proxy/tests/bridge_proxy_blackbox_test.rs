@@ -40,13 +40,13 @@ const BRIDGE_PROXY_ADDRESS: TestAddress = TestAddress::new("bridge-proxy");
 const ADDER_ADDRESS: TestAddress = TestAddress::new("adder");
 
 const BRIDGE_PROXY_PATH_EXPR: MxscPath = MxscPath::new("output/bridge-proxy.mxsc.json");
-const ADDER_BOGUS_PATH_EXPR: MxscPath = MxscPath::new("test-contract/adder.mxsc.json");
+const ADDER_PATH_EXPR: MxscPath = MxscPath::new("test-contract/adder.mxsc.json");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
 
     blockchain.register_contract(BRIDGE_PROXY_PATH_EXPR, bridge_proxy::ContractBuilder);
-    blockchain.register_contract(ADDER_BOGUS_PATH_EXPR, adder::ContractBuilder);
+    blockchain.register_contract(ADDER_PATH_EXPR, adder::ContractBuilder);
 
     blockchain
 }
@@ -54,54 +54,20 @@ fn world() -> ScenarioWorld {
 type BridgeProxyContract = ContractInfo<bridge_proxy::Proxy<StaticApi>>;
 type AdderContract = ContractInfo<adder::Proxy<StaticApi>>;
 
-struct BridgeProxyTestState<M: ManagedTypeApi> {
+struct BridgeProxyTestState {
     world: ScenarioWorld,
-    owner: AddressValue,
-    user: AddressValue,
-    eth_user: EthAddress<M>,
-    bridge_proxy_contract: BridgeProxyContract,
-    adder_contract: AdderContract,
 }
 
-impl<M: ManagedTypeApi> BridgeProxyTestState<M> {
-    fn setup() -> Self {
-        let world = world();
-        let ic = &world.interpreter_context();
+impl BridgeProxyTestState {
+    fn new() -> Self {
+        let mut world = world();
 
-        let mut state = BridgeProxyTestState {
-            world,
-            owner: "address:owner".into(),
-            user: "address:user".into(),
-            eth_user: EthAddress {
-                raw_addr: ManagedByteArray::default(),
-            },
-            bridge_proxy_contract: BridgeProxyContract::new("sc:bridge_proxy"),
-            adder_contract: AdderContract::new("sc:adder"),
-        };
-
-        state
-            .world
-            .set_state_step(SetStateStep::new().put_account(&state.owner, Account::new().nonce(1)));
-
-        state
+        world.account(OWNER_ADDRESS).nonce(1);
+        Self { world }
     }
 
     fn bridge_proxy_deploy(&mut self) -> &mut Self {
-        // self.world.set_state_step(
-        //     SetStateStep::new()
-        //         .put_account(&self.owner, Account::new().nonce(1))
-        //         .new_address(&self.owner, 1, &self.bridge_proxy_contract),
-        // );
-
         self.world.account(OWNER_ADDRESS).nonce(1);
-
-        // let ic = &self.world.interpreter_context();
-        // self.world.sc_deploy(
-        //     ScDeployStep::new()
-        //         .from(self.owner.clone())
-        //         .code(self.world.code_expression(BRIDGE_PROXY_PATH_EXPR))
-        //         .call(self.bridge_proxy_contract.init(ManagedAddress::zero())),
-        // );
 
         self.world
             .tx()
@@ -116,25 +82,12 @@ impl<M: ManagedTypeApi> BridgeProxyTestState<M> {
     }
 
     fn deploy_adder(&mut self) -> &mut Self {
-        // self.world.set_state_step(SetStateStep::new().new_address(
-        //     &self.owner,
-        //     2,
-        //     &self.adder_contract,
-        // ));
-
-        // self.world.sc_deploy(
-        //     ScDeployStep::new()
-        //         .from(self.owner.clone())
-        //         .code(self.world.code_expression(ADDER_BOGUS_PATH_EXPR))
-        //         .call(self.adder_contract.init(BigUint::zero())),
-        // );
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)
             .typed(adder_proxy::AdderProxy)
             .init(BigUint::zero())
-            .code(ADDER_BOGUS_PATH_EXPR)
+            .code(ADDER_PATH_EXPR)
             .new_address(ADDER_ADDRESS)
             .run();
         self
@@ -143,25 +96,20 @@ impl<M: ManagedTypeApi> BridgeProxyTestState<M> {
 
 // #[test]
 fn deploy_deposit_test() {
-    let mut test = BridgeProxyTestState::setup();
+    let mut test = BridgeProxyTestState::new();
     let bridge_token_id_expr: &str = "str:BRIDGE-123456"; // when specifying the token transfer
 
     test.bridge_proxy_deploy();
     test.deploy_adder();
 
-    // test.world.sc_call(
-    //     ScCallStep::new()
-    //         .from(&test.owner)
-    //         .to(&test.bridge_proxy_contract)
-    //         .call(test.bridge_proxy_contract.unpause())
-    // );
-
     let mut args = ManagedVec::new();
     args.push(ManagedBuffer::from(&[5u8]));
 
     let eth_tx = EthTransaction {
-        from: test.eth_user.clone(),
-        to: ManagedAddress::from_address(&test.adder_contract.to_address()),
+        from: EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        to: ManagedAddress::from_address(&AdderContract::new("sc:adder").to_address()),
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -215,7 +163,7 @@ fn deploy_deposit_test() {
 
 // #[test]
 fn multiple_deposit_test() {
-    let mut test = BridgeProxyTestState::setup();
+    let mut test = BridgeProxyTestState::new();
     let bridge_token_id_expr = "str:BRIDGE-123456"; // when specifying the token transfer
 
     test.bridge_proxy_deploy();
@@ -225,8 +173,10 @@ fn multiple_deposit_test() {
     args1.push(ManagedBuffer::from(&[5u8]));
 
     let eth_tx1 = EthTransaction {
-        from: test.eth_user.clone(),
-        to: ManagedAddress::from_address(&test.adder_contract.to_address()),
+        from: EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        to: ManagedAddress::from_address(&AdderContract::new("sc:adder").to_address()),
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -241,8 +191,10 @@ fn multiple_deposit_test() {
     args2.push(ManagedBuffer::from(&[15u8]));
 
     let eth_tx2 = EthTransaction {
-        from: test.eth_user.clone(),
-        to: ManagedAddress::from_address(&test.adder_contract.to_address()),
+        from: EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        to: ManagedAddress::from_address(&AdderContract::new("sc:adder").to_address()),
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::zero(),
         tx_nonce: 1u64,
