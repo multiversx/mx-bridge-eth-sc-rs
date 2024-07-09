@@ -119,9 +119,9 @@ pub trait Multisig:
             total_percentage == PERCENTAGE_TOTAL as u64,
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
-
+        let esdt_safe_addr = self.esdt_safe_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .distribute_fees(args)
             .sync_call();
@@ -183,9 +183,10 @@ pub trait Multisig:
         //     .get_current_tx_batch()
         //     .execute_on_dest_context();
 
+        let esdt_safe_addr = self.esdt_safe_address().get();
         let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
             .tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .get_current_tx_batch()
             .returns(ReturnsResult)
@@ -274,8 +275,9 @@ pub trait Multisig:
     #[only_owner]
     #[endpoint(moveRefundBatchToSafeFromChildContract)]
     fn move_refund_batch_to_safe_from_child_contract(&self) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .move_refund_batch_to_safe()
             .sync_call();
@@ -288,8 +290,10 @@ pub trait Multisig:
     #[endpoint(initSupplyFromChildContract)]
     fn init_supply_from_child_contract(&self, token_id: TokenIdentifier, amount: BigUint) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init_supply(token_id, amount)
             .payment((payment_token, 0, payment_amount))
@@ -343,8 +347,9 @@ pub trait Multisig:
                 }
 
                 action_ids_mapper.clear();
+                let esdt_safe_addr = self.esdt_safe_address().get();
                 self.tx()
-                    .to(ToCaller)
+                    .to(esdt_safe_addr)
                     .typed(esdt_safe_proxy::EsdtSafeProxy)
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
@@ -373,10 +378,11 @@ pub trait Multisig:
                 let last_tx = transfers.get(last_tx_index);
                 self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
 
+                let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.into();
                 self.tx()
-                    .to(ToCaller)
+                    .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .sync_call();

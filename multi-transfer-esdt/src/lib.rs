@@ -54,10 +54,12 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
+        let safe_address = self.esdt_safe_contract_address().get();
+
         for eth_tx in transfers {
             let is_success: bool = self
                 .tx()
-                .to(ToCaller)
+                .to(safe_address.clone())
                 .typed(esdt_safe_proxy::EsdtSafeProxy)
                 .get_tokens(&eth_tx.token_id, &eth_tx.amount)
                 .returns(ReturnsResult)
@@ -133,8 +135,9 @@ pub trait MultiTransferEsdt:
                     refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                 }
 
+                let esdt_safe_addr = self.esdt_safe_contract_address().get();
                 self.tx()
-                    .to(ToCaller)
+                    .to(esdt_safe_addr)
                     .typed(esdt_safe_proxy::EsdtSafeProxy)
                     .add_refund_batch(refund_batch)
                     .payment(refund_payments)
@@ -229,8 +232,9 @@ pub trait MultiTransferEsdt:
             return payments;
         }
 
+        let bridged_tokens_wrapper_addr = self.wrapping_contract_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(bridged_tokens_wrapper_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .wrap_tokens()
             .payment(payments)
@@ -243,12 +247,13 @@ pub trait MultiTransferEsdt:
         transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
     ) {
+        let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
         for (mut eth_tx, p) in transfers.iter().zip(payments.iter()) {
             eth_tx.amount = p.amount.clone();
             eth_tx.token_id = p.token_identifier.clone();
             if self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.tx()
-                    .to(ToCaller)
+                    .to(bridge_proxy_addr.clone())
                     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
                     .deposit(&eth_tx)
                     .esdt((p.token_identifier, 0, p.amount))

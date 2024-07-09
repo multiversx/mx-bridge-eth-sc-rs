@@ -136,8 +136,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(pauseEsdtSafe)]
     fn pause_esdt_safe(&self) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .pause_endpoint()
             .sync_call();
@@ -148,8 +150,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(unpauseEsdtSafe)]
     fn unpause_esdt_safe(&self) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
             .sync_call();
@@ -159,8 +163,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_fee_estimator_contract_address(new_address)
             .sync_call();
@@ -175,8 +181,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeElrondToEthGasLimit)]
     fn change_multiversx_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_eth_tx_gas_limit(new_gas_limit)
             .sync_call();
@@ -187,8 +195,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_default_price_per_gas_unit(token_id, new_value)
             .sync_call();
@@ -198,8 +208,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_token_ticker(token_id, new_ticker)
             .sync_call();
@@ -215,8 +227,10 @@ pub trait SetupModule:
         is_native_token: bool,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .add_token_to_whitelist(
                 token_id,
@@ -232,8 +246,9 @@ pub trait SetupModule:
     #[endpoint(setMultiTransferOnEsdtSafe)]
     fn set_multi_transfer_on_esdt_safe(&self) {
         let multi_transfer_esdt_address = self.multi_transfer_esdt_address().get();
+        let esdt_safe_addr = self.esdt_safe_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_multi_transfer_contract_address(OptionalValue::Some(multi_transfer_esdt_address))
             .sync_call();
@@ -243,9 +258,9 @@ pub trait SetupModule:
     #[endpoint(setEsdtSafeOnMultiTransfer)]
     fn set_esdt_safe_on_multi_transfer(&self) {
         let esdt_safe_address = self.esdt_safe_address().get();
-
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_esdt_safe_contract_address(OptionalValue::Some(esdt_safe_address))
             .sync_call();
@@ -254,8 +269,9 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
     fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .remove_token_from_whitelist(token_id)
             .sync_call();
@@ -267,8 +283,9 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
     fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .sync_call();
@@ -280,8 +297,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .sync_call();
@@ -296,8 +315,10 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         max_amount: BigUint,
     ) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .sync_call();
@@ -311,8 +332,9 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         max_amount: BigUint,
     ) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .sync_call();
@@ -323,8 +345,10 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]
     fn multi_transfer_esdt_set_max_refund_tx_batch_size(&self, new_max_tx_batch_size: usize) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .sync_call();
@@ -338,8 +362,10 @@ pub trait SetupModule:
         &self,
         new_max_tx_batch_block_duration: u64,
     ) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .sync_call();
@@ -358,8 +384,10 @@ pub trait SetupModule:
         &self,
         opt_wrapping_contract_address: OptionalValue<ManagedAddress>,
     ) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(opt_wrapping_contract_address)
             .sync_call();

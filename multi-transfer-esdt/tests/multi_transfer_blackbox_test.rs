@@ -153,6 +153,15 @@ impl MultiTransferTestState {
             .account(OWNER_ADDRESS)
             .nonce(1)
             .esdt_balance(BRIDGE_TOKEN_ID, 1000u64);
+
+        let roles = vec![
+            "ESDTRoleLocalMint".to_string(),
+            "ESDTRoleLocalBurn".to_string(),
+        ];
+        world
+            .account(ESDT_SAFE_ADDRESS)
+            .esdt_roles(BRIDGE_TOKEN_ID, roles);
+
         Self { world }
     }
 

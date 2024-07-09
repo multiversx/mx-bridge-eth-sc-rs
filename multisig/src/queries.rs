@@ -14,8 +14,10 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token ID, Amount
     #[view(getCurrentTxBatch)]
     fn get_current_tx_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .get_current_tx_batch()
             .returns(ReturnsResult)
@@ -30,8 +32,10 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     /// Block Nonce, Tx Nonce, Sender Address, Receiver Address, Token ID, Amount
     #[view(getBatch)]
     fn get_batch(&self, batch_id: u64) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .get_batch(batch_id)
             .returns(ReturnsResult)
@@ -42,8 +46,9 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     /// The result format is the same as getCurrentTxBatch
     #[view(getCurrentRefundBatch)]
     fn get_current_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
+        let multi_transfer_addr = self.multi_transfer_esdt_address().get();
         self.tx()
-            .to(ToCaller)
+            .to(multi_transfer_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .get_first_batch_any_status()
             .returns(ReturnsResult)

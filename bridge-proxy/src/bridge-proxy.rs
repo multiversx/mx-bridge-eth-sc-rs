@@ -67,9 +67,10 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let esdt_safe_addr = self.esdt_safe_address().get();
 
         self.tx()
-            .to(ToCaller)
+            .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(tx.from)
             .egld_or_single_esdt(&EgldOrEsdtTokenIdentifier::esdt(tx.token_id), 0, &tx.amount)
