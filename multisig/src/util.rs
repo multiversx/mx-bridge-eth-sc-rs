@@ -85,15 +85,4 @@ pub trait UtilModule: crate::storage::StorageModule {
 
         self.crypto().keccak256(&serialized)
     }
-
-    // proxies
-
-    #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
-
-    #[proxy]
-    fn multi_transfer_esdt_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt::Proxy<Self::Api>;
 }
