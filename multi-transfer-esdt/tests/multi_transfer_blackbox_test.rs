@@ -152,7 +152,11 @@ impl MultiTransferTestState {
         world
             .account(OWNER_ADDRESS)
             .nonce(1)
-            .esdt_balance(BRIDGE_TOKEN_ID, 1000u64);
+            .esdt_balance(BRIDGE_TOKEN_ID, 1000u64)
+            .account(USER1_ADDRESS)
+            .nonce(1)
+            .account(USER2_ADDRESS)
+            .nonce(1);
 
         let roles = vec![
             "ESDTRoleLocalMint".to_string(),
@@ -160,7 +164,9 @@ impl MultiTransferTestState {
         ];
         world
             .account(ESDT_SAFE_ADDRESS)
-            .esdt_roles(BRIDGE_TOKEN_ID, roles);
+            .esdt_roles(BRIDGE_TOKEN_ID, roles)
+            .code(ESDT_SAFE_CODE_PATH)
+            .owner(OWNER_ADDRESS);
 
         Self { world }
     }
@@ -194,14 +200,14 @@ impl MultiTransferTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init(
+            .upgrade(
                 ManagedAddress::zero(),
                 MULTI_TRANSFER_ADDRESS.to_address(),
                 ESDT_SAFE_ETH_TX_GAS_LIMIT,
             )
             .code(ESDT_SAFE_CODE_PATH)
-            .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
         self
