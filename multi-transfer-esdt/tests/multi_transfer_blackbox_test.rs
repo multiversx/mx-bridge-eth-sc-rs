@@ -296,7 +296,7 @@ fn basic_transfer_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::default(),
         },
-        to: ManagedAddress::new_from_bytes(b"address:user1___________________"), // TODO: solve this
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()), // TODO: solve this
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -353,6 +353,6 @@ fn basic_transfer_test() {
 
     state
         .world
-        .check_account(OWNER_ADDRESS)
+        .check_account(USER1_ADDRESS)
         .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
 }
