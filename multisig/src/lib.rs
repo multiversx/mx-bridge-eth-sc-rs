@@ -162,7 +162,7 @@ pub trait Multisig:
         }
 
         self.amount_staked(&caller).set(&remaining_stake);
-        self.send().direct_egld(&caller, &amount);
+        self.tx().to(ToCaller).egld(&amount).transfer();
     }
 
     // ESDT Safe SC calls
@@ -178,11 +178,6 @@ pub trait Multisig:
         esdt_safe_batch_id: u64,
         tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
-        // let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
-        //     .get_esdt_safe_proxy_instance()
-        //     .get_current_tx_batch()
-        //     .execute_on_dest_context();
-
         let esdt_safe_addr = self.esdt_safe_address().get();
         let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
             .tx()

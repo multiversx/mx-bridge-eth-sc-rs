@@ -259,8 +259,10 @@ pub trait MultiTransferEsdt:
                     .esdt((p.token_identifier, 0, p.amount))
                     .sync_call();
             } else {
-                self.send()
-                    .direct_esdt(&eth_tx.to, &p.token_identifier, 0, &p.amount);
+                self.tx()
+                    .to(&eth_tx.to)
+                    .single_esdt(&p.token_identifier, 0, &p.amount)
+                    .transfer();
             }
         }
     }

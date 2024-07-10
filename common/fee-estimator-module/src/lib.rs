@@ -68,11 +68,6 @@ pub trait FeeEstimatorModule {
         let from_ticker = self.token_ticker(from).get();
         let to_ticker = self.token_ticker(to).get();
 
-        // let result: OptionalValue<AggregatorResultAsMultiValue<Self::Api>> = self
-        //     .aggregator_proxy(fee_estimator_sc_address)
-        //     .latest_price_feed_optional(from_ticker, to_ticker)
-        //     .execute_on_dest_context();
-
         let result: OptionalValue<AggregatorResultAsMultiValue<Self::Api>> = self
             .tx()
             .to(fee_estimator_sc_address)
@@ -85,11 +80,6 @@ pub trait FeeEstimatorModule {
             .into_option()
             .map(|multi_result| AggregatorResult::from(multi_result).price)
     }
-
-    // proxies
-
-    // #[proxy]
-    // fn aggregator_proxy(&self, sc_address: ManagedAddress) -> aggregator_proxy::Proxy<Self::Api>;
 
     // storage
 

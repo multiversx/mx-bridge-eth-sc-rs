@@ -305,8 +305,10 @@ pub trait EsdtSafe:
             .update(|total| *total -= &refund_amount);
         self.rebalance_for_refund(&token_id, &refund_amount);
 
-        self.send()
-            .direct_esdt(&caller, &token_id, 0, &refund_amount);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&token_id, 0, &refund_amount)
+            .transfer();
 
         self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)

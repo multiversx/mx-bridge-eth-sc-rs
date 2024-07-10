@@ -52,8 +52,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 if amount_to_send > 0 {
                     remaining_fees -= &amount_to_send;
 
-                    self.send()
-                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send);
+                    self.tx()
+                        .to(&pair.address)
+                        .single_esdt(&token_id, 0, &amount_to_send)
+                        .transfer();
                 }
             }
 
@@ -111,7 +113,11 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 total_balances_mapper.update(|total| {
                     *total -= amount;
                 });
-                self.send().direct_esdt(&caller, token_id, 0, amount);
+                self.tx()
+                    .to(ToCaller)
+                    .single_esdt(token_id, 0, amount)
+                    .transfer();
+
                 return true;
             } else {
                 return false;
@@ -131,7 +137,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         if !mint_executed {
             return false;
         }
-        self.send().direct_esdt(&caller, token_id, 0, amount);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(token_id, 0, amount)
+            .transfer();
 
         mint_balances_mapper.update(|minted| {
             *minted += amount;
