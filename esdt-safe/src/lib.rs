@@ -61,9 +61,17 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
+    fn upgrade(
+        &self,
+        fee_estimator_contract_address: ManagedAddress,
+        multi_transfer_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
+    ) {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
+        self.multi_transfer_contract_address()
+            .set(&multi_transfer_contract_address);
+
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -297,8 +305,10 @@ pub trait EsdtSafe:
             .update(|total| *total -= &refund_amount);
         self.rebalance_for_refund(&token_id, &refund_amount);
 
-        self.send()
-            .direct_esdt(&caller, &token_id, 0, &refund_amount);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&token_id, 0, &refund_amount)
+            .transfer();
 
         self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)

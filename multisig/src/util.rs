@@ -1,4 +1,4 @@
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 use transaction::{EthTransaction, EthTxAsMultiValue};
 
@@ -84,24 +84,5 @@ pub trait UtilModule: crate::storage::StorageModule {
         }
 
         self.crypto().keccak256(&serialized)
-    }
-
-    // proxies
-
-    #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
-
-    #[proxy]
-    fn multi_transfer_esdt_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt::Proxy<Self::Api>;
-
-    fn get_esdt_safe_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
-        self.esdt_safe_proxy(self.esdt_safe_address().get())
-    }
-
-    fn get_multi_transfer_esdt_proxy_instance(&self) -> multi_transfer_esdt::Proxy<Self::Api> {
-        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
     }
 }

@@ -1,11 +1,10 @@
 #![no_std]
+use multiversx_sc::imports::*;
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
-
+pub mod bridge_proxy_contract_proxy;
 pub mod config;
+pub mod esdt_safe_proxy;
 
-use esdt_safe::ProxyTrait as _;
 use transaction::EthTransaction;
 
 #[multiversx_sc::contract]
@@ -41,10 +40,7 @@ pub trait BridgeProxyContract:
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
 
-        require!(
-            tx.call_data.is_some(),
-            "There is no data for a SC call!"
-        );
+        require!(tx.call_data.is_some(), "There is no data for a SC call!");
 
         let call_data = unsafe { tx.call_data.clone().unwrap_unchecked() };
         self.send()
@@ -58,11 +54,7 @@ pub trait BridgeProxyContract:
     }
 
     #[promises_callback]
-    fn execution_callback(
-        &self,
-        #[call_result] result: ManagedAsyncCallResult<()>,
-        tx_id: usize,
-    ) {
+    fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
             self.refund_transaction(tx_id);
         }
@@ -75,36 +67,37 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let esdt_safe_addr = self.esdt_safe_address().get();
 
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(tx.from)
-            .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
-            .execute_on_dest_context();
+            .single_esdt(&tx.token_id, 0, &tx.amount)
+            .sync_call();
     }
 
     #[view(getPendingTransactionById)]
     fn get_pending_transaction_by_id(&self, tx_id: usize) -> EthTransaction<Self::Api> {
-        self.pending_transactions().get_or_else(tx_id, || panic!("Invalid tx id"))
+        self.pending_transactions()
+            .get_or_else(tx_id, || panic!("Invalid tx id"))
     }
 
     #[view(getPendingTransactions)]
-    fn get_pending_transactions(&self) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
+    fn get_pending_transactions(
+        &self,
+    ) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
         let lowest_tx_id = self.lowest_tx_id().get();
         let len = self.pending_transactions().len();
-        
+
         let mut transactions = MultiValueEncoded::new();
         for i in lowest_tx_id..=len {
             if self.pending_transactions().item_is_empty(i) {
                 continue;
             }
             let tx = self.pending_transactions().get_unchecked(i);
-            transactions.push(MultiValue2((
-                i,
-                tx,
-            )));
+            transactions.push(MultiValue2((i, tx)));
         }
         transactions
     }
-
 }

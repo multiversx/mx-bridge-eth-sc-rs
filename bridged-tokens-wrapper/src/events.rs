@@ -1,5 +1,3 @@
-multiversx_sc::imports!();
-
 #[multiversx_sc::module]
 pub trait EventsModule {
     #[event("wrap_tokens")]

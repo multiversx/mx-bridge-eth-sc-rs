@@ -7,8 +7,7 @@ use core::ops::Deref;
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
@@ -184,8 +183,10 @@ pub trait BridgedTokensWrapper:
             self.wrap_tokens_event(universal_token_id, converted_amount);
         }
 
-        let caller = self.blockchain().get_caller();
-        self.send().direct_multi(&caller, &new_payments);
+        self.tx()
+            .to(ToCaller)
+            .multi_esdt(new_payments.clone())
+            .transfer();
 
         new_payments
     }
@@ -225,9 +226,10 @@ pub trait BridgedTokensWrapper:
         self.send()
             .esdt_local_burn(&universal_bridged_token_ids, 0, &payment_amount);
 
-        let caller = self.blockchain().get_caller();
-        self.send()
-            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(chain_specific_token_id, 0, &converted_amount)
+            .transfer();
 
         self.unwrap_tokens_event(chain_specific_token_id.clone(), converted_amount);
     }

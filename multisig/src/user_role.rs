@@ -1,6 +1,7 @@
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
 
-#[derive(TopEncode, TopDecode, TypeAbi, Clone, Copy, PartialEq)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, Clone, Copy, PartialEq)]
 pub enum UserRole {
     None,
     BoardMember,

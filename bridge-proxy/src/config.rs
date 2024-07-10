@@ -1,5 +1,4 @@
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 use transaction::EthTransaction;
 
@@ -25,10 +24,7 @@ pub trait ConfigModule {
 
     #[only_owner]
     #[endpoint(setupEsdtSafe)]
-    fn set_esdt_safe_contract_address(
-        &self,
-        opt_esdt_safe_address: OptionalValue<ManagedAddress>,
-    ) {
+    fn set_esdt_safe_contract_address(&self, opt_esdt_safe_address: OptionalValue<ManagedAddress>) {
         match opt_esdt_safe_address {
             OptionalValue::Some(sc_addr) => {
                 require!(
@@ -39,10 +35,6 @@ pub trait ConfigModule {
             }
             OptionalValue::None => self.esdt_safe_address().clear(),
         }
-    }
-
-    fn get_esdt_safe_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
-        self.esdt_safe_proxy(self.esdt_safe_address().get())
     }
 
     #[view(getMultiTransferAddress)]

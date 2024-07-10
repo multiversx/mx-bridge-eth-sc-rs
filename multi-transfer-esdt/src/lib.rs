@@ -1,10 +1,14 @@
 #![no_std]
 
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-use token_module::ProxyTrait as OtherProxyTrait;
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
+
+pub mod bridge_proxy_contract_proxy;
+pub mod bridged_tokens_wrapper_proxy;
+pub mod esdt_safe_proxy;
+pub mod multi_transfer_proxy;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -50,11 +54,16 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
+        let safe_address = self.esdt_safe_contract_address().get();
+
         for eth_tx in transfers {
             let is_success: bool = self
-                .get_esdt_safe_contract_proxy_instance()
+                .tx()
+                .to(safe_address.clone())
+                .typed(esdt_safe_proxy::EsdtSafeProxy)
                 .get_tokens(&eth_tx.token_id, &eth_tx.amount)
-                .execute_on_dest_context();
+                .returns(ReturnsResult)
+                .sync_call();
 
             require!(is_success, "Invalid token or amount");
 
@@ -126,11 +135,13 @@ pub trait MultiTransferEsdt:
                     refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                 }
 
-                let _: IgnoreValue = self
-                    .get_esdt_safe_contract_proxy_instance()
+                let esdt_safe_addr = self.esdt_safe_contract_address().get();
+                self.tx()
+                    .to(esdt_safe_addr)
+                    .typed(esdt_safe_proxy::EsdtSafeProxy)
                     .add_refund_batch(refund_batch)
-                    .with_multi_token_transfer(refund_payments)
-                    .execute_on_dest_context();
+                    .payment(refund_payments)
+                    .sync_call();
             }
             OptionalValue::None => {}
         }
@@ -221,10 +232,14 @@ pub trait MultiTransferEsdt:
             return payments;
         }
 
-        self.get_wrapping_contract_proxy_instance()
+        let bridged_tokens_wrapper_addr = self.wrapping_contract_address().get();
+        self.tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .wrap_tokens()
-            .with_multi_token_transfer(payments)
-            .execute_on_dest_context()
+            .payment(payments)
+            .returns(ReturnsResult)
+            .sync_call()
     }
 
     fn distribute_payments(
@@ -232,46 +247,24 @@ pub trait MultiTransferEsdt:
         transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
     ) {
+        let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
         for (mut eth_tx, p) in transfers.iter().zip(payments.iter()) {
             eth_tx.amount = p.amount.clone();
             eth_tx.token_id = p.token_identifier.clone();
             if self.blockchain().is_smart_contract(&eth_tx.to) {
-                let _: IgnoreValue = self
-                    .get_bridge_proxy_contract_proxy_instance()
+                self.tx()
+                    .to(bridge_proxy_addr.clone())
+                    .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
                     .deposit(&eth_tx)
-                    .with_esdt_transfer((p.token_identifier, 0, p.amount))
-                    .execute_on_dest_context();
+                    .esdt((p.token_identifier, 0, p.amount))
+                    .sync_call();
             } else {
-                self.send()
-                    .direct_esdt(&eth_tx.to, &p.token_identifier, 0, &p.amount);
+                self.tx()
+                    .to(&eth_tx.to)
+                    .single_esdt(&p.token_identifier, 0, &p.amount)
+                    .transfer();
             }
         }
-    }
-
-    // proxies
-
-    #[proxy]
-    fn wrapping_contract_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> bridged_tokens_wrapper::Proxy<Self::Api>;
-
-    fn get_wrapping_contract_proxy_instance(&self) -> bridged_tokens_wrapper::Proxy<Self::Api> {
-        self.wrapping_contract_proxy(self.wrapping_contract_address().get())
-    }
-
-    #[proxy]
-    fn bridge_proxy(&self, sc_address: ManagedAddress) -> bridge_proxy::Proxy<Self::Api>;
-
-    fn get_bridge_proxy_contract_proxy_instance(&self) -> bridge_proxy::Proxy<Self::Api> {
-        self.bridge_proxy(self.bridge_proxy_contract_address().get())
-    }
-
-    #[proxy]
-    fn esdt_safe(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
-
-    fn get_esdt_safe_contract_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
-        self.esdt_safe(self.esdt_safe_contract_address().get())
     }
 
     // storage

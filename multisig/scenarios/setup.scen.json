@@ -28,6 +28,7 @@
                     },
                     "storage": {
                         "str:esdtSafeContractAddress": "sc:esdt_safe",
+                        "str:bridgeProxyContractAddress": "sc:bridge_proxy",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
                         "str:firstBatchId": "1",

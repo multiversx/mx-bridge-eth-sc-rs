@@ -1,7 +1,6 @@
 #![no_std]
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 pub use batch_status::BatchStatus;
 use transaction::{Transaction, TxBatchSplitInFields, MIN_BLOCKS_FOR_FINALITY};
