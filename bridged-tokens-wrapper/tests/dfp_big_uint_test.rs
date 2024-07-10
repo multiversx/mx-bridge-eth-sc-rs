@@ -31,7 +31,7 @@ fn test_biguint_zero_dec() {
 
 #[test]
 fn test_mandos_scenario_values() {
-    let _ = DebugApi::dummy();
+    DebugApi::dummy();
     let raw = 300000000000000u64;
     let dfp = DFPBigUint::<DebugApi>::from_raw(raw.into(), 18);
     assert!(dfp.convert(6).to_raw() == 300u64);
