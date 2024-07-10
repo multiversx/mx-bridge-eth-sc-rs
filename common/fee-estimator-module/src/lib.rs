@@ -1,10 +1,9 @@
 #![no_std]
 
 use multiversx_sc::imports::*;
-
-mod aggregator_proxy;
-pub use aggregator_proxy::*;
 mod price_aggregator_proxy;
+
+pub const GWEI_STRING: &[u8] = b"GWEI";
 
 #[multiversx_sc::module]
 pub trait FeeEstimatorModule {
@@ -68,7 +67,19 @@ pub trait FeeEstimatorModule {
         let from_ticker = self.token_ticker(from).get();
         let to_ticker = self.token_ticker(to).get();
 
-        let result: OptionalValue<AggregatorResultAsMultiValue<Self::Api>> = self
+        // let result: OptionalValue<AggregatorResultAsMultiValue<Self::Api>> = self
+        //     .tx()
+        //     .to(fee_estimator_sc_address)
+        //     .typed(price_aggregator_proxy::PriceAggregatorProxy)
+        //     .latest_price_feed_optional(from_ticker, to_ticker)
+        //     .returns(ReturnsResult)
+        //     .sync_call();
+
+        // result
+        //     .into_option()
+        //     .map(|multi_result| AggregatorResult::from(multi_result).price)
+
+        let result = self
             .tx()
             .to(fee_estimator_sc_address)
             .typed(price_aggregator_proxy::PriceAggregatorProxy)
@@ -78,7 +89,7 @@ pub trait FeeEstimatorModule {
 
         result
             .into_option()
-            .map(|multi_result| AggregatorResult::from(multi_result).price)
+            .map(|multi_result| multi_result.into_tuple().4)
     }
 
     // storage
