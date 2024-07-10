@@ -228,7 +228,7 @@ pub trait BridgedTokensWrapper:
 
         self.tx()
             .to(ToCaller)
-            .single_esdt(&chain_specific_token_id, 0, &converted_amount)
+            .single_esdt(chain_specific_token_id, 0, &converted_amount)
             .transfer();
 
         self.unwrap_tokens_event(chain_specific_token_id.clone(), converted_amount);
