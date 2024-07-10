@@ -109,7 +109,7 @@ fn deploy_deposit_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::default(),
         },
-        to: ManagedAddress::from_address(&AdderContract::new("sc:adder").to_address()),
+        to: ManagedAddress::from(ADDER_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -176,7 +176,7 @@ fn multiple_deposit_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::default(),
         },
-        to: ManagedAddress::from_address(&AdderContract::new("sc:adder").to_address()),
+        to: ManagedAddress::from(ADDER_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -194,7 +194,7 @@ fn multiple_deposit_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::default(),
         },
-        to: ManagedAddress::from_address(&AdderContract::new("sc:adder").to_address()),
+        to: ManagedAddress::from(ADDER_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from_esdt_bytes(BRIDGE_TOKEN_ID),
         amount: BigUint::zero(),
         tx_nonce: 1u64,
