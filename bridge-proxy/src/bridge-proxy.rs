@@ -7,6 +7,8 @@ pub mod esdt_safe_proxy;
 
 use transaction::{CallData, EthTransaction};
 
+const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
     config::ConfigModule + multiversx_sc_modules::pause::PauseModule
@@ -40,9 +42,10 @@ pub trait BridgeProxyContract:
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
 
-        require!(tx.call_data.is_some(), "There is no data for a SC call!");
-
+        require!(tx.call_data.is_empty(), "There is no data for a SC call!");
         let call_data = CallData::from(tx.call_data.clone());
+        require!(call_data.gas_limit >= MIN_GAS_LIMIT_FOR_SC_CALL, "Gas limit too low!");
+        
         self.send()
             .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint.clone())
             .with_raw_arguments(call_data.args.clone().into())
