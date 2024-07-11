@@ -12,10 +12,10 @@ path = "src/lib.rs"
 path = "../common/transaction"
 
 [dependencies.multiversx-sc]
-version = "=0.50.4"
+version = "=0.51.1"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.50.4"
+version = "=0.51.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.50.4"
+version = "=0.51.1"
