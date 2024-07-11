@@ -65,7 +65,7 @@
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
-                            "balance": "1,500,400",
+                            "balance": "1,500,000",
                             "roles": [
                                 "ESDTRoleLocalBurn",
                                 "ESDTRoleLocalMint"
@@ -76,9 +76,7 @@
                         "str:pendingBatches|u64:1": "",
                         "str:firstBatchId": "2",
                         "str:lastBatchId": "2",
-
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"

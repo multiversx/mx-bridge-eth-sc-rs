@@ -5,14 +5,13 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           12
+// Upgrade:                              1
+// Endpoints:                           11
 // Async Callback (empty):               1
 // Promise callbacks:                    1
 // Total number of exported functions:  15
 
 #![no_std]
-#![allow(internal_features)]
-#![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -23,13 +22,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         deposit => deposit
-        executeWithAsnyc => execute_with_async
+        execute => execute
         getPendingTransactionById => get_pending_transaction_by_id
+        getPendingTransactions => get_pending_transactions
         setupMultiTransfer => set_multi_transfer_contract_address
         setupEsdtSafe => set_esdt_safe_contract_address
         getMultiTransferAddress => multi_transfer_address
         getEsdtSafeAddress => esdt_safe_address
-        getPendingTransactions => pending_transactions
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status

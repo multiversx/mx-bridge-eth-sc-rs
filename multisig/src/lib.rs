@@ -10,6 +10,9 @@ mod storage;
 mod user_role;
 mod util;
 
+pub mod esdt_safe_proxy;
+pub mod multi_transfer_esdt_proxy;
+
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
 use transaction::transaction_status::TransactionStatus;
@@ -17,12 +20,7 @@ use transaction::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
-use esdt_safe::ProxyTrait as _;
-use multi_transfer_esdt::ProxyTrait as _;
-use token_module::ProxyTrait as _;
-use tx_batch_module::ProxyTrait as _;
-
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
@@ -121,11 +119,12 @@ pub trait Multisig:
             total_percentage == PERCENTAGE_TOTAL as u64,
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
-
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .distribute_fees(args)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Board members have to stake a certain amount of EGLD
@@ -163,7 +162,7 @@ pub trait Multisig:
         }
 
         self.amount_staked(&caller).set(&remaining_stake);
-        self.send().direct_egld(&caller, &amount);
+        self.tx().to(ToCaller).egld(&amount).transfer();
     }
 
     // ESDT Safe SC calls
@@ -179,10 +178,15 @@ pub trait Multisig:
         esdt_safe_batch_id: u64,
         tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
+        let esdt_safe_addr = self.esdt_safe_address().get();
         let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
-            .get_esdt_safe_proxy_instance()
+            .tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .get_current_tx_batch()
-            .execute_on_dest_context();
+            .returns(ReturnsResult)
+            .sync_call();
+
         let (current_batch_id, current_batch_transactions) = match call_result {
             OptionalValue::Some(batch) => batch.into_tuple(),
             OptionalValue::None => sc_panic!("Current batch is empty"),
@@ -266,10 +270,13 @@ pub trait Multisig:
     #[only_owner]
     #[endpoint(moveRefundBatchToSafeFromChildContract)]
     fn move_refund_batch_to_safe_from_child_contract(&self) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .move_refund_batch_to_safe()
-            .execute_on_dest_context();
+            .sync_call();
+
         self.move_refund_batch_to_safe_event();
     }
 
@@ -278,11 +285,14 @@ pub trait Multisig:
     #[endpoint(initSupplyFromChildContract)]
     fn init_supply_from_child_contract(&self, token_id: TokenIdentifier, amount: BigUint) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init_supply(token_id, amount)
-            .with_esdt_transfer((payment_token, 0, payment_amount))
-            .execute_on_dest_context();
+            .payment((payment_token, 0, payment_amount))
+            .sync_call();
     }
 
     /// Proposers and board members use this to launch signed actions.
@@ -332,14 +342,15 @@ pub trait Multisig:
                 }
 
                 action_ids_mapper.clear();
-
-                let _: IgnoreValue = self
-                    .get_esdt_safe_proxy_instance()
+                let esdt_safe_addr = self.esdt_safe_address().get();
+                self.tx()
+                    .to(esdt_safe_addr)
+                    .typed(esdt_safe_proxy::EsdtSafeProxy)
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
                         MultiValueEncoded::from(tx_batch_status),
                     )
-                    .execute_on_dest_context();
+                    .sync_call();
             }
             Action::BatchTransferEsdtToken {
                 eth_batch_id,
@@ -362,12 +373,14 @@ pub trait Multisig:
                 let last_tx = transfers.get(last_tx_index);
                 self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
 
+                let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.into();
-                let _: IgnoreValue = self
-                    .get_multi_transfer_esdt_proxy_instance()
+                self.tx()
+                    .to(multi_transfer_esdt_addr)
+                    .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
-                    .execute_on_dest_context();
+                    .sync_call();
             }
         }
     }

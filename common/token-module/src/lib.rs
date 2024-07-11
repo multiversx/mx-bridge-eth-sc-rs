@@ -1,12 +1,13 @@
 #![no_std]
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
+use multiversx_sc::imports::*;
 
 pub const PERCENTAGE_TOTAL: u32 = 10_000; // precision of 2 decimals
 pub static INVALID_PERCENTAGE_SUM_OVER_ERR_MSG: &[u8] = b"Percentages do not add up to 100%";
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct AddressPercentagePair<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub percentage: u32,
@@ -51,8 +52,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 if amount_to_send > 0 {
                     remaining_fees -= &amount_to_send;
 
-                    self.send()
-                        .direct_esdt(&pair.address, &token_id, 0, &amount_to_send);
+                    self.tx()
+                        .to(&pair.address)
+                        .single_esdt(&token_id, 0, &amount_to_send)
+                        .transfer();
                 }
             }
 
@@ -110,7 +113,11 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 total_balances_mapper.update(|total| {
                     *total -= amount;
                 });
-                self.send().direct_esdt(&caller, token_id, 0, amount);
+                self.tx()
+                    .to(ToCaller)
+                    .single_esdt(token_id, 0, amount)
+                    .transfer();
+
                 return true;
             } else {
                 return false;
@@ -130,7 +137,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         if !mint_executed {
             return false;
         }
-        self.send().direct_esdt(&caller, token_id, 0, amount);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(token_id, 0, amount)
+            .transfer();
 
         mint_balances_mapper.update(|minted| {
             *minted += amount;

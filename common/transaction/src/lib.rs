@@ -1,7 +1,7 @@
 #![no_std]
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
+use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
 pub mod transaction_status;
@@ -25,7 +25,8 @@ pub type TxAsMultiValue<M> = MultiValue6<
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
-#[derive(NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, Clone, ManagedVecItem)]
 pub struct CallData<M: ManagedTypeApi> {
     pub endpoint: ManagedBuffer<M>,
     pub gas_limit: u64,
@@ -52,7 +53,8 @@ impl<M: ManagedTypeApi> From<ManagedBuffer<M>> for CallData<M> {
     }
 }
 
-#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, TypeAbi, Clone, ManagedVecItem)]
+#[type_abi]
+#[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
@@ -71,7 +73,8 @@ pub type EthTxAsMultiValue<M> = MultiValue6<
     ManagedBuffer<M>,
 >;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,

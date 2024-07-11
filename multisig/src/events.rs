@@ -1,7 +1,5 @@
 use eth_address::EthAddress;
 
-multiversx_sc::imports!();
-
 #[multiversx_sc::module]
 pub trait EventsModule {
     #[event("add_mapping")]
