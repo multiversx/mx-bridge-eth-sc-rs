@@ -31,7 +31,7 @@ use multiversx_sc_scenario::{
 
 use eth_address::*;
 use token_module::ProxyTrait as _;
-use transaction::{CallData, EthTransaction};
+use transaction::EthTransaction;
 
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
 
@@ -300,11 +300,9 @@ fn basic_transfer_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        call_data: Some(CallData {
-            endpoint: ManagedBuffer::from("data"),
-            gas_limit: GAS_LIMIT,
-            args: ManagedVec::new(),
-        }),
+        call_endpoint: ManagedBuffer::from("data"),
+        call_gas_limit: GAS_LIMIT,
+        call_args: ManagedVec::new(),
     };
 
     // state

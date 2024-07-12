@@ -26,34 +26,6 @@ pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
 #[type_abi]
-#[derive(NestedEncode, NestedDecode, Clone, ManagedVecItem)]
-pub struct CallData<M: ManagedTypeApi> {
-    pub endpoint: ManagedBuffer<M>,
-    pub gas_limit: u64,
-    pub args: ManagedVec<M, ManagedBuffer<M>>,
-}
-
-impl<M: ManagedTypeApi> Default for CallData<M> {
-    #[inline]
-    fn default() -> Self {
-        Self {
-            endpoint: ManagedBuffer::new(),
-            gas_limit: 0,
-            args: ManagedVec::new(),
-        }
-    }
-}
-
-impl<M: ManagedTypeApi> From<ManagedBuffer<M>> for CallData<M> {
-    #[inline]
-    fn from(buffer: ManagedBuffer<M>) -> Self {
-        Self {
-            ..Default::default()
-        }
-    }
-}
-
-#[type_abi]
 #[derive(TopDecode, TopEncode, NestedEncode, NestedDecode, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
@@ -61,16 +33,20 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
     pub tx_nonce: TxNonce,
-    pub call_data: ManagedBuffer<M>,
+    pub call_endpoint: ManagedBuffer<M>,
+    pub call_gas_limit: u64,
+    pub call_args: ManagedVec<M, ManagedBuffer<M>>,
 }
 
-pub type EthTxAsMultiValue<M> = MultiValue6<
+pub type EthTxAsMultiValue<M> = MultiValue8<
     EthAddress<M>,
     ManagedAddress<M>,
     TokenIdentifier<M>,
     BigUint<M>,
     TxNonce,
     ManagedBuffer<M>,
+    u64,
+    ManagedVec<M, ManagedBuffer<M>>,
 >;
 
 #[type_abi]
