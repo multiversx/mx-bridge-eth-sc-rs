@@ -43,18 +43,21 @@ pub trait BridgeProxyContract:
         let tx = self.get_pending_transaction_by_id(tx_id);
 
         require!(
-            tx.call_endpoint.is_empty(),
+            !tx.call_endpoint.is_empty() && tx.call_gas_limit != 0,
             "There is no endpoint name for a SC call!"
         );
-        // let call_data = CallData::from(tx.call_data.clone());
+        // let endpoint = tx.call_endpoint.unwrap();
+        // let args = tx.call_args.unwrap_or_default();
+        // let gas_limit = tx.call_gas_limit.unwrap_or_default();
+
         require!(
             tx.call_gas_limit >= MIN_GAS_LIMIT_FOR_SC_CALL,
             "Gas limit too low!"
         );
 
         self.send()
-            .contract_call::<IgnoreValue>(tx.to.clone(), tx.call_endpoint.clone())
-            .with_raw_arguments(tx.call_args.clone().into())
+            .contract_call::<IgnoreValue>(tx.to.clone(), tx.call_endpoint)
+            .with_raw_arguments(tx.call_args.into())
             .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
             .with_gas_limit(tx.call_gas_limit)
             .async_call_promise()
