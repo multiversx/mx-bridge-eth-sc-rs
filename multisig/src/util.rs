@@ -1,6 +1,6 @@
 use multiversx_sc::imports::*;
 
-use transaction::{EthTransaction, EthTxAsMultiValue};
+use transaction::EthTransaction;
 
 use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;

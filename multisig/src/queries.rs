@@ -1,9 +1,7 @@
 use multiversx_sc::imports::*;
 
 use crate::{action::Action, esdt_safe_proxy, multi_transfer_esdt_proxy, user_role::UserRole};
-use transaction::{
-    transaction_status::TransactionStatus, EthTransaction, EthTxAsMultiValue, TxBatchSplitInFields,
-};
+use transaction::{transaction_status::TransactionStatus, EthTransaction, TxBatchSplitInFields};
 
 /// Note: Additional queries can be found in the Storage module
 #[multiversx_sc::module]
