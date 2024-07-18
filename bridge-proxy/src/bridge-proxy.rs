@@ -7,6 +7,8 @@ pub mod esdt_safe_proxy;
 
 use transaction::EthTransaction;
 
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20000000; // 20 million
+
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
     config::ConfigModule + multiversx_sc_modules::pause::PauseModule
@@ -50,6 +52,7 @@ pub trait BridgeProxyContract:
             .with_gas_limit(call_data.gas_limit)
             .async_call_promise()
             .with_callback(self.callbacks().execution_callback(tx_id))
+            .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
             .register_promise();
     }
 
