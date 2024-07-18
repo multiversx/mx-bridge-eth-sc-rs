@@ -51,15 +51,15 @@ pub trait BridgeProxyContract:
             .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
             .with_gas_limit(call_data.gas_limit)
             .async_call_promise()
-            .with_callback(self.callbacks().execution_callback(tx_id))
+            .with_callback(self.callbacks().execution_callback(tx_id, &tx.token_id, &tx.amount))
             .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
             .register_promise();
     }
 
     #[promises_callback]
-    fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
+    fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize, token_id: &TokenIdentifier, amount: &BigUint) {
         if result.is_err() {
-            self.refund_transaction(tx_id);
+            self.refund_transaction(tx_id, token_id, amount);
         }
         let lowest_tx_id = self.lowest_tx_id().get();
         if tx_id < lowest_tx_id {
@@ -68,17 +68,15 @@ pub trait BridgeProxyContract:
         self.pending_transactions().clear_entry_unchecked(tx_id);
     }
 
-    fn refund_transaction(&self, tx_id: usize) {
+    fn refund_transaction(&self, tx_id: usize, token_id: &TokenIdentifier, amount: &BigUint) {
         let tx = self.get_pending_transaction_by_id(tx_id);
         let esdt_safe_addr = self.esdt_safe_address().get();
-
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(bridged_tokens_wrapper::BridgedTokensWrapperProxy)
             .unwrap_token_create_transaction(&tx.token_id, tx.from)
-            .single_esdt(&payment_token, 0, &payment_amount)
+            .single_esdt(&token_id, 0, &amount)
             .sync_call();
     }
 
