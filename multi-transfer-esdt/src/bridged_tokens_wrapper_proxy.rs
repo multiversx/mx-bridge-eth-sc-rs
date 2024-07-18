@@ -203,6 +203,21 @@ where
             .original_result()
     }
 
+    pub fn unwrap_token_create_transaction<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<eth_address::EthAddress<Env::Api>>,
+    >(
+        self,
+        requested_token: Arg0,
+        to: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("unwrapTokenCreateTransaction")
+            .argument(&requested_token)
+            .argument(&to)
+            .original_result()
+    }
+
     pub fn universal_bridged_token_ids(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>> {

@@ -3,7 +3,7 @@ use multiversx_sc::imports::*;
 
 pub mod bridge_proxy_contract_proxy;
 pub mod config;
-pub mod esdt_safe_proxy;
+pub mod bridged_tokens_wrapper;
 
 use transaction::EthTransaction;
 
@@ -72,11 +72,13 @@ pub trait BridgeProxyContract:
         let tx = self.get_pending_transaction_by_id(tx_id);
         let esdt_safe_addr = self.esdt_safe_address().get();
 
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+
         self.tx()
             .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(tx.from)
-            .single_esdt(&tx.token_id, 0, &tx.amount)
+            .typed(bridged_tokens_wrapper::BridgedTokensWrapperProxy)
+            .unwrap_token_create_transaction(&tx.token_id, tx.from)
+            .single_esdt(&payment_token, 0, &payment_amount)
             .sync_call();
     }
 

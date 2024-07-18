@@ -4,5 +4,5 @@ pub trait EventsModule {
     fn wrap_tokens_event(&self, #[indexed] token_id: TokenIdentifier, #[indexed] amount: BigUint);
 
     #[event("unwrap_tokens")]
-    fn unwrap_tokens_event(&self, #[indexed] token_id: TokenIdentifier, #[indexed] amount: BigUint);
+    fn unwrap_tokens_event(&self, #[indexed] token_id: &TokenIdentifier, #[indexed] amount: BigUint);
 }

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           16
+// Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  19
+// Total number of exported functions:  20
 
 #![no_std]
 
@@ -29,6 +29,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         depositLiquidity => deposit_liquidity
         wrapTokens => wrap_tokens
         unwrapToken => unwrap_token
+        unwrapTokenCreateTransaction => unwrap_token_create_transaction
         getUniversalBridgedTokenIds => universal_bridged_token_ids
         getTokenLiquidity => token_liquidity
         getChainSpecificToUniversalMapping => chain_specific_to_universal_mapping

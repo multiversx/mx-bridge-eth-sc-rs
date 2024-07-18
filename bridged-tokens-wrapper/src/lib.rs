@@ -2,12 +2,14 @@
 
 mod dfp_big_uint;
 mod events;
+mod esdt_safe_proxy;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
 use multiversx_sc::imports::*;
+use eth_address::*;
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
@@ -194,6 +196,14 @@ pub trait BridgedTokensWrapper:
     #[payable("*")]
     #[endpoint(unwrapToken)]
     fn unwrap_token(&self, requested_token: TokenIdentifier) {
+        let converted_amount = self.unwrap_token_common(&requested_token);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&requested_token, 0, &converted_amount)
+            .transfer();
+    }
+
+    fn unwrap_token_common(&self, requested_token: &TokenIdentifier) -> BigUint {
         require!(self.not_paused(), "Contract is paused");
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
@@ -226,12 +236,20 @@ pub trait BridgedTokensWrapper:
         self.send()
             .esdt_local_burn(&universal_bridged_token_ids, 0, &payment_amount);
 
+        self.unwrap_tokens_event(chain_specific_token_id, converted_amount.clone());
+        converted_amount
+    }
+
+    #[payable("*")]
+    #[endpoint(unwrapTokenCreateTransaction)]
+    fn unwrap_token_create_transaction(&self, requested_token: TokenIdentifier, to: EthAddress<Self::Api>) {
+        let converted_amount = self.unwrap_token_common(&requested_token);
         self.tx()
             .to(ToCaller)
-            .single_esdt(chain_specific_token_id, 0, &converted_amount)
-            .transfer();
-
-        self.unwrap_tokens_event(chain_specific_token_id.clone(), converted_amount);
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(to)
+            .single_esdt(&requested_token, 0, &converted_amount)
+            .sync_call();
     }
 
     fn get_converted_amount(
