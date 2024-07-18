@@ -9,6 +9,11 @@
             "step": "setState",
             "comment": "simulate child contracts deploy + setting local roles + change ownership. Changing ownership will be done after the multisig deploy in the real setup, but this is way less verbose in mandos.",
             "accounts": {
+                "sc:bridge_proxy": {
+                    "code": "file:../../bridge-proxy/output/bridge-proxy.wasm",
+                    "nonce": "0",
+                    "balance": "0"
+                },
                 "sc:multi_transfer": {
                     "nonce": "0",
                     "balance": "0",

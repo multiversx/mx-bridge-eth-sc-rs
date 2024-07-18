@@ -46,9 +46,6 @@ pub trait BridgeProxyContract:
             !tx.call_endpoint.is_empty() && tx.call_gas_limit != 0,
             "There is no endpoint name for a SC call!"
         );
-        // let endpoint = tx.call_endpoint.unwrap();
-        // let args = tx.call_args.unwrap_or_default();
-        // let gas_limit = tx.call_gas_limit.unwrap_or_default();
 
         require!(
             tx.call_gas_limit >= MIN_GAS_LIMIT_FOR_SC_CALL,
