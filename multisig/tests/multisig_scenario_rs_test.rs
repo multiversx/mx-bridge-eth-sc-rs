@@ -16,7 +16,10 @@ fn world() -> ScenarioWorld {
         "file:../price-aggregator/multiversx-price-aggregator-sc.wasm",
         multiversx_price_aggregator_sc::ContractBuilder,
     );
-
+    blockchain.register_contract(
+        "file:../bridge-proxy/output/bridge-proxy.wasm",
+        bridge_proxy::ContractBuilder,
+    );
     blockchain
 }
 

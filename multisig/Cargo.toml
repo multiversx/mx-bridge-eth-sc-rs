@@ -32,6 +32,9 @@ path = "../esdt-safe"
 [dependencies.multi-transfer-esdt]
 path = "../multi-transfer-esdt"
 
+[dependencies.bridge-proxy]
+path = "../bridge-proxy"
+
 [dependencies.multiversx-sc]
 version = "=0.51.1"
 

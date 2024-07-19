@@ -554,6 +554,7 @@ dependencies = [
 name = "multisig"
 version = "0.0.0"
 dependencies = [
+ "bridge-proxy",
  "esdt-safe",
  "eth-address",
  "fee-estimator-module",
