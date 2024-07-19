@@ -111,17 +111,6 @@ impl<M: ManagedTypeApi> TopDecode for EthTransaction<M> {
     }
 }
 
-pub type EthTxAsMultiValue<M> = MultiValue8<
-    EthAddress<M>,
-    ManagedAddress<M>,
-    TokenIdentifier<M>,
-    BigUint<M>,
-    TxNonce,
-    ManagedBuffer<M>,
-    u64,
-    ManagedVec<M, ManagedBuffer<M>>,
->;
-
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
