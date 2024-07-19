@@ -70,7 +70,7 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize, token_id: &TokenIdentifier, amount: &BigUint) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let esdt_safe_addr = self.esdt_safe_address().get();
+        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
 
         self.tx()
             .to(esdt_safe_addr)
