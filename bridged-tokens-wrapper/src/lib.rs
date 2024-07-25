@@ -245,7 +245,7 @@ pub trait BridgedTokensWrapper:
     fn unwrap_token_create_transaction(&self, requested_token: TokenIdentifier, to: EthAddress<Self::Api>) {
         let converted_amount = self.unwrap_token_common(&requested_token);
         self.tx()
-            .to(ToCaller)
+            .to(self.esdt_safe_contract_address().get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(to)
             .single_esdt(&requested_token, 0, &converted_amount)
@@ -288,6 +288,17 @@ pub trait BridgedTokensWrapper:
         );
     }
 
+    #[only_owner]
+    #[endpoint(setEsdtSafeContractAddress)]
+    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                self.esdt_safe_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.esdt_safe_contract_address().clear(),
+        }
+    }
+
     #[view(getUniversalBridgedTokenIds)]
     #[storage_mapper("universalBridgedTokenIds")]
     fn universal_bridged_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
@@ -312,4 +323,8 @@ pub trait BridgedTokensWrapper:
 
     #[storage_mapper("token_decimals_num")]
     fn token_decimals_num(&self, token: &TokenIdentifier) -> SingleValueMapper<u32>;
+
+    #[view(getEsdtSafeContractAddress)]
+    #[storage_mapper("esdtSafeContractAddress")]
+    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
