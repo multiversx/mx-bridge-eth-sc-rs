@@ -30,17 +30,20 @@ pub trait BridgeProxyContract:
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         self.require_not_paused();
         let caller = self.blockchain().get_caller();
+        let payment = self.call_value().single_esdt();
         require!(
             caller == self.multi_transfer_address().get(),
             "Only MultiTransfer can do deposits"
         );
-        self.pending_transactions().push(&eth_tx);
+        let tx_id = self.pending_transactions().push(&eth_tx);
+        self.payments(tx_id).set(&payment);
     }
 
     #[endpoint(execute)]
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let payment = self.payments(tx_id).get();
 
         require!(tx.call_data.is_some(), "There is no data for a SC call!");
 
@@ -48,18 +51,18 @@ pub trait BridgeProxyContract:
         self.send()
             .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint.clone())
             .with_raw_arguments(call_data.args.clone().into())
-            .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
+            .with_esdt_transfer(payment)
             .with_gas_limit(call_data.gas_limit)
             .async_call_promise()
-            .with_callback(self.callbacks().execution_callback(tx_id, &tx.token_id, &tx.amount))
+            .with_callback(self.callbacks().execution_callback(tx_id))
             .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
             .register_promise();
     }
 
     #[promises_callback]
-    fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize, token_id: &TokenIdentifier, amount: &BigUint) {
+    fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
-            self.refund_transaction(tx_id, token_id, amount);
+            self.refund_transaction(tx_id);
         }
         let lowest_tx_id = self.lowest_tx_id().get();
         if tx_id < lowest_tx_id {
@@ -68,15 +71,16 @@ pub trait BridgeProxyContract:
         self.pending_transactions().clear_entry_unchecked(tx_id);
     }
 
-    fn refund_transaction(&self, tx_id: usize, token_id: &TokenIdentifier, amount: &BigUint) {
+    fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let payment = self.payments(tx_id).get();
         let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(bridged_tokens_wrapper::BridgedTokensWrapperProxy)
             .unwrap_token_create_transaction(&tx.token_id, tx.from)
-            .single_esdt(&token_id, 0, &amount)
+            .single_esdt(&payment.token_identifier, payment.token_nonce, &payment.amount)
             .sync_call();
     }
 
