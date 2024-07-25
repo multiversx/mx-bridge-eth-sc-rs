@@ -5,7 +5,7 @@ pub mod bridge_proxy_contract_proxy;
 pub mod config;
 pub mod esdt_safe_proxy;
 
-use transaction::EthTransaction;
+use transaction::{CallData, EthTransaction};
 
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 
@@ -41,22 +41,31 @@ pub trait BridgeProxyContract:
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let call_data_result: Result<CallData<Self::Api>, DecodeError> =
+            CallData::top_decode(tx.call_data);
 
         require!(
-            !tx.call_endpoint.is_empty() && tx.call_gas_limit != 0,
+            call_data_result.is_ok(),
+            "Call data doesn't respect the format!"
+        );
+
+        let call_data = call_data_result.unwrap();
+
+        require!(
+            !call_data.endpoint.is_empty() && call_data.gas_limit != 0,
             "There is no endpoint name for a SC call!"
         );
 
         require!(
-            tx.call_gas_limit >= MIN_GAS_LIMIT_FOR_SC_CALL,
+            call_data.gas_limit >= MIN_GAS_LIMIT_FOR_SC_CALL,
             "Gas limit too low!"
         );
 
         self.send()
-            .contract_call::<IgnoreValue>(tx.to.clone(), tx.call_endpoint)
-            .with_raw_arguments(tx.call_args.into())
+            .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint)
+            .with_raw_arguments(call_data.args.into())
             .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
-            .with_gas_limit(tx.call_gas_limit)
+            .with_gas_limit(call_data.gas_limit)
             .async_call_promise()
             .with_callback(self.callbacks().execution_callback(tx_id))
             .register_promise();
