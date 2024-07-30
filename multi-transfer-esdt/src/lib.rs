@@ -54,6 +54,7 @@ pub trait MultiTransferEsdt:
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
         let safe_address = self.esdt_safe_contract_address().get();
+        let _len = transfers.len();
 
         for eth_tx in transfers {
             let is_success: bool = self

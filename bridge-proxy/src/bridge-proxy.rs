@@ -41,34 +41,60 @@ pub trait BridgeProxyContract:
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let call_data_result: Result<CallData<Self::Api>, DecodeError> =
-            CallData::top_decode(tx.call_data);
+        // let call_data_result: Result<CallData<Self::Api>, DecodeError> =
+        //     CallData::top_decode(tx.call_data);
 
-        require!(
-            call_data_result.is_ok(),
-            "Call data doesn't respect the format!"
-        );
+        // let call_data_result = CallData::dep_decode(&mut tx.call_data);
 
-        let call_data = call_data_result.unwrap();
+        let decode_tx = EthTransaction::dep_decode(&mut tx);
 
-        require!(
-            !call_data.endpoint.is_empty() && call_data.gas_limit != 0,
-            "There is no endpoint name for a SC call!"
-        );
+        let mut refund = false;
 
-        require!(
-            call_data.gas_limit >= MIN_GAS_LIMIT_FOR_SC_CALL,
-            "Gas limit too low!"
-        );
+        if decode_tx.is_err() {
+            refund = true;
+        }
 
-        self.send()
-            .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint)
-            .with_raw_arguments(call_data.args.into())
-            .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
-            .with_gas_limit(call_data.gas_limit)
-            .async_call_promise()
-            .with_callback(self.callbacks().execution_callback(tx_id))
-            .register_promise();
+        let call_data = decode_tx.unwrap().call_data;
+
+        if call_data.endpoint.is_empty()
+            || call_data.gas_limit == 0
+            || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
+        {
+            refund = true;
+        }
+
+        if refund {
+            self.refund_transaction(tx_id);
+        }
+
+        // let unwraped_args = match call_data.args {
+        //     ManagedOption::some(args) => args.unwrap(),
+        //     ManagedOption::none() => ManagedVec::new(),
+        // };
+
+        let tx_call = if call_data.args.is_some() {
+            self.tx()
+                .to(&tx.to)
+                .raw_call(call_data.endpoint)
+                .arguments_raw(call_data.args.unwrap_no_check().into())
+                .gas(call_data.gas_limit) //TODO: set gas limit to this call
+                .callback(self.callbacks().execution_callback(tx_id))
+        } else {
+            self.tx()
+                .to(&tx.to)
+                .raw_call(call_data.endpoint)
+                // .arguments_raw(call_data.args.unwrap_no_check().into())
+                .gas(call_data.gas_limit) //TODO: set gas limit to this call
+                .callback(self.callbacks().execution_callback(tx_id))
+        };
+
+        if tx.amount == 0 {
+            tx_call.register_promise();
+        } else {
+            tx_call
+                .single_esdt(&tx.token_id, 0, &tx.amount)
+                .register_promise();
+        }
     }
 
     #[promises_callback]
