@@ -21,9 +21,7 @@
                         "3-token_id": "nested:str:WEGLD-123456",
                         "4-amount": "biguint:76,000,000,000",
                         "5-tx_nonce": "u64:1",
-                        "6-call_endpoint": "nested:str:data",
-                        "7-call_gas_limit": "u64:20,000,000",
-                        "8-call_args": "0x"
+                        "6-call_data": "0x000000036164640000000000989680000000010000000105"
                     },
                     {
                         "1-from": "0x0102030405060708091011121314151617181920",
@@ -31,9 +29,7 @@
                         "3-token_id": "nested:str:ETH-123456",
                         "4-amount": "biguint:76,000,000,000",
                         "5-tx_nonce": "u64:2",
-                        "6-call_endpoint": "nested:str:data",
-                        "7-call_gas_limit": "u64:20,000,000",
-                        "8-call_args": "0x"
+                        "6-call_data": "0x000000036164640000000000989680000000010000000105"
                     }
                 ],
                 "gasLimit": "50,000,000",
@@ -67,9 +63,7 @@
                                     "3-token_id": "nested:str:WEGLD-123456",
                                     "4-amount": "biguint:76,000,000,000",
                                     "5-tx_nonce": "u64:1",
-                                    "6-call_endpoint": "nested:str:data",
-                                    "7-call_gas_limit": "u64:20,000,000",
-                                    "8-call_args": "u32:0"
+                                    "6-call_data": "nested:str:add|u64:10,000,000|u32:0x1|nested:u8:5"
                                 },
                                 {
                                     "1-from": "0x0102030405060708091011121314151617181920",
@@ -77,9 +71,7 @@
                                     "3-token_id": "nested:str:ETH-123456",
                                     "4-amount": "biguint:76,000,000,000",
                                     "5-tx_nonce": "u64:2",
-                                    "6-call_endpoint": "nested:str:data",
-                                    "7-call_gas_limit": "u64:20,000,000",
-                                    "8-call_args": "u32:0"
+                                    "6-call_endpoint": "nested:str:add|u64:10,000,000|u32:0x1|nested:u8:5"
                                 }
                             ]
                         },
