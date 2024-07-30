@@ -1,15 +1,15 @@
 #![no_std]
 
 mod dfp_big_uint;
-mod events;
 mod esdt_safe_proxy;
+mod events;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
-use multiversx_sc::imports::*;
 use eth_address::*;
+use multiversx_sc::imports::*;
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
@@ -209,13 +209,13 @@ pub trait BridgedTokensWrapper:
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
 
         let universal_bridged_token_ids = self
-            .chain_specific_to_universal_mapping(&requested_token)
+            .chain_specific_to_universal_mapping(requested_token)
             .get();
         require!(
             payment_token == universal_bridged_token_ids,
             "Esdt token unavailable"
         );
-        self.require_tokens_have_set_decimals_num(&payment_token, &requested_token);
+        self.require_tokens_have_set_decimals_num(&payment_token, requested_token);
 
         let chain_specific_token_id = &requested_token;
         let converted_amount = self.get_converted_amount(
@@ -242,7 +242,11 @@ pub trait BridgedTokensWrapper:
 
     #[payable("*")]
     #[endpoint(unwrapTokenCreateTransaction)]
-    fn unwrap_token_create_transaction(&self, requested_token: TokenIdentifier, to: EthAddress<Self::Api>) {
+    fn unwrap_token_create_transaction(
+        &self,
+        requested_token: TokenIdentifier,
+        to: EthAddress<Self::Api>,
+    ) {
         let converted_amount = self.unwrap_token_common(&requested_token);
         self.tx()
             .to(self.esdt_safe_contract_address().get())
