@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "adder"
 version = "0.0.0"
-source = "git+https://github.com/multiversx/mx-contracts-rs?rev=84aa882#84aa882c9ead27f116c725671308a49716dd286d"
+source = "git+https://github.com/multiversx/mx-contracts-rs?rev=96c10e5#96c10e56b00252db1a957bf8d207bd2fe1dd55c7"
 dependencies = [
  "multiversx-sc",
 ]
@@ -56,6 +56,12 @@ name = "bumpalo"
 version = "3.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "79296716171880943b8470b5f8d03aa55eb2e645a4874bdbb28adb49162e012c"
+
+[[package]]
+name = "byteorder"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
 
 [[package]]
 name = "cfg-if"
@@ -177,9 +183,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-price-aggregator-sc"
-version = "0.51.1"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c2f06c0325936b990c92ec3d0f348aac98a1e3caaf60f305d62f2f5b932bca5b"
+checksum = "5ea572ebab3a6addd937cad829076b13e320851503fb6adf1ad66f544b2bf100"
 dependencies = [
  "arrayvec",
  "getrandom",
@@ -190,9 +196,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc"
-version = "0.51.1"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "236f7890b2208796df8b5ac73b8572ffaf5e2b1531c7ad549d669328b715b657"
+checksum = "31bcb4dc736ef975b59878720de1c731788aa1a5a197888606e7d3d6600b1925"
 dependencies = [
  "bitflags",
  "hex-literal",
@@ -204,9 +210,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-codec"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcecd449ea708b72f92edaa17158fe4859c1780aed9b52b14de45f26124ccb8b"
+checksum = "ad4f318427761faecf26c1f3115a3beeb5f61858845a60547d9763aa981ddd2d"
 dependencies = [
  "arrayvec",
  "multiversx-sc-codec-derive",
@@ -215,9 +221,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-codec-derive"
-version = "0.20.0"
+version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "68f7fa25402e5e8054d719951289306fd79e481f7c21b2565b5549b6bc359772"
+checksum = "476501462b0c2654b64f9dec6f2c480e24b4e9b7133ec10b7167e64acda35d04"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -227,9 +233,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.51.1"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb683bc78d0e2eb43c16cac790144f53cc2ab27912aeb1484433895742ce698d"
+checksum = "ae92e4121bad55ffc476028c25722bc01ba989b4953837fb7f4b6be9dba398ed"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -240,18 +246,18 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.51.1"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16af268784dff8a34cb696605413c325253da793d85f81b00dcb0e66f82963c9"
+checksum = "1aca2fbccb7cd84f3c4d7a13c78d90fac484bf9cab30ed73c9b5f5e31f513b6f"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "multiversx-sc-wasm-adapter"
-version = "0.51.1"
+version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2f0d6be22f911ce45427491a9bec94612a1678eab2769dd08c9c9731d13da53"
+checksum = "bbb8f0bf218a2e3f02d37c3112fd099bdd72d307e69e97b4773fa8c16bf6ab87"
 dependencies = [
  "multiversx-sc",
 ]
@@ -282,9 +288,13 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "ppv-lite86"
-version = "0.2.17"
+version = "0.2.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5b40af805b3121feab8a3c29f04d8ad262fa8e0561883e7653e024ae4479e6de"
+checksum = "2288c0e17cc8d342c712bb43a257a80ebffce59cdb33d5000d8348f3ec02528b"
+dependencies = [
+ "zerocopy",
+ "zerocopy-derive",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -352,9 +362,9 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
 name = "syn"
-version = "2.0.68"
+version = "2.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "901fa70d88b9d6c98022e23b4136f9f3e54e4662c3bc1bd1d84a42a9a0f0c1e9"
+checksum = "dc4b9b9bf2add8093d3f2c0204471e951b2285580335de42f9d2534f3ae7a8af"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -456,3 +466,24 @@ name = "wasm-bindgen-shared"
 version = "0.2.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "af190c94f2773fdb3729c55b007a722abb5384da03bc0986df4c289bf5567e96"
+
+[[package]]
+name = "zerocopy"
+version = "0.7.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b9b4fd18abc82b8136838da5d50bae7bdea537c574d8dc1a34ed098d6c166f0"
+dependencies = [
+ "byteorder",
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "zerocopy-derive"
+version = "0.7.35"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa4f8080344d4671fb4e831a13ad1e68092748387dfc4f55e356242fae12ce3e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
