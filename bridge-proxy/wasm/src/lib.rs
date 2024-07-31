@@ -26,9 +26,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getPendingTransactionById => get_pending_transaction_by_id
         getPendingTransactions => get_pending_transactions
         setupMultiTransfer => set_multi_transfer_contract_address
-        setupEsdtSafe => set_esdt_safe_contract_address
+        setBridgedTokensWrapper => set_bridged_tokens_wrapper
         getMultiTransferAddress => multi_transfer_address
-        getEsdtSafeAddress => esdt_safe_address
+        getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status

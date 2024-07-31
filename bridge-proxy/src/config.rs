@@ -23,17 +23,17 @@ pub trait ConfigModule {
     }
 
     #[only_owner]
-    #[endpoint(setupEsdtSafe)]
-    fn set_esdt_safe_contract_address(&self, opt_esdt_safe_address: OptionalValue<ManagedAddress>) {
-        match opt_esdt_safe_address {
+    #[endpoint(setBridgedTokensWrapper)]
+    fn set_bridged_tokens_wrapper(&self, opt_address: OptionalValue<ManagedAddress>) {
+        match opt_address {
             OptionalValue::Some(sc_addr) => {
                 require!(
                     self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid multi-transfer address"
+                    "Invalid bridged tokens wrapper address"
                 );
-                self.esdt_safe_address().set(&sc_addr);
+                self.bridged_tokens_wrapper_address().set(&sc_addr);
             }
-            OptionalValue::None => self.esdt_safe_address().clear(),
+            OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
         }
     }
 
@@ -41,15 +41,15 @@ pub trait ConfigModule {
     #[storage_mapper("multiTransferAddress")]
     fn multi_transfer_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[view(getEsdtSafeAddress)]
-    #[storage_mapper("esdtSafeAddress")]
-    fn esdt_safe_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
+    #[view(getBridgedTokensWrapperAddress)]
+    #[storage_mapper("bridgedTokensWrapperAddress")]
+    fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("pending_transactions")]
     fn pending_transactions(&self) -> VecMapper<EthTransaction<Self::Api>>;
+
+    #[storage_mapper("payments")]
+    fn payments(&self, tx_id: usize) -> SingleValueMapper<EsdtTokenPayment<Self::Api>>;
 
     #[storage_mapper("lowest_tx_id")]
     fn lowest_tx_id(&self) -> SingleValueMapper<usize>;

@@ -3,9 +3,11 @@ use multiversx_sc::imports::*;
 
 pub mod bridge_proxy_contract_proxy;
 pub mod config;
-pub mod esdt_safe_proxy;
+pub mod bridged_tokens_wrapper;
 
 use transaction::EthTransaction;
+
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20000000; // 20 million
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -28,17 +30,20 @@ pub trait BridgeProxyContract:
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         self.require_not_paused();
         let caller = self.blockchain().get_caller();
+        let payment = self.call_value().single_esdt();
         require!(
             caller == self.multi_transfer_address().get(),
             "Only MultiTransfer can do deposits"
         );
-        self.pending_transactions().push(&eth_tx);
+        let tx_id = self.pending_transactions().push(&eth_tx);
+        self.payments(tx_id).set(&payment);
     }
 
     #[endpoint(execute)]
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let payment = self.payments(tx_id).get();
 
         require!(tx.call_data.is_some(), "There is no data for a SC call!");
 
@@ -46,10 +51,11 @@ pub trait BridgeProxyContract:
         self.send()
             .contract_call::<IgnoreValue>(tx.to.clone(), call_data.endpoint.clone())
             .with_raw_arguments(call_data.args.clone().into())
-            .with_esdt_transfer((tx.token_id.clone(), 0, tx.amount.clone()))
+            .with_esdt_transfer(payment)
             .with_gas_limit(call_data.gas_limit)
             .async_call_promise()
             .with_callback(self.callbacks().execution_callback(tx_id))
+            .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
             .register_promise();
     }
 
@@ -67,13 +73,14 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let esdt_safe_addr = self.esdt_safe_address().get();
+        let payment = self.payments(tx_id).get();
+        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
 
         self.tx()
             .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(tx.from)
-            .single_esdt(&tx.token_id, 0, &tx.amount)
+            .typed(bridged_tokens_wrapper::BridgedTokensWrapperProxy)
+            .unwrap_token_create_transaction(&tx.token_id, tx.from)
+            .single_esdt(&payment.token_identifier, payment.token_nonce, &payment.amount)
             .sync_call();
     }
 
