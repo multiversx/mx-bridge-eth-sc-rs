@@ -36,13 +36,13 @@ path = "../multi-transfer-esdt"
 path = "../bridge-proxy"
 
 [dependencies.multiversx-sc]
-version = "=0.52.0"
+version = "=0.52.1"
 
 [dependencies.multiversx-price-aggregator-sc]
 version = "=0.52.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.52.0"
+version = "=0.52.1"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.0"
+version = "=0.52.1"

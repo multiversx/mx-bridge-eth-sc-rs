@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "adder"
 version = "0.0.0"
-source = "git+https://github.com/multiversx/mx-contracts-rs?rev=96c10e5#96c10e56b00252db1a957bf8d207bd2fe1dd55c7"
+source = "git+https://github.com/multiversx/mx-contracts-rs?rev=d91bbff#d91bbff295295c2f7e2baf1cd569dd5693ddfb56"
 dependencies = [
  "multiversx-sc",
 ]
@@ -634,9 +634,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc"
-version = "0.52.0"
+version = "0.52.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31bcb4dc736ef975b59878720de1c731788aa1a5a197888606e7d3d6600b1925"
+checksum = "ad1c90e0079028040f6219494a66a5fec724ab1e4b4b836e06cc899b5fe9f2f9"
 dependencies = [
  "bitflags",
  "hex-literal",
@@ -672,9 +672,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.52.0"
+version = "0.52.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae92e4121bad55ffc476028c25722bc01ba989b4953837fb7f4b6be9dba398ed"
+checksum = "2da247945d1700c84859f935214e49ec4d781fbebc483fadc715291e49801cae"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -685,9 +685,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta-lib"
-version = "0.52.0"
+version = "0.52.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77add452483515e992d633c1820557941d17cb59dbc0c4783d5b9585b8f5a0a4"
+checksum = "49dfe01c37bd97c61f80bbeec07d3f2046475842517ec48d238f9bf6242ae290"
 dependencies = [
  "clap",
  "colored",
@@ -706,18 +706,18 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.52.0"
+version = "0.52.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1aca2fbccb7cd84f3c4d7a13c78d90fac484bf9cab30ed73c9b5f5e31f513b6f"
+checksum = "6dec3bd3e6ea44263db7cc5bef2d16d0626c5dc1e18a1923843459ba7896ded2"
 dependencies = [
  "multiversx-sc",
 ]
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.52.0"
+version = "0.52.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6975f54ad39d3e35e4e4299e32dbb2bd8a8e371775418324640ca33fc401a9d1"
+checksum = "208e14827435a693681dd562e895f4fb376d82aa1e3d31e5588e3ff309441e2e"
 dependencies = [
  "base64",
  "bech32",
