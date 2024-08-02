@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "adder"
-version = "0.0.0"
-source = "git+https://github.com/multiversx/mx-contracts-rs?rev=d91bbff#d91bbff295295c2f7e2baf1cd569dd5693ddfb56"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "ahash"
 version = "0.8.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -129,7 +121,7 @@ dependencies = [
 name = "bridge-proxy"
 version = "0.0.0"
 dependencies = [
- "adder",
+ "crowdfunding-esdt",
  "esdt-safe",
  "eth-address",
  "multiversx-sc",
@@ -260,6 +252,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53fe5e26ff1b7aef8bca9c6080520cfb8d9333c7568e1829cef191a9723e5504"
 dependencies = [
  "libc",
+]
+
+[[package]]
+name = "crowdfunding-esdt"
+version = "0.0.0"
+source = "git+https://github.com/multiversx/mx-contracts-rs?rev=d91bbff#d91bbff295295c2f7e2baf1cd569dd5693ddfb56"
+dependencies = [
+ "multiversx-sc",
 ]
 
 [[package]]

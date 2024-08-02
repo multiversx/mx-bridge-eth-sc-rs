@@ -64,24 +64,26 @@ pub trait BridgeProxyContract:
             self.refund_transaction(tx_id);
         }
 
-        if call_data.args.is_some() {
+        let tx_call = if call_data.args.is_some() {
             let args = unsafe { call_data.args.unwrap_no_check() };
             self.tx()
                 .to(&tx.to)
                 .raw_call(call_data.endpoint)
-                .with_esdt_transfer(payment)
                 .arguments_raw(args.into())
                 .gas(call_data.gas_limit)
                 .callback(self.callbacks().execution_callback(tx_id))
-                .register_promise();
         } else {
             self.tx()
                 .to(&tx.to)
                 .raw_call(call_data.endpoint)
                 .gas(call_data.gas_limit)
-                .with_esdt_transfer(payment)
                 .callback(self.callbacks().execution_callback(tx_id))
-                .register_promise();
+        };
+
+        if payment.amount.clone() == 0 {
+            tx_call.register_promise();
+        } else {
+            tx_call.with_esdt_transfer(payment).register_promise();
         }
     }
 

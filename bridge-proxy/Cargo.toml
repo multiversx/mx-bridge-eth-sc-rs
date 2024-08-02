@@ -29,7 +29,7 @@ version = "=0.52.2"
 [dependencies.multiversx-sc-modules]
 version = "0.52.2"
 
-[dependencies.adder]
+[dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-contracts-rs"
 rev = "d91bbff"
 

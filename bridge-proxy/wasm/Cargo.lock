@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "adder"
-version = "0.0.0"
-source = "git+https://github.com/multiversx/mx-contracts-rs?rev=d91bbff#d91bbff295295c2f7e2baf1cd569dd5693ddfb56"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -32,7 +24,7 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 name = "bridge-proxy"
 version = "0.0.0"
 dependencies = [
- "adder",
+ "crowdfunding-esdt",
  "esdt-safe",
  "eth-address",
  "multiversx-sc",
@@ -67,6 +59,14 @@ name = "cfg-if"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
+
+[[package]]
+name = "crowdfunding-esdt"
+version = "0.0.0"
+source = "git+https://github.com/multiversx/mx-contracts-rs?rev=d91bbff#d91bbff295295c2f7e2baf1cd569dd5693ddfb56"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "endian-type"
