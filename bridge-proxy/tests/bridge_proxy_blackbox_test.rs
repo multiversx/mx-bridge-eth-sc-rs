@@ -142,8 +142,10 @@ fn deploy_test() {
 }
 
 #[test]
-fn deploy_deposit_test() {
+fn bridge_proxy_execute_crowdfunding_test() {
     let mut test = BridgeProxyTestState::new();
+
+    test.world.start_trace();
 
     test.bridge_proxy_deploy();
     test.deploy_crowdfunding();
@@ -207,6 +209,9 @@ fn deploy_deposit_test() {
         .get_current_funds()
         .returns(ExpectValue(500u64))
         .run();
+
+    test.world
+        .write_scenario_trace("scenarios/bridge_proxy_execute_crowdfunding.scen.json");
 }
 
 #[test]
