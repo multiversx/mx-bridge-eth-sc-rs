@@ -33,51 +33,6 @@ pub struct CallData<M: ManagedTypeApi> {
     pub args: ManagedOption<M, ManagedVec<M, ManagedBuffer<M>>>,
 }
 
-// impl<M: ManagedTypeApi> Default for CallData<M> {
-//     fn default() -> Self {
-//         CallData {
-//             endpoint: ManagedBuffer::new(),
-//             gas_limit: 0u64,
-//             args: ManagedOption::none(),
-//         }
-//     }
-// }
-
-// impl<M: ManagedTypeApi> NestedDecode for CallData<M> {
-//     fn dep_decode_or_handle_err<I, H>(nested_buffer: &mut I, h: H) -> Result<Self, H::HandledErr>
-//     where
-//         I: codec::NestedDecodeInput,
-//         H: codec::DecodeErrorHandler,
-//     {
-//         let mut endpoint = ManagedBuffer::new();
-//         if !nested_buffer.is_depleted() {
-//             endpoint = ManagedBuffer::dep_decode_or_handle_err(nested_buffer, h)?;
-//         }
-
-//         let mut gas_limit = 0u64;
-//         if !nested_buffer.is_depleted() {
-//             gas_limit = u64::dep_decode_or_handle_err(nested_buffer, h)?;
-//         }
-
-//         let mut args: ManagedVec<M, ManagedBuffer<M>> = ManagedVec::new();
-//         while !nested_buffer.is_depleted() {
-//             args.push(ManagedBuffer::dep_decode_or_handle_err(nested_buffer, h)?);
-//         }
-
-//         let args: ManagedOption<M, ManagedVec<M, ManagedBuffer<M>>> = if args.is_empty() {
-//             ManagedOption::none()
-//         } else {
-//             ManagedOption::some(args)
-//         };
-
-//         Result::Ok(CallData {
-//             endpoint,
-//             gas_limit,
-//             args,
-//         })
-//     }
-// }
-
 #[type_abi]
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
@@ -88,65 +43,6 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub tx_nonce: TxNonce,
     pub call_data: ManagedBuffer<M>,
 }
-    
-// impl<M: ManagedTypeApi> TopDecode for EthTransaction<M> {
-//     fn top_decode_or_handle_err<I, H>(input: I, h: H) -> Result<Self, H::HandledErr>
-//     where
-//         I: codec::TopDecodeInput,
-//         H: codec::DecodeErrorHandler,
-//     {
-//         let mut nested_buffer = input.into_nested_buffer();
-//         let from = EthAddress::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-//         let to = ManagedAddress::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-//         let token_id = TokenIdentifier::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-//         let amount = BigUint::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-//         let tx_nonce = TxNonce::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-
-//         // let mb: ManagedBufferReadToEnd<M> = ManagedBufferReadToEnd::from(nested_buffer);
-
-//         // let managed_serializer = ManagedSerializer::new();
-//         // let call_data: CallData<M> =
-//         //     managed_serializer.top_decode_from_managed_buffer(&mb.into_managed_buffer());
-
-//         let endpoint: ManagedBuffer<M> = ManagedBuffer::new();
-//         if !nested_buffer.is_depleted() {
-//             endpoint = ManagedBuffer::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-//         }
-//         let gas_limit = 0u64;
-//         if !nested_buffer.is_depleted() {
-//             gas_limit = u64::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-//         }
-//         let final_args = if nested_buffer.is_depleted() {
-//             ManagedOption::none()
-//         } else {
-//             let args = ManagedVec<M, ManagedBuffer<M>>::new();
-//         while !nested_buffer.is_depleted() {
-//             args.push(ManagedBuffer::dep_decode_or_handle_err(
-//                 &mut nested_buffer,
-//                 h,
-//             )?);
-//         }
-//         ManagedOption::some(args)
-//     };
-//         let call_data_struct = CallData {
-//             endpoint,
-//             gas_limit,
-//             args: final_args,
-//         };
-//         // call_data = CallData::dep_decode_or_handle_err(&mut nested_buffer, h)?;
-
-//         let call_data = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data_struct);
-
-//         Result::Ok(EthTransaction {
-//             from,
-//             to,
-//             token_id,
-//             amount,
-//             tx_nonce,
-//             call_data,
-//         })
-//     }
-// }
 
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
