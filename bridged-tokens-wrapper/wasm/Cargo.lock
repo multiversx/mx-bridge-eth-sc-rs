@@ -24,9 +24,12 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
+ "eth-address",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "token-module",
  "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]
@@ -45,6 +48,13 @@ checksum = "c34f04666d835ff5d62e058c3995147c06f42fe86ff053337632bca83e42702d"
 
 [[package]]
 name = "eth-address"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "fee-estimator-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
@@ -194,11 +204,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "token-module"
+version = "0.0.0"
+dependencies = [
+ "fee-estimator-module",
+ "multiversx-sc",
+]
+
+[[package]]
 name = "transaction"
 version = "0.0.0"
 dependencies = [
  "eth-address",
  "multiversx-sc",
+]
+
+[[package]]
+name = "tx-batch-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
 ]
 
 [[package]]

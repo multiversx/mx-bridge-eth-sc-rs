@@ -238,9 +238,7 @@ pub trait MultiTransferEsdt:
         payments: PaymentsVec<Self::Api>,
     ) {
         let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
-        for (mut eth_tx, p) in transfers.iter().zip(payments.iter()) {
-            eth_tx.amount = p.amount.clone();
-            eth_tx.token_id = p.token_identifier.clone();
+        for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
             if self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.tx()
                     .to(bridge_proxy_addr.clone())

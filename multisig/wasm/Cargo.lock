@@ -46,9 +46,12 @@ dependencies = [
 name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
+ "eth-address",
  "multiversx-sc",
  "multiversx-sc-modules",
+ "token-module",
  "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]

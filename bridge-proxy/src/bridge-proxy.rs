@@ -2,12 +2,14 @@
 use multiversx_sc::{contract_base::ManagedSerializer, imports::*};
 
 pub mod bridge_proxy_contract_proxy;
+pub mod bridged_tokens_wrapper;
 pub mod config;
-pub mod esdt_safe_proxy;
 
 use transaction::{CallData, EthTransaction};
 
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+
+// const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20000000; // 20 million
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -30,11 +32,13 @@ pub trait BridgeProxyContract:
     fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
         self.require_not_paused();
         let caller = self.blockchain().get_caller();
+        let payment = self.call_value().single_esdt();
         require!(
             caller == self.multi_transfer_address().get(),
             "Only MultiTransfer can do deposits"
         );
-        self.pending_transactions().push(&eth_tx);
+        let tx_id = self.pending_transactions().push(&eth_tx);
+        self.payments(tx_id).set(&payment);
     }
 
     #[endpoint(execute)]
@@ -45,6 +49,7 @@ pub trait BridgeProxyContract:
         let managed_serializer = ManagedSerializer::new();
         let call_data: CallData<Self::Api> =
             managed_serializer.top_decode_from_managed_buffer(&mb_aux.into_managed_buffer());
+        let payment = self.payments(tx_id).get();
 
         let mut refund = false;
 
@@ -59,34 +64,23 @@ pub trait BridgeProxyContract:
             self.refund_transaction(tx_id);
         }
 
-        // let unwrapped_args = call_data.args.unwrap_or_else(|| ManagedVec::new());
-        // let unwraped_args: ManagedVec<ManagedBuffer> = match call_data.args {
-        //     ManagedOption::some(args) => args.unwrap(),
-        //     ManagedOption::none() => ManagedVec::new(),
-        // };
-
-        let tx_call = if call_data.args.is_some() {
+        if call_data.args.is_some() {
             let args = unsafe { call_data.args.unwrap_no_check() };
             self.tx()
                 .to(&tx.to)
                 .raw_call(call_data.endpoint)
+                .with_esdt_transfer(payment)
                 .arguments_raw(args.into())
-                .gas(call_data.gas_limit) //TODO: set gas limit to this call
+                .gas(call_data.gas_limit)
                 .callback(self.callbacks().execution_callback(tx_id))
+                .register_promise();
         } else {
             self.tx()
                 .to(&tx.to)
                 .raw_call(call_data.endpoint)
-                // .arguments_raw(call_data.args.unwrap_no_check().into())
-                .gas(call_data.gas_limit) //TODO: set gas limit to this call
+                .gas(call_data.gas_limit)
+                .with_esdt_transfer(payment)
                 .callback(self.callbacks().execution_callback(tx_id))
-        };
-
-        if tx.amount == 0 {
-            tx_call.register_promise();
-        } else {
-            tx_call
-                .single_esdt(&tx.token_id, 0, &tx.amount)
                 .register_promise();
         }
     }
@@ -105,13 +99,18 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let esdt_safe_addr = self.esdt_safe_address().get();
+        let payment = self.payments(tx_id).get();
+        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
 
         self.tx()
             .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(tx.from)
-            .single_esdt(&tx.token_id, 0, &tx.amount)
+            .typed(bridged_tokens_wrapper::BridgedTokensWrapperProxy)
+            .unwrap_token_create_transaction(&tx.token_id, tx.from)
+            .single_esdt(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
             .sync_call();
     }
 
