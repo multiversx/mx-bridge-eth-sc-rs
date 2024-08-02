@@ -12,6 +12,7 @@ mod util;
 
 pub mod esdt_safe_proxy;
 pub mod multi_transfer_esdt_proxy;
+pub mod multisig_proxy;
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
@@ -231,7 +232,7 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
     ) -> usize {
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
@@ -239,10 +240,10 @@ pub trait Multisig:
             "Can only propose for next batch ID"
         );
 
-        let transfers_as_eth_tx = self.transfers_multi_value_to_eth_tx_vec(transfers);
-        self.require_valid_eth_tx_ids(&transfers_as_eth_tx);
+        // let transfers_as_eth_tx = self.transfers_multi_value_to_eth_tx_vec(transfers);
+        self.require_valid_eth_tx_ids(&transfers);
 
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
+        let batch_hash = self.hash_eth_tx_batch(&transfers);
         require!(
             self.batch_id_to_action_id_mapping(eth_batch_id)
                 .get(&batch_hash)
@@ -252,7 +253,7 @@ pub trait Multisig:
 
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
             eth_batch_id,
-            transfers: transfers_as_eth_tx,
+            transfers,
         });
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
