@@ -44,19 +44,18 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         batch_id: u64,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
-        let mut valid_tx_list = MultiValueEncoded::new();
+        let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
         let safe_address = self.esdt_safe_contract_address().get();
-        let _len = transfers.len();
 
-        for eth_tx in transfers {
+        for eth_tx in transfers.iter() {
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
@@ -235,11 +234,11 @@ pub trait MultiTransferEsdt:
 
     fn distribute_payments(
         &self,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
     ) {
         let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
-        for (mut eth_tx, p) in transfers.into_iter().zip(payments.iter()) {
+        for (mut eth_tx, p) in transfers.iter().zip(payments.iter()) {
             eth_tx.amount = p.amount.clone();
             eth_tx.token_id = p.token_identifier.clone();
             if self.blockchain().is_smart_contract(&eth_tx.to) {

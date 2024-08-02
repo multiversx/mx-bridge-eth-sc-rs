@@ -13,11 +13,12 @@ use multiversx_sc::{
         multi_types::{MultiValueVec, OptionalValue},
         Empty,
     },
+    contract_base::ManagedSerializer,
     storage::mappers::SingleValue,
     types::{
         Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress, ReturnsRawResult, TestAddress,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress, ReturnsRawResult,
+        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::pause::ProxyTrait;
@@ -31,9 +32,10 @@ use multiversx_sc_scenario::{
 
 use eth_address::*;
 use token_module::ProxyTrait as _;
-use transaction::EthTransaction;
+use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
+const WRAPPED_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRAPPED-123456");
 
 const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
 
@@ -98,7 +100,8 @@ impl MultiTransferTestState {
         world
             .account(OWNER_ADDRESS)
             .nonce(1)
-            .esdt_balance(BRIDGE_TOKEN_ID, 1000u64)
+            .esdt_balance(BRIDGE_TOKEN_ID, 1001u64)
+            .esdt_balance(WRAPPED_TOKEN_ID, 1001u64)
             .account(USER1_ADDRESS)
             .nonce(1)
             .account(USER2_ADDRESS)
@@ -110,7 +113,8 @@ impl MultiTransferTestState {
         ];
         world
             .account(ESDT_SAFE_ADDRESS)
-            .esdt_roles(BRIDGE_TOKEN_ID, roles)
+            .esdt_roles(BRIDGE_TOKEN_ID, roles.clone())
+            .esdt_roles(WRAPPED_TOKEN_ID, roles)
             .code(ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS);
 
@@ -224,6 +228,44 @@ impl MultiTransferTestState {
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_token_to_whitelist(
+                TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
+                "BRIDGE",
+                true,
+                false,
+                OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
+            )
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unpause_endpoint()
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unpause_endpoint()
+            .run();
     }
 }
 
@@ -255,26 +297,8 @@ fn basic_transfer_test() {
         call_data,
     };
 
-    let mut transfers = MultiValueEncoded::new();
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
     transfers.push(eth_tx);
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .unpause_endpoint()
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unpause_endpoint()
-        .run();
 
     state
         .world
@@ -289,4 +313,232 @@ fn basic_transfer_test() {
         .world
         .check_account(USER1_ADDRESS)
         .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+}
+
+#[test]
+fn batch_transfer_both_executed_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.safe_deploy(Address::zero());
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multi_transfer();
+
+    let mut args = ManagedVec::new();
+    args.push(ManagedBuffer::from(&[5u8]));
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("add"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx1 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()), // TODO: solve this
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: call_data.clone(),
+    };
+
+    let eth_tx2 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()), // TODO: solve this
+        token_id: TokenIdentifier::from(WRAPPED_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 2u64,
+        call_data,
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx1);
+    transfers.push(eth_tx2);
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .check_account(USER1_ADDRESS)
+        .esdt_balance(WRAPPED_TOKEN_ID, token_amount.clone());
+
+    state
+        .world
+        .check_account(USER2_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+}
+
+#[test]
+fn batch_two_transfers_same_token_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.safe_deploy(Address::zero());
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multi_transfer();
+
+    let mut args = ManagedVec::new();
+    args.push(ManagedBuffer::from(&[5u8]));
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("add"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx1 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()), // TODO: solve this
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: call_data.clone(),
+    };
+
+    let eth_tx2 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()), // TODO: solve this
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 2u64,
+        call_data,
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx1);
+    transfers.push(eth_tx2);
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .check_account(USER1_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, token_amount.clone());
+
+    state
+        .world
+        .check_account(USER2_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+}
+
+#[test]
+fn batch_transfer_both_failed_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.safe_deploy(Address::zero());
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multi_transfer();
+
+    let mut args = ManagedVec::new();
+    args.push(ManagedBuffer::from(&[5u8]));
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("add"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx1 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()), // TODO: solve this
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: call_data.clone(),
+    };
+
+    let eth_tx2 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()), // TODO: solve this
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 2u64,
+        call_data,
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx1);
+    transfers.push(eth_tx2);
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    let first_batch = state
+        .world
+        .query()
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .get_first_batch_any_status()
+        .returns(ReturnsRawResult)
+        .run();
+
+    assert!(first_batch.len() == 0);
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .move_refund_batch_to_safe()
+        .run();
+
+    let first_batch = state
+        .world
+        .query()
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .get_first_batch_any_status()
+        .returns(ReturnsRawResult)
+        .run();
+
+    assert!(first_batch.len() == 0);
 }

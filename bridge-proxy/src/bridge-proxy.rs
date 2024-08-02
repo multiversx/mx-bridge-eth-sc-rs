@@ -41,21 +41,12 @@ pub trait BridgeProxyContract:
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
+        let mb_aux = ManagedBufferReadToEnd::from(tx.call_data);
         let managed_serializer = ManagedSerializer::new();
-        let call_data_result: CallData<Self::Api> =
-            managed_serializer.top_decode_from_managed_buffer(&tx.call_data);
-
-        // let call_data_result = CallData::dep_decode(&mut tx.call_data);
-
-        // let decode_tx = EthTransaction::top_decode(&tx);
+        let call_data: CallData<Self::Api> =
+            managed_serializer.top_decode_from_managed_buffer(&mb_aux.into_managed_buffer());
 
         let mut refund = false;
-
-        if decode_tx.is_err() {
-            refund = true;
-        }
-
-        let call_data = decode_tx.unwrap().call_data;
 
         if call_data.endpoint.is_empty()
             || call_data.gas_limit == 0
@@ -68,16 +59,18 @@ pub trait BridgeProxyContract:
             self.refund_transaction(tx_id);
         }
 
-        // let unwraped_args = match call_data.args {
+        // let unwrapped_args = call_data.args.unwrap_or_else(|| ManagedVec::new());
+        // let unwraped_args: ManagedVec<ManagedBuffer> = match call_data.args {
         //     ManagedOption::some(args) => args.unwrap(),
         //     ManagedOption::none() => ManagedVec::new(),
         // };
 
         let tx_call = if call_data.args.is_some() {
+            let args = unsafe { call_data.args.unwrap_no_check() };
             self.tx()
                 .to(&tx.to)
                 .raw_call(call_data.endpoint)
-                .arguments_raw(call_data.args.unwrap_no_check().into())
+                .arguments_raw(args.into())
                 .gas(call_data.gas_limit) //TODO: set gas limit to this call
                 .callback(self.callbacks().execution_callback(tx_id))
         } else {

@@ -10,7 +10,8 @@ use multiversx_sc::codec::NestedEncode;
 use multiversx_sc::contract_base::ManagedSerializer;
 use multiversx_sc::sc_print;
 use multiversx_sc::types::{
-    EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ReturnsNewAddress, TestAddress, TestSCAddress,
+    EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedOption, ReturnsNewAddress, TestAddress,
+    TestSCAddress,
 };
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
@@ -156,7 +157,7 @@ fn deploy_deposit_test() {
     let call_data: CallData<StaticApi> = CallData {
         endpoint: ManagedBuffer::from("add"),
         gas_limit: GAS_LIMIT,
-        args,
+        args: ManagedOption::some(args),
     };
 
     let call_data: ManagedBuffer<StaticApi> =
@@ -172,10 +173,6 @@ fn deploy_deposit_test() {
         tx_nonce: 1u64,
         call_data,
     };
-    // let mut buf: ManagedBuffer<StaticApi> = ManagedBuffer::new();
-    // eth_tx.dep_encode(&mut buf);
-
-    // println!("{:?}", buf);
 
     test.world
         .tx()
@@ -225,7 +222,7 @@ fn multiple_deposit_test() {
     let call_data: CallData<StaticApi> = CallData {
         endpoint: ManagedBuffer::from(b"add"),
         gas_limit: GAS_LIMIT,
-        args,
+        args: ManagedOption::some(args),
     };
     let call_data = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
 
@@ -246,7 +243,7 @@ fn multiple_deposit_test() {
     let call_data: CallData<StaticApi> = CallData {
         endpoint: ManagedBuffer::from(b"add"),
         gas_limit: GAS_LIMIT,
-        args,
+        args: ManagedOption::some(args),
     };
     let call_data = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
 

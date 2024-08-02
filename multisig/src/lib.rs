@@ -374,12 +374,11 @@ pub trait Multisig:
                 self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
 
                 let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
-                let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
-                    transfers.into();
+
                 self.tx()
                     .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-                    .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
+                    .batch_transfer_esdt_token(eth_batch_id, transfers)
                     .sync_call();
             }
         }
