@@ -444,7 +444,6 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
 #[test]
 fn ethereum_to_multiversx_tx_batch_rejected_test() {
     let mut state = MultiTransferTestState::new();
-    // let token_amount = BigUint::from(76_000_000_000u64);
     let over_the_limit_token_amount = BigUint::from(101_000_000_000u64);
 
     state.multisig_deploy();
@@ -528,7 +527,6 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         .returns(ReturnsResult)
         .run();
 
-    // TODO: check this
     assert!(refund_tx.is_none());
 
     state
@@ -539,10 +537,4 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         .typed(multisig_proxy::MultisigProxy)
         .move_refund_batch_to_safe_from_child_contract()
         .run();
-
-    // state
-    //     .world
-    //     .check_account(ESDT_SAFE_ADDRESS)
-    //     .esdt_balance(WEGLD_TOKEN_ID, over_the_limit_token_amount.clone())
-    //     .esdt_balance(ETH_TOKEN_ID, over_the_limit_token_amount);
 }
