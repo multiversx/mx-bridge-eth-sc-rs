@@ -34,16 +34,19 @@ fn create_multiversx_to_ethereum_tx_batch_rs() {
 }
 
 #[test]
+#[ignore] //There is an equivalent blackbox test
 fn ethereum_to_multiversx_tx_batch_ok_rs() {
     world().run("scenarios/ethereum_to_multiversx_tx_batch_ok.scen.json");
 }
 
 #[test]
+#[ignore] //There is an equivalent blackbox test
 fn ethereum_to_multiversx_tx_batch_rejected_rs() {
     world().run("scenarios/ethereum_to_multiversx_tx_batch_rejected.scen.json");
 }
 
 #[test]
+#[ignore] //There is an equivalent blackbox test
 fn ethereum_to_multiversx_tx_batch_without_data_rs() {
     world().run("scenarios/ethereum_to_multiversx_tx_batch_without_data.scen.json");
 }

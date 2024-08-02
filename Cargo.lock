@@ -555,6 +555,7 @@ name = "multisig"
 version = "0.0.0"
 dependencies = [
  "bridge-proxy",
+ "bridged-tokens-wrapper",
  "esdt-safe",
  "eth-address",
  "fee-estimator-module",

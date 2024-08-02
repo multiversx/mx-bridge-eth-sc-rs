@@ -17,7 +17,7 @@ use multiversx_sc::{
     storage::mappers::SingleValue,
     types::{
         Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress, ReturnsRawResult,
+        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress, ReturnsResult,
         TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
@@ -290,7 +290,7 @@ fn basic_transfer_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::default(),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -342,7 +342,7 @@ fn batch_transfer_both_executed_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -353,7 +353,7 @@ fn batch_transfer_both_executed_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(WRAPPED_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
@@ -411,7 +411,7 @@ fn batch_two_transfers_same_token_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -422,7 +422,7 @@ fn batch_two_transfers_same_token_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
@@ -480,7 +480,7 @@ fn batch_transfer_both_failed_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -491,7 +491,7 @@ fn batch_transfer_both_failed_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()), // TODO: solve this
+        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
@@ -517,10 +517,10 @@ fn batch_transfer_both_failed_test() {
         .to(MULTI_TRANSFER_ADDRESS)
         .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
         .get_first_batch_any_status()
-        .returns(ReturnsRawResult)
+        .returns(ReturnsResult)
         .run();
 
-    assert!(first_batch.len() == 0);
+    assert!(first_batch.is_none());
 
     state
         .world
@@ -537,8 +537,8 @@ fn batch_transfer_both_failed_test() {
         .to(MULTI_TRANSFER_ADDRESS)
         .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
         .get_first_batch_any_status()
-        .returns(ReturnsRawResult)
+        .returns(ReturnsResult)
         .run();
 
-    assert!(first_batch.len() == 0);
+    assert!(first_batch.is_none());
 }

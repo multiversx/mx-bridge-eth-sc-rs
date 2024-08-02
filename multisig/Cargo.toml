@@ -32,6 +32,9 @@ path = "../esdt-safe"
 [dependencies.multi-transfer-esdt]
 path = "../multi-transfer-esdt"
 
+[dependencies.bridged-tokens-wrapper]
+path = "../bridged-tokens-wrapper"
+
 [dependencies.bridge-proxy]
 path = "../bridge-proxy"
 

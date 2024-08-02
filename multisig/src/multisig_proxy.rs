@@ -167,7 +167,7 @@ where
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce 
     pub fn propose_multi_transfer_esdt_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
     >(
         self,
         eth_batch_id: Arg0,
