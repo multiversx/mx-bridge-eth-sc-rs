@@ -17,6 +17,7 @@ use multiversx_sc::{
         Empty,
     },
     contract_base::ManagedSerializer,
+    hex_literal::hex,
     storage::mappers::SingleValue,
     types::{
         Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
@@ -420,9 +421,11 @@ fn ethereum_to_multiversx_call_data_empty_test() {
 }
 
 #[test]
-fn ethereum_to_multiversx_relayer_call_data_test() {
+fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(5_000u64);
+
+    state.world.start_trace();
 
     state.multisig_deploy();
     state.safe_deploy(Address::zero());
@@ -437,15 +440,63 @@ fn ethereum_to_multiversx_relayer_call_data_test() {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
-        to: ManagedAddress::from(addr),
+        to: ManagedAddress::from(addr.clone()),
         token_id: TokenIdentifier::from("ETHUSDC-afa689"),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
         call_data: ManagedOption::none(),
     };
+    let eth_tx2 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+        },
+        to: ManagedAddress::from(addr.clone()),
+        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
+        amount: token_amount.clone(),
+        tx_nonce: 2u64,
+        call_data: ManagedOption::none(),
+    };
 
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from(b"fund"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::none(),
+    };
+    let call_data = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx3 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+        },
+        to: ManagedAddress::from(addr.clone()),
+        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
+        amount: token_amount.clone(),
+        tx_nonce: 3u64,
+        call_data: ManagedOption::some(call_data.clone()),
+    };
+    let args = ManagedVec::from_single_item(ManagedBuffer::from(b"5"));
+    let call_data2: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from(b"fund"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+    let call_data2 = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data2);
+
+    let eth_tx4 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+        },
+        to: ManagedAddress::from(addr),
+        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
+        amount: token_amount.clone(),
+        tx_nonce: 4u64,
+        call_data: ManagedOption::some(call_data2),
+    };
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
     transfers.push(eth_tx);
+    transfers.push(eth_tx2);
+    transfers.push(eth_tx3);
+    transfers.push(eth_tx4);
 
     state
         .world
@@ -474,6 +525,10 @@ fn ethereum_to_multiversx_relayer_call_data_test() {
         .perform_action_endpoint(1usize)
         .returns(ExpectError(4, "Invalid token or amount"))
         .run();
+
+    state.world.write_scenario_trace(
+        "scenarios/ethereum_to_multiversx_relayer_call_data_several_tx_test.scen.json",
+    );
 }
 
 #[test]
@@ -560,6 +615,93 @@ fn ethereum_to_multiversx_relayer_query_test() {
     state
         .world
         .write_scenario_trace("scenarios/ethereum_to_multiversx_relayer_query_test.scen.json");
+}
+
+#[test]
+fn ethereum_to_multiversx_relayer_query2_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(5_000u64);
+    state.world.start_trace();
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let addr =
+        Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
+
+    const ADDR: [u8; 32] = hex!("691dee92137cddbe76ec34eeacbc3b7d91264148da5a69205133c395aa7662cf");
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+        },
+        to: ManagedAddress::from(ADDR),
+        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers.clone())
+        .run();
+
+    let was_transfer = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .was_transfer_action_proposed(1u64, transfers.clone())
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(was_transfer);
+
+    let get_action_id = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .get_action_id_for_transfer_batch(1u64, transfers)
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(get_action_id == 1usize);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER2_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .returns(ExpectError(4, "Invalid token or amount"))
+        .run();
+
+    state
+        .world
+        .write_scenario_trace("scenarios/ethereum_to_multiversx_relayer_query2_test.scen.json");
 }
 
 #[test]
