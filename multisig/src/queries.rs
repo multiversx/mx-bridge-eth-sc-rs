@@ -73,7 +73,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn was_transfer_action_proposed(
         &self,
         eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
 
@@ -87,10 +87,9 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn get_action_id_for_transfer_batch(
         &self,
         eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: ManagedVec<EthTransaction<Self::Api>>,
     ) -> usize {
-        let transfers_as_struct = self.transfers_multi_value_to_eth_tx_vec(transfers);
-        let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
+        let batch_hash = self.hash_eth_tx_batch(&transfers);
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
             .get(&batch_hash)
