@@ -477,6 +477,87 @@ fn ethereum_to_multiversx_relayer_call_data_test() {
 }
 
 #[test]
+fn ethereum_to_multiversx_relayer_query_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers.clone())
+        .run();
+
+    let was_transfer = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .was_transfer_action_proposed(1u64, transfers.clone())
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(was_transfer);
+
+    let get_action_id = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .get_action_id_for_transfer_batch(1u64, transfers)
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(get_action_id == 1usize);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER2_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .run();
+
+    state
+        .world
+        .check_account(USER1_ADDRESS)
+        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone());
+}
+
+#[test]
 fn ethereum_to_multiversx_tx_batch_ok_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
