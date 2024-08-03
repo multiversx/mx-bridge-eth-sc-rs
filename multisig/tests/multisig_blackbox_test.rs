@@ -1,5 +1,7 @@
 #![allow(unused)]
 
+use std::ops::Add;
+
 use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _, ProxyTrait as _};
 use esdt_safe::{EsdtSafe, ProxyTrait as _};
 use multi_transfer_esdt::{bridged_tokens_wrapper_proxy, multi_transfer_proxy, ProxyTrait as _};
@@ -415,6 +417,63 @@ fn ethereum_to_multiversx_call_data_empty_test() {
         .world
         .check_account(USER1_ADDRESS)
         .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone());
+}
+
+#[test]
+fn ethereum_to_multiversx_relayer_call_data_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(5_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let addr =
+        Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+        },
+        to: ManagedAddress::from(addr),
+        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER2_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .returns(ExpectError(4, "Invalid token or amount"))
+        .run();
 }
 
 #[test]

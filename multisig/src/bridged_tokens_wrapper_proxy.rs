@@ -203,6 +203,34 @@ where
             .original_result()
     }
 
+    pub fn unwrap_token_create_transaction<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<eth_address::EthAddress<Env::Api>>,
+    >(
+        self,
+        requested_token: Arg0,
+        to: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("unwrapTokenCreateTransaction")
+            .argument(&requested_token)
+            .argument(&to)
+            .original_result()
+    }
+
+    pub fn set_esdt_safe_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_new_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setEsdtSafeContractAddress")
+            .argument(&opt_new_address)
+            .original_result()
+    }
+
     pub fn universal_bridged_token_ids(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>> {
@@ -248,6 +276,15 @@ where
             .payment(NotPayable)
             .raw_call("getchainSpecificTokenIds")
             .argument(&universal_token_id)
+            .original_result()
+    }
+
+    pub fn esdt_safe_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeContractAddress")
             .original_result()
     }
 
