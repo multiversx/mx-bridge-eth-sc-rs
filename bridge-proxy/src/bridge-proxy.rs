@@ -3,6 +3,7 @@ use multiversx_sc::{contract_base::ManagedSerializer, imports::*};
 
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper;
+pub mod bridged_tokens_wrapper_proxy;
 pub mod config;
 
 use transaction::{CallData, EthTransaction};
@@ -45,11 +46,18 @@ pub trait BridgeProxyContract:
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let mb_aux = ManagedBufferReadToEnd::from(tx.call_data);
-        let managed_serializer = ManagedSerializer::new();
-        let call_data: CallData<Self::Api> =
-            managed_serializer.top_decode_from_managed_buffer(&mb_aux.into_managed_buffer());
         let payment = self.payments(tx_id).get();
+
+        let call_data: CallData<Self::Api> = if tx.call_data.is_some() {
+            let unwraped_call_data = unsafe { tx.call_data.unwrap_no_check() };
+            let mb_aux = ManagedBufferReadToEnd::from(unwraped_call_data);
+            let managed_serializer = ManagedSerializer::new();
+            let call_data: CallData<Self::Api> =
+                managed_serializer.top_decode_from_managed_buffer(&mb_aux.into_managed_buffer());
+            call_data
+        } else {
+            CallData::default()
+        };
 
         let mut refund = false;
 

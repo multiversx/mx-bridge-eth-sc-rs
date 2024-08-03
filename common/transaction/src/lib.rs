@@ -33,6 +33,16 @@ pub struct CallData<M: ManagedTypeApi> {
     pub args: ManagedOption<M, ManagedVec<M, ManagedBuffer<M>>>,
 }
 
+impl<M: ManagedTypeApi> Default for CallData<M> {
+    fn default() -> Self {
+        CallData {
+            endpoint: ManagedBuffer::new(),
+            gas_limit: 0u64,
+            args: ManagedOption::none(),
+        }
+    }
+}
+
 #[type_abi]
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
@@ -41,7 +51,7 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
     pub tx_nonce: TxNonce,
-    pub call_data: ManagedBuffer<M>,
+    pub call_data: ManagedOption<M, ManagedBuffer<M>>,
 }
 
 #[type_abi]

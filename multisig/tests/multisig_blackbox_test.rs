@@ -357,6 +357,66 @@ fn config_test() {
     state.bridged_tokens_wrapper_deploy();
     state.config_multisig();
 }
+
+#[test]
+fn ethereum_to_multiversx_call_data_empty_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER2_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .run();
+
+    state
+        .world
+        .check_account(USER1_ADDRESS)
+        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone());
+}
+
 #[test]
 fn ethereum_to_multiversx_tx_batch_ok_test() {
     let mut state = MultiTransferTestState::new();
@@ -389,7 +449,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
         token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        call_data: call_data.clone(),
+        call_data: ManagedOption::some(call_data.clone()),
     };
 
     let eth_tx2 = EthTransaction {
@@ -400,7 +460,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
         token_id: TokenIdentifier::from(ETH_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
-        call_data,
+        call_data: ManagedOption::some(call_data),
     };
 
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
@@ -473,7 +533,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
         amount: over_the_limit_token_amount.clone(),
         tx_nonce: 1u64,
-        call_data: call_data.clone(),
+        call_data: ManagedOption::some(call_data.clone()),
     };
 
     let eth_tx2 = EthTransaction {
@@ -484,7 +544,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         token_id: TokenIdentifier::from(ETH_TOKEN_ID),
         amount: over_the_limit_token_amount.clone(),
         tx_nonce: 2u64,
-        call_data,
+        call_data: ManagedOption::some(call_data),
     };
 
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();

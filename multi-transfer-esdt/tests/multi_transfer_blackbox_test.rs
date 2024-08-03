@@ -294,7 +294,7 @@ fn basic_transfer_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        call_data,
+        call_data: ManagedOption::some(call_data),
     };
 
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
@@ -346,7 +346,7 @@ fn batch_transfer_both_executed_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        call_data: call_data.clone(),
+        call_data: ManagedOption::some(call_data.clone()),
     };
 
     let eth_tx2 = EthTransaction {
@@ -357,7 +357,7 @@ fn batch_transfer_both_executed_test() {
         token_id: TokenIdentifier::from(WRAPPED_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
-        call_data,
+        call_data: ManagedOption::some(call_data),
     };
 
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
@@ -415,7 +415,7 @@ fn batch_two_transfers_same_token_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        call_data: call_data.clone(),
+        call_data: ManagedOption::some(call_data.clone()),
     };
 
     let eth_tx2 = EthTransaction {
@@ -426,7 +426,7 @@ fn batch_two_transfers_same_token_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
-        call_data,
+        call_data: ManagedOption::some(call_data),
     };
 
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
@@ -484,7 +484,7 @@ fn batch_transfer_both_failed_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
-        call_data: call_data.clone(),
+        call_data: ManagedOption::some(call_data.clone()),
     };
 
     let eth_tx2 = EthTransaction {
@@ -495,7 +495,7 @@ fn batch_transfer_both_failed_test() {
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
-        call_data,
+        call_data: ManagedOption::some(call_data),
     };
 
     let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();

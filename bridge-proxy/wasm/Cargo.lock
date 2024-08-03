@@ -24,6 +24,7 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 name = "bridge-proxy"
 version = "0.0.0"
 dependencies = [
+ "bridged-tokens-wrapper",
  "crowdfunding-esdt",
  "esdt-safe",
  "eth-address",
@@ -40,6 +41,18 @@ version = "0.0.0"
 dependencies = [
  "bridge-proxy",
  "multiversx-sc-wasm-adapter",
+]
+
+[[package]]
+name = "bridged-tokens-wrapper"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "token-module",
+ "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]

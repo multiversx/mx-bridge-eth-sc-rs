@@ -73,6 +73,113 @@
             "step": "scCall",
             "id": "",
             "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged-tokens-wrapper",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridge-proxy",
+                "function": "setBridgedTokensWrapper",
+                "arguments": [
+                    "0x00000000000000000500627269646765642d746f6b656e732d77726170706572"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged-tokens-wrapper",
+                "function": "whitelistToken",
+                "arguments": [
+                    "0x4252494447452d313233343536",
+                    "0x12",
+                    "0x574252494447452d313233343536"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged-tokens-wrapper",
+                "function": "addWrappedToken",
+                "arguments": [
+                    "0x574252494447452d313233343536",
+                    "0x12"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged-tokens-wrapper",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x4252494447452d313233343536",
+                        "value": "5000"
+                    }
+                ],
+                "function": "depositLiquidity",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged-tokens-wrapper",
+                "function": "setEsdtSafeContractAddress",
+                "arguments": [
+                    "0x00000000000000000500657364742d736166655f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
                 "from": "sc:multi-transfer",
                 "to": "sc:bridge-proxy",
                 "esdtValue": [
@@ -83,7 +190,7 @@
                 ],
                 "function": "deposit",
                 "arguments": [
-                    "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f40000000000000001000000150000000466756e6400000000009896800100000000"
+                    "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000009896800100000000"
                 ],
                 "gasLimit": "5,000,000"
             },
@@ -104,7 +211,7 @@
             },
             "expect": {
                 "out": [
-                    "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f40000000000000001000000150000000466756e6400000000009896800100000000"
+                    "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000009896800100000000"
                 ],
                 "status": "0"
             }
