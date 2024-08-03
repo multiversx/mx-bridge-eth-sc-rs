@@ -480,6 +480,7 @@ fn ethereum_to_multiversx_relayer_call_data_test() {
 fn ethereum_to_multiversx_relayer_query_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
+    state.world.start_trace();
 
     state.multisig_deploy();
     state.safe_deploy(Address::zero());
@@ -555,6 +556,10 @@ fn ethereum_to_multiversx_relayer_query_test() {
         .world
         .check_account(USER1_ADDRESS)
         .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone());
+
+    state
+        .world
+        .write_scenario_trace("scenarios/ethereum_to_multiversx_relayer_query_test.scen.json");
 }
 
 #[test]
