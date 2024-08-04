@@ -9,6 +9,7 @@ pub mod config;
 use transaction::{CallData, EthTransaction};
 
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 
 // const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20000000; // 20 million
 
@@ -48,6 +49,8 @@ pub trait BridgeProxyContract:
         let tx = self.get_pending_transaction_by_id(tx_id);
         let payment = self.payments(tx_id).get();
 
+        require!(payment.amount != 0, "No amount bridged");
+
         let call_data: CallData<Self::Api> = if tx.call_data.is_some() {
             let unwraped_call_data = unsafe { tx.call_data.unwrap_no_check() };
             let mb_aux = ManagedBufferReadToEnd::from(unwraped_call_data);
@@ -72,27 +75,23 @@ pub trait BridgeProxyContract:
             self.refund_transaction(tx_id);
         }
 
+        let tx_call = self
+            .tx()
+            .to(&tx.to)
+            .raw_call(call_data.endpoint)
+            .gas(call_data.gas_limit)
+            .callback(self.callbacks().execution_callback(tx_id))
+            .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
+            .with_esdt_transfer(payment);
+
         let tx_call = if call_data.args.is_some() {
             let args = unsafe { call_data.args.unwrap_no_check() };
-            self.tx()
-                .to(&tx.to)
-                .raw_call(call_data.endpoint)
-                .arguments_raw(args.into())
-                .gas(call_data.gas_limit)
-                .callback(self.callbacks().execution_callback(tx_id))
+            tx_call.arguments_raw(args.into())
         } else {
-            self.tx()
-                .to(&tx.to)
-                .raw_call(call_data.endpoint)
-                .gas(call_data.gas_limit)
-                .callback(self.callbacks().execution_callback(tx_id))
+            tx_call
         };
 
-        if payment.amount.clone() == 0 {
-            tx_call.register_promise();
-        } else {
-            tx_call.with_esdt_transfer(payment).register_promise();
-        }
+        tx_call.register_promise();
     }
 
     #[promises_callback]
