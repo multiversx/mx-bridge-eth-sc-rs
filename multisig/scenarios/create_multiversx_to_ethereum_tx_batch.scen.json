@@ -1,5 +1,5 @@
 {
-    "name": "batch tx from Elrond to Ethereum",
+    "name": "batch tx from MultiversX to Ethereum",
     "steps": [
         {
             "step": "externalSteps",

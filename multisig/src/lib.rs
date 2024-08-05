@@ -225,7 +225,7 @@ pub trait Multisig:
 
     // Multi-transfer ESDT SC calls
 
-    /// Proposes a batch of Ethereum -> Elrond transfers.
+    /// Proposes a batch of Ethereum -> MultiversX transfers.
     /// Transactions have to be separated by fields, in the following order:
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce
     #[endpoint(proposeMultiTransferEsdtBatch)]
@@ -261,11 +261,11 @@ pub trait Multisig:
         action_id
     }
 
-    /// Failed Ethereum -> Elrond transactions are saved in the MultiTransfer SC
+    /// Failed Ethereum -> MultiversX transactions are saved in the MultiTransfer SC
     /// as "refund transactions", and stored in batches, using the same mechanism as EsdtSafe.
     ///
     /// This function moves the first refund batch into the EsdtSafe SC,
-    /// converting the transactions into Elrond -> Ethereum transactions
+    /// converting the transactions into MultiversX -> Ethereum transactions
     /// and adding them into EsdtSafe batches
     #[only_owner]
     #[endpoint(moveRefundBatchToSafeFromChildContract)]

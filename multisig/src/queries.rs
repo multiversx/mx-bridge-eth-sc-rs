@@ -42,7 +42,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .sync_call()
     }
 
-    /// Returns a batch of failed Ethereum -> Elrond transactions.
+    /// Returns a batch of failed Ethereum -> MultiversX transactions.
     /// The result format is the same as getCurrentTxBatch
     #[view(getCurrentRefundBatch)]
     fn get_current_refund_batch(&self) -> OptionalValue<TxBatchSplitInFields<Self::Api>> {
@@ -66,7 +66,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
         }
     }
 
-    /// Used for Ethereum -> Elrond batches.
+    /// Used for Ethereum -> MultiversX batches.
     /// If the mapping was made, it means that the transfer action was proposed in the past.
     /// To check if it was executed as well, use the wasActionExecuted view
     #[view(wasTransferActionProposed)]

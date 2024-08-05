@@ -162,7 +162,7 @@ where
             .original_result()
     }
 
-    /// Proposes a batch of Ethereum -> Elrond transfers. 
+    /// Proposes a batch of Ethereum -> MultiversX transfers. 
     /// Transactions have to be separated by fields, in the following order: 
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce 
     pub fn propose_multi_transfer_esdt_batch<
@@ -181,11 +181,11 @@ where
             .original_result()
     }
 
-    /// Failed Ethereum -> Elrond transactions are saved in the MultiTransfer SC 
+    /// Failed Ethereum -> MultiversX transactions are saved in the MultiTransfer SC 
     /// as "refund transactions", and stored in batches, using the same mechanism as EsdtSafe. 
     ///  
     /// This function moves the first refund batch into the EsdtSafe SC, 
-    /// converting the transactions into Elrond -> Ethereum transactions 
+    /// converting the transactions into MultiversX -> Ethereum transactions 
     /// and adding them into EsdtSafe batches 
     pub fn move_refund_batch_to_safe_from_child_contract(
         self,
@@ -397,7 +397,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("changeElrondToEthGasLimit")
+            .raw_call("changeMultiversXToEthGasLimit")
             .argument(&new_gas_limit)
             .original_result()
     }
@@ -525,7 +525,7 @@ where
             .original_result()
     }
 
-    /// Sets the maximum bridged amount for the token for the Elrond -> Ethereum direction. 
+    /// Sets the maximum bridged amount for the token for the MultiversX -> Ethereum direction. 
     /// Any attempt to transfer over this amount will be rejected. 
     pub fn esdt_safe_set_max_bridged_amount_for_token<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
@@ -543,7 +543,7 @@ where
             .original_result()
     }
 
-    /// Same as the function above, but for Ethereum -> Elrond transactions. 
+    /// Same as the function above, but for Ethereum -> MultiversX transactions. 
     pub fn multi_transfer_esdt_set_max_bridged_amount_for_token<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,
@@ -560,7 +560,7 @@ where
             .original_result()
     }
 
-    /// Any failed Ethereum -> Elrond transactions are added into so-called "refund batches\ 
+    /// Any failed Ethereum -> MultiversX transactions are added into so-called "refund batches\ 
     /// This configures the size of a batch. 
     pub fn multi_transfer_esdt_set_max_refund_tx_batch_size<
         Arg0: ProxyArg<usize>,
@@ -693,7 +693,7 @@ where
             .original_result()
     }
 
-    /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers 
+    /// Mapping between ERC20 Ethereum address and MultiversX ESDT Token Identifiers 
     pub fn erc20_address_for_token_id<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -772,7 +772,7 @@ where
             .original_result()
     }
 
-    /// Returns a batch of failed Ethereum -> Elrond transactions. 
+    /// Returns a batch of failed Ethereum -> MultiversX transactions. 
     /// The result format is the same as getCurrentTxBatch 
     pub fn get_current_refund_batch(
         self,
@@ -798,7 +798,7 @@ where
             .original_result()
     }
 
-    /// Used for Ethereum -> Elrond batches. 
+    /// Used for Ethereum -> MultiversX batches. 
     /// If the mapping was made, it means that the transfer action was proposed in the past. 
     /// To check if it was executed as well, use the wasActionExecuted view 
     pub fn was_transfer_action_proposed<

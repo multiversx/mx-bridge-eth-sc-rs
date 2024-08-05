@@ -138,10 +138,10 @@ pub trait EsdtSafe:
         self.clear_first_batch(&mut tx_batch);
     }
 
-    /// Converts failed Ethereum -> Elrond transactions to Elrond -> Ethereum transaction.
+    /// Converts failed Ethereum -> MultiversX transactions to MultiversX -> Ethereum transaction.
     /// This is done every now and then to refund the tokens.
     ///
-    /// As with normal Elrond -> Ethereum transactions, a part of the tokens will be
+    /// As with normal MultiversX -> Ethereum transactions, a part of the tokens will be
     /// subtracted to pay for the fees
     #[payable("*")]
     #[endpoint(addRefundBatch)]
@@ -195,7 +195,7 @@ pub trait EsdtSafe:
                 .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
 
-            // "from" and "to" are inverted, since this was initially an Ethereum -> Elrond tx
+            // "from" and "to" are inverted, since this was initially an Ethereum -> MultiversX tx
             let new_tx = Transaction {
                 block_nonce,
                 nonce: tx_nonce,
@@ -220,7 +220,7 @@ pub trait EsdtSafe:
 
     // endpoints
 
-    /// Create an Elrond -> Ethereum transaction. Only fungible tokens are accepted.
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
     ///
     /// Every transfer will have a part of the tokens subtracted as fees.
     /// The fee amount depends on the global eth_tx_gas_limit
@@ -291,7 +291,7 @@ pub trait EsdtSafe:
         );
     }
 
-    /// Claim funds for failed Elrond -> Ethereum transactions.
+    /// Claim funds for failed MultiversX -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck.
     /// For example, if the receiver is a SC, a frozen account, etc.
     #[endpoint(claimRefund)]
