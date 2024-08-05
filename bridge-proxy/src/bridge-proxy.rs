@@ -11,8 +11,6 @@ use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 
-// const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20000000; // 20 million
-
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
     config::ConfigModule + multiversx_sc_modules::pause::PauseModule

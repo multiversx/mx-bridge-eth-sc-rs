@@ -240,7 +240,6 @@ pub trait Multisig:
             "Can only propose for next batch ID"
         );
 
-        // let transfers_as_eth_tx = self.transfers_multi_value_to_eth_tx_vec(transfers);
         self.require_valid_eth_tx_ids(&transfers);
 
         let batch_hash = self.hash_eth_tx_batch(&transfers);

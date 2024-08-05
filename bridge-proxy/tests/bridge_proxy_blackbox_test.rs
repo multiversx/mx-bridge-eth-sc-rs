@@ -39,9 +39,6 @@ use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
 use eth_address::*;
 use transaction::{CallData, EthTransaction};
 
-// const BRIDGE_TOKEN_ID: &[u8] = b"BRIDGE-123456";
-// const WBRIDGE_TOKEN_ID: &[u8] = b"WBRIDGE-123456";
-
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
 const WBRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WBRIDGE-123456");
 
