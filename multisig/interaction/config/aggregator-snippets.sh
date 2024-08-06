@@ -17,15 +17,34 @@ deployAggregator() {
     update-config AGGREGATOR ${ADDRESS}
 }
 
+stake() {
+    CHECK_VARIABLES AGGREGATOR
+
+    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+    --gas-limit=35000000 --function="stake" --value=${MIN_STAKE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 submitAggregatorBatch() {
     CHECK_VARIABLES AGGREGATOR CHAIN_SPECIFIC_TOKEN FEE_AMOUNT NR_DECIMALS_CHAIN_SPECIFIC
 
     FEE=$(echo "scale=0; $FEE_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
 
+    CURRENT_TIME=$(date +%s)
     mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
     --gas-limit=15000000 --function="submitBatch" \
-    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${FEE} \
+    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
+setPairDecimals() {
+    CHECK_VARIABLES AGGREGATOR
+
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+        --gas-limit=15000000 --function="setPairDecimals" \
+        --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} 0 \
+        --send --proxy=${PROXY} --chain=${CHAIN_ID} || return  
 }
 
 pauseAggregator() {
