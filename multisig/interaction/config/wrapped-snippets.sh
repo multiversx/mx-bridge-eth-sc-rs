@@ -20,6 +20,7 @@ deployBridgedTokensWrapper() {
 
     echo ""
     echo "Bridged tokens wrapper SC: ${ADDRESS}"
+    update-config BRIDGED_TOKENS_WRAPPER ${ADDRESS}
 }
 
 setLocalRolesBridgedTokensWrapper() {
@@ -126,4 +127,13 @@ wrapper-upgrade() {
     mxpy --verbose contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=50000000 --send \
     --outfile="upgrade-bridged-tokens-wrapper.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return 
+}
+
+setEsdtSafeOnWrapper() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGED_TOKENS_WRAPPER
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setEsdtSafeContractAddress" \
+    --arguments ${SAFE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

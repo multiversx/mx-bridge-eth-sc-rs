@@ -1,8 +1,9 @@
 deployAggregator() {
     CHECK_VARIABLES AGGREGATOR_WASM CHAIN_SPECIFIC_TOKEN ALICE_ADDRESS
 
+    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     mxpy --verbose contract deploy --bytecode=${AGGREGATOR_WASM} --recall-nonce --pem=${ALICE} \
-    --gas-limit=100000000 --arguments 1 0 ${ALICE_ADDRESS} \
+    --gas-limit=100000000 --arguments str:EGLD ${MIN_STAKE} 1 1 1 ${ALICE_ADDRESS} \
     --send --outfile=deploy-price-agregator-testnet.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-price-agregator-testnet.interaction.json" --expression="data['emittedTransactionHash']")
@@ -13,6 +14,7 @@ deployAggregator() {
 
     echo ""
     echo "Price agregator: ${ADDRESS}"
+    update-config AGGREGATOR ${ADDRESS}
 }
 
 submitAggregatorBatch() {

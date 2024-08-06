@@ -9,23 +9,12 @@ source $SCRIPTPATH/config/helper.cfg
 source $SCRIPTPATH/config/menu_functions.cfg
 
 case "$1" in
-'deploy-aggregator')
-  confirmation deploy-aggregator
-  ;;
-
-'deploy-wrapper')
-  confirmation deploy-wrapper    
+'deploy-bridge-contracts')
+  confirmation deploy-bridge-contracts
   ;;
 
 'upgrade-wrapper')
   confirmation upgrade-wrapper    
-  ;;
-
-'deploy-bridge-contracts')
-  echo -e 
-  echo "PREREQUIREMENTS: AGGREGATOR & BRIDGED_TOKENS_WRAPPER deployed"
-  echo -e 
-  confirmation deploy-bridge-contracts
   ;;
 
 'add-relayer')
@@ -102,7 +91,7 @@ case "$1" in
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
-  echo "  { \"deploy-aggregator\", \"deploy-wrapper\", \"upgrade-wrapper\", \"deploy-bridge-contracts\", \"add-relayer\", \"remove-relayer\", \"whitelist-token\", "
+  echo "  { \"whitelist-token\", \"deploy-bridge-contracts\", \"upgrade-wrapper\", \"add-relayer\", \"remove-relayer\", "
   echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", "
   echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\" }"
   ;;

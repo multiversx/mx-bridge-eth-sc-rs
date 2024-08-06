@@ -16,3 +16,12 @@ deployBridgeProxy() {
     echo "Proxy contract address: ${ADDRESS}"
     update-config BRIDGE_PROXY ${ADDRESS}
 }
+
+setBridgedTokensWrapper() {
+    CHECK_VARIABLES BRIDGE_PROXY BRIDGED_TOKENS_WRAPPER
+
+    mxpy --verbose contract call ${BRIDGE_PROXY} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setBridgedTokensWrapper" \
+    --arguments ${BRIDGED_TOKENS_WRAPPER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
