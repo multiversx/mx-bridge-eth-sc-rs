@@ -27,10 +27,10 @@ path = "../esdt-safe"
 path = "../bridged-tokens-wrapper"
 
 [dependencies.multiversx-sc]
-version = "=0.52.2"
+version = "=0.52.3"
 
 [dependencies.multiversx-sc-modules]
-version = "0.52.2"
+version = "0.52.3"
 
 [dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-contracts-rs"
@@ -40,4 +40,4 @@ rev = "d91bbff"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.2"
+version = "=0.52.3"
