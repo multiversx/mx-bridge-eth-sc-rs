@@ -12,6 +12,7 @@ mod util;
 
 pub mod esdt_safe_proxy;
 pub mod multi_transfer_esdt_proxy;
+pub mod bridge_proxy_contract_proxy;
 pub mod multisig_proxy;
 
 use action::Action;
@@ -42,6 +43,7 @@ pub trait Multisig:
         &self,
         esdt_safe_sc_address: ManagedAddress,
         multi_transfer_sc_address: ManagedAddress,
+        proxy_sc_address: ManagedAddress,
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
@@ -83,11 +85,44 @@ pub trait Multisig:
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_sc_address);
 
+        require!(
+            self.blockchain().is_smart_contract(&proxy_sc_address),
+            "Proxy address is not a Smart Contract address"
+        );
+        self.proxy_address().set(&proxy_sc_address);
+
         self.set_paused(true);
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(
+        &self,
+        esdt_safe_sc_address: ManagedAddress,
+        multi_transfer_sc_address: ManagedAddress,
+        proxy_sc_address: ManagedAddress,
+    ) {
+        require!(
+            self.blockchain().is_smart_contract(&esdt_safe_sc_address),
+            "Esdt Safe address is not a Smart Contract address"
+        );
+        self.esdt_safe_address().set(&esdt_safe_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&multi_transfer_sc_address),
+            "Multi Transfer address is not a Smart Contract address"
+        );
+        self.multi_transfer_esdt_address()
+            .set(&multi_transfer_sc_address);
+
+        require!(
+            self.blockchain().is_smart_contract(&proxy_sc_address),
+            "Proxy address is not a Smart Contract address"
+        );
+        self.proxy_address().set(&proxy_sc_address);
+
+        self.set_paused(true);
+    }
 
     /// Distributes the accumulated fees to the given addresses.
     /// Expected arguments are pairs of (address, percentage),

@@ -98,4 +98,8 @@ pub trait StorageModule {
     #[view(getMultiTransferEsdtAddress)]
     #[storage_mapper("multiTransferEsdtAddress")]
     fn multi_transfer_esdt_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getProxyAddress)]
+    #[storage_mapper("proxyAddress")]
+    fn proxy_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

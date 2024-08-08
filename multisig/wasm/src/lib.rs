@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           65
+// Endpoints:                           68
 // Async Callback (empty):               1
-// Total number of exported functions:  68
+// Total number of exported functions:  71
 
 #![no_std]
 
@@ -38,6 +38,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         clearMapping => clear_mapping
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
+        pauseProxy => pause_proxy
+        unpauseProxy => unpause_proxy
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
         changeMultiversXToEthGasLimit => change_multiversx_to_eth_gas_limit
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
@@ -65,6 +67,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokenIdForErc20Address => token_id_for_erc20_address
         getEsdtSafeAddress => esdt_safe_address
         getMultiTransferEsdtAddress => multi_transfer_esdt_address
+        getProxyAddress => proxy_address
         getCurrentTxBatch => get_current_tx_batch
         getBatch => get_batch
         getCurrentRefundBatch => get_current_refund_batch

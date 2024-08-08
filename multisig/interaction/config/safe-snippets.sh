@@ -1,9 +1,9 @@
 deploySafe() {
-    CHECK_VARIABLES SAFE_WASM AGGREGATOR
+    CHECK_VARIABLES SAFE_WASM MULTI_TRANSFER AGGREGATOR
     
     mxpy --verbose contract deploy --bytecode=${SAFE_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
-    --arguments ${AGGREGATOR} 1 \
+    --arguments ${MULTI_TRANSFER} ${AGGREGATOR} 1 \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emittedTransactionHash']")

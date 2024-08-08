@@ -2,7 +2,7 @@ use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
 
-use crate::{esdt_safe_proxy, multi_transfer_esdt_proxy};
+use crate::{esdt_safe_proxy, multi_transfer_esdt_proxy, bridge_proxy_contract_proxy};
 
 #[multiversx_sc::module]
 pub trait SetupModule:
@@ -158,6 +158,34 @@ pub trait SetupModule:
             .unpause_endpoint()
             .sync_call();
         self.unpause_esdt_safe_event();
+    }
+
+    #[only_owner]
+    #[endpoint(pauseProxy)]
+    fn pause_proxy(&self) {
+        let proxy_addr = self.proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_esdt_safe_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseProxy)]
+    fn unpause_proxy(&self) {
+        let proxy_addr = self.proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .unpause_endpoint()
+            .sync_call();
+
+        self.pause_esdt_safe_event();
     }
 
     #[only_owner]
