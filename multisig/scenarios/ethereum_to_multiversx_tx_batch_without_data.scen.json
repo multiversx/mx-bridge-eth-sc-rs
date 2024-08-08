@@ -1,0 +1,77 @@
+{
+    "name": "create ethereum to MultiversX tx batch",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "setup.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "propose-transfer-ok",
+            "tx": {
+                "from": "address:relayer1",
+                "to": "sc:multisig",
+                "value": "0",
+                "function": "proposeMultiTransferEsdtBatch",
+                "arguments": [
+                    "1",
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:WEGLD-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:1"
+                    },
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:ETH-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:2"
+                    }
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "1"
+                ],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-current-tx-batch",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "wasTransferActionProposed",
+                "arguments": [
+                    "1",
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:WEGLD-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:1"
+                    },
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:ETH-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:2"
+                    }
+                ]
+            },
+            "expect": {
+                "out": [
+                    "1"
+                ]
+            }
+        }
+    ]
+}

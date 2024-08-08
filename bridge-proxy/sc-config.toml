@@ -1,0 +1,4 @@
+[settings]
+
+[[proxy]]
+path = "../multi-transfer-esdt/src/bridge_proxy_contract_proxy.rs"

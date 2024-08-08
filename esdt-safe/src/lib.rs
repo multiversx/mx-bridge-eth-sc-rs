@@ -6,12 +6,15 @@ multiversx_sc::derive_imports!();
 
 use core::convert::TryFrom;
 
+use core::ops::Deref;
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
 use transaction::{transaction_status::TransactionStatus, Transaction};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
+
+pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
@@ -27,9 +30,17 @@ pub trait EsdtSafe:
     /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side.
     /// Will be used to compute the fees for the transfer
     #[init]
-    fn init(&self, fee_estimator_contract_address: ManagedAddress, eth_tx_gas_limit: BigUint) {
+    fn init(
+        &self,
+        fee_estimator_contract_address: ManagedAddress,
+        multi_transfer_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
+    ) {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
+        self.multi_transfer_contract_address()
+            .set(&multi_transfer_contract_address);
+
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -50,7 +61,35 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(
+        &self,
+        fee_estimator_contract_address: ManagedAddress,
+        multi_transfer_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
+    ) {
+        self.fee_estimator_contract_address()
+            .set(&fee_estimator_contract_address);
+        self.multi_transfer_contract_address()
+            .set(&multi_transfer_contract_address);
+
+        self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
+
+        self.max_tx_batch_size()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_SIZE);
+        self.max_tx_batch_block_duration()
+            .set_if_empty(DEFAULT_MAX_TX_BATCH_BLOCK_DURATION);
+
+        // batch ID 0 is considered invalid
+        self.first_batch_id().set_if_empty(1);
+        self.last_batch_id().set_if_empty(1);
+
+        // set ticker for "GWEI"
+        let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
+        self.token_ticker(&gwei_token_id)
+            .set(gwei_token_id.as_managed_buffer());
+
+        self.set_paused(true);
+    }
 
     /// Sets the statuses for the transactions, after they were executed on the Ethereum side.
     ///
@@ -83,14 +122,7 @@ pub trait EsdtSafe:
             }
 
             match tx_status {
-                TransactionStatus::Executed => {
-                    // local burn role might be removed while tx is executed
-                    // tokens will remain locked forever in that case
-                    // otherwise, the whole batch would fail
-                    if self.is_local_role_set(&tx.token_identifier, &EsdtLocalRole::Burn) {
-                        self.burn_esdt_token(&tx.token_identifier, &tx.amount);
-                    }
-                }
+                TransactionStatus::Executed => {}
                 TransactionStatus::Rejected => {
                     let addr = ManagedAddress::try_from(tx.from).unwrap();
                     self.mark_refund(&addr, &tx.token_identifier, &tx.amount);
@@ -106,21 +138,40 @@ pub trait EsdtSafe:
         self.clear_first_batch(&mut tx_batch);
     }
 
-    /// Converts failed Ethereum -> Elrond transactions to Elrond -> Ethereum transaction.
+    /// Converts failed Ethereum -> MultiversX transactions to MultiversX -> Ethereum transaction.
     /// This is done every now and then to refund the tokens.
     ///
-    /// As with normal Elrond -> Ethereum transactions, a part of the tokens will be
+    /// As with normal MultiversX -> Ethereum transactions, a part of the tokens will be
     /// subtracted to pay for the fees
-    #[only_owner]
+    #[payable("*")]
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
+        let caller = self.blockchain().get_caller();
+        let multi_transfer_address = self.multi_transfer_contract_address().get();
+        require!(caller == multi_transfer_address, "Invalid caller");
+
+        let refund_payments = self.call_value().all_esdt_transfers().deref().clone();
+        require!(
+            !refund_payments.is_empty(),
+            "Cannot refund with no payments"
+        );
+
         let block_nonce = self.blockchain().get_block_nonce();
         let mut cached_token_ids = ManagedVec::<Self::Api, TokenIdentifier>::new();
         let mut cached_prices = ManagedVec::<Self::Api, BigUint>::new();
         let mut new_transactions = ManagedVec::new();
         let mut original_tx_nonces = ManagedVec::<Self::Api, u64>::new();
 
-        for refund_tx in &refund_transactions {
+        for (refund_tx, refund_payment) in refund_transactions.iter().zip(refund_payments.iter()) {
+            require!(
+                refund_tx.token_identifier == refund_payment.token_identifier,
+                "Token identifiers do not match"
+            );
+            require!(
+                refund_tx.amount == refund_payment.amount,
+                "Amounts do not match"
+            );
+
             let required_fee = match cached_token_ids
                 .iter()
                 .position(|id| *id == refund_tx.token_identifier)
@@ -139,10 +190,12 @@ pub trait EsdtSafe:
                 continue;
             }
 
-            let actual_bridged_amount = refund_tx.amount - required_fee;
+            let actual_bridged_amount = refund_tx.amount - &required_fee;
+            self.total_fees_on_ethereum(&refund_tx.token_identifier)
+                .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
 
-            // "from" and "to" are inverted, since this was initially an Ethereum -> Elrond tx
+            // "from" and "to" are inverted, since this was initially an Ethereum -> MultiversX tx
             let new_tx = Transaction {
                 block_nonce,
                 nonce: tx_nonce,
@@ -167,7 +220,7 @@ pub trait EsdtSafe:
 
     // endpoints
 
-    /// Create an Elrond -> Ethereum transaction. Only fungible tokens are accepted.
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
     ///
     /// Every transfer will have a part of the tokens subtracted as fees.
     /// The fee amount depends on the global eth_tx_gas_limit
@@ -193,7 +246,7 @@ pub trait EsdtSafe:
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
-        let actual_bridged_amount = payment_amount - required_fee;
+        let actual_bridged_amount = payment_amount - required_fee.clone();
         let caller = self.blockchain().get_caller();
         let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
@@ -201,16 +254,44 @@ pub trait EsdtSafe:
             nonce: tx_nonce,
             from: caller.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
-            token_identifier: payment_token,
-            amount: actual_bridged_amount,
+            token_identifier: payment_token.clone(),
+            amount: actual_bridged_amount.clone(),
             is_refund_tx: false,
         };
 
-        let batch_id = self.add_to_batch(tx);
-        self.create_transaction_event(batch_id, tx_nonce);
+        let batch_id = self.add_to_batch(tx.clone());
+        if !self.mint_burn_token(&payment_token).get() {
+            self.total_balances(&payment_token).update(|total| {
+                *total += &actual_bridged_amount;
+            });
+        } else {
+            let burn_balances_mapper = self.burn_balances(&payment_token);
+            let mint_balances_mapper = self.mint_balances(&payment_token);
+            if !self.native_token(&payment_token).get() {
+                require!(
+                    mint_balances_mapper.get()
+                        >= &burn_balances_mapper.get() + &actual_bridged_amount,
+                    "Not enough minted tokens!"
+                );
+            }
+            let burn_executed = self.internal_burn(&payment_token, &actual_bridged_amount);
+            require!(burn_executed, "Cannot do the burn action!");
+            burn_balances_mapper.update(|burned| {
+                *burned += &actual_bridged_amount;
+            });
+        }
+        self.create_transaction_event(
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            tx.to,
+            tx.from,
+        );
     }
 
-    /// Claim funds for failed Elrond -> Ethereum transactions.
+    /// Claim funds for failed MultiversX -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck.
     /// For example, if the receiver is a SC, a frozen account, etc.
     #[endpoint(claimRefund)]
@@ -220,10 +301,80 @@ pub trait EsdtSafe:
         require!(refund_amount > 0, "Nothing to refund");
 
         self.refund_amount(&caller, &token_id).clear();
-        self.send()
-            .direct_esdt(&caller, &token_id, 0, &refund_amount);
+        self.total_refund_amount(&token_id)
+            .update(|total| *total -= &refund_amount);
+        self.rebalance_for_refund(&token_id, &refund_amount);
 
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&token_id, 0, &refund_amount)
+            .transfer();
+
+        self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
+    }
+
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupply)]
+    fn init_supply(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        require!(token_id == payment_token, "Invalid token ID");
+        require!(amount == payment_amount, "Invalid amount");
+
+        self.require_token_in_whitelist(&token_id);
+        if !self.mint_burn_token(&token_id).get() {
+            self.total_balances(&token_id).update(|total| {
+                *total += &amount;
+            });
+            return;
+        }
+
+        require!(
+            self.native_token(&token_id).get(),
+            "Cannot init for non native tokens"
+        );
+
+        let burn_executed = self.internal_burn(&token_id, &amount);
+        require!(burn_executed, "Cannot do the burn action!");
+        self.burn_balances(&token_id).update(|burned| {
+            *burned += &amount;
+        });
+    }
+
+    #[view(computeTotalAmmountsFromIndex)]
+    fn compute_total_amounts_from_index(
+        &self,
+        startIndex: u64,
+        endIndex: u64,
+    ) -> PaymentsVec<Self::Api> {
+        let mut all_payments = PaymentsVec::new();
+        for index in startIndex..endIndex {
+            let last_batch = self.pending_batches(index);
+            for tx in last_batch.iter() {
+                let new_payment = EsdtTokenPayment::new(tx.token_identifier, 0, tx.amount);
+                let len = all_payments.len();
+
+                let mut updated = false;
+                for i in 0..len {
+                    let mut current_payment = all_payments.get(i);
+                    if current_payment.token_identifier != new_payment.token_identifier {
+                        continue;
+                    }
+
+                    current_payment.amount += &new_payment.amount;
+                    let _ = all_payments.set(i, &current_payment);
+
+                    updated = true;
+                    break;
+                }
+                if !updated {
+                    all_payments.push(new_payment);
+                }
+            }
+        }
+
+        all_payments
     }
 
     /// Query function that lists all refund amounts for a user.
@@ -244,21 +395,61 @@ pub trait EsdtSafe:
         refund_amounts
     }
 
+    // views
+
+    #[view(getTotalRefundAmounts)]
+    fn getTotalRefundAmounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
+        let mut refund_amounts = MultiValueEncoded::new();
+        for token_id in self.token_whitelist().iter() {
+            let amount = self.total_refund_amount(&token_id).get();
+            if amount > 0u32 {
+                refund_amounts.push((token_id, amount).into());
+            }
+        }
+
+        refund_amounts
+    }
+
     // private
 
-    fn burn_esdt_token(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        self.send().esdt_local_burn(token_id, 0, amount);
+    fn rebalance_for_refund(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        let mintBurnToken = self.mint_burn_token(token_id).get();
+        if !mintBurnToken {
+            let total_balances_mapper = self.total_balances(token_id);
+            total_balances_mapper.update(|total| {
+                *total -= amount;
+            });
+        } else {
+            let mint_balances_mapper = self.mint_balances(token_id);
+            let mint_executed = self.internal_mint(token_id, amount);
+            require!(mint_executed, "Cannot do the mint action!");
+
+            mint_balances_mapper.update(|minted| {
+                *minted += amount;
+            });
+        }
     }
 
     fn mark_refund(&self, to: &ManagedAddress, token_id: &TokenIdentifier, amount: &BigUint) {
         self.refund_amount(to, token_id)
             .update(|refund| *refund += amount);
+        self.total_refund_amount(token_id)
+            .update(|total| *total += amount);
     }
 
     // events
 
     #[event("createTransactionEvent")]
-    fn create_transaction_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn create_transaction_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] sender: ManagedBuffer,
+        #[indexed] recipient: ManagedBuffer,
+    );
 
     #[event("addRefundTransactionEvent")]
     fn add_refund_transaction_event(
@@ -266,6 +457,13 @@ pub trait EsdtSafe:
         #[indexed] batch_id: u64,
         #[indexed] tx_id: u64,
         #[indexed] original_tx_id: u64,
+    );
+
+    #[event("claimRefundTransactionEvent")]
+    fn claim_refund_transaction_event(
+        &self,
+        #[indexed] token_id: &TokenIdentifier,
+        #[indexed] caller: ManagedAddress,
     );
 
     #[event("setStatusEvent")]
@@ -277,6 +475,12 @@ pub trait EsdtSafe:
     );
 
     // storage
+
+    #[storage_mapper("totalRefundAmount")]
+    fn total_refund_amount(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+
+    #[storage_mapper("totalFeesOnEthereum")]
+    fn total_fees_on_ethereum(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[storage_mapper("refundAmount")]
     fn refund_amount(

@@ -1,0 +1,4 @@
+[settings]
+
+[[proxy]]
+path = "../multi-transfer-esdt/src/bridged_tokens_wrapper_proxy.rs"

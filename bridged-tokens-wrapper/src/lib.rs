@@ -1,18 +1,22 @@
 #![no_std]
 
 mod dfp_big_uint;
+mod esdt_safe_proxy;
+mod events;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
 use transaction::PaymentsVec;
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use eth_address::*;
+use multiversx_sc::imports::*;
 
 impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
 #[multiversx_sc::contract]
-pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
+pub trait BridgedTokensWrapper:
+    multiversx_sc_modules::pause::PauseModule + events::EventsModule
+{
     #[init]
     fn init(&self) {
         self.set_paused(true);
@@ -174,14 +178,17 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
             self.send()
                 .esdt_local_mint(&universal_token_id, 0, &converted_amount);
             new_payments.push(EsdtTokenPayment::new(
-                universal_token_id,
+                universal_token_id.clone(),
                 0,
-                converted_amount,
+                converted_amount.clone(),
             ));
+            self.wrap_tokens_event(universal_token_id, converted_amount);
         }
 
-        let caller = self.blockchain().get_caller();
-        self.send().direct_multi(&caller, &new_payments);
+        self.tx()
+            .to(ToCaller)
+            .multi_esdt(new_payments.clone())
+            .transfer();
 
         new_payments
     }
@@ -189,18 +196,26 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
     #[payable("*")]
     #[endpoint(unwrapToken)]
     fn unwrap_token(&self, requested_token: TokenIdentifier) {
+        let converted_amount = self.unwrap_token_common(&requested_token);
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&requested_token, 0, &converted_amount)
+            .transfer();
+    }
+
+    fn unwrap_token_common(&self, requested_token: &TokenIdentifier) -> BigUint {
         require!(self.not_paused(), "Contract is paused");
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
 
         let universal_bridged_token_ids = self
-            .chain_specific_to_universal_mapping(&requested_token)
+            .chain_specific_to_universal_mapping(requested_token)
             .get();
         require!(
             payment_token == universal_bridged_token_ids,
             "Esdt token unavailable"
         );
-        self.require_tokens_have_set_decimals_num(&payment_token, &requested_token);
+        self.require_tokens_have_set_decimals_num(&payment_token, requested_token);
 
         let chain_specific_token_id = &requested_token;
         let converted_amount = self.get_converted_amount(
@@ -221,9 +236,24 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
         self.send()
             .esdt_local_burn(&universal_bridged_token_ids, 0, &payment_amount);
 
-        let caller = self.blockchain().get_caller();
-        self.send()
-            .direct_esdt(&caller, chain_specific_token_id, 0, &converted_amount);
+        self.unwrap_tokens_event(chain_specific_token_id, converted_amount.clone());
+        converted_amount
+    }
+
+    #[payable("*")]
+    #[endpoint(unwrapTokenCreateTransaction)]
+    fn unwrap_token_create_transaction(
+        &self,
+        requested_token: TokenIdentifier,
+        to: EthAddress<Self::Api>,
+    ) {
+        let converted_amount = self.unwrap_token_common(&requested_token);
+        self.tx()
+            .to(self.esdt_safe_contract_address().get())
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(to)
+            .single_esdt(&requested_token, 0, &converted_amount)
+            .sync_call();
     }
 
     fn get_converted_amount(
@@ -262,6 +292,17 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
         );
     }
 
+    #[only_owner]
+    #[endpoint(setEsdtSafeContractAddress)]
+    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                self.esdt_safe_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.esdt_safe_contract_address().clear(),
+        }
+    }
+
     #[view(getUniversalBridgedTokenIds)]
     #[storage_mapper("universalBridgedTokenIds")]
     fn universal_bridged_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
@@ -286,4 +327,8 @@ pub trait BridgedTokensWrapper: multiversx_sc_modules::pause::PauseModule {
 
     #[storage_mapper("token_decimals_num")]
     fn token_decimals_num(&self, token: &TokenIdentifier) -> SingleValueMapper<u32>;
+
+    #[view(getEsdtSafeContractAddress)]
+    #[storage_mapper("esdtSafeContractAddress")]
+    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

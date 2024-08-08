@@ -5,15 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           32
+// Upgrade:                              1
+// Endpoints:                           43
 // Async Callback (empty):               1
-// Total number of exported functions:  34
+// Total number of exported functions:  46
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
-#![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -27,7 +24,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         addRefundBatch => add_refund_batch
         createTransaction => create_transaction
         claimRefund => claim_refund
+        initSupply => init_supply
+        computeTotalAmmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
+        getTotalRefundAmounts => getTotalRefundAmounts
         setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit
         setDefaultPricePerGasUnit => set_default_price_per_gas_unit
@@ -39,8 +39,17 @@ multiversx_sc_wasm_adapter::endpoints! {
         distributeFees => distribute_fees
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
+        getTokens => get_tokens
+        setMultiTransferContractAddress => set_multi_transfer_contract_address
+        setTotalBalances => set_total_balances
         getAllKnownTokens => token_whitelist
+        isNativeToken => native_token
+        isMintBurnToken => mint_burn_token
+        getMultiTransferContractAddress => multi_transfer_contract_address
         getAccumulatedTransactionFees => accumulated_transaction_fees
+        getTotalBalances => total_balances
+        getMintBalances => mint_balances
+        getBurnBalances => burn_balances
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
