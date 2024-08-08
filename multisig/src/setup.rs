@@ -179,7 +179,7 @@ pub trait SetupModule:
     ///
     /// where price_per_gas_unit is queried from the aggregator (fee estimator SC)
     #[only_owner]
-    #[endpoint(changeElrondToEthGasLimit)]
+    #[endpoint(changeMultiversXToEthGasLimit)]
     fn change_multiversx_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
         let esdt_safe_addr = self.esdt_safe_address().get();
 
@@ -306,7 +306,7 @@ pub trait SetupModule:
             .sync_call();
     }
 
-    /// Sets the maximum bridged amount for the token for the Elrond -> Ethereum direction.
+    /// Sets the maximum bridged amount for the token for the MultiversX -> Ethereum direction.
     /// Any attempt to transfer over this amount will be rejected.
     #[only_owner]
     #[endpoint(esdtSafeSetMaxBridgedAmountForToken)]
@@ -324,7 +324,7 @@ pub trait SetupModule:
             .sync_call();
     }
 
-    /// Same as the function above, but for Ethereum -> Elrond transactions.
+    /// Same as the function above, but for Ethereum -> MultiversX transactions.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxBridgedAmountForToken)]
     fn multi_transfer_esdt_set_max_bridged_amount_for_token(
@@ -340,7 +340,7 @@ pub trait SetupModule:
             .sync_call();
     }
 
-    /// Any failed Ethereum -> Elrond transactions are added into so-called "refund batches"
+    /// Any failed Ethereum -> MultiversX transactions are added into so-called "refund batches"
     /// This configures the size of a batch.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]

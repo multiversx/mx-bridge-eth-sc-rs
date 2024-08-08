@@ -9,6 +9,14 @@
             "step": "setState",
             "comment": "simulate child contracts deploy + setting local roles + change ownership. Changing ownership will be done after the multisig deploy in the real setup, but this is way less verbose in mandos.",
             "accounts": {
+                "sc:bridge_proxy": {
+                    "code": "file:../../bridge-proxy/output/bridge-proxy.wasm",
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "str:multiTransferAddress": "sc:multi_transfer"
+                    }
+                },
                 "sc:multi_transfer": {
                     "nonce": "0",
                     "balance": "0",
@@ -31,6 +39,8 @@
                         "str:bridgeProxyContractAddress": "sc:bridge_proxy",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
+                        "str:maxBridgedAmount|nested:str:WEGLD-123456": "100,000,000,000",
+                        "str:maxBridgedAmount|nested:str:ETH-123456": "100,000,000,000",
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1"
                     },

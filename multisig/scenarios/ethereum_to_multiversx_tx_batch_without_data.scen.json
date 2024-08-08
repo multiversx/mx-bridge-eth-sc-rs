@@ -15,18 +15,20 @@
                 "function": "proposeMultiTransferEsdtBatch",
                 "arguments": [
                     "1",
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user",
-                    "str:WEGLD-123456",
-                    "76,000,000,000",
-                    "1",
-                    "0x",
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user",
-                    "str:ETH-123456",
-                    "76,000,000,000",
-                    "2",
-                    "0x"
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:WEGLD-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:1"
+                    },
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:ETH-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:2"
+                    }
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
@@ -49,18 +51,20 @@
                 "function": "wasTransferActionProposed",
                 "arguments": [
                     "1",
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user",
-                    "str:WEGLD-123456",
-                    "76,000,000,000",
-                    "1",
-                    "0x",
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user",
-                    "str:ETH-123456",
-                    "76,000,000,000",
-                    "2",
-                    "0x"
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:WEGLD-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:1"
+                    },
+                    {
+                        "1-from": "0x0102030405060708091011121314151617181920",
+                        "2-to": "address:user",
+                        "3-token_id": "nested:str:ETH-123456",
+                        "4-amount": "biguint:76,000,000,000",
+                        "5-tx_nonce": "u64:2"
+                    }
                 ]
             },
             "expect": {

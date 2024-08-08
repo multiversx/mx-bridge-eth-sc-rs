@@ -145,16 +145,16 @@ where
             .original_result()
     }
 
-    pub fn set_esdt_safe_contract_address<
+    pub fn set_bridged_tokens_wrapper<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
-        opt_esdt_safe_address: Arg0,
+        opt_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setupEsdtSafe")
-            .argument(&opt_esdt_safe_address)
+            .raw_call("setBridgedTokensWrapper")
+            .argument(&opt_address)
             .original_result()
     }
 
@@ -167,12 +167,12 @@ where
             .original_result()
     }
 
-    pub fn esdt_safe_address(
+    pub fn bridged_tokens_wrapper_address(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getEsdtSafeAddress")
+            .raw_call("getBridgedTokensWrapperAddress")
             .original_result()
     }
 

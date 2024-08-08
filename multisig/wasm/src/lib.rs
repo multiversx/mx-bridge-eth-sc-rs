@@ -39,7 +39,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
-        changeElrondToEthGasLimit => change_multiversx_to_eth_gas_limit
+        changeMultiversXToEthGasLimit => change_multiversx_to_eth_gas_limit
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
         changeTokenTicker => change_token_ticker
         esdtSafeAddTokenToWhitelist => esdt_safe_add_token_to_whitelist

@@ -1,6 +1,6 @@
 use multiversx_sc::imports::*;
 
-use transaction::{EthTransaction, EthTxAsMultiValue};
+use transaction::EthTransaction;
 
 use crate::storage::EthBatchHash;
 use crate::user_role::UserRole;
@@ -45,20 +45,11 @@ pub trait UtilModule: crate::storage::StorageModule {
 
     fn transfers_multi_value_to_eth_tx_vec(
         &self,
-        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
+        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) -> ManagedVec<EthTransaction<Self::Api>> {
         let mut transfers_as_eth_tx = ManagedVec::new();
         for transfer in transfers {
-            let (from, to, token_id, amount, tx_nonce, call_data) = transfer.into_tuple();
-
-            transfers_as_eth_tx.push(EthTransaction {
-                from,
-                to,
-                token_id,
-                amount,
-                tx_nonce,
-                call_data,
-            });
+            transfers_as_eth_tx.push(transfer);
         }
 
         transfers_as_eth_tx
