@@ -71,6 +71,11 @@ pub trait BridgeProxyContract:
 
         if refund {
             self.refund_transaction(tx_id);
+            let lowest_tx_id = self.lowest_tx_id().get();
+            if tx_id < lowest_tx_id {
+                self.lowest_tx_id().set(tx_id + 1);
+            }
+            self.pending_transactions().clear_entry_unchecked(tx_id);
             return;
         }
 
