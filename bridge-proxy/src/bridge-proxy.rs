@@ -71,6 +71,7 @@ pub trait BridgeProxyContract:
 
         if refund {
             self.refund_transaction(tx_id);
+            return;
         }
 
         let tx_call = self
