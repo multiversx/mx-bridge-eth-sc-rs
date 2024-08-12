@@ -41,11 +41,11 @@ pub trait MultiTransferEsdt:
 
     #[only_owner]
     #[endpoint(batchTransferEsdtToken)]
-    fn batch_transfer_esdt_token(
-        &self,
-        batch_id: u64,
-        transfers: ManagedVec<EthTransaction<Self::Api>>,
-    ) {
+    fn batch_transfer_esdt_token(&self, batch_id: u64, raw_transfers: ManagedBuffer) {
+        let eth_transfers_decode_result =
+            ManagedVec::<Self::Api, EthTransaction<Self::Api>>::top_decode(raw_transfers);
+        let transfers = eth_transfers_decode_result.unwrap_or_default();
+
         let mut valid_payments_list = ManagedVec::new();
         let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();

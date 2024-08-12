@@ -232,8 +232,14 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         eth_batch_id: u64,
-        transfers: ManagedVec<EthTransaction<Self::Api>>,
+        raw_transfers: ManagedBuffer,
     ) -> usize {
+        let eth_transfers_decode_result =
+            ManagedVec::<Self::Api, EthTransaction<Self::Api>>::top_decode(raw_transfers);
+        let Ok(transfers) = eth_transfers_decode_result else {
+            return 0;
+        };
+
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
             eth_batch_id == next_eth_batch_id,

@@ -1,5 +1,5 @@
 #![no_std]
-use multiversx_sc::{contract_base::ManagedSerializer, imports::*};
+use multiversx_sc::imports::*;
 
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper;
@@ -51,26 +51,23 @@ pub trait BridgeProxyContract:
 
         let call_data: CallData<Self::Api> = if tx.call_data.is_some() {
             let unwraped_call_data = unsafe { tx.call_data.unwrap_no_check() };
-            let mb_aux = ManagedBufferReadToEnd::from(unwraped_call_data);
-            let managed_serializer = ManagedSerializer::new();
-            let call_data: CallData<Self::Api> =
-                managed_serializer.top_decode_from_managed_buffer(&mb_aux.into_managed_buffer());
+
+            let Ok(call_data) = CallData::top_decode(unwraped_call_data) else {
+                self.finish_execute_gracefully(tx_id);
+                return;
+            };
+
             call_data
         } else {
             CallData::default()
         };
 
-        let mut refund = false;
-
         if call_data.endpoint.is_empty()
             || call_data.gas_limit == 0
             || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
         {
-            refund = true;
-        }
-
-        if refund {
-            self.refund_transaction(tx_id);
+            self.finish_execute_gracefully(tx_id);
+            return;
         }
 
         let tx_call = self
@@ -119,6 +116,15 @@ pub trait BridgeProxyContract:
                 &payment.amount,
             )
             .sync_call();
+    }
+
+    fn finish_execute_gracefully(&self, tx_id: usize) {
+        self.refund_transaction(tx_id);
+        let lowest_tx_id = self.lowest_tx_id().get();
+        if tx_id < lowest_tx_id {
+            self.lowest_tx_id().set(tx_id + 1);
+        }
+        self.pending_transactions().clear_entry_unchecked(tx_id);
     }
 
     #[view(getPendingTransactionById)]
