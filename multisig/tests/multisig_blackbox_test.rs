@@ -147,6 +147,7 @@ impl MultiTransferTestState {
             .init(
                 ESDT_SAFE_ADDRESS,
                 MULTI_TRANSFER_ADDRESS,
+                BRIDGE_PROXY_ADDRESS,
                 1_000u64,
                 500u64,
                 2usize,
