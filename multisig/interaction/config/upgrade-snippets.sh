@@ -46,8 +46,7 @@ upgradeMultisig() {
     MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     mxpy --verbose contract upgrade ${MULTISIG} --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
-    --arguments ${SAFE} ${MULTI_TRANSFER} \
-    ${MIN_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
+    --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-testnet.interaction.json" --expression="data['emitted_tx']['hash']")
