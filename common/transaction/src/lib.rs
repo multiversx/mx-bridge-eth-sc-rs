@@ -1,5 +1,6 @@
 #![no_std]
 
+use codec::NestedDecodeInput;
 use multiversx_sc::derive_imports::*;
 use multiversx_sc::imports::*;
 
@@ -44,7 +45,7 @@ impl<M: ManagedTypeApi> Default for CallData<M> {
 }
 
 #[type_abi]
-#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, Clone, ManagedVecItem)]
+#[derive(NestedEncode, NestedDecode, TopEncode, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
@@ -52,6 +53,47 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub amount: BigUint<M>,
     pub tx_nonce: TxNonce,
     pub call_data: ManagedOption<M, ManagedBuffer<M>>,
+}
+
+impl<M: ManagedTypeApi> TopDecode for EthTransaction<M> {
+    fn top_decode_or_handle_err<I, H>(input: I, h: H) -> Result<Self, H::HandledErr>
+    where
+        I: codec::TopDecodeInput,
+        H: codec::DecodeErrorHandler,
+    {
+        let mut nested_buffer = input.into_nested_buffer();
+        let from = EthAddress::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let to = ManagedAddress::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let token_id = TokenIdentifier::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let amount = BigUint::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+        let tx_nonce = TxNonce::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+
+        // let a: ManagedBufferReadToEnd<M> =
+        //     ManagedBufferReadToEnd::dep_decode_or_handle_err(&mut nested_buffer, h)?;
+
+        let call_data = if !nested_buffer.is_depleted() {
+            ManagedOption::some(ManagedBuffer::dep_decode_or_handle_err(
+                &mut nested_buffer,
+                h,
+            )?)
+        } else {
+            ManagedOption::none()
+        };
+
+        // let Ok(call_data) = CallData::top_decode(unwraped_call_data) else {
+        //     self.finish_execute_gracefully(tx_id);
+        //     return;
+        // };
+
+        Result::Ok(EthTransaction {
+            from,
+            to,
+            token_id,
+            amount,
+            tx_nonce,
+            call_data,
+        })
+    }
 }
 
 #[type_abi]

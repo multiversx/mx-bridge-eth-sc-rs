@@ -16,6 +16,7 @@ pub mod bridge_proxy_contract_proxy;
 pub mod multisig_proxy;
 
 use action::Action;
+
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
 use transaction::transaction_status::TransactionStatus;
 use transaction::TxBatchSplitInFields;
@@ -271,6 +272,24 @@ pub trait Multisig:
     ) -> usize {
         let eth_transfers_decode_result =
             ManagedVec::<Self::Api, EthTransaction<Self::Api>>::top_decode(raw_transfers);
+
+        // let mut transfers: ManagedVec<Self::Api, EthTransaction<Self::Api>> = ManagedVec::new();
+
+        // let mut nested_de_transfers = ManagedBufferNestedDecodeInput::new(raw_transfers);
+        // while nested_de_transfers.remaining_len() > 0 {
+        //     let next_tx_result = EthTransaction::dep_decode(&mut nested_de_transfers);
+        //     if next_tx_result.is_ok() {
+        //         let eth_tx = next_tx_result.unwrap();
+        //         transfers.push(eth_tx)
+        //     } else {
+        //     }
+        //     // match EthTransaction::dep_decode(&mut nested_de_transfers) {
+        //     //     Ok(eth_tx) => transfers.push(eth_tx),
+        //     //     Err(faulty_eth_tx) => {
+        //     //     }
+        //     // }
+        // }
+
         let Ok(transfers) = eth_transfers_decode_result else {
             return 0;
         };
