@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            3
+// Endpoints:                            4
 // Async Callback (empty):               1
-// Total number of exported functions:   6
+// Total number of exported functions:   7
 
 #![no_std]
 
@@ -23,6 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         callPayable => call_payable
         callNonPayable => call_non_payable
         callPayableWithParams => call_payable_with_params
+        getCalledDataParams => get_called_data_params
     )
 }
 

@@ -46,6 +46,23 @@ pub trait TestCallerContract {
         _ = self.called_data_params().push(&data);
     }
 
+    #[view(getCalledDataParams)]
+    fn get_called_data_params(
+        &self,
+    ) -> MultiValueEncoded<CalledData<Self::Api>> {
+        let mut values = MultiValueEncoded::new();
+        let len = self.called_data_params().len();
+
+        for i in 0..len {
+            if self.called_data_params().item_is_empty(i) {
+                continue;
+            }
+            let value = self.called_data_params().get_unchecked(i);
+            values.push(value);
+        }
+        values
+    }
+
     #[storage_mapper("calledDataParams")]
     fn called_data_params(&self) -> VecMapper<CalledData<Self::Api>>;
 }
