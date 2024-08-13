@@ -44,7 +44,7 @@ pub trait MultiTransferEsdt:
     fn batch_transfer_esdt_token(
         &self,
         batch_id: u64,
-        transfers: ManagedVec<EthTransaction<Self::Api>>,
+        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
         let mut valid_payments_list = ManagedVec::new();
         let mut valid_tx_list = ManagedVec::new();
@@ -55,7 +55,7 @@ pub trait MultiTransferEsdt:
 
         let safe_address = self.esdt_safe_contract_address().get();
 
-        for eth_tx in transfers.iter() {
+        for eth_tx in transfers {
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
