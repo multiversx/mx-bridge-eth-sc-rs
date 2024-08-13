@@ -48,24 +48,27 @@ where
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
         Arg3: ProxyArg<BigUint<Env::Api>>,
-        Arg4: ProxyArg<usize>,
-        Arg5: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg4: ProxyArg<BigUint<Env::Api>>,
+        Arg5: ProxyArg<usize>,
+        Arg6: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
         esdt_safe_sc_address: Arg0,
         multi_transfer_sc_address: Arg1,
-        required_stake: Arg2,
-        slash_amount: Arg3,
-        quorum: Arg4,
-        board: Arg5,
+        proxy_sc_address: Arg2,
+        required_stake: Arg3,
+        slash_amount: Arg4,
+        quorum: Arg5,
+        board: Arg6,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_sc_address)
             .argument(&multi_transfer_sc_address)
+            .argument(&proxy_sc_address)
             .argument(&required_stake)
             .argument(&slash_amount)
             .argument(&quorum)
@@ -83,12 +86,22 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn upgrade(
+    pub fn upgrade<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
         self,
+        esdt_safe_sc_address: Arg0,
+        multi_transfer_sc_address: Arg1,
+        proxy_sc_address: Arg2,
     ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_upgrade()
+            .argument(&esdt_safe_sc_address)
+            .argument(&multi_transfer_sc_address)
+            .argument(&proxy_sc_address)
             .original_result()
     }
 }
@@ -367,6 +380,24 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("unpauseEsdtSafe")
+            .original_result()
+    }
+
+    pub fn pause_proxy(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseProxy")
+            .original_result()
+    }
+
+    pub fn unpause_proxy(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseProxy")
             .original_result()
     }
 
@@ -735,6 +766,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getMultiTransferEsdtAddress")
+            .original_result()
+    }
+
+    pub fn proxy_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getProxyAddress")
             .original_result()
     }
 
