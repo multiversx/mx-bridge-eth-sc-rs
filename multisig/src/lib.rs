@@ -267,7 +267,7 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         eth_batch_id: u64,
-        transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
