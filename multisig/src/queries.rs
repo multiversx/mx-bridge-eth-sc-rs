@@ -1,7 +1,7 @@
 use multiversx_sc::imports::*;
 
 use crate::{action::Action, esdt_safe_proxy, multi_transfer_esdt_proxy, user_role::UserRole};
-use transaction::{transaction_status::TransactionStatus, EthTransaction, TxBatchSplitInFields};
+use transaction::{transaction_status::TransactionStatus, EthTxAsMultiValue, TxBatchSplitInFields};
 
 /// Note: Additional queries can be found in the Storage module
 #[multiversx_sc::module]
@@ -73,7 +73,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn was_transfer_action_proposed(
         &self,
         eth_batch_id: u64,
-        transfers: ManagedVec<EthTransaction<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> bool {
         let action_id = self.get_action_id_for_transfer_batch(eth_batch_id, transfers);
 
@@ -87,9 +87,10 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
     fn get_action_id_for_transfer_batch(
         &self,
         eth_batch_id: u64,
-        transfers: ManagedVec<EthTransaction<Self::Api>>,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
-        let batch_hash = self.hash_eth_tx_batch(&transfers);
+        let transfers_as_struct = self.transfers_multi_value_to_eth_tx_vec(transfers);
+        let batch_hash = self.hash_eth_tx_batch(&transfers_as_struct);
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
             .get(&batch_hash)

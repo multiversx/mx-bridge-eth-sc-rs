@@ -385,7 +385,8 @@ fn ethereum_to_multiversx_call_data_empty_test() {
         call_data: ManagedOption::none(),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx);
 
     state
@@ -493,7 +494,8 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
         tx_nonce: 4u64,
         call_data: ManagedOption::some(call_data2),
     };
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx);
     transfers.push(eth_tx2);
     transfers.push(eth_tx3);
@@ -556,7 +558,8 @@ fn ethereum_to_multiversx_relayer_query_test() {
         call_data: ManagedOption::none(),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx);
 
     state
@@ -647,7 +650,8 @@ fn ethereum_to_multiversx_relayer_query2_test() {
         call_data: ManagedOption::none(),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx);
 
     state
@@ -751,7 +755,8 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
         call_data: ManagedOption::some(call_data),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
 
@@ -835,7 +840,8 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         call_data: ManagedOption::some(call_data),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
 

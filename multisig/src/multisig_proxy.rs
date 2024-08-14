@@ -180,7 +180,7 @@ where
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce 
     pub fn propose_multi_transfer_esdt_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::EthTransaction<Env::Api>>>,
     >(
         self,
         eth_batch_id: Arg0,
@@ -843,7 +843,7 @@ where
     /// To check if it was executed as well, use the wasActionExecuted view 
     pub fn was_transfer_action_proposed<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::EthTransaction<Env::Api>>>,
     >(
         self,
         eth_batch_id: Arg0,
@@ -862,7 +862,7 @@ where
     /// Will return 0 if the transfers were not proposed 
     pub fn get_action_id_for_transfer_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::EthTransaction<Env::Api>>>,
     >(
         self,
         eth_batch_id: Arg0,
