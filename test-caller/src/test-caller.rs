@@ -53,7 +53,7 @@ pub trait TestCallerContract {
         let mut values = MultiValueEncoded::new();
         let len = self.called_data_params().len();
 
-        for i in 1..len {
+        for i in 1..=len {
             if self.called_data_params().item_is_empty(i) {
                 continue;
             }
