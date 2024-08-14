@@ -36,7 +36,7 @@ use multiversx_sc_scenario::{
 
 use eth_address::*;
 use token_module::ProxyTrait as _;
-use transaction::{CallData, EthTransaction, TxBatchSplitInFields};
+use transaction::{CallData, EthTransaction, EthTxAsMultiValue, TxBatchSplitInFields};
 
 const WEGLD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
@@ -374,18 +374,18 @@ fn ethereum_to_multiversx_call_data_empty_test() {
     state.bridged_tokens_wrapper_deploy();
     state.config_multisig();
 
-    let eth_tx = EthTransaction {
-        from: EthAddress {
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
-        amount: token_amount.clone(),
-        tx_nonce: 1u64,
-        call_data: ManagedOption::none(),
-    };
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
 
-    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx);
 
@@ -438,26 +438,27 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
 
     let addr =
         Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
-    let eth_tx = EthTransaction {
-        from: EthAddress {
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
-        to: ManagedAddress::from(addr.clone()),
-        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
-        amount: token_amount.clone(),
-        tx_nonce: 1u64,
-        call_data: ManagedOption::none(),
-    };
-    let eth_tx2 = EthTransaction {
-        from: EthAddress {
+        ManagedAddress::from(addr.clone()),
+        TokenIdentifier::from("ETHUSDC-afa689"),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
-        to: ManagedAddress::from(addr.clone()),
-        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
-        amount: token_amount.clone(),
-        tx_nonce: 2u64,
-        call_data: ManagedOption::none(),
-    };
+        ManagedAddress::from(addr.clone()),
+        TokenIdentifier::from("ETHUSDC-afa689"),
+        token_amount.clone(),
+        2u64,
+        ManagedOption::none(),
+    ));
 
     let call_data: CallData<StaticApi> = CallData {
         endpoint: ManagedBuffer::from(b"fund"),
@@ -466,16 +467,17 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
     };
     let call_data = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
 
-    let eth_tx3 = EthTransaction {
-        from: EthAddress {
+    let eth_tx3 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
-        to: ManagedAddress::from(addr.clone()),
-        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
-        amount: token_amount.clone(),
-        tx_nonce: 3u64,
-        call_data: ManagedOption::some(call_data.clone()),
-    };
+        ManagedAddress::from(addr.clone()),
+        TokenIdentifier::from("ETHUSDC-afa689"),
+        token_amount.clone(),
+        3u64,
+        ManagedOption::some(call_data),
+    ));
+
     let args = ManagedVec::from_single_item(ManagedBuffer::from(b"5"));
     let call_data2: CallData<StaticApi> = CallData {
         endpoint: ManagedBuffer::from(b"fund"),
@@ -484,17 +486,17 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
     };
     let call_data2 = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data2);
 
-    let eth_tx4 = EthTransaction {
-        from: EthAddress {
+    let eth_tx4 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
-        to: ManagedAddress::from(addr),
-        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
-        amount: token_amount.clone(),
-        tx_nonce: 4u64,
-        call_data: ManagedOption::some(call_data2),
-    };
-    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        ManagedAddress::from(addr.clone()),
+        TokenIdentifier::from("ETHUSDC-afa689"),
+        token_amount.clone(),
+        4u64,
+        ManagedOption::some(call_data2),
+    ));
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx);
     transfers.push(eth_tx2);
@@ -547,18 +549,18 @@ fn ethereum_to_multiversx_relayer_query_test() {
     state.bridged_tokens_wrapper_deploy();
     state.config_multisig();
 
-    let eth_tx = EthTransaction {
-        from: EthAddress {
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
-        amount: token_amount.clone(),
-        tx_nonce: 1u64,
-        call_data: ManagedOption::none(),
-    };
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
 
-    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx);
 
@@ -639,18 +641,18 @@ fn ethereum_to_multiversx_relayer_query2_test() {
 
     const ADDR: [u8; 32] = hex!("691dee92137cddbe76ec34eeacbc3b7d91264148da5a69205133c395aa7662cf");
 
-    let eth_tx = EthTransaction {
-        from: EthAddress {
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
-        to: ManagedAddress::from(ADDR),
-        token_id: TokenIdentifier::from("ETHUSDC-afa689"),
-        amount: token_amount.clone(),
-        tx_nonce: 1u64,
-        call_data: ManagedOption::none(),
-    };
+        ManagedAddress::from(ADDR),
+        TokenIdentifier::from("ETHUSDC-afa689"),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
 
-    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx);
 
@@ -733,29 +735,29 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
     let call_data: ManagedBuffer<StaticApi> =
         ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
 
-    let eth_tx1 = EthTransaction {
-        from: EthAddress {
+    let eth_tx1 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
-        amount: token_amount.clone(),
-        tx_nonce: 1u64,
-        call_data: ManagedOption::some(call_data.clone()),
-    };
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::some(call_data.clone()),
+    ));
 
-    let eth_tx2 = EthTransaction {
-        from: EthAddress {
+    let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(ETH_TOKEN_ID),
-        amount: token_amount.clone(),
-        tx_nonce: 2u64,
-        call_data: ManagedOption::some(call_data),
-    };
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(ETH_TOKEN_ID),
+        token_amount.clone(),
+        2u64,
+        ManagedOption::some(call_data.clone()),
+    ));
 
-    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
@@ -818,29 +820,29 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
     let call_data: ManagedBuffer<StaticApi> =
         ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
 
-    let eth_tx1 = EthTransaction {
-        from: EthAddress {
+    let eth_tx1 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
-        amount: over_the_limit_token_amount.clone(),
-        tx_nonce: 1u64,
-        call_data: ManagedOption::some(call_data.clone()),
-    };
+        ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        over_the_limit_token_amount.clone(),
+        1u64,
+        ManagedOption::some(call_data.clone()),
+    ));
 
-    let eth_tx2 = EthTransaction {
-        from: EthAddress {
+    let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(ETH_TOKEN_ID),
-        amount: over_the_limit_token_amount.clone(),
-        tx_nonce: 2u64,
-        call_data: ManagedOption::some(call_data),
-    };
+        ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(ETH_TOKEN_ID),
+        over_the_limit_token_amount.clone(),
+        2u64,
+        ManagedOption::some(call_data.clone()),
+    ));
 
-    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
