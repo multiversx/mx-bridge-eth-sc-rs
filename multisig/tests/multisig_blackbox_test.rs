@@ -715,6 +715,7 @@ fn ethereum_to_multiversx_relayer_query2_test() {
 fn ethereum_to_multiversx_tx_batch_ok_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
+    state.world.start_trace();
 
     state.multisig_deploy();
     state.safe_deploy(Address::zero());
@@ -724,7 +725,9 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
     state.config_multisig();
 
     let mut args = ManagedVec::new();
-    args.push(ManagedBuffer::from(&[5u8]));
+    args.push(ManagedBuffer::from(&[5u8, 6u8]));
+    args.push(ManagedBuffer::from(&[7u8, 8u8, 9u8]));
+    args.push(ManagedBuffer::from(&[7u8, 8u8, 9u8, 10u8, 11u8]));
 
     let call_data: CallData<StaticApi> = CallData {
         endpoint: ManagedBuffer::from("add"),
@@ -794,6 +797,10 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
         .check_account(USER1_ADDRESS)
         .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone())
         .esdt_balance(ETH_TOKEN_ID, token_amount.clone());
+
+    state.world.write_scenario_trace(
+        "scenarios/ethereum_to_multiversx_tx_batch_ok_call_data_encoded.scen.json",
+    );
 }
 
 #[test]
