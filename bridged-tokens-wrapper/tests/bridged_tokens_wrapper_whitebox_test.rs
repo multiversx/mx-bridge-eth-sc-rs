@@ -139,7 +139,7 @@ fn test_set_esdt_safe_contract_address_should_work() {
         bridged_tokens_wrapper::contract_obj,
     );
 
-    let esdt_address_expr = format!("address:from");
+    let esdt_address_expr = "address:from".to_string();
     let esdt_address = AddressValue::from(esdt_address_expr.as_str());
 
     world.whitebox_call(
@@ -342,7 +342,7 @@ fn test_update_wrapped_token_shoud_work() {
         let result = sc
             .universal_bridged_token_ids()
             .contains(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
-        assert_eq!(result, true);
+        assert!(result);
     });
 
     world.whitebox_call(
@@ -393,7 +393,7 @@ fn test_remove_wrapped_token_should_work() {
         let result = sc
             .universal_bridged_token_ids()
             .contains(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
-        assert_eq!(result, false);
+        assert!(result);
     });
 }
 
@@ -614,7 +614,7 @@ fn test_unwrap_token_create_transaction_should_work() {
             sc.chain_specific_to_universal_mapping(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
                 .set(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
             //let address = convert_to_eth_address(ETH_ADDRESS);
-            let esdt_address_expr = format!("sc:esdt_safe");
+            let esdt_address_expr = "sc:esdt_safe".to_string();
             let esdt_address = AddressValue::from(esdt_address_expr.as_str());
             sc.set_esdt_safe_contract_address(OptionalValue::Some(managed_address!(
                 &esdt_address.to_address()
@@ -768,8 +768,8 @@ fn test_blacklist_token_should_work() {
         let token_decimals_result = sc
             .token_decimals_num(&managed_token_id!(CHAIN_TOKEN_IDENTIFIER))
             .is_empty();
-        assert_eq!(result, true);
-        assert_eq!(token_decimals_result, true);
+        assert!(result);
+        assert!(token_decimals_result);
     });
 }
 
