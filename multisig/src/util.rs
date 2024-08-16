@@ -48,9 +48,6 @@ pub trait UtilModule: crate::storage::StorageModule {
         transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> ManagedVec<EthTransaction<Self::Api>> {
         let mut transfers_as_eth_tx = ManagedVec::new();
-        // for transfer in transfers {
-        //     transfers_as_eth_tx.push(transfer);
-        // }
         for transfer in transfers {
             let (from, to, token_id, amount, tx_nonce, call_data) = transfer.into_tuple();
 
