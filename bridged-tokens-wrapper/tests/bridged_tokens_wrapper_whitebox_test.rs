@@ -393,7 +393,7 @@ fn test_remove_wrapped_token_should_work() {
         let result = sc
             .universal_bridged_token_ids()
             .contains(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
-        assert!(result);
+        assert!(!result);
     });
 }
 
