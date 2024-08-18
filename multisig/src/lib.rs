@@ -10,9 +10,9 @@ mod storage;
 mod user_role;
 mod util;
 
+pub mod bridge_proxy_contract_proxy;
 pub mod esdt_safe_proxy;
 pub mod multi_transfer_esdt_proxy;
-pub mod bridge_proxy_contract_proxy;
 pub mod multisig_proxy;
 
 use action::Action;
@@ -267,23 +267,18 @@ pub trait Multisig:
     fn propose_multi_transfer_esdt_batch(
         &self,
         eth_batch_id: u64,
-        raw_transfers: ManagedBuffer,
+        transfers: MultiValueEncoded<EthTxAsMultiValue<Self::Api>>,
     ) -> usize {
-        let eth_transfers_decode_result =
-            ManagedVec::<Self::Api, EthTransaction<Self::Api>>::top_decode(raw_transfers);
-        let Ok(transfers) = eth_transfers_decode_result else {
-            return 0;
-        };
-
         let next_eth_batch_id = self.last_executed_eth_batch_id().get() + 1;
         require!(
             eth_batch_id == next_eth_batch_id,
             "Can only propose for next batch ID"
         );
 
-        self.require_valid_eth_tx_ids(&transfers);
+        let transfers_as_eth_tx = self.transfers_multi_value_to_eth_tx_vec(transfers);
+        self.require_valid_eth_tx_ids(&transfers_as_eth_tx);
 
-        let batch_hash = self.hash_eth_tx_batch(&transfers);
+        let batch_hash = self.hash_eth_tx_batch(&transfers_as_eth_tx);
         require!(
             self.batch_id_to_action_id_mapping(eth_batch_id)
                 .get(&batch_hash)
@@ -293,7 +288,7 @@ pub trait Multisig:
 
         let action_id = self.propose_action(Action::BatchTransferEsdtToken {
             eth_batch_id,
-            transfers,
+            transfers: transfers_as_eth_tx,
         });
 
         self.batch_id_to_action_id_mapping(eth_batch_id)
@@ -415,11 +410,13 @@ pub trait Multisig:
                 self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
 
                 let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+                let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
+                    transfers.into();
 
                 self.tx()
                     .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-                    .batch_transfer_esdt_token(eth_batch_id, transfers)
+                    .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .sync_call();
             }
         }

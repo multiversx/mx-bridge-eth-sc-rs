@@ -54,6 +54,15 @@ pub struct EthTransaction<M: ManagedTypeApi> {
     pub call_data: ManagedOption<M, ManagedBuffer<M>>,
 }
 
+pub type EthTxAsMultiValue<M> = MultiValue6<
+    EthAddress<M>,
+    ManagedAddress<M>,
+    TokenIdentifier<M>,
+    BigUint<M>,
+    TxNonce,
+    ManagedOption<M, ManagedBuffer<M>>,
+>;
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
