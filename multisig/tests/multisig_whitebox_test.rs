@@ -40,12 +40,12 @@ fn setup() -> ScenarioWorld {
     let proxy_address = AddressValue::from(proxy_address_expr);
 
     set_state_step = set_state_step
-        .put_account(esdt_safe_address_expr.as_str(), Account::new().nonce(1))
-        .put_account(
-            multi_transfer_address_expr.as_str(),
-            Account::new().nonce(1),
-        )
-        .put_account(proxy_address_expr, Account::new().nonce(1))
+        // .put_account(esdt_safe_address_expr.as_str(), Account::new().nonce(1))
+        // .put_account(
+        //     multi_transfer_address_expr.as_str(),
+        //     Account::new().nonce(1),
+        // )
+        // .put_account(proxy_address_expr, Account::new().nonce(1))
         .put_account(BOARD_MEMBER_ADDRESS_EXPR, Account::new().nonce(1));
 
     world.set_state_step(set_state_step).whitebox_deploy(
@@ -57,6 +57,12 @@ fn setup() -> ScenarioWorld {
             let mut board_members = ManagedVec::new();
             board_members.push(managed_address!(&address_expr_to_address(
                 BOARD_MEMBER_ADDRESS_EXPR
+            )));
+            board_members.push(managed_address!(&address_expr_to_address(
+                "address:board-member-2"
+            )));
+            board_members.push(managed_address!(&address_expr_to_address(
+                "address:board-member-3"
             )));
 
             let required_stake = BigUint::from(1000u32);
@@ -80,6 +86,33 @@ fn setup() -> ScenarioWorld {
 #[test]
 fn test_init() {
     setup();
+}
+
+#[test]
+fn test_upgrade_fail_invalid_address() {
+    let mut world = setup();
+    let multisig = WhiteboxContract::new(MULTISIG_ADDRESS_EXPR, multisig::contract_obj);
+
+    let invalid_address =
+        AddressValue::from("0x0000000000000000000000000000000000000000000000000000000000000000")
+            .to_address();
+
+    world.whitebox_call_check(
+        &multisig,
+        ScCallStep::new()
+            .from(OWNER_ADDRESS_EXPR)
+            .expect(TxExpect::user_error(
+                "Esdt Safe address is not a Smart Contract address",
+            )),
+        |sc| {
+            sc.upgrade(
+                managed_address!(&invalid_address),
+                managed_address!(&invalid_address),
+                managed_address!(&invalid_address),
+            );
+        },
+        |r| r.assert_user_error("Esdt Safe address is not a Smart Contract address"),
+    );
 }
 
 fn address_expr_to_address(address_expr: &str) -> Address {
