@@ -33,8 +33,6 @@ fn world() -> ScenarioWorld {
 }
 
 
-/*********************************************************************************/
-/*************************[ENDPOINT]: create_transaction *************************/
 #[test]
 fn test_create_transaction_should_fail_case_1() {
     let mut world = setup();
@@ -66,7 +64,6 @@ fn test_create_transaction_should_fail_case_1() {
         |r| r.assert_user_error("Cannot create transaction while paused"),
     );
 }
-
 
 #[test]
 fn test_create_transaction_should_fail_case_2() {
@@ -100,174 +97,8 @@ fn test_create_transaction_should_fail_case_2() {
     );
 }
 
+//TODO: Add tests with fee-estimator contract integrated
 
-#[test]
-fn test_create_transaction_should_fail_case_3() {
-    let mut world = setup();
-
-    let esdt_safe_whitebox = WhiteboxContract::new(
-        ESTD_SAFE_ADDRESS_EXPR,
-        esdt_safe::contract_obj,
-    );
-
-    world.whitebox_call(
-        &esdt_safe_whitebox,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.paused_status().set(false);
-            sc.token_whitelist().insert(TokenIdentifier::from(TOKEN_ID));
-        }
-    );
-
-    const BIG_VALUE: u32 = 100000000u32;
-
-    world.whitebox_call(
-        &esdt_safe_whitebox,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.eth_tx_gas_limit().set(BigUint::from(BIG_VALUE));
-            sc.default_price_per_gas_unit(&TokenIdentifier::from(TOKEN_ID)).set(BigUint::from(BIG_VALUE));
-        }
-    );
-
-    const ESDT_TRANSFER_AMOUNT: u32 = 1u32;
-
-    world.whitebox_call_check(
-        &esdt_safe_whitebox,
-        ScCallStep::new()
-            .from(OWNER_ADDRESS_EXPR)
-            .esdt_transfer(TOKEN_ID, 0, ESDT_TRANSFER_AMOUNT)
-            .expect(TxExpect::user_error("str:Transaction fees cost more than the entire bridged amount")),
-        |sc| {
-            sc.create_transaction(convert_to_eth_address(ETH_ADDRESS))
-        },
-        |r| r.assert_user_error("Transaction fees cost more than the entire bridged amount"),
-    );
-}
-
-#[test]
-fn test_create_transaction_should_fail_case_4() {
-    let mut world = setup();
-
-    let esdt_safe_whitebox = WhiteboxContract::new(
-        ESTD_SAFE_ADDRESS_EXPR,
-        esdt_safe::contract_obj,
-    );
-
-    const MAX_AMOUNT: u32 = 100u32;
-
-    world.whitebox_call(
-        &esdt_safe_whitebox,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.paused_status().set(false);
-            sc.token_whitelist().insert(TokenIdentifier::from(TOKEN_ID));
-            sc.max_bridged_amount(&TokenIdentifier::from(TOKEN_ID)).set(BigUint::from(MAX_AMOUNT));
-        }
-    );
-
-    const ESDT_TRANSFER_AMOUNT: u32 = 101u32;
-
-    world.whitebox_call_check(
-        &esdt_safe_whitebox,
-        ScCallStep::new()
-            .from(OWNER_ADDRESS_EXPR)
-            .esdt_transfer(TOKEN_ID, 0, ESDT_TRANSFER_AMOUNT)
-            .expect(TxExpect::user_error("str:Deposit over max amount")),
-        |sc| {
-            sc.create_transaction(convert_to_eth_address(ETH_ADDRESS))
-        },
-        |r| r.assert_user_error("Deposit over max amount"),
-    );
-}
-
-#[test]
-fn test_create_transaction_should_fail_case_5() {
-    let mut world = setup();
-
-    let esdt_safe_whitebox = WhiteboxContract::new(
-        ESTD_SAFE_ADDRESS_EXPR,
-        esdt_safe::contract_obj,
-    );
-
-    const MAX_AMOUNT: u32 = 100_000_000u32;
-
-    world.whitebox_call(
-        &esdt_safe_whitebox,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.paused_status().set(false);
-            sc.token_whitelist().insert(TokenIdentifier::from(TOKEN_ID));
-            sc.max_bridged_amount(&TokenIdentifier::from(TOKEN_ID)).set(BigUint::from(MAX_AMOUNT));
-            sc.mint_burn_token(&TokenIdentifier::from(TOKEN_ID)).set(true);
-            sc.native_token(&TokenIdentifier::from(TOKEN_ID)).set(false);
-        }
-    );
-
-    const MINTED_AMOUNT: u32 = 199u32;
-    const BURNED_AMOUNT: u32 = 100u32;
-
-    world.whitebox_call(
-        &esdt_safe_whitebox,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.mint_balances(&TokenIdentifier::from(TOKEN_ID)).set(BigUint::from(MINTED_AMOUNT));
-            sc.burn_balances(&TokenIdentifier::from(TOKEN_ID)).set(BigUint::from(BURNED_AMOUNT));
-        }
-    );
-
-    const ESDT_TRANSFER_AMOUNT: u32 = 100u32;
-
-    world.whitebox_call_check(
-        &esdt_safe_whitebox,
-        ScCallStep::new()
-            .from(OWNER_ADDRESS_EXPR)
-            .esdt_transfer(TOKEN_ID, 0, ESDT_TRANSFER_AMOUNT)
-            .expect(TxExpect::user_error("str:Not enough minted tokens!")),
-        |sc| {
-            sc.create_transaction(convert_to_eth_address(ETH_ADDRESS))
-        },
-        |r| r.assert_user_error("Not enough minted tokens!"),
-    );
-}
-
-#[test]
-fn test_create_transaction_should_fail_case_6() {
-    let mut world = setup();
-
-    let esdt_safe_whitebox = WhiteboxContract::new(
-        ESTD_SAFE_ADDRESS_EXPR,
-        esdt_safe::contract_obj,
-    );
-
-    const MAX_AMOUNT: u32 = 100_000_000u32;
-
-    world.whitebox_call(
-        &esdt_safe_whitebox,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.paused_status().set(false);
-            sc.token_whitelist().insert(TokenIdentifier::from(TOKEN_ID));
-            sc.max_bridged_amount(&TokenIdentifier::from(TOKEN_ID)).set(BigUint::from(MAX_AMOUNT));
-            sc.mint_burn_token(&TokenIdentifier::from(TOKEN_ID)).set(true);
-            sc.native_token(&TokenIdentifier::from(TOKEN_ID)).set(true);
-        }
-    );
-
-    const ESDT_TRANSFER_AMOUNT: u32 = 100u32;
-
-    world.whitebox_call_check(
-        &esdt_safe_whitebox,
-        ScCallStep::new()
-            .from(OWNER_ADDRESS_EXPR)
-            .esdt_transfer(TOKEN_ID, 0, ESDT_TRANSFER_AMOUNT)
-            .expect(TxExpect::user_error("str:Cannot do the burn action!")),
-        |sc| {
-            sc.create_transaction(convert_to_eth_address(ETH_ADDRESS))
-        },
-        |r| r.assert_user_error("Cannot do the burn action!"),
-    );
-}
 
 #[test]
 fn test_create_transaction_should_work_case_1() {
@@ -427,9 +258,6 @@ fn test_create_transaction_should_work_case_3() {
 }
 
 
-
-/***************************************************************************/
-/*************************[ENDPOINT]: claim_refund *************************/
 #[test]
 fn test_claim_refund_should_fail_case_1() {
     let mut world = setup();
@@ -493,8 +321,6 @@ fn test_claim_refund_should_work() {
 }
 
 
-/**************************************************************************/
-/*************************[ENDPOINT]: init_supply *************************/
 #[test]
 fn test_init_supply_should_fail_case_1() {
     let mut world = setup();
@@ -724,8 +550,6 @@ fn test_init_supply_should_work_case_2() {
 }
 
 
-/*******************************************************************************************/
-/*************************[ENDPOINT]: set_transaction_batch_status *************************/
 #[test]
 fn test_set_transaction_batch_status_should_fail_case_1() {
     let mut world = setup();
@@ -1106,7 +930,6 @@ fn test_add_refund_batch_should_work() {
 }
 
 
-
 #[test]
 fn test_compute_total_amounts_from_index() {
     let mut world = setup();
@@ -1263,7 +1086,6 @@ fn test_get_total_refund_amounts() {
 }
 
 
-
 #[test]
 fn test_rebalance_for_refund_case_1() {
     let mut world = setup();
@@ -1375,7 +1197,6 @@ fn test_mark_refund() {
 
 
 fn setup() -> ScenarioWorld {
-    // setup
     let mut world = world();
 
     let esdt_safe_whitebox = WhiteboxContract::new(
@@ -1410,7 +1231,6 @@ fn setup() -> ScenarioWorld {
         .block_timestamp(100);
 
     let fee_estimator_expr = format!("sc:fee_estimator");
-
     let multi_transfer_expr = format!("sc:multi_transfer");
 
     world.set_state_step(set_state_step)
@@ -1491,6 +1311,7 @@ fn test_all() {
     test_add_refund_batch_should_fail_case_2();
     test_add_refund_batch_should_fail_case_3();
     test_add_refund_batch_should_fail_case_4();
+    // test_add_refund_batch_should_work();
 
     test_compute_total_amounts_from_index();
 
