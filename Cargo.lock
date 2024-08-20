@@ -371,6 +371,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "esdt_safe"
+version = "0.1.0"
+dependencies = [
+ "esdt-safe",
+ "eth-address",
+ "fee-estimator-module",
+ "max-bridged-amount-module",
+ "multi-transfer-esdt",
+ "multiversx-price-aggregator-sc",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "token-module",
+ "transaction",
+ "tx-batch-module",
+]
+
+[[package]]
 name = "eth-address"
 version = "0.0.0"
 dependencies = [
