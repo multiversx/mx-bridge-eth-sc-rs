@@ -451,6 +451,19 @@ pub trait EsdtSafe:
         #[indexed] recipient: ManagedBuffer,
     );
 
+    #[event("create_transaction_sc_call")]
+    fn create_transaction_sc_call_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_nonce: u64,
+        #[indexed] payment_token: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] to: ManagedBuffer,
+        #[indexed] from: ManagedBuffer,
+        #[indexed] data: ManagedBuffer,
+    );
+
     #[event("addRefundTransactionEvent")]
     fn add_refund_transaction_event(
         &self,
