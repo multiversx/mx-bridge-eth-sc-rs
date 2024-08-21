@@ -218,29 +218,27 @@ pub trait EsdtSafe:
         }
     }
 
-    // endpoints
-
-    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
-    ///
-    /// Every transfer will have a part of the tokens subtracted as fees.
-    /// The fee amount depends on the global eth_tx_gas_limit
-    /// and the current GWEI price, respective to the bridged token
-    ///
-    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
-    #[payable("*")]
-    #[endpoint(createTransaction)]
-    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+    fn create_transaction_common(
+        &self,
+        to: EthAddress<Self::Api>,
+    ) -> (
+        u64,
+        u64,
+        TokenIdentifier<Self::Api>,
+        BigUint<Self::Api>,
+        BigUint<Self::Api>,
+        ManagedBuffer<Self::Api>,
+        ManagedBuffer<Self::Api>,
+    ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_in_whitelist(&payment_token);
-
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
             required_fee < payment_amount,
             "Transaction fees cost more than the entire bridged amount"
         );
-
         self.require_below_max_amount(&payment_token, &payment_amount);
 
         self.accumulated_transaction_fees(&payment_token)
@@ -280,14 +278,69 @@ pub trait EsdtSafe:
                 *burned += &actual_bridged_amount;
             });
         }
+
+        (
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            to.as_managed_buffer().clone(),
+            caller.as_managed_buffer().clone(),
+        )
+    }
+
+    // endpoints
+
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
+    #[payable("*")]
+    #[endpoint(createTransaction)]
+    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+        let (batch_id, tx_nonce, payment_token, actual_bridged_amount, required_fee, to, from) =
+            self.create_transaction_common(to);
         self.create_transaction_event(
             batch_id,
             tx_nonce,
             payment_token,
             actual_bridged_amount,
             required_fee,
-            tx.to,
-            tx.from,
+            to,
+            from,
+        );
+    }
+
+    #[payable("*")]
+    #[endpoint(createTransactionSCCall)]
+    fn create_transaction_sc_call(
+        &self,
+        to: EthAddress<Self::Api>,
+        data: ManagedBuffer<Self::Api>,
+    ) {
+        let (
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            tx_to,
+            tx_from,
+        ) = self.create_transaction_common(to);
+
+        self.create_transaction_sc_call_event(
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            tx_to,
+            tx_from,
+            data,
         );
     }
 
@@ -449,6 +502,19 @@ pub trait EsdtSafe:
         #[indexed] fee: BigUint,
         #[indexed] sender: ManagedBuffer,
         #[indexed] recipient: ManagedBuffer,
+    );
+
+    #[event("createTransactionScCallEvent")]
+    fn create_transaction_sc_call_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_nonce: u64,
+        #[indexed] payment_token: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] to: ManagedBuffer,
+        #[indexed] from: ManagedBuffer,
+        #[indexed] data: ManagedBuffer,
     );
 
     #[event("addRefundTransactionEvent")]
