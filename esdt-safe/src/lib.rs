@@ -451,7 +451,7 @@ pub trait EsdtSafe:
         #[indexed] recipient: ManagedBuffer,
     );
 
-    #[event("create_transaction_sc_call")]
+    #[event("createTransactionScCallEvent")]
     fn create_transaction_sc_call_event(
         &self,
         #[indexed] batch_id: u64,
