@@ -218,6 +218,78 @@ pub trait EsdtSafe:
         }
     }
 
+    fn create_transaction_common(
+        &self,
+        to: EthAddress<Self::Api>,
+    ) -> (
+        u64,
+        u64,
+        TokenIdentifier<Self::Api>,
+        BigUint<Self::Api>,
+        BigUint<Self::Api>,
+        ManagedBuffer<Self::Api>,
+        ManagedBuffer<Self::Api>,
+    ) {
+        require!(self.not_paused(), "Cannot create transaction while paused");
+
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        self.require_token_in_whitelist(&payment_token);
+        let required_fee = self.calculate_required_fee(&payment_token);
+        require!(
+            required_fee < payment_amount,
+            "Transaction fees cost more than the entire bridged amount"
+        );
+        self.require_below_max_amount(&payment_token, &payment_amount);
+
+        self.accumulated_transaction_fees(&payment_token)
+            .update(|fees| *fees += &required_fee);
+
+        let actual_bridged_amount = payment_amount - required_fee.clone();
+        let caller = self.blockchain().get_caller();
+        let tx_nonce = self.get_and_save_next_tx_id();
+        let tx = Transaction {
+            block_nonce: self.blockchain().get_block_nonce(),
+            nonce: tx_nonce,
+            from: caller.as_managed_buffer().clone(),
+            to: to.as_managed_buffer().clone(),
+            token_identifier: payment_token.clone(),
+            amount: actual_bridged_amount.clone(),
+            is_refund_tx: false,
+        };
+
+        let batch_id = self.add_to_batch(tx.clone());
+        if !self.mint_burn_token(&payment_token).get() {
+            self.total_balances(&payment_token).update(|total| {
+                *total += &actual_bridged_amount;
+            });
+        } else {
+            let burn_balances_mapper = self.burn_balances(&payment_token);
+            let mint_balances_mapper = self.mint_balances(&payment_token);
+            if !self.native_token(&payment_token).get() {
+                require!(
+                    mint_balances_mapper.get()
+                        >= &burn_balances_mapper.get() + &actual_bridged_amount,
+                    "Not enough minted tokens!"
+                );
+            }
+            let burn_executed = self.internal_burn(&payment_token, &actual_bridged_amount);
+            require!(burn_executed, "Cannot do the burn action!");
+            burn_balances_mapper.update(|burned| {
+                *burned += &actual_bridged_amount;
+            });
+        }
+
+        (
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            to.as_managed_buffer().clone(),
+            caller.as_managed_buffer().clone(),
+        )
+    }
+
     // endpoints
 
     /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
@@ -280,6 +352,7 @@ pub trait EsdtSafe:
                 *burned += &actual_bridged_amount;
             });
         }
+
         self.create_transaction_event(
             batch_id,
             tx_nonce,
