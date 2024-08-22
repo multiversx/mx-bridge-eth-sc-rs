@@ -302,65 +302,45 @@ pub trait EsdtSafe:
     #[payable("*")]
     #[endpoint(createTransaction)]
     fn create_transaction(&self, to: EthAddress<Self::Api>) {
-        require!(self.not_paused(), "Cannot create transaction while paused");
-
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        self.require_token_in_whitelist(&payment_token);
-
-        let required_fee = self.calculate_required_fee(&payment_token);
-        require!(
-            required_fee < payment_amount,
-            "Transaction fees cost more than the entire bridged amount"
-        );
-
-        self.require_below_max_amount(&payment_token, &payment_amount);
-
-        self.accumulated_transaction_fees(&payment_token)
-            .update(|fees| *fees += &required_fee);
-
-        let actual_bridged_amount = payment_amount - required_fee.clone();
-        let caller = self.blockchain().get_caller();
-        let tx_nonce = self.get_and_save_next_tx_id();
-        let tx = Transaction {
-            block_nonce: self.blockchain().get_block_nonce(),
-            nonce: tx_nonce,
-            from: caller.as_managed_buffer().clone(),
-            to: to.as_managed_buffer().clone(),
-            token_identifier: payment_token.clone(),
-            amount: actual_bridged_amount.clone(),
-            is_refund_tx: false,
-        };
-
-        let batch_id = self.add_to_batch(tx.clone());
-        if !self.mint_burn_token(&payment_token).get() {
-            self.total_balances(&payment_token).update(|total| {
-                *total += &actual_bridged_amount;
-            });
-        } else {
-            let burn_balances_mapper = self.burn_balances(&payment_token);
-            let mint_balances_mapper = self.mint_balances(&payment_token);
-            if !self.native_token(&payment_token).get() {
-                require!(
-                    mint_balances_mapper.get()
-                        >= &burn_balances_mapper.get() + &actual_bridged_amount,
-                    "Not enough minted tokens!"
-                );
-            }
-            let burn_executed = self.internal_burn(&payment_token, &actual_bridged_amount);
-            require!(burn_executed, "Cannot do the burn action!");
-            burn_balances_mapper.update(|burned| {
-                *burned += &actual_bridged_amount;
-            });
-        }
-
+        let (batch_id, tx_nonce, payment_token, actual_bridged_amount, required_fee, to, from) =
+            self.create_transaction_common(to);
         self.create_transaction_event(
             batch_id,
             tx_nonce,
             payment_token,
             actual_bridged_amount,
             required_fee,
-            tx.to,
-            tx.from,
+            to,
+            from,
+        );
+    }
+
+    #[payable("*")]
+    #[endpoint(createTransactionSCCall)]
+    fn create_transaction_sc_call(
+        &self,
+        to: EthAddress<Self::Api>,
+        data: ManagedBuffer<Self::Api>,
+    ) {
+        let (
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            tx_to,
+            tx_from,
+        ) = self.create_transaction_common(to);
+
+        self.create_transaction_sc_call_event(
+            batch_id,
+            tx_nonce,
+            payment_token,
+            actual_bridged_amount,
+            required_fee,
+            tx_to,
+            tx_from,
+            data,
         );
     }
 
