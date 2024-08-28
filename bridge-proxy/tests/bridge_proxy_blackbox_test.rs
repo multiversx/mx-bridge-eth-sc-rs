@@ -418,3 +418,104 @@ fn multiple_deposit_test() {
         .returns(ExpectValue(1_000u64))
         .run();
 }
+
+#[test]
+fn test_lowest_tx_id() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.bridge_proxy_deploy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from(b"fund"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+    let call_data = ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    // Generate 100 transactions
+    let mut transactions = Vec::new();
+    for i in 1..=100 {
+        let eth_tx = EthTransaction {
+            from: EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+            token_id: BRIDGE_TOKEN_ID.into(),
+            amount: BigUint::from(5u64),
+            tx_nonce: i as u64,
+            call_data: ManagedOption::some(call_data.clone()),
+        };
+        transactions.push(eth_tx);
+    }
+
+    // Deposit all transactions
+    for tx in &transactions {
+        test.world
+            .tx()
+            .from(MULTI_TRANSFER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .deposit(tx)
+            .single_esdt(
+                &TokenIdentifier::from(BRIDGE_TOKEN_ID),
+                0u64,
+                &BigUint::from(5u64),
+            )
+            .run();
+    }
+
+    // Check the lowest_tx_id
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .lowest_tx_id()
+        .returns(ExpectValue(1usize))
+        .run();
+
+    // Execute the first 50 transactions
+    for i in 1..=50usize {
+        test.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .execute(i)
+            .run();
+    }
+
+    // Check the lowest_tx_id again
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .lowest_tx_id()
+        .returns(ExpectValue(51usize))
+        .run();
+
+    // Execute transactions 75 to 100
+    for i in 75..=100usize {
+        test.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .execute(i)
+            .run();
+    }
+
+    // Check the lowest_tx_id one last time
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .lowest_tx_id()
+        .returns(ExpectValue(51usize))
+        .run();
+}
+
+
