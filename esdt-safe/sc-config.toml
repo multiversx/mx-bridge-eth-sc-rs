@@ -1,4 +1,13 @@
 [settings]
+main = "main"
+
+[contracts.main]
+name = "esdt-safe"
+
+[contracts.test]
+name = "esdt-safe-test"
+add-unlabelled = false
+add-labels = ["test-only"]
 
 [[proxy]]
 path = "../bridge-proxy/src/esdt_safe_proxy.rs"
