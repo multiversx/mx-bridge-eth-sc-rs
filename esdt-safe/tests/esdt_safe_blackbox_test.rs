@@ -5,6 +5,7 @@ use eth_address::EthAddress;
 use multiversx_sc_scenario::imports::*;
 use transaction::transaction_status::TransactionStatus;
 use transaction::Transaction;
+use tx_batch_module::BatchStatus;
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
@@ -15,7 +16,7 @@ const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer
 
 const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
 const MULTI_TRANSFER_CODE_PATH: MxscPath =
-    MxscPath::new("../multi-transfer/multi-transfer-esdt.mxsc.json");
+    MxscPath::new("../multi-transfer-esdt/multi-transfer-esdt.mxsc.json");
 const TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-123456");
 const NON_WHITELISTED_TOKEN: TestTokenIdentifier =
     TestTokenIdentifier::new("NON-WHITELISTED-123456");
@@ -189,13 +190,13 @@ impl EsdtSafeTestState {
         transfers
     }
 
-    fn single_transaction(
+    fn single_transaction_should_fail(
         &mut self,
         from_address: TestAddress,
         to_address: TestSCAddress,
         token_id: TestTokenIdentifier,
         amount: u64,
-        expected_status: u64,
+        expected_error: &str,
     ) {
         self.world
             .tx()
@@ -208,7 +209,179 @@ impl EsdtSafeTestState {
                 0,
                 &BigUint::from(amount),
             )
-            .with_result(ExpectStatus(expected_status))
+            .returns(ExpectError(4u64, expected_error))
+            .run();
+    }
+
+    fn single_transaction_should_work(
+        &mut self,
+        from_address: TestAddress,
+        to_address: TestSCAddress,
+        token_id: TestTokenIdentifier,
+        amount: u64,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(EthAddress::zero())
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(token_id),
+                0,
+                &BigUint::from(amount),
+            )
+            .returns(ReturnsResult)
+            .run();
+    }
+
+    fn set_transaction_batch_status_should_fail(
+        &mut self,
+        from_address: TestAddress,
+        to_address: TestSCAddress,
+        batch_id: u32,
+        statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
+        expected_status: u64,
+        expected_error: &str,
+    ) {
+        let mut tx = self
+            .world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .set_transaction_batch_status(batch_id, statuses)
+            .returns(ExpectError(expected_status, expected_error))
+            .run();
+    }
+
+    fn set_transaction_batch_status_should_work(
+        &mut self,
+        from_address: TestAddress,
+        to_address: TestSCAddress,
+        batch_id: u32,
+        statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
+    ) {
+        let mut tx = self
+            .world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .set_transaction_batch_status(batch_id, statuses)
+            .returns(ReturnsResult)
+            .run();
+    }
+
+    fn add_refund_batch_tx_multiple_payment_should_fail(
+        &mut self,
+        from_address: TestSCAddress,
+        to_address: TestSCAddress,
+        transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
+        payment: EgldOrMultiEsdtPayment<StaticApi>,
+        expected_status: u64,
+        expected_error: &str,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_refund_batch(transfers)
+            .egld_or_multi_esdt(payment)
+            .returns(ExpectError(expected_status, expected_error))
+            .run();
+    }
+
+    fn add_refund_batch_tx_multiple_payment_should_work(
+        &mut self,
+        from_address: TestSCAddress,
+        to_address: TestSCAddress,
+        transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
+        payment: EgldOrMultiEsdtPayment<StaticApi>,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_refund_batch(transfers)
+            .egld_or_multi_esdt(payment)
+            .returns(ReturnsResult)
+            .run();
+    }
+
+    fn add_refund_batch_tx_single_payment_should_fail(
+        &mut self,
+        from_address: TestSCAddress,
+        to_address: TestSCAddress,
+        transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
+        token_id: TestTokenIdentifier,
+        amount: u64,
+        expected_status: u64,
+        expected_error: &str,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_refund_batch(transfers)
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(token_id),
+                0,
+                &BigUint::from(amount),
+            )
+            .returns(ExpectError(expected_status, expected_error))
+            .run();
+    }
+
+    fn init_supply_should_fail(
+        &mut self,
+        from_address: TestAddress,
+        to_address: TestSCAddress,
+        token_id: TestTokenIdentifier,
+        tx_token_id: TestTokenIdentifier,
+        tx_amount: u64,
+        amount: u64,
+        expected_status: u64,
+        expected_error: &str,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply(token_id, BigUint::from(amount))
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(tx_token_id),
+                0,
+                &BigUint::from(tx_amount),
+            )
+            .returns(ExpectError(expected_status, expected_error))
+            .run();
+    }
+
+    fn init_supply_should_work(
+        &mut self,
+        from_address: TestAddress,
+        to_address: TestSCAddress,
+        token_id: TestTokenIdentifier,
+        tx_token_id: TestTokenIdentifier,
+        tx_amount: u64,
+        amount: u64,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply(token_id, BigUint::from(amount))
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(tx_token_id),
+                0,
+                &BigUint::from(tx_amount),
+            )
             .returns(ReturnsResult)
             .run();
     }
@@ -226,105 +399,42 @@ fn create_transaction_test() {
     let mut state = EsdtSafeTestState::new();
     state.safe_deploy();
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(10_000_000u64),
-        )
-        .with_result(ExpectStatus(4))
-        .returns(ExpectError(4u64, "Cannot create transaction while paused"))
-        .run();
+    state.single_transaction_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        TOKEN_ID,
+        10_000_000u64,
+        "Cannot create transaction while paused",
+    );
 
     state.config_esdtsafe();
     state.set_balances();
 
-    //transaction fees cost more than the entire bridged amount
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(0u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Transaction fees cost more than the entire bridged amount"))
-        .run();
+    state.single_transaction_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        TOKEN_ID,
+        0u64,
+        "Transaction fees cost more than the entire bridged amount",
+    );
 
-    // not enough minted tokens
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(200_000_000_000u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(10u64, "Not enough minted tokens!"))
-        .run();
+    state.single_transaction_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        TOKEN_ID,
+        200_000_000_000u64,
+        "Not enough minted tokens!",
+    );
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(100000000000000u64),
-        )
-        .with_result(ExpectStatus(10))
-        //.with_result(ExpectMessage("insufficient funds"))
-        .run();
+    state.single_transaction_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        NON_WHITELISTED_TOKEN,
+        100u64,
+        "Token not in whitelist",
+    );
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(NON_WHITELISTED_TOKEN),
-            0,
-            &BigUint::from(100u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.with_result(ExpectMessage(expected_error))
-        //.returns(ExpectError(4u64, "Token not whitelisted"))
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(10_000_000u64),
-        )
-        .run();
+    state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10_000_000u64);
 }
 
 #[test]
@@ -335,55 +445,49 @@ fn set_transaction_batch_status_test() {
 
     let mut tx_statuses = MultiValueEncoded::<StaticApi, TransactionStatus>::new();
     tx_statuses.push(TransactionStatus::Executed);
+    let mut tx_multiple_statuses = MultiValueEncoded::<StaticApi, TransactionStatus>::new();
+    tx_multiple_statuses.push(TransactionStatus::Executed);
+    tx_multiple_statuses.push(TransactionStatus::Pending);
     let mut tx_statuses_invalid = MultiValueEncoded::<StaticApi, TransactionStatus>::new();
-    tx_statuses_invalid.push(TransactionStatus::Executed);
     tx_statuses_invalid.push(TransactionStatus::Pending);
 
     state.set_balances();
 
-    state.single_transaction(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10000u64, 0);
+    state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10000u64);
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_transaction_batch_status(5u32, tx_statuses.clone())
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Batches must be processed in order"))
-        .run();
+    state.set_transaction_batch_status_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        5u32,
+        tx_statuses.clone(),
+        4,
+        "Batches must be processed in order",
+    );
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_transaction_batch_status(5u32, tx_statuses_invalid.clone())
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Invalid number of statuses provided"))
-        .run();
+    state.set_transaction_batch_status_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        1u32,
+        tx_multiple_statuses.clone(),
+        4,
+        "Invalid number of statuses provided",
+    );
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_transaction_batch_status(1u32, tx_statuses_invalid.clone())
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Transaction status may only be set to Executed or Rejected"))
-        .run();
+    state.set_transaction_batch_status_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        1u32,
+        tx_statuses_invalid.clone(),
+        4,
+        "Transaction status may only be set to Executed or Rejected",
+    );
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_transaction_batch_status(1u32, tx_statuses)
-        .run();
+    state.set_transaction_batch_status_should_work(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        1u32,
+        tx_statuses.clone(),
+    );
 
     let result = state
         .world
@@ -393,7 +497,7 @@ fn set_transaction_batch_status_test() {
         .get_batch_status(1u64)
         .returns(ReturnsResult)
         .run();
-    //assert_eq!(result, tx_statuses);
+    assert_eq!(result, BatchStatus::AlreadyProcessed);
 }
 
 #[test]
@@ -409,19 +513,17 @@ fn add_refund_batch_test() {
     ];
     let payment = EgldOrMultiEsdtPayment::MultiEsdt(payments.into());
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .add_refund_batch(transfers.clone())
-        .egld_or_multi_esdt(payment.clone())
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Invalid caller"))
-        .run();
+    state.add_refund_batch_tx_multiple_payment_should_fail(
+        ESDT_SAFE_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        transfers.clone(),
+        payment.clone(),
+        4,
+        "Invalid caller",
+    );
 
     let empty_transfers = ManagedVec::<StaticApi, Transaction<StaticApi>>::new();
+
     state
         .world
         .tx()
@@ -429,25 +531,18 @@ fn add_refund_batch_test() {
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .add_refund_batch(empty_transfers)
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Cannot refund with no payments"))
+        .returns(ExpectError(4u64, "Cannot refund with no payments"))
         .run();
 
-    state
-        .world
-        .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .add_refund_batch(transfers.clone())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(ETH_TOKEN_ID),
-            0,
-            &BigUint::from(10u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Token identifiers do not match"))
-        .run();
+    state.add_refund_batch_tx_single_payment_should_fail(
+        MULTI_TRANSFER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        transfers.clone(),
+        ETH_TOKEN_ID,
+        10u64,
+        4,
+        "Token identifiers do not match",
+    );
 
     let payments_invalid = vec![
         EsdtTokenPayment::new(TOKEN_ID.into(), 0, BigUint::from(1_000u64)),
@@ -455,27 +550,20 @@ fn add_refund_batch_test() {
     ];
     let payment_invalid = EgldOrMultiEsdtPayment::MultiEsdt(payments_invalid.into());
 
-    state
-        .world
-        .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .add_refund_batch(transfers.clone())
-        .egld_or_multi_esdt(payment_invalid.clone())
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Amounts do not match"))
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .add_refund_batch(transfers.clone())
-        .egld_or_multi_esdt(payment.clone())
-        .run();
+    state.add_refund_batch_tx_multiple_payment_should_fail(
+        MULTI_TRANSFER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        transfers.clone(),
+        payment_invalid.clone(),
+        4,
+        "Amounts do not match",
+    );
+    state.add_refund_batch_tx_multiple_payment_should_work(
+        MULTI_TRANSFER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        transfers,
+        payment,
+    );
 
     let result = state
         .world
@@ -486,7 +574,21 @@ fn add_refund_batch_test() {
         .returns(ReturnsResult)
         .run();
 
-    //assert_eq!(result, tx_statuses);
+    if let BatchStatus::PartiallyFull {
+        end_block_nonce,
+        tx_ids,
+    } = result
+    {
+        assert!(!tx_ids.is_empty(), "tx_ids should not be empty");
+        let expected_tx_ids = vec![1u64, 2u64];
+        let tx_ids_vec: Vec<u64> = tx_ids.into_iter().collect();
+        assert_eq!(
+            tx_ids_vec, expected_tx_ids,
+            "tx_ids do not match expected values"
+        );
+    } else {
+        panic!("Expected BatchStatus::PartiallyFull, got {:?}", result);
+    }
 }
 
 #[test]
@@ -495,67 +597,65 @@ fn init_supply_test() {
     state.safe_deploy();
     state.config_esdtsafe();
 
-    state
+    state.init_supply_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        NON_WHITELISTED_TOKEN,
+        NATIVE_TOKEN_ID,
+        10_000u64,
+        10_000u64,
+        4u64,
+        "Invalid token ID",
+    );
+
+    state.init_supply_should_fail(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        TOKEN_ID,
+        TOKEN_ID,
+        10_000u64,
+        10_000u64,
+        4u64,
+        "Cannot init for non native tokens",
+    );
+
+    state.init_supply_should_work(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        NATIVE_TOKEN_ID,
+        NATIVE_TOKEN_ID,
+        10_000u64,
+        10_000u64,
+    );
+
+    let total_supply = state
         .world
-        .tx()
-        .from(OWNER_ADDRESS)
+        .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply(NON_WHITELISTED_TOKEN, BigUint::from(10_000u64))
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(NATIVE_TOKEN_ID),
-            0,
-            &BigUint::from(10_000u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Invalid token ID"))
+        .total_balances(NATIVE_TOKEN_ID)
+        .returns(ReturnsResult)
         .run();
 
-    state
+    assert_eq!(
+        total_supply,
+        BigUint::from(10_000u64),
+        "Total supply should be 10,000"
+    );
+    let total_burned = state
         .world
-        .tx()
-        .from(OWNER_ADDRESS)
+        .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply(NATIVE_TOKEN_ID, BigUint::from(1_000u64))
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(NATIVE_TOKEN_ID),
-            0,
-            &BigUint::from(10_000u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Invalid amount))
+        .burn_balances(NATIVE_TOKEN_ID)
+        .returns(ReturnsResult)
         .run();
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply(TOKEN_ID, BigUint::from(10_000u64))
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(10_000u64),
-        )
-        .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Cannot init for non native tokens"))
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply(NATIVE_TOKEN_ID, BigUint::from(10_000u64))
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(NATIVE_TOKEN_ID),
-            0,
-            &BigUint::from(10_000u64),
-        )
-        .run();
+    assert_eq!(
+        total_burned,
+        BigUint::from(0u64),
+        "Total supply should be 0"
+    )
 }
 
 #[test]
@@ -576,31 +676,17 @@ fn claim_refund_test() {
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .claim_refund(TOKEN_ID)
         .with_result(ExpectStatus(4))
-        //.returns(ExpectError(4u64, "Nothing to refund"))
+        .returns(ExpectError(4u64, "Nothing to refund"))
         .run();
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(10_000_000u64),
-        )
-        .run();
+    state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10_000_000u64);
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_transaction_batch_status(1u32, tx_statuses)
-        .run();
+    state.set_transaction_batch_status_should_work(
+        OWNER_ADDRESS,
+        ESDT_SAFE_ADDRESS,
+        1,
+        tx_statuses.clone(),
+    );
 
     let result = state
         .world
@@ -610,6 +696,10 @@ fn claim_refund_test() {
         .get_refund_amounts(OWNER_ADDRESS)
         .returns(ReturnsResult)
         .run();
+
+    let (token_id, amount) = result.into_iter().next().unwrap().into_tuple();
+    assert_eq!(token_id, TokenIdentifier::from(TOKEN_ID));
+    assert_eq!(amount, BigUint::from(10_000_000u64));
 
     let result2 = state
         .world
@@ -621,6 +711,9 @@ fn claim_refund_test() {
         .returns(ReturnsResult)
         .run();
 
+    assert_eq!(token_id, result2.token_identifier);
+    assert_eq!(amount, result2.amount);
+
     let result3 = state
         .world
         .query()
@@ -629,4 +722,5 @@ fn claim_refund_test() {
         .get_refund_amounts(OWNER_ADDRESS)
         .returns(ReturnsResult)
         .run();
+    assert!(result3.is_empty());
 }
