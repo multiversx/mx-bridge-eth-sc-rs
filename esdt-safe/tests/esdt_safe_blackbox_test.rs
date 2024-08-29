@@ -1,3 +1,4 @@
+#![allow(unused)]
 use esdt_safe::*;
 use eth_address::EthAddress;
 
