@@ -578,7 +578,6 @@ fn claim_refund_test() {
         //.returns(ExpectError(4u64, "Nothing to refund"))
         .run();
 
-    //create transaction
     state
         .world
         .tx()
@@ -605,14 +604,11 @@ fn claim_refund_test() {
     let result = state
         .world
         .query()
-        //.from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .get_refund_amounts(OWNER_ADDRESS)
         .returns(ReturnsResult)
         .run();
-
-    println!("result: {:?}", result);
 
     let result2 = state
         .world
@@ -624,8 +620,6 @@ fn claim_refund_test() {
         .returns(ReturnsResult)
         .run();
 
-    println!("result2: {:?}", result2);
-
     let result3 = state
         .world
         .query()
@@ -634,6 +628,4 @@ fn claim_refund_test() {
         .get_refund_amounts(OWNER_ADDRESS)
         .returns(ReturnsResult)
         .run();
-
-    println!("result3: {:?}", result3);
 }
