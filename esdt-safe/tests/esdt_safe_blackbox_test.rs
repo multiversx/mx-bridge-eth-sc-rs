@@ -52,7 +52,7 @@ impl EsdtSafeTestState {
         ];
         world
             .account(MULTI_TRANSFER_ADDRESS)
-            .esdt_roles(ETH_TOKEN_ID.clone(), roles.clone())
+            .esdt_roles(ETH_TOKEN_ID, roles.clone())
             .code(MULTI_TRANSFER_CODE_PATH)
             .nonce(1)
             .esdt_balance(ETH_TOKEN_ID, 1001u64)
@@ -61,7 +61,7 @@ impl EsdtSafeTestState {
 
         world
             .account(ESDT_SAFE_ADDRESS)
-            .esdt_roles(ETH_TOKEN_ID.clone(), roles)
+            .esdt_roles(ETH_TOKEN_ID, roles)
             .code(ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS);
 
@@ -96,7 +96,7 @@ impl EsdtSafeTestState {
         self.world.set_esdt_balance(
             ESDT_SAFE_ADDRESS,
             b"TOKEN-123456",
-            &BigUint::from(10_000_000u64),
+            BigUint::from(10_000_000u64),
         );
         self.world.set_esdt_local_roles(
             ESDT_SAFE_ADDRESS,
