@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           43
+// Endpoints:                           45
 // Async Callback (empty):               1
-// Total number of exported functions:  46
+// Total number of exported functions:  48
 
 #![no_std]
 
@@ -23,6 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
         createTransaction => create_transaction
+        createTransactionSCCall => create_transaction_sc_call
         claimRefund => claim_refund
         initSupply => init_supply
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
@@ -42,6 +43,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokens => get_tokens
         setMultiTransferContractAddress => set_multi_transfer_contract_address
         setTotalBalances => set_total_balances
+        setMintBalances => set_mint_balances
         getAllKnownTokens => token_whitelist
         isNativeToken => native_token
         isMintBurnToken => mint_burn_token
