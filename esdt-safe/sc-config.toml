@@ -4,8 +4,9 @@ main = "main"
 [contracts.main]
 name = "esdt-safe"
 
-[contracts.test]
+[contracts.set_mint_balances]
 name = "esdt-safe-test"
+external-view = true
 add-unlabelled = false
 add-labels = ["test-only"]
 
