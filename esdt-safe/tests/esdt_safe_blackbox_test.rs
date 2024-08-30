@@ -3,6 +3,7 @@ use esdt_safe::*;
 use eth_address::EthAddress;
 
 use multiversx_sc_scenario::imports::*;
+use token_module::TokenModule;
 use transaction::transaction_status::TransactionStatus;
 use transaction::Transaction;
 use tx_batch_module::BatchStatus;
@@ -33,6 +34,7 @@ fn world() -> ScenarioWorld {
 
 struct EsdtSafeTestState {
     world: ScenarioWorld,
+    esdt_safe_whitebox: WhiteboxContract<ContractObj<DebugApi>>,
 }
 
 impl EsdtSafeTestState {
@@ -66,7 +68,13 @@ impl EsdtSafeTestState {
             .code(ESDT_SAFE_CODE_PATH)
             .owner(OWNER_ADDRESS);
 
-        Self { world }
+        let esdt_safe_whitebox =
+            WhiteboxContract::new(ESTD_SAFE_ADDRESS_EXPR, esdt_safe::contract_obj);
+
+        Self {
+            world,
+            esdt_safe_whitebox,
+        }
     }
 
     fn safe_deploy(&mut self) -> &mut Self {
@@ -145,13 +153,14 @@ impl EsdtSafeTestState {
     }
 
     fn set_balances(&mut self) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .set_mint_balances(TOKEN_ID, BigUint::from(MINTED_AMOUNT))
-            .run();
+        self.world.whitebox_call(
+            &self.esdt_safe_whitebox,
+            ScCallStep::new().from(OWNER_ADDRESS),
+            |sc| {
+                sc.mint_balances(&TokenIdentifier::from(TOKEN_ID))
+                    .set(BigUint::from(MINTED_AMOUNT))
+            },
+        );
 
         self.world
             .tx()
