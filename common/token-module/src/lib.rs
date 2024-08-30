@@ -198,8 +198,8 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         }
     }
 
-    #[only_owner]
     #[endpoint(setTotalBalances)]
+    #[label("test-only")]
     fn set_total_balances(&self, token_id: &TokenIdentifier, value: BigUint) {
         self.total_balances(token_id).set_if_empty(value);
     }

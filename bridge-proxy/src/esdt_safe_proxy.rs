@@ -437,38 +437,6 @@ where
             .original_result()
     }
 
-    pub fn set_total_balances<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        value: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setTotalBalances")
-            .argument(&token_id)
-            .argument(&value)
-            .original_result()
-    }
-
-    pub fn set_mint_balances<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        value: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMintBalances")
-            .argument(&token_id)
-            .argument(&value)
-            .original_result()
-    }
-
     pub fn token_whitelist(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>> {

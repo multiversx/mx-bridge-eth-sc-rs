@@ -5,6 +5,7 @@ multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
 pub mod esdt_safe_proxy;
+pub mod esdt_safe_proxy_test_only;
 use core::convert::TryFrom;
 
 use core::ops::Deref;
