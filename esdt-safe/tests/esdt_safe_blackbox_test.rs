@@ -3,6 +3,7 @@ use esdt_safe::*;
 use eth_address::EthAddress;
 
 use multiversx_sc_scenario::imports::*;
+use multiversx_sc_scenario::scenario::tx_to_step::TxToStep;
 use transaction::transaction_status::TransactionStatus;
 use transaction::Transaction;
 use tx_batch_module::BatchStatus;
@@ -435,6 +436,25 @@ fn create_transaction_test() {
     );
 
     state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10_000_000u64);
+
+    let mut scenario = state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(EthAddress::zero())
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
+            0,
+            &BigUint::from(10_000_000u64),
+        );
+    let tx_hash = scenario.tx_to_step().env.data.tx_hash;
+    scenario.with_result(ReturnsResult).run();
+    match tx_hash {
+        Some(tx_hash) => println!("Transaction hash for successful transaction: {:?}", tx_hash),
+        None => println!("No transaction hash found"),
+    }
 }
 
 #[test]
