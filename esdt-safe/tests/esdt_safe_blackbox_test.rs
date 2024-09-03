@@ -1,9 +1,9 @@
 #![allow(unused)]
 use esdt_safe::*;
+use esdt_safe_proxy::EsdtSafeProxyMethods;
 use eth_address::EthAddress;
 
 use multiversx_sc_scenario::imports::*;
-use multiversx_sc_scenario::scenario::tx_to_step::TxToStep;
 use transaction::transaction_status::TransactionStatus;
 use transaction::Transaction;
 use tx_batch_module::BatchStatus;
@@ -14,6 +14,7 @@ const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
 const ESTD_SAFE_ADDRESS_EXPR: &str = "sc:esdt-safe";
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
+const FEE_ESTIMATOR_ADDRESS: TestSCAddress = TestSCAddress::new("fee-estimator");
 
 const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
 const MULTI_TRANSFER_CODE_PATH: MxscPath =
@@ -25,6 +26,7 @@ const NATIVE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ESDT-123"
 const ETH_TX_GAS_LIMIT: u64 = 150_000;
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
 const MINTED_AMOUNT: u64 = 100_000_000_000;
+const ERROR: u64 = 4;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -61,12 +63,6 @@ impl EsdtSafeTestState {
             .esdt_balance(TOKEN_ID, 1000000000u64)
             .owner(OWNER_ADDRESS);
 
-        world
-            .account(ESDT_SAFE_ADDRESS)
-            .esdt_roles(ETH_TOKEN_ID, roles)
-            .code(ESDT_SAFE_CODE_PATH)
-            .owner(OWNER_ADDRESS);
-
         Self { world }
     }
 
@@ -74,43 +70,33 @@ impl EsdtSafeTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .upgrade(
-                ManagedAddress::zero(),
+            .init(
+                FEE_ESTIMATOR_ADDRESS.to_address(),
                 MULTI_TRANSFER_ADDRESS.to_address(),
                 ETH_TX_GAS_LIMIT,
             )
             .code(ESDT_SAFE_CODE_PATH)
+            .new_address(ESDT_SAFE_ADDRESS)
             .run();
 
         self
     }
 
     fn config_esdtsafe(&mut self) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .unpause_endpoint()
-            .run();
-        self.world.set_esdt_balance(
-            ESDT_SAFE_ADDRESS,
-            b"TOKEN-123456",
-            BigUint::from(10_000_000u64),
-        );
+        self.esdt_raw_transction().unpause_endpoint().run();
         self.world.set_esdt_local_roles(
             ESDT_SAFE_ADDRESS,
             b"TOKEN-123456",
             &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
         );
+        self.world.set_esdt_balance(
+            ESDT_SAFE_ADDRESS,
+            b"TOKEN-123456",
+            BigUint::from(10_000_000u64),
+        );
 
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        self.esdt_raw_transction()
             .add_token_to_whitelist(
                 TOKEN_ID,
                 "TOKEN",
@@ -120,11 +106,7 @@ impl EsdtSafeTestState {
             )
             .run();
 
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        self.esdt_raw_transction()
             .add_token_to_whitelist(
                 NATIVE_TOKEN_ID,
                 "NATIVE",
@@ -134,15 +116,13 @@ impl EsdtSafeTestState {
             )
             .run();
 
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        self.esdt_raw_transction()
             .set_multi_transfer_contract_address(OptionalValue::Some(
                 MULTI_TRANSFER_ADDRESS.to_address(),
             ))
             .run();
+
+        // self.esdt_raw_transction().
     }
 
     fn set_balances(&mut self) {
@@ -163,69 +143,25 @@ impl EsdtSafeTestState {
             .run();
     }
 
-    fn multiple_transactions(&mut self) -> ManagedVec<StaticApi, Transaction<StaticApi>> {
-        let eth_tx = Transaction {
-            from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
-            to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
-            amount: BigUint::from(100_000u64),
-            block_nonce: 0u64,
-            nonce: 0u64,
-            token_identifier: TokenIdentifier::from(TOKEN_ID),
-            is_refund_tx: true,
-        };
-
-        let eth_tx2 = Transaction {
-            from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
-            to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
-            amount: BigUint::from(100_000u64),
-            block_nonce: 0u64,
-            nonce: 0u64,
-            token_identifier: TokenIdentifier::from(TOKEN_ID),
-            is_refund_tx: true,
-        };
-
-        let mut transfers: ManagedVec<StaticApi, Transaction<StaticApi>> = ManagedVec::new();
-        transfers.push(eth_tx);
-        transfers.push(eth_tx2);
-
-        transfers
-    }
-
     fn single_transaction_should_fail(
         &mut self,
-        from_address: TestAddress,
-        to_address: TestSCAddress,
         token_id: TestTokenIdentifier,
         amount: u64,
         expected_error: &str,
     ) {
-        self.world
-            .tx()
-            .from(from_address)
-            .to(to_address)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        self.esdt_raw_transction()
             .create_transaction(EthAddress::zero())
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
                 &BigUint::from(amount),
             )
-            .returns(ExpectError(4u64, expected_error))
+            .returns(ExpectError(ERROR, expected_error))
             .run();
     }
 
-    fn single_transaction_should_work(
-        &mut self,
-        from_address: TestAddress,
-        to_address: TestSCAddress,
-        token_id: TestTokenIdentifier,
-        amount: u64,
-    ) {
-        self.world
-            .tx()
-            .from(from_address)
-            .to(to_address)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+    fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
+        self.esdt_raw_transction()
             .create_transaction(EthAddress::zero())
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -359,24 +295,18 @@ impl EsdtSafeTestState {
                 0,
                 &BigUint::from(tx_amount),
             )
-            .returns(ExpectError(expected_status, expected_error))
+            .with_result(ExpectError(expected_status, expected_error))
             .run();
     }
 
     fn init_supply_should_work(
         &mut self,
-        from_address: TestAddress,
-        to_address: TestSCAddress,
         token_id: TestTokenIdentifier,
         tx_token_id: TestTokenIdentifier,
         tx_amount: u64,
         amount: u64,
     ) {
-        self.world
-            .tx()
-            .from(from_address)
-            .to(to_address)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        self.esdt_raw_transction()
             .init_supply(token_id, BigUint::from(amount))
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(tx_token_id),
@@ -385,6 +315,18 @@ impl EsdtSafeTestState {
             )
             .returns(ReturnsResult)
             .run();
+    }
+
+    fn esdt_raw_transction(
+        &mut self,
+        // from_address: TestAddress,
+        // to_address: TestSCAddress,
+    ) -> EsdtSafeProxyMethods<ScenarioEnvExec<'_>, TestAddress, TestSCAddress, ()> {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
     }
 }
 
@@ -401,8 +343,6 @@ fn create_transaction_test() {
     state.safe_deploy();
 
     state.single_transaction_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
         TOKEN_ID,
         10_000_000u64,
         "Cannot create transaction while paused",
@@ -412,49 +352,16 @@ fn create_transaction_test() {
     state.set_balances();
 
     state.single_transaction_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
         TOKEN_ID,
-        0u64,
+        1u64,
         "Transaction fees cost more than the entire bridged amount",
     );
 
-    state.single_transaction_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
-        TOKEN_ID,
-        200_000_000_000u64,
-        "Not enough minted tokens!",
-    );
+    state.single_transaction_should_fail(TOKEN_ID, 200_000_000_000u64, "Not enough minted tokens!");
 
-    state.single_transaction_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
-        NON_WHITELISTED_TOKEN,
-        100u64,
-        "Token not in whitelist",
-    );
+    state.single_transaction_should_fail(NON_WHITELISTED_TOKEN, 100u64, "Token not in whitelist");
 
-    state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10_000_000u64);
-
-    let mut scenario = state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero())
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
-            0,
-            &BigUint::from(10_000_000u64),
-        );
-    let tx_hash = scenario.tx_to_step().env.data.tx_hash;
-    scenario.with_result(ReturnsResult).run();
-    match tx_hash {
-        Some(tx_hash) => println!("Transaction hash for successful transaction: {:?}", tx_hash),
-        None => println!("No transaction hash found"),
-    }
+    state.single_transaction_should_work(TOKEN_ID, 10_000_000u64);
 }
 
 #[test]
@@ -473,7 +380,7 @@ fn set_transaction_batch_status_test() {
 
     state.set_balances();
 
-    state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10000u64);
+    state.single_transaction_should_work(TOKEN_ID, 10000u64);
 
     state.set_transaction_batch_status_should_fail(
         OWNER_ADDRESS,
@@ -526,7 +433,30 @@ fn add_refund_batch_test() {
     state.safe_deploy();
     state.config_esdtsafe();
 
-    let transfers = state.multiple_transactions();
+    let eth_tx = Transaction {
+        from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
+        to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
+        amount: BigUint::from(100_000u64),
+        block_nonce: 0u64,
+        nonce: 0u64,
+        token_identifier: TokenIdentifier::from(TOKEN_ID),
+        is_refund_tx: true,
+    };
+
+    let eth_tx2 = Transaction {
+        from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
+        to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
+        amount: BigUint::from(100_000u64),
+        block_nonce: 0u64,
+        nonce: 0u64,
+        token_identifier: TokenIdentifier::from(TOKEN_ID),
+        is_refund_tx: true,
+    };
+
+    let mut transfers: ManagedVec<StaticApi, Transaction<StaticApi>> = ManagedVec::new();
+    transfers.push(eth_tx);
+    transfers.push(eth_tx2);
+
     let payments = vec![
         EsdtTokenPayment::new(TOKEN_ID.into(), 0, BigUint::from(100_000u64)),
         EsdtTokenPayment::new(TOKEN_ID.into(), 0, BigUint::from(100_000u64)),
@@ -551,7 +481,7 @@ fn add_refund_batch_test() {
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .add_refund_batch(empty_transfers)
-        .returns(ExpectError(4u64, "Cannot refund with no payments"))
+        .returns(ExpectError(ERROR, "Cannot refund with no payments"))
         .run();
 
     state.add_refund_batch_tx_single_payment_should_fail(
@@ -624,7 +554,7 @@ fn init_supply_test() {
         NATIVE_TOKEN_ID,
         10_000u64,
         10_000u64,
-        4u64,
+        ERROR,
         "Invalid token ID",
     );
 
@@ -635,18 +565,11 @@ fn init_supply_test() {
         TOKEN_ID,
         10_000u64,
         10_000u64,
-        4u64,
+        ERROR,
         "Cannot init for non native tokens",
     );
 
-    state.init_supply_should_work(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
-        NATIVE_TOKEN_ID,
-        NATIVE_TOKEN_ID,
-        10_000u64,
-        10_000u64,
-    );
+    state.init_supply_should_work(NATIVE_TOKEN_ID, NATIVE_TOKEN_ID, 10_000u64, 10_000u64);
 
     let total_supply = state
         .world
@@ -696,10 +619,10 @@ fn claim_refund_test() {
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .claim_refund(TOKEN_ID)
         .with_result(ExpectStatus(4))
-        .returns(ExpectError(4u64, "Nothing to refund"))
+        .returns(ExpectError(ERROR, "Nothing to refund"))
         .run();
 
-    state.single_transaction_should_work(OWNER_ADDRESS, ESDT_SAFE_ADDRESS, TOKEN_ID, 10_000_000u64);
+    state.single_transaction_should_work(TOKEN_ID, 10_000_000u64);
 
     state.set_transaction_batch_status_should_work(
         OWNER_ADDRESS,
