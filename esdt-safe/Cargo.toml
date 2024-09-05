@@ -14,6 +14,9 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
+[dependencies.multi-transfer-esdt]
+path = "../multi-transfer-esdt"
+
 [dependencies.fee-estimator-module]
 path = "../common/fee-estimator-module"
 
@@ -27,7 +30,7 @@ path = "../common/tx-batch-module"
 path = "../common/max-bridged-amount-module"
 
 [dependencies.multiversx-price-aggregator-sc]
-version = "=0.52.0"
+path = "../price-aggregator"
 
 [dependencies.multiversx-sc]
 version = "=0.52.3"

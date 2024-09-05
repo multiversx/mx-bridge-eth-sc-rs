@@ -353,7 +353,8 @@ dependencies = [
  "eth-address",
  "fee-estimator-module",
  "max-bridged-amount-module",
- "multiversx-price-aggregator-sc",
+ "multi-transfer-esdt",
+ "multiversx-price-aggregator-sc 0.47.1",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -533,9 +534,7 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 name = "multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
- "bridge-proxy",
  "bridged-tokens-wrapper",
- "esdt-safe",
  "eth-address",
  "max-bridged-amount-module",
  "multiversx-sc",
@@ -565,7 +564,7 @@ dependencies = [
  "fee-estimator-module",
  "max-bridged-amount-module",
  "multi-transfer-esdt",
- "multiversx-price-aggregator-sc",
+ "multiversx-price-aggregator-sc 0.52.0",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -626,6 +625,18 @@ checksum = "b59072fa0624b55ae5ae3fa6bfa91515bbeb4ac440214bc4a509e2c8806d6e9f"
 
 [[package]]
 name = "multiversx-price-aggregator-sc"
+version = "0.47.1"
+dependencies = [
+ "arrayvec",
+ "getrandom 0.2.15",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+ "multiversx-sc-scenario",
+ "rand 0.8.5",
+]
+
+[[package]]
+name = "multiversx-price-aggregator-sc"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ea572ebab3a6addd937cad829076b13e320851503fb6adf1ad66f544b2bf100"
@@ -635,6 +646,15 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "rand 0.8.5",
+]
+
+[[package]]
+name = "multiversx-price-aggregator-sc-meta"
+version = "0.0.0"
+dependencies = [
+ "multiversx-price-aggregator-sc 0.47.1",
+ "multiversx-sc",
+ "multiversx-sc-meta-lib",
 ]
 
 [[package]]

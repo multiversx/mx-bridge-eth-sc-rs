@@ -23,11 +23,11 @@ path = "../common/max-bridged-amount-module"
 [dependencies.bridged-tokens-wrapper]
 path = "../bridged-tokens-wrapper"
 
-[dependencies.bridge-proxy]
-path = "../bridge-proxy"
+# [dependencies.bridge-proxy]
+# path = "../bridge-proxy"
 
-[dependencies.esdt-safe]
-path = "../esdt-safe"
+# [dependencies.esdt-safe]
+# path = "../esdt-safe"
 
 [dependencies.token-module]
 path = "../common/token-module"

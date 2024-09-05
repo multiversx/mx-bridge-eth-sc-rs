@@ -11,5 +11,7 @@ members = [
   "bridged-tokens-wrapper",
   "bridged-tokens-wrapper/meta",
   "test-caller",
-  "test-caller/meta"
+  "test-caller/meta",
+  "price-aggregator",
+  "price-aggregator/meta",
 ]
