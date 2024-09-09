@@ -183,14 +183,14 @@ where
         Arg1: ProxyArg<u64>,
     >(
         self,
-        startIndex: Arg0,
-        endIndex: Arg1,
+        start_index: Arg0,
+        end_index: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("computeTotalAmmountsFromIndex")
-            .argument(&startIndex)
-            .argument(&endIndex)
+            .argument(&start_index)
+            .argument(&end_index)
             .original_result()
     }
 
@@ -209,7 +209,7 @@ where
             .original_result()
     }
 
-    pub fn getTotalRefundAmounts(
+    pub fn get_total_refund_amounts(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
         self.wrapped_tx

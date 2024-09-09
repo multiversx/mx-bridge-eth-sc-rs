@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           70
+// Endpoints:                           68
 // Async Callback (empty):               1
-// Total number of exported functions:  73
+// Total number of exported functions:  71
 
 #![no_std]
 
@@ -38,8 +38,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         clearMapping => clear_mapping
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
-        initSupplyEsdtSafe => init_supply_esdt_safe
-        initSupplyMintBurnEsdtSafe => init_supply_mint_burn_esdt_safe
         pauseProxy => pause_proxy
         unpauseProxy => unpause_proxy
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address

@@ -26,7 +26,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         claimRefund => claim_refund
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
-        getTotalRefundAmounts => getTotalRefundAmounts
+        getTotalRefundAmounts => get_total_refund_amounts
         setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit
         setDefaultPricePerGasUnit => set_default_price_per_gas_unit
