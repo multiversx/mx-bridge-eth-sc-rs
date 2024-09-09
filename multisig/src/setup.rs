@@ -161,6 +161,33 @@ pub trait SetupModule:
     }
 
     #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupplyEsdtSafe)]
+    fn init_supply_esdt_safe(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply(token_id, amount)
+            .single_esdt(&payment_token, 0, &payment_amount) // enforce only single FT transfer
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(initSupplyMintBurnEsdtSafe)]
+    fn init_supply_mint_burn_esdt_safe(&self, token_id: TokenIdentifier, mint_amount: BigUint, burn_amount: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply_mint_burn(token_id, mint_amount, burn_amount)
+            .sync_call();
+    }
+    
+    #[only_owner]
     #[endpoint(pauseProxy)]
     fn pause_proxy(&self) {
         let proxy_addr = self.proxy_address().get();
