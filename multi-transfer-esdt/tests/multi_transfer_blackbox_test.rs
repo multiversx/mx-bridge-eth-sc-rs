@@ -316,6 +316,13 @@ impl MultiTransferTestState {
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy_test_only::EsdtSafeProxy)
+            .set_mint_balances(TOKEN_ID, BigUint::from(600_000u64))
+            .run();
     }
 
     fn single_transaction_should_fail(
@@ -754,15 +761,6 @@ fn esdt_safe_create_transaction() {
 
     state.config_esdtsafe();
 
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy_test_only::EsdtSafeProxy)
-        .set_mint_balances(TOKEN_ID, BigUint::from(600_000u64))
-        .run();
-
     state.single_transaction_should_fail(
         OWNER_ADDRESS,
         ESDT_SAFE_ADDRESS,
@@ -1077,7 +1075,7 @@ fn claim_refund_test() {
 
     let (token_id, amount) = result.into_iter().next().unwrap().into_tuple();
     assert_eq!(token_id, TokenIdentifier::from(TOKEN_ID));
-    assert_eq!(amount, BigUint::from(10_000_000u64));
+    assert_eq!(amount, BigUint::from(10_000u64));
 
     let result2 = state
         .world
