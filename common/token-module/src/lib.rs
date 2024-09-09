@@ -97,7 +97,9 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
                 require!(native_token, "Only native tokens can be stored!");
                 require!(mint_balance == &BigUint::zero(), "Stored tokens must have 0 mint balance!");
                 require!(burn_balance == &BigUint::zero(), "Stored tokens must have 0 burn balance!");
-                self.init_supply(token_id, total_balance);
+                if total_balance > &BigUint::zero() {
+                    self.init_supply(token_id, total_balance);
+                }
             }
         }
     }
