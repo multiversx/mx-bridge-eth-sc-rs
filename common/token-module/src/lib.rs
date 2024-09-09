@@ -65,27 +65,41 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     }
 
     #[only_owner]
+    #[payable("*")]
     #[endpoint(addTokenToWhitelist)]
     fn add_token_to_whitelist(
         &self,
-        token_id: TokenIdentifier,
+        token_id: &TokenIdentifier,
         ticker: ManagedBuffer,
         mint_burn_token: bool,
         native_token: bool,
+        total_balance: &BigUint,
+        mint_balance: &BigUint,
+        burn_balance: &BigUint,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
-        self.token_ticker(&token_id).set(&ticker);
+        self.token_ticker(token_id).set(&ticker);
 
         if let OptionalValue::Some(default_price_per_gas_unit) = opt_default_price_per_gas_unit {
-            self.default_price_per_gas_unit(&token_id)
+            self.default_price_per_gas_unit(token_id)
                 .set(&default_price_per_gas_unit);
         }
-        if !mint_burn_token {
-            require!(native_token, "Only native tokens can be stored!");
-        }
-        self.mint_burn_token(&token_id).set(mint_burn_token);
-        self.native_token(&token_id).set(native_token);
+        self.mint_burn_token(token_id).set(mint_burn_token);
+        self.native_token(token_id).set(native_token);
         let _ = self.token_whitelist().insert(token_id.clone());
+        match mint_burn_token {
+            true => {
+                require!(total_balance == &BigUint::zero(), "Mint-burn tokens must have 0 total balance!");
+                require!(self.call_value().all_esdt_transfers().is_empty(), "No payment required for mint burn tokens!");
+                self.init_supply_mint_burn(token_id, mint_balance, burn_balance);
+            }
+            false => {
+                require!(native_token, "Only native tokens can be stored!");
+                require!(mint_balance == &BigUint::zero(), "Stored tokens must have 0 mint balance!");
+                require!(burn_balance == &BigUint::zero(), "Stored tokens must have 0 burn balance!");
+                self.init_supply(token_id, total_balance);
+            }
+        }
     }
 
     #[only_owner]
@@ -149,6 +163,33 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         true
     }
 
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupply)]
+    fn init_supply(&self, token_id: &TokenIdentifier, amount: &BigUint) {
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        require!(token_id == &payment_token, "Invalid token ID");
+        require!(amount == &payment_amount, "Invalid amount");
+
+        self.require_token_in_whitelist(token_id);
+        require!(!self.mint_burn_token(token_id).get(), "Cannot init for non mintable/burnable tokens");
+        require!(self.native_token(token_id).get(), "Only native tokens can be stored!");
+
+        self.total_balances(token_id).update(|total| {
+            *total += amount;
+        });
+    }
+
+    #[only_owner]
+    #[endpoint(initSupplyMintBurn)]
+    fn init_supply_mint_burn(&self, token_id: &TokenIdentifier, mint_amount: &BigUint, burn_amount: &BigUint) {
+        self.require_token_in_whitelist(token_id);
+        require!(self.mint_burn_token(token_id).get(), "Cannot init for non mintable/burnable tokens");
+
+        self.mint_balances(token_id).set(mint_amount);
+        self.burn_balances(token_id).set(burn_amount);
+    }
+
     // private
 
     fn internal_mint(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
@@ -196,12 +237,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
             }
             OptionalValue::None => self.multi_transfer_contract_address().clear(),
         }
-    }
-
-    #[only_owner]
-    #[endpoint(setTotalBalances)]
-    fn set_total_balances(&self, token_id: &TokenIdentifier, value: BigUint) {
-        self.total_balances(token_id).set_if_empty(value);
     }
 
     // storage

@@ -390,12 +390,30 @@ where
         self,
         token_id: Arg0,
         amount: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("initSupplyEsdtSafe")
             .argument(&token_id)
             .argument(&amount)
+            .original_result()
+    }
+
+    pub fn init_supply_mint_burn_esdt_safe<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        mint_amount: Arg1,
+        burn_amount: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initSupplyMintBurnEsdtSafe")
+            .argument(&token_id)
+            .argument(&mint_amount)
+            .argument(&burn_amount)
             .original_result()
     }
 

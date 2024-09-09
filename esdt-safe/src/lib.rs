@@ -314,33 +314,6 @@ pub trait EsdtSafe:
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
-    #[only_owner]
-    #[payable("*")]
-    #[endpoint(initSupply)]
-    fn init_supply(&self, token_id: TokenIdentifier, amount: BigUint) {
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        require!(token_id == payment_token, "Invalid token ID");
-        require!(amount == payment_amount, "Invalid amount");
-
-        self.require_token_in_whitelist(&token_id);
-        require!(!self.mint_burn_token(&token_id).get(), "Cannot init for non mintable/burnable tokens");
-        require!(self.native_token(&token_id).get(), "Only native tokens can be stored!");
-
-        self.total_balances(&token_id).update(|total| {
-            *total += &amount;
-        });
-    }
-
-    #[only_owner]
-    #[endpoint(initSupplyMintBurn)]
-    fn init_supply_mint_burn(&self, token_id: TokenIdentifier, mint_amount: BigUint, burn_amount: BigUint) {
-        self.require_token_in_whitelist(&token_id);
-        require!(self.mint_burn_token(&token_id).get(), "Cannot init for non mintable/burnable tokens");
-
-        self.mint_balances(&token_id).set(mint_amount);
-        self.burn_balances(&token_id).set(burn_amount);
-    }
-
     #[view(computeTotalAmmountsFromIndex)]
     fn compute_total_amounts_from_index(
         &self,
