@@ -1,4 +1,20 @@
 [settings]
 
 [[proxy]]
-path = "../multisig/src/multisig_proxy.rs"
+path = "src/multisig_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "upgrade",
+    "stake",
+    "proposeEsdtSafeSetCurrentTransactionBatchStatus",
+    "unpause",
+    "getAllStakedRelayers",
+    "proposeMultiTransferEsdtBatch",
+    "sign",
+    "performAction",
+    "wasTransferActionProposed",
+    "getActionIdForTransferBatch",
+    "getCurrentRefundBatch",
+    "moveRefundBatchToSafeFromChildContract",
+]
