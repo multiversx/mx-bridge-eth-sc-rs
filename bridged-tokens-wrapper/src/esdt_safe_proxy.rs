@@ -178,34 +178,19 @@ where
             .original_result()
     }
 
-    pub fn init_supply<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        amount: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("initSupply")
-            .argument(&token_id)
-            .argument(&amount)
-            .original_result()
-    }
-
     pub fn compute_total_amounts_from_index<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<u64>,
     >(
         self,
-        start_index: Arg0,
-        end_index: Arg1,
+        startIndex: Arg0,
+        endIndex: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("computeTotalAmmountsFromIndex")
-            .argument(&start_index)
-            .argument(&end_index)
+            .argument(&startIndex)
+            .argument(&endIndex)
             .original_result()
     }
 
@@ -224,7 +209,7 @@ where
             .original_result()
     }
 
-    pub fn get_total_refund_amounts(
+    pub fn getTotalRefundAmounts(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
         self.wrapped_tx
@@ -360,22 +345,30 @@ where
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<bool>,
         Arg3: ProxyArg<bool>,
-        Arg4: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+        Arg4: ProxyArg<BigUint<Env::Api>>,
+        Arg5: ProxyArg<BigUint<Env::Api>>,
+        Arg6: ProxyArg<BigUint<Env::Api>>,
+        Arg7: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
     >(
         self,
         token_id: Arg0,
         ticker: Arg1,
         mint_burn_token: Arg2,
         native_token: Arg3,
-        opt_default_price_per_gas_unit: Arg4,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        total_balance: Arg4,
+        mint_balance: Arg5,
+        burn_balance: Arg6,
+        opt_default_price_per_gas_unit: Arg7,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .payment(NotPayable)
             .raw_call("addTokenToWhitelist")
             .argument(&token_id)
             .argument(&ticker)
             .argument(&mint_burn_token)
             .argument(&native_token)
+            .argument(&total_balance)
+            .argument(&mint_balance)
+            .argument(&burn_balance)
             .argument(&opt_default_price_per_gas_unit)
             .original_result()
     }
@@ -409,6 +402,40 @@ where
             .original_result()
     }
 
+    pub fn init_supply<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("initSupply")
+            .argument(&token_id)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn init_supply_mint_burn<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        mint_amount: Arg1,
+        burn_amount: Arg2,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initSupplyMintBurn")
+            .argument(&token_id)
+            .argument(&mint_amount)
+            .argument(&burn_amount)
+            .original_result()
+    }
+
     pub fn set_multi_transfer_contract_address<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
@@ -419,22 +446,6 @@ where
             .payment(NotPayable)
             .raw_call("setMultiTransferContractAddress")
             .argument(&opt_new_address)
-            .original_result()
-    }
-
-    pub fn set_total_balances<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        value: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setTotalBalances")
-            .argument(&token_id)
-            .argument(&value)
             .original_result()
     }
 
