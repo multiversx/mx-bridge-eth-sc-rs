@@ -314,42 +314,14 @@ pub trait EsdtSafe:
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
-    #[only_owner]
-    #[payable("*")]
-    #[endpoint(initSupply)]
-    fn init_supply(&self, token_id: TokenIdentifier, amount: BigUint) {
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        require!(token_id == payment_token, "Invalid token ID");
-        require!(amount == payment_amount, "Invalid amount");
-
-        self.require_token_in_whitelist(&token_id);
-        if !self.mint_burn_token(&token_id).get() {
-            self.total_balances(&token_id).update(|total| {
-                *total += &amount;
-            });
-            return;
-        }
-
-        require!(
-            self.native_token(&token_id).get(),
-            "Cannot init for non native tokens"
-        );
-
-        let burn_executed = self.internal_burn(&token_id, &amount);
-        require!(burn_executed, "Cannot do the burn action!");
-        self.burn_balances(&token_id).update(|burned| {
-            *burned += &amount;
-        });
-    }
-
     #[view(computeTotalAmmountsFromIndex)]
     fn compute_total_amounts_from_index(
         &self,
-        startIndex: u64,
-        endIndex: u64,
+        start_index: u64,
+        end_index: u64,
     ) -> PaymentsVec<Self::Api> {
         let mut all_payments = PaymentsVec::new();
-        for index in startIndex..endIndex {
+        for index in start_index..end_index {
             let last_batch = self.pending_batches(index);
             for tx in last_batch.iter() {
                 let new_payment = EsdtTokenPayment::new(tx.token_identifier, 0, tx.amount);
@@ -398,7 +370,7 @@ pub trait EsdtSafe:
     // views
 
     #[view(getTotalRefundAmounts)]
-    fn getTotalRefundAmounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
+    fn get_total_refund_amounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = MultiValueEncoded::new();
         for token_id in self.token_whitelist().iter() {
             let amount = self.total_refund_amount(&token_id).get();
