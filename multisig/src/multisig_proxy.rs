@@ -383,6 +383,22 @@ where
             .original_result()
     }
 
+    pub fn init_supply_esdt_safe<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("initSupplyEsdtSafe")
+            .argument(&token_id)
+            .argument(&amount)
+            .original_result()
+    }
+
     pub fn pause_proxy(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
