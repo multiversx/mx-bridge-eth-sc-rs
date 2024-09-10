@@ -12,7 +12,8 @@ add-endpoints = [
     "setMaxBridgedAmount",
     "setMaxTxBatchSize",
     "setMaxTxBatchBlockDuration",
-    "setWrappingContractAddress"
+    "setWrappingContractAddress",
+    "setBridgeProxyContractAddress"
 ]
 
 [[proxy]]

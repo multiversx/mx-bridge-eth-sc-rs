@@ -100,6 +100,19 @@ where
             .original_result()
     }
 
+    pub fn set_bridge_proxy_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_new_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBridgeProxyContractAddress")
+            .argument(&opt_new_address)
+            .original_result()
+    }
+
     pub fn set_esdt_safe_contract_address<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
