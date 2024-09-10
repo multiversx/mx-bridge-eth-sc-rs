@@ -1,8 +1,4 @@
 [settings]
-main = "main"
-
-[contracts.main]
-name = "esdt-safe"
 
 [[proxy]]
 path = "../bridge-proxy/src/esdt_safe_proxy.rs"
