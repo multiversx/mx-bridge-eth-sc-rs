@@ -16,6 +16,16 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
+pub struct TransactionDetails<Api: ManagedTypeApi> {
+    pub batch_id: u64,
+    pub tx_nonce: u64,
+    pub payment_token: TokenIdentifier<Api>,
+    pub actual_bridged_amount: BigUint<Api>,
+    pub required_fee: BigUint<Api>,
+    pub to_address: ManagedBuffer<Api>,
+    pub caller_address: ManagedBuffer<Api>,
+}
+
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
     fee_estimator_module::FeeEstimatorModule
@@ -221,15 +231,7 @@ pub trait EsdtSafe:
     fn create_transaction_common(
         &self,
         to: EthAddress<Self::Api>,
-    ) -> (
-        u64,
-        u64,
-        TokenIdentifier<Self::Api>,
-        BigUint<Self::Api>,
-        BigUint<Self::Api>,
-        ManagedBuffer<Self::Api>,
-        ManagedBuffer<Self::Api>,
-    ) {
+    ) -> TransactionDetails<Self::Api> {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
@@ -278,16 +280,15 @@ pub trait EsdtSafe:
                 *burned += &actual_bridged_amount;
             });
         }
-
-        (
+        TransactionDetails {
             batch_id,
             tx_nonce,
             payment_token,
             actual_bridged_amount,
             required_fee,
-            to.as_managed_buffer().clone(),
-            caller.as_managed_buffer().clone(),
-        )
+            to_address: to.as_managed_buffer().clone(),
+            caller_address: caller.as_managed_buffer().clone(),
+        }
     }
 
     // endpoints
@@ -302,16 +303,21 @@ pub trait EsdtSafe:
     #[payable("*")]
     #[endpoint(createTransaction)]
     fn create_transaction(&self, to: EthAddress<Self::Api>) {
-        let (batch_id, tx_nonce, payment_token, actual_bridged_amount, required_fee, to, from) =
-            self.create_transaction_common(to);
+        let transaction_details = self.create_transaction_common(to);
+        let token_nonce = self.call_value().single_esdt().token_nonce;
+        require!(
+            token_nonce == 0,
+            "Only fungible tokens are accepted for this transaction"
+        );
+
         self.create_transaction_event(
-            batch_id,
-            tx_nonce,
-            payment_token,
-            actual_bridged_amount,
-            required_fee,
-            to,
-            from,
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.to_address,
+            transaction_details.caller_address,
         );
     }
 
@@ -322,24 +328,21 @@ pub trait EsdtSafe:
         to: EthAddress<Self::Api>,
         data: ManagedBuffer<Self::Api>,
     ) {
-        let (
-            batch_id,
-            tx_nonce,
-            payment_token,
-            actual_bridged_amount,
-            required_fee,
-            tx_to,
-            tx_from,
-        ) = self.create_transaction_common(to);
+        let transaction_details = self.create_transaction_common(to);
+        let token_nonce = self.call_value().single_esdt().token_nonce;
+        require!(
+            token_nonce == 0,
+            "Only fungible tokens are accepted for this transaction"
+        );
 
         self.create_transaction_sc_call_event(
-            batch_id,
-            tx_nonce,
-            payment_token,
-            actual_bridged_amount,
-            required_fee,
-            tx_to,
-            tx_from,
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.to_address,
+            transaction_details.caller_address,
             data,
         );
     }
