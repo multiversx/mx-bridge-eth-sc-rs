@@ -2,3 +2,29 @@
 
 [[proxy]]
 path = "../multi-transfer-esdt/src/bridged_tokens_wrapper_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "wrapTokens",
+    "init",
+    "unpause",
+]
+
+[[proxy]]
+path = "../multisig/src/bridged_tokens_wrapper_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "unpause",
+]
+
+[[proxy]]
+path = "../bridge-proxy/src/bridged_tokens_wrapper_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "unpause",
+    "whitelistToken",
+    "addWrappedToken",
+    "depositLiquidity",
+    "setEsdtSafeContractAddress"
+]
