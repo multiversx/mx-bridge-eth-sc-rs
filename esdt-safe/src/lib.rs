@@ -235,6 +235,11 @@ pub trait EsdtSafe:
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        let token_nonce = self.call_value().single_esdt().token_nonce;
+        require!(
+            token_nonce == 0,
+            "Only fungible tokens are accepted for this transaction"
+        );
         self.require_token_in_whitelist(&payment_token);
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
@@ -304,11 +309,6 @@ pub trait EsdtSafe:
     #[endpoint(createTransaction)]
     fn create_transaction(&self, to: EthAddress<Self::Api>) {
         let transaction_details = self.create_transaction_common(to);
-        let token_nonce = self.call_value().single_esdt().token_nonce;
-        require!(
-            token_nonce == 0,
-            "Only fungible tokens are accepted for this transaction"
-        );
 
         self.create_transaction_event(
             transaction_details.batch_id,
@@ -329,11 +329,6 @@ pub trait EsdtSafe:
         data: ManagedBuffer<Self::Api>,
     ) {
         let transaction_details = self.create_transaction_common(to);
-        let token_nonce = self.call_value().single_esdt().token_nonce;
-        require!(
-            token_nonce == 0,
-            "Only fungible tokens are accepted for this transaction"
-        );
 
         self.create_transaction_sc_call_event(
             transaction_details.batch_id,
