@@ -23,6 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
         createTransaction => create_transaction
+        createTransactionSCCall => create_transaction_sc_call
         claimRefund => claim_refund
         initSupply => init_supply
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
@@ -41,7 +42,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         removeTokenFromWhitelist => remove_token_from_whitelist
         getTokens => get_tokens
         setMultiTransferContractAddress => set_multi_transfer_contract_address
-        setTotalBalances => set_total_balances
         getAllKnownTokens => token_whitelist
         isNativeToken => native_token
         isMintBurnToken => mint_burn_token
