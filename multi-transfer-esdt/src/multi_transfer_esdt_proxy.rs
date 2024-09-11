@@ -9,23 +9,23 @@
 
 use multiversx_sc::proxy_imports::*;
 
-pub struct BridgedTokensWrapperProxy;
+pub struct MultiTransferEsdtProxy;
 
-impl<Env, From, To, Gas> TxProxyTrait<Env, From, To, Gas> for BridgedTokensWrapperProxy
+impl<Env, From, To, Gas> TxProxyTrait<Env, From, To, Gas> for MultiTransferEsdtProxy
 where
     Env: TxEnv,
     From: TxFrom<Env>,
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    type TxProxyMethods = BridgedTokensWrapperProxyMethods<Env, From, To, Gas>;
+    type TxProxyMethods = MultiTransferEsdtProxyMethods<Env, From, To, Gas>;
 
     fn proxy_methods(self, tx: Tx<Env, From, To, (), Gas, (), ()>) -> Self::TxProxyMethods {
-        BridgedTokensWrapperProxyMethods { wrapped_tx: tx }
+        MultiTransferEsdtProxyMethods { wrapped_tx: tx }
     }
 }
 
-pub struct BridgedTokensWrapperProxyMethods<Env, From, To, Gas>
+pub struct MultiTransferEsdtProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     From: TxFrom<Env>,
@@ -36,7 +36,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, Gas> BridgedTokensWrapperProxyMethods<Env, From, (), Gas>
+impl<Env, From, Gas> MultiTransferEsdtProxyMethods<Env, From, (), Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
@@ -54,7 +54,7 @@ where
 }
 
 #[rustfmt::skip]
-impl<Env, From, To, Gas> BridgedTokensWrapperProxyMethods<Env, From, To, Gas>
+impl<Env, From, To, Gas> MultiTransferEsdtProxyMethods<Env, From, To, Gas>
 where
     Env: TxEnv,
     Env::Api: VMApi,
@@ -62,46 +62,54 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn add_wrapped_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<u32>,
+    pub fn batch_transfer_esdt_token<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::EthTransaction<Env::Api>>>,
     >(
         self,
-        universal_bridged_token_ids: Arg0,
-        num_decimals: Arg1,
+        batch_id: Arg0,
+        transfers: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("addWrappedToken")
-            .argument(&universal_bridged_token_ids)
-            .argument(&num_decimals)
+            .raw_call("batchTransferEsdtToken")
+            .argument(&batch_id)
+            .argument(&transfers)
             .original_result()
     }
 
-    pub fn whitelist_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<u32>,
-        Arg2: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
+    pub fn move_refund_batch_to_safe(
         self,
-        chain_specific_token_id: Arg0,
-        chain_specific_token_decimals: Arg1,
-        universal_bridged_token_ids: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("whitelistToken")
-            .argument(&chain_specific_token_id)
-            .argument(&chain_specific_token_decimals)
-            .argument(&universal_bridged_token_ids)
+            .raw_call("moveRefundBatchToSafe")
             .original_result()
     }
 
-    pub fn deposit_liquidity(
+    pub fn set_wrapping_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
         self,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        opt_new_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
-            .raw_call("depositLiquidity")
+            .payment(NotPayable)
+            .raw_call("setWrappingContractAddress")
+            .argument(&opt_new_address)
+            .original_result()
+    }
+
+    pub fn set_bridge_proxy_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_new_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBridgeProxyContractAddress")
+            .argument(&opt_new_address)
             .original_result()
     }
 
@@ -118,12 +126,12 @@ where
             .original_result()
     }
 
-    pub fn unpause_endpoint(
+    pub fn get_first_batch_any_status(
         self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue6<u64, u64, ManagedBuffer<Env::Api>, ManagedBuffer<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("unpause")
+            .raw_call("getFirstBatchAnyStatus")
             .original_result()
     }
 }
