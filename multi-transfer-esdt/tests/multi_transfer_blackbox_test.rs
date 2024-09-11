@@ -375,7 +375,6 @@ impl MultiTransferTestState {
         transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
         token_id: TestTokenIdentifier,
         amount: u64,
-        expected_status: u64,
         expected_error: &str,
     ) {
         self.world
@@ -389,7 +388,7 @@ impl MultiTransferTestState {
                 0,
                 &BigUint::from(amount),
             )
-            .returns(ExpectError(expected_status, expected_error))
+            .returns(ExpectError(ERROR, expected_error))
             .run();
     }
 
@@ -894,7 +893,6 @@ fn add_refund_batch_test() {
         transfers.clone(),
         BRIDGE_TOKEN_ID,
         10u64,
-        ERROR,
         "Token identifiers do not match",
     );
 
