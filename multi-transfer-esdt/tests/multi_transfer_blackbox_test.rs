@@ -868,13 +868,13 @@ fn add_refund_batch_test() {
     state.world.set_esdt_balance(
         MULTI_TRANSFER_ADDRESS,
         b"TOKEN-123456",
-        &BigUint::from(10_000u64),
+        BigUint::from(10_000u64),
     );
 
     state.world.set_esdt_balance(
         MULTI_TRANSFER_ADDRESS,
         b"BRIDGE-123456",
-        &BigUint::from(10_000u64),
+        BigUint::from(10_000u64),
     );
 
     state
