@@ -114,8 +114,6 @@ impl EsdtSafeTestState {
 
     fn init_supply_should_fail(
         &mut self,
-        from_address: TestAddress,
-        to_address: TestSCAddress,
         token_id: TestTokenIdentifier,
         tx_token_id: TestTokenIdentifier,
         tx_amount: u64,
@@ -125,8 +123,8 @@ impl EsdtSafeTestState {
     ) {
         self.world
             .tx()
-            .from(from_address)
-            .to(to_address)
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init_supply(token_id, BigUint::from(amount))
             .egld_or_single_esdt(
@@ -181,8 +179,6 @@ fn init_supply_test() {
     state.config_esdtsafe();
 
     state.init_supply_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
         NON_WHITELISTED_TOKEN,
         NATIVE_TOKEN_ID,
         10_000u64,
@@ -192,8 +188,6 @@ fn init_supply_test() {
     );
 
     state.init_supply_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
         TOKEN_ID,
         TOKEN_ID,
         10_000u64,
@@ -203,8 +197,6 @@ fn init_supply_test() {
     );
 
     state.init_supply_should_fail(
-        OWNER_ADDRESS,
-        ESDT_SAFE_ADDRESS,
         TOKEN_WITHOUT_BURN_ROLE,
         TOKEN_WITHOUT_BURN_ROLE,
         1_000u64,

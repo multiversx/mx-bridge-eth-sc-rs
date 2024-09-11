@@ -332,8 +332,7 @@ impl MultiTransferTestState {
         expected_status: u64,
         expected_error: &str,
     ) {
-        let mut tx = self
-            .esdt_raw_transaction()
+        self.esdt_raw_transaction()
             .set_transaction_batch_status(batch_id, statuses)
             .returns(ExpectError(expected_status, expected_error))
             .run();
@@ -344,8 +343,7 @@ impl MultiTransferTestState {
         batch_id: u32,
         statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
     ) {
-        let mut tx = self
-            .esdt_raw_transaction()
+        self.esdt_raw_transaction()
             .set_transaction_batch_status(batch_id, statuses)
             .returns(ReturnsResult)
             .run();
@@ -357,7 +355,6 @@ impl MultiTransferTestState {
         to_address: TestSCAddress,
         transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
         payment: EgldOrMultiEsdtPayment<StaticApi>,
-        expected_status: u64,
         expected_error: &str,
     ) {
         self.world
@@ -367,7 +364,7 @@ impl MultiTransferTestState {
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .add_refund_batch(transfers)
             .egld_or_multi_esdt(payment)
-            .returns(ExpectError(expected_status, expected_error))
+            .returns(ExpectError(ERROR, expected_error))
             .run();
     }
 
@@ -787,21 +784,21 @@ fn set_transaction_batch_status_test() {
     state.set_transaction_batch_status_should_fail(
         5u32,
         tx_statuses.clone(),
-        4,
+        ERROR,
         "Batches must be processed in order",
     );
 
     state.set_transaction_batch_status_should_fail(
         1u32,
         tx_multiple_statuses.clone(),
-        4,
+        ERROR,
         "Invalid number of statuses provided",
     );
 
     state.set_transaction_batch_status_should_fail(
         1u32,
         tx_statuses_invalid.clone(),
-        4,
+        ERROR,
         "Transaction status may only be set to Executed or Rejected",
     );
 
@@ -864,7 +861,6 @@ fn add_refund_batch_test() {
         ESDT_SAFE_ADDRESS,
         transfers.clone(),
         payment.clone(),
-        4,
         "Invalid caller",
     );
 
@@ -898,7 +894,7 @@ fn add_refund_batch_test() {
         transfers.clone(),
         BRIDGE_TOKEN_ID,
         10u64,
-        4,
+        ERROR,
         "Token identifiers do not match",
     );
 
@@ -913,7 +909,6 @@ fn add_refund_batch_test() {
         ESDT_SAFE_ADDRESS,
         transfers.clone(),
         payment_invalid.clone(),
-        4,
         "Amounts do not match",
     );
 
@@ -971,7 +966,7 @@ fn claim_refund_test() {
     state
         .esdt_raw_transaction()
         .claim_refund(TOKEN_ID)
-        .with_result(ExpectStatus(4))
+        .with_result(ExpectStatus(ERROR))
         .returns(ExpectError(ERROR, "Nothing to refund"))
         .run();
 
