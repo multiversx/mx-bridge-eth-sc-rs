@@ -9,7 +9,7 @@ pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper_proxy;
 pub mod esdt_safe_proxy;
 pub mod esdt_safe_proxy_test_only;
-pub mod multi_transfer_proxy;
+pub mod multi_transfer_esdt_proxy;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;

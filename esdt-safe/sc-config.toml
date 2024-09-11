@@ -1,9 +1,52 @@
 [settings]
 
 [[proxy]]
-path = "../bridge-proxy/src/esdt_safe_proxy.rs"
+path = "../multisig/src/esdt_safe_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "upgrade",
+    "unpause",
+    "setMultiTransferContractAddress",
+    "addTokenToWhitelist",
+    "distributeFees",
+    "getCurrentTxBatch",
+    "initSupply",
+    "setTransactionBatchStatus",
+    "getBatch",
+    "pause",
+    "setFeeEstimatorContractAddress",
+    "setEthTxGasLimit",
+    "setDefaultPricePerGasUnit",
+    "setTokenTicker",
+    "addTokenToWhitelist",
+    "setMultiTransferContractAddress",
+    "removeTokenFromWhitelist",
+    "setMaxTxBatchSize",
+    "setMaxTxBatchBlockDuration",
+    "setMaxBridgedAmount",
+]
 
 [[proxy]]
 path = "src/esdt_safe_proxy_test_only.rs"
 add-unlabelled = false
 add-labels = ["test-only"]
+
+[[proxy]]
+path = "../bridged-tokens-wrapper/src/esdt_safe_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "createTransaction"
+]
+
+[[proxy]]
+path = "../multi-transfer-esdt/src/esdt_safe_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "upgrade",
+    "unpause",
+    "setMultiTransferContractAddress",
+    "addTokenToWhitelist",
+    "getTokens",
+    "addRefundBatch"
+]

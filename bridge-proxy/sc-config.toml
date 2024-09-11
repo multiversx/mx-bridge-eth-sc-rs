@@ -2,3 +2,30 @@
 
 [[proxy]]
 path = "../multi-transfer-esdt/src/bridge_proxy_contract_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "deposit",
+]
+
+[[proxy]]
+path = "../multisig/src/bridge_proxy_contract_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "unpause",
+    "pause",
+]
+
+[[proxy]]
+path = "../bridge-proxy/src/bridge_proxy_contract_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "unpause",
+    "setBridgedTokensWrapper",
+    "deposit",
+    "getPendingTransactionById",
+    "execute",
+    "deposit",
+]
