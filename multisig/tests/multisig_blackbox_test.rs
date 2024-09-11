@@ -264,6 +264,7 @@ impl MultiTransferTestState {
                 "WEGLD",
                 true,
                 false,
+                BigUint::zero(), BigUint::zero(), BigUint::zero(),
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();
@@ -278,6 +279,7 @@ impl MultiTransferTestState {
                 "ETH",
                 true,
                 false,
+                 BigUint::zero(), BigUint::zero(), BigUint::zero(),
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();

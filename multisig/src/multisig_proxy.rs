@@ -473,14 +473,20 @@ where
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<bool>,
         Arg3: ProxyArg<bool>,
-        Arg4: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+        Arg4: ProxyArg<BigUint<Env::Api>>,
+        Arg5: ProxyArg<BigUint<Env::Api>>,
+        Arg6: ProxyArg<BigUint<Env::Api>>,
+        Arg7: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
     >(
         self,
         token_id: Arg0,
         ticker: Arg1,
         mint_burn_allowed: Arg2,
         is_native_token: Arg3,
-        opt_default_price_per_gas_unit: Arg4,
+        total_balance: Arg4,
+        mint_balance: Arg5,
+        burn_balance: Arg6,
+        opt_default_price_per_gas_unit: Arg7,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -489,6 +495,9 @@ where
             .argument(&ticker)
             .argument(&mint_burn_allowed)
             .argument(&is_native_token)
+            .argument(&total_balance)
+            .argument(&mint_balance)
+            .argument(&burn_balance)
             .argument(&opt_default_price_per_gas_unit)
             .original_result()
     }
