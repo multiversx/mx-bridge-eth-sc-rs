@@ -48,24 +48,27 @@ where
     pub fn init<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
         Arg3: ProxyArg<BigUint<Env::Api>>,
-        Arg4: ProxyArg<usize>,
-        Arg5: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg4: ProxyArg<BigUint<Env::Api>>,
+        Arg5: ProxyArg<usize>,
+        Arg6: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
         esdt_safe_sc_address: Arg0,
         multi_transfer_sc_address: Arg1,
-        required_stake: Arg2,
-        slash_amount: Arg3,
-        quorum: Arg4,
-        board: Arg5,
+        proxy_sc_address: Arg2,
+        required_stake: Arg3,
+        slash_amount: Arg4,
+        quorum: Arg5,
+        board: Arg6,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_sc_address)
             .argument(&multi_transfer_sc_address)
+            .argument(&proxy_sc_address)
             .argument(&required_stake)
             .argument(&slash_amount)
             .argument(&quorum)
@@ -83,12 +86,22 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn upgrade(
+    pub fn upgrade<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
         self,
+        esdt_safe_sc_address: Arg0,
+        multi_transfer_sc_address: Arg1,
+        proxy_sc_address: Arg2,
     ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_upgrade()
+            .argument(&esdt_safe_sc_address)
+            .argument(&multi_transfer_sc_address)
+            .argument(&proxy_sc_address)
             .original_result()
     }
 }
@@ -167,7 +180,7 @@ where
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce 
     pub fn propose_multi_transfer_esdt_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, ManagedOption<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         eth_batch_id: Arg0,
@@ -370,6 +383,24 @@ where
             .original_result()
     }
 
+    pub fn pause_proxy(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseProxy")
+            .original_result()
+    }
+
+    pub fn unpause_proxy(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseProxy")
+            .original_result()
+    }
+
     pub fn change_fee_estimator_contract_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -442,14 +473,20 @@ where
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<bool>,
         Arg3: ProxyArg<bool>,
-        Arg4: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+        Arg4: ProxyArg<BigUint<Env::Api>>,
+        Arg5: ProxyArg<BigUint<Env::Api>>,
+        Arg6: ProxyArg<BigUint<Env::Api>>,
+        Arg7: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
     >(
         self,
         token_id: Arg0,
         ticker: Arg1,
         mint_burn_allowed: Arg2,
         is_native_token: Arg3,
-        opt_default_price_per_gas_unit: Arg4,
+        total_balance: Arg4,
+        mint_balance: Arg5,
+        burn_balance: Arg6,
+        opt_default_price_per_gas_unit: Arg7,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -458,6 +495,9 @@ where
             .argument(&ticker)
             .argument(&mint_burn_allowed)
             .argument(&is_native_token)
+            .argument(&total_balance)
+            .argument(&mint_balance)
+            .argument(&burn_balance)
             .argument(&opt_default_price_per_gas_unit)
             .original_result()
     }
@@ -738,6 +778,15 @@ where
             .original_result()
     }
 
+    pub fn proxy_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getProxyAddress")
+            .original_result()
+    }
+
     /// Returns the current EsdtSafe batch. 
     ///  
     /// First result is the batch ID, then pairs of 6 results, representing transactions 
@@ -803,7 +852,7 @@ where
     /// To check if it was executed as well, use the wasActionExecuted view 
     pub fn was_transfer_action_proposed<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, ManagedOption<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         eth_batch_id: Arg0,
@@ -822,7 +871,7 @@ where
     /// Will return 0 if the transfers were not proposed 
     pub fn get_action_id_for_transfer_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<ManagedVec<Env::Api, transaction::EthTransaction<Env::Api>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, ManagedOption<Env::Api, ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         eth_batch_id: Arg0,

@@ -2,7 +2,7 @@ use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
 
-use crate::{esdt_safe_proxy, multi_transfer_esdt_proxy};
+use crate::{esdt_safe_proxy, multi_transfer_esdt_proxy, bridge_proxy_contract_proxy};
 
 #[multiversx_sc::module]
 pub trait SetupModule:
@@ -161,6 +161,61 @@ pub trait SetupModule:
     }
 
     #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupplyEsdtSafe)]
+    fn init_supply_esdt_safe(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply(token_id, amount)
+            .single_esdt(&payment_token, 0, &payment_amount) // enforce only single FT transfer
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(initSupplyMintBurnEsdtSafe)]
+    fn init_supply_mint_burn_esdt_safe(&self, token_id: TokenIdentifier, mint_amount: BigUint, burn_amount: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply_mint_burn(token_id, mint_amount, burn_amount)
+            .sync_call();
+    }
+    
+    #[only_owner]
+    #[endpoint(pauseProxy)]
+    fn pause_proxy(&self) {
+        let proxy_addr = self.proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_esdt_safe_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseProxy)]
+    fn unpause_proxy(&self) {
+        let proxy_addr = self.proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .unpause_endpoint()
+            .sync_call();
+
+        self.pause_esdt_safe_event();
+    }
+
+    #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
         let esdt_safe_addr = self.esdt_safe_address().get();
@@ -221,10 +276,13 @@ pub trait SetupModule:
     #[endpoint(esdtSafeAddTokenToWhitelist)]
     fn esdt_safe_add_token_to_whitelist(
         &self,
-        token_id: TokenIdentifier,
+        token_id: &TokenIdentifier,
         ticker: ManagedBuffer,
         mint_burn_allowed: bool,
         is_native_token: bool,
+        total_balance: &BigUint,
+        mint_balance: &BigUint,
+        burn_balance: &BigUint,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
         let esdt_safe_addr = self.esdt_safe_address().get();
@@ -237,6 +295,9 @@ pub trait SetupModule:
                 ticker,
                 mint_burn_allowed,
                 is_native_token,
+                total_balance,
+                mint_balance,
+                burn_balance,
                 opt_default_price_per_gas_unit,
             )
             .sync_call();

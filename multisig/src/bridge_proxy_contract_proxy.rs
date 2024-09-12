@@ -176,15 +176,6 @@ where
             .original_result()
     }
 
-    pub fn lowest_tx_id(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, usize> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("lowestTxId")
-            .original_result()
-    }
-
     pub fn pause_endpoint(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {

@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           11
+// Endpoints:                           12
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  15
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -29,6 +29,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setBridgedTokensWrapper => set_bridged_tokens_wrapper
         getMultiTransferAddress => multi_transfer_address
         getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
+        lowestTxId => lowest_tx_id
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status

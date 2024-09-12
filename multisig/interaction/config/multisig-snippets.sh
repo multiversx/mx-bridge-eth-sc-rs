@@ -1,12 +1,12 @@
 deployMultisig() {
     CHECK_VARIABLES RELAYER_ADDR_0 RELAYER_ADDR_1 RELAYER_ADDR_2 RELAYER_ADDR_3 \
     RELAYER_ADDR_4 RELAYER_ADDR_5 RELAYER_ADDR_6 RELAYER_ADDR_7 RELAYER_ADDR_8 \
-    RELAYER_ADDR_9 SAFE MULTI_TRANSFER RELAYER_REQUIRED_STAKE SLASH_AMOUNT QUORUM MULTISIG_WASM
+    RELAYER_ADDR_9 SAFE MULTI_TRANSFER BRIDGE_PROXY RELAYER_REQUIRED_STAKE SLASH_AMOUNT QUORUM MULTISIG_WASM
 
     MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     mxpy --verbose contract deploy --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
-    --arguments ${SAFE} ${MULTI_TRANSFER} \
+    --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} \
     ${MIN_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
     ${RELAYER_ADDR_0} ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -137,6 +137,14 @@ pauseEsdtSafe() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+pauseProxy() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="pauseProxy" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 unpause() {
     CHECK_VARIABLES MULTISIG
 
@@ -150,6 +158,14 @@ unpauseEsdtSafe() {
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="unpauseEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unpauseProxy() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="unpauseProxy" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 

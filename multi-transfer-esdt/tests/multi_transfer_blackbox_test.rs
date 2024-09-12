@@ -11,7 +11,7 @@ use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
     codec::{
         multi_types::{MultiValueVec, OptionalValue},
-        Empty,
+        Empty, TopEncode,
     },
     contract_base::ManagedSerializer,
     storage::mappers::SingleValue,
@@ -225,6 +225,7 @@ impl MultiTransferTestState {
                 "BRIDGE",
                 true,
                 false,
+                BigUint::zero(), BigUint::zero(), BigUint::zero(),
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();
@@ -239,6 +240,7 @@ impl MultiTransferTestState {
                 "BRIDGE",
                 true,
                 false,
+                BigUint::zero(), BigUint::zero(), BigUint::zero(),
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();
@@ -297,7 +299,8 @@ fn basic_transfer_test() {
         call_data: ManagedOption::some(call_data),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx);
 
     state
@@ -360,7 +363,8 @@ fn batch_transfer_both_executed_test() {
         call_data: ManagedOption::some(call_data),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
 
@@ -429,7 +433,8 @@ fn batch_two_transfers_same_token_test() {
         call_data: ManagedOption::some(call_data),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
 
@@ -498,7 +503,8 @@ fn batch_transfer_both_failed_test() {
         call_data: ManagedOption::some(call_data),
     };
 
-    let mut transfers: ManagedVec<StaticApi, EthTransaction<StaticApi>> = ManagedVec::new();
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
     transfers.push(eth_tx1);
     transfers.push(eth_tx2);
 
