@@ -44,6 +44,72 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn upgrade<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        fee_estimator_contract_address: Arg0,
+        multi_transfer_contract_address: Arg1,
+        eth_tx_gas_limit: Arg2,
+    ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_upgrade()
+            .argument(&fee_estimator_contract_address)
+            .argument(&multi_transfer_contract_address)
+            .argument(&eth_tx_gas_limit)
+            .original_result()
+    }
+}
+
+#[rustfmt::skip]
+impl<Env, From, To, Gas> EsdtSafeProxyMethods<Env, From, To, Gas>
+where
+    Env: TxEnv,
+    Env::Api: VMApi,
+    From: TxFrom<Env>,
+    To: TxTo<Env>,
+    Gas: TxGas<Env>,
+{
+    /// Sets the statuses for the transactions, after they were executed on the Ethereum side. 
+    ///  
+    /// Only TransactionStatus::Executed (3) and TransactionStatus::Rejected (4) values are allowed. 
+    /// Number of provided statuses must be equal to number of transactions in the batch. 
+    pub fn set_transaction_batch_status<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::transaction_status::TransactionStatus>>,
+    >(
+        self,
+        batch_id: Arg0,
+        tx_statuses: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setTransactionBatchStatus")
+            .argument(&batch_id)
+            .argument(&tx_statuses)
+            .original_result()
+    }
+
+    /// Converts failed Ethereum -> MultiversX transactions to MultiversX -> Ethereum transaction. 
+    /// This is done every now and then to refund the tokens. 
+    ///  
+    /// As with normal MultiversX -> Ethereum transactions, a part of the tokens will be 
+    /// subtracted to pay for the fees 
+    pub fn add_refund_batch<
+        Arg0: ProxyArg<ManagedVec<Env::Api, transaction::Transaction<Env::Api>>>,
+    >(
+        self,
+        refund_transactions: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("addRefundBatch")
+            .argument(&refund_transactions)
+            .original_result()
+    }
+
     /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted. 
     ///  
     /// Every transfer will have a part of the tokens subtracted as fees. 
@@ -60,6 +126,139 @@ where
         self.wrapped_tx
             .raw_call("createTransaction")
             .argument(&to)
+            .original_result()
+    }
+
+    /// Claim funds for failed MultiversX -> Ethereum transactions. 
+    /// These are not sent automatically to prevent the contract getting stuck. 
+    /// For example, if the receiver is a SC, a frozen account, etc. 
+    pub fn claim_refund<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EsdtTokenPayment<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimRefund")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    /// Query function that lists all refund amounts for a user. 
+    /// Useful for knowing which token IDs to pass to the claimRefund endpoint. 
+    pub fn get_refund_amounts<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRefundAmounts")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn add_token_to_whitelist<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<bool>,
+        Arg3: ProxyArg<bool>,
+        Arg4: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+    >(
+        self,
+        token_id: Arg0,
+        ticker: Arg1,
+        mint_burn_token: Arg2,
+        native_token: Arg3,
+        opt_default_price_per_gas_unit: Arg4,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addTokenToWhitelist")
+            .argument(&token_id)
+            .argument(&ticker)
+            .argument(&mint_burn_token)
+            .argument(&native_token)
+            .argument(&opt_default_price_per_gas_unit)
+            .original_result()
+    }
+
+    pub fn get_tokens<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTokens")
+            .argument(&token_id)
+            .argument(&amount)
+            .original_result()
+    }
+
+    pub fn set_multi_transfer_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_new_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMultiTransferContractAddress")
+            .argument(&opt_new_address)
+            .original_result()
+    }
+
+    pub fn accumulated_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAccumulatedTransactionFees")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn total_balances<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTotalBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn get_batch_status<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        batch_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, tx_batch_module::batch_status::BatchStatus<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBatchStatus")
+            .argument(&batch_id)
+            .original_result()
+    }
+
+    pub fn unpause_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpause")
             .original_result()
     }
 }

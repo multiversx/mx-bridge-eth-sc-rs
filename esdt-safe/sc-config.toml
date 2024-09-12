@@ -28,9 +28,26 @@ add-endpoints = [
 ]
 
 [[proxy]]
+path = "src/esdt_safe_proxy_test_only.rs"
+add-unlabelled = false
+add-labels = ["test-only"]
+
+[[proxy]]
 path = "../bridged-tokens-wrapper/src/esdt_safe_proxy.rs"
 add-unlabelled = false
 add-endpoints = [
+    "upgrade",
+    "unpause",
+    "setMultiTransferContractAddress",
+    "addTokenToWhitelist",
+    "getTokens",
+    "addRefundBatch",
+    "getAccumulatedTransactionFees",
+    "getTotalBalances",
+    "getBatchStatus",
+    "getRefundAmounts",
+    "claimRefund",
+    "setTransactionBatchStatus",
     "createTransaction"
 ]
 
@@ -43,5 +60,25 @@ add-endpoints = [
     "setMultiTransferContractAddress",
     "addTokenToWhitelist",
     "getTokens",
-    "addRefundBatch"
+    "addRefundBatch",
+    "getRefundAmounts",
+    "claimRefund",
+    "getBatchStatus",
+    "getTotalBalances",
+    "getAccumulatedTransactionFees",
+    "setTransactionBatchStatus",
+    "createTransaction"
+]
+
+[[proxy]]
+path = "src/esdt_safe_proxy.rs"
+add-unlabelled = false
+add-endpoints = [
+    "init",
+    "initSupply",
+    "getTotalBalances",
+    "getBurnBalances",
+    "unpause",
+    "addTokenToWhitelist",
+    "setMultiTransferContractAddress",
 ]

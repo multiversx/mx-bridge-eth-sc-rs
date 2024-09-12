@@ -4,6 +4,7 @@
 multiversx_sc::imports!();
 multiversx_sc::derive_imports!();
 
+pub mod esdt_safe_proxy;
 use core::convert::TryFrom;
 
 use core::ops::Deref;
@@ -15,6 +16,16 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
+
+pub struct TransactionDetails<Api: ManagedTypeApi> {
+    pub batch_id: u64,
+    pub tx_nonce: u64,
+    pub payment_token: TokenIdentifier<Api>,
+    pub actual_bridged_amount: BigUint<Api>,
+    pub required_fee: BigUint<Api>,
+    pub to_address: ManagedBuffer<Api>,
+    pub caller_address: ManagedBuffer<Api>,
+}
 
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
@@ -218,29 +229,24 @@ pub trait EsdtSafe:
         }
     }
 
-    // endpoints
-
-    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
-    ///
-    /// Every transfer will have a part of the tokens subtracted as fees.
-    /// The fee amount depends on the global eth_tx_gas_limit
-    /// and the current GWEI price, respective to the bridged token
-    ///
-    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
-    #[payable("*")]
-    #[endpoint(createTransaction)]
-    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+    fn create_transaction_common(
+        &self,
+        to: EthAddress<Self::Api>,
+    ) -> TransactionDetails<Self::Api> {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        let token_nonce = self.call_value().single_esdt().token_nonce;
+        require!(
+            token_nonce == 0,
+            "Only fungible tokens are accepted for this transaction"
+        );
         self.require_token_in_whitelist(&payment_token);
-
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
             required_fee < payment_amount,
             "Transaction fees cost more than the entire bridged amount"
         );
-
         self.require_below_max_amount(&payment_token, &payment_amount);
 
         self.accumulated_transaction_fees(&payment_token)
@@ -280,14 +286,60 @@ pub trait EsdtSafe:
                 *burned += &actual_bridged_amount;
             });
         }
-        self.create_transaction_event(
+        TransactionDetails {
             batch_id,
             tx_nonce,
             payment_token,
             actual_bridged_amount,
             required_fee,
-            tx.to,
-            tx.from,
+            to_address: to.as_managed_buffer().clone(),
+            caller_address: caller.as_managed_buffer().clone(),
+        }
+    }
+
+    // endpoints
+
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
+    #[payable("*")]
+    #[endpoint(createTransaction)]
+    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+        let transaction_details = self.create_transaction_common(to);
+
+        self.create_transaction_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.to_address,
+            transaction_details.caller_address,
+        );
+    }
+
+    #[payable("*")]
+    #[endpoint(createTransactionSCCall)]
+    fn create_transaction_sc_call(
+        &self,
+        to: EthAddress<Self::Api>,
+        data: ManagedBuffer<Self::Api>,
+    ) {
+        let transaction_details = self.create_transaction_common(to);
+
+        self.create_transaction_sc_call_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.to_address,
+            transaction_details.caller_address,
+            data,
         );
     }
 
@@ -449,6 +501,19 @@ pub trait EsdtSafe:
         #[indexed] fee: BigUint,
         #[indexed] sender: ManagedBuffer,
         #[indexed] recipient: ManagedBuffer,
+    );
+
+    #[event("createTransactionScCallEvent")]
+    fn create_transaction_sc_call_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_nonce: u64,
+        #[indexed] payment_token: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] to: ManagedBuffer,
+        #[indexed] from: ManagedBuffer,
+        #[indexed] data: ManagedBuffer,
     );
 
     #[event("addRefundTransactionEvent")]
