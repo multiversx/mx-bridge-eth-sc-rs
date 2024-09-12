@@ -29,11 +29,6 @@ add-endpoints = [
 ]
 
 [[proxy]]
-path = "src/esdt_safe_proxy_test_only.rs"
-add-unlabelled = false
-add-labels = ["test-only"]
-
-[[proxy]]
 path = "../bridged-tokens-wrapper/src/esdt_safe_proxy.rs"
 add-unlabelled = false
 add-endpoints = [
