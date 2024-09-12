@@ -260,11 +260,7 @@ pub trait EsdtSafe:
         };
 
         let batch_id = self.add_to_batch(tx.clone());
-        if !self.mint_burn_token(&payment_token).get() {
-            self.total_balances(&payment_token).update(|total| {
-                *total += &actual_bridged_amount;
-            });
-        } else {
+        if self.mint_burn_token(&payment_token).get() {
             let burn_balances_mapper = self.burn_balances(&payment_token);
             let mint_balances_mapper = self.mint_balances(&payment_token);
             if !self.native_token(&payment_token).get() {
@@ -278,6 +274,10 @@ pub trait EsdtSafe:
             require!(burn_executed, "Cannot do the burn action!");
             burn_balances_mapper.update(|burned| {
                 *burned += &actual_bridged_amount;
+            });
+        } else {
+            self.total_balances(&payment_token).update(|total| {
+                *total += &actual_bridged_amount;
             });
         }
         self.create_transaction_event(
