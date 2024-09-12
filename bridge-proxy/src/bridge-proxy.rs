@@ -94,11 +94,8 @@ pub trait BridgeProxyContract:
         if result.is_err() {
             self.refund_transaction(tx_id);
         }
-        let lowest_tx_id = self.lowest_tx_id().get();
-        if tx_id < lowest_tx_id {
-            self.lowest_tx_id().set(tx_id + 1);
-        }
         self.pending_transactions().clear_entry_unchecked(tx_id);
+        self.update_lowest_tx_id();
     }
 
     fn refund_transaction(&self, tx_id: usize) {
@@ -120,11 +117,19 @@ pub trait BridgeProxyContract:
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
         self.refund_transaction(tx_id);
-        let lowest_tx_id = self.lowest_tx_id().get();
-        if tx_id < lowest_tx_id {
-            self.lowest_tx_id().set(tx_id + 1);
-        }
         self.pending_transactions().clear_entry_unchecked(tx_id);
+        self.update_lowest_tx_id();
+    }
+
+    fn update_lowest_tx_id(&self) {
+        let mut new_lowest = self.lowest_tx_id().get();
+        let len = self.pending_transactions().len();
+        
+        while new_lowest < len && self.pending_transactions().item_is_empty(new_lowest) {
+            new_lowest += 1;
+        }
+        
+        self.lowest_tx_id().set(new_lowest);
     }
 
     #[view(getPendingTransactionById)]
