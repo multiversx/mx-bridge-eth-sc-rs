@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="EMPTY_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/bridge-proxy/meta/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bridge-proxy/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bridge-proxy/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/bridged-tokens-wrapper/meta/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bridged-tokens-wrapper/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/bridged-tokens-wrapper/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/common/eth-address/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/fee-estimator-module/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/max-bridged-amount-module/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/token-module/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/transaction/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/common/tx-batch-module/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/esdt-safe/meta/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/esdt-safe/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/esdt-safe/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/multi-transfer-esdt/meta/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/multi-transfer-esdt/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/multi-transfer-esdt/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/multisig/meta/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/multisig/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/multisig/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test-caller/meta/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test-caller/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/esdt_safe/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/esdt_safe/tests" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>
