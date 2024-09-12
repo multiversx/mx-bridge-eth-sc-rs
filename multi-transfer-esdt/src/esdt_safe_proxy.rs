@@ -160,6 +160,19 @@ where
             .original_result()
     }
 
+    pub fn set_eth_tx_gas_limit<
+        Arg0: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        new_limit: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setEthTxGasLimit")
+            .argument(&new_limit)
+            .original_result()
+    }
+
     pub fn add_token_to_whitelist<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
@@ -263,6 +276,32 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn mint_balances<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMintBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn burn_balances<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBurnBalances")
             .argument(&token_id)
             .original_result()
     }
