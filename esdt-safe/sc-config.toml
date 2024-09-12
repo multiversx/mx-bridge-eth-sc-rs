@@ -25,6 +25,7 @@ add-endpoints = [
     "setMaxTxBatchSize",
     "setMaxTxBatchBlockDuration",
     "setMaxBridgedAmount",
+    "initSupplyMintBurn",
 ]
 
 [[proxy]]
@@ -67,7 +68,8 @@ add-endpoints = [
     "getTotalBalances",
     "getAccumulatedTransactionFees",
     "setTransactionBatchStatus",
-    "createTransaction"
+    "createTransaction",
+    "initSupplyMintBurn",
 ]
 
 [[proxy]]
@@ -81,4 +83,7 @@ add-endpoints = [
     "unpause",
     "addTokenToWhitelist",
     "setMultiTransferContractAddress",
+    "initSupplyMintBurn",
+    "getMintBalances",
+    "getBurnBalances",
 ]

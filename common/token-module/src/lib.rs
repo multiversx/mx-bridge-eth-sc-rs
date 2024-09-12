@@ -174,7 +174,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         require!(amount == &payment_amount, "Invalid amount");
 
         self.require_token_in_whitelist(token_id);
-        require!(!self.mint_burn_token(token_id).get(), "Cannot init for non mintable/burnable tokens");
+        require!(!self.mint_burn_token(token_id).get(), "Cannot init for mintable/burnable tokens");
         require!(self.native_token(token_id).get(), "Only native tokens can be stored!");
 
         self.total_balances(token_id).update(|total| {

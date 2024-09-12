@@ -277,6 +277,9 @@ impl MultiTransferTestState {
                 "TOKEN",
                 true,
                 false,
+                BigUint::from(100000u64),
+                BigUint::from(100000u64),
+                BigUint::from(100000u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
@@ -286,6 +289,9 @@ impl MultiTransferTestState {
                 "TOKEN",
                 true,
                 true,
+                BigUint::from(100000u64),
+                BigUint::from(100000u64),
+                BigUint::from(100000u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
@@ -293,8 +299,8 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy_test_only::EsdtSafeProxy)
-            .set_mint_balances(TOKEN_ID, BigUint::from(600_000u64))
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .init_supply_mint_burn(TOKEN_ID, BigUint::from(600_000u64), BigUint::from(600_000u64))
             .run();
     }
 
@@ -717,8 +723,8 @@ fn esdt_safe_create_transaction() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy_test_only::EsdtSafeProxy)
-        .set_mint_balances(TOKEN_WITHOUT_BURN_ROLE, BigUint::from(100u64))
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .init_supply_mint_burn(TOKEN_WITHOUT_BURN_ROLE, BigUint::from(100u64), BigUint::from(100u64))
         .run();
 
     state.single_transaction_should_fail(
@@ -776,8 +782,8 @@ fn set_transaction_batch_status_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy_test_only::EsdtSafeProxy)
-        .set_mint_balances(TOKEN_ID, BigUint::from(10_000u64))
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
         .run();
 
     state.single_transaction_should_work(TOKEN_ID, 1000u64);

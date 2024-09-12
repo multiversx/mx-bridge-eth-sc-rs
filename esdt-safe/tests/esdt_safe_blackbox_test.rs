@@ -14,7 +14,7 @@ const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json"
 const TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-123456");
 const NON_WHITELISTED_TOKEN: TestTokenIdentifier =
     TestTokenIdentifier::new("NON-WHITELISTED-123456");
-const TOKEN_WITHOUT_BURN_ROLE: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-WITH-OUT");
+const TOKEN_WITH_BURN_ROLE: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-WITH-OUT");
 const NATIVE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ESDT-123");
 const ETH_TX_GAS_LIMIT: u64 = 150_000;
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
@@ -40,7 +40,7 @@ impl EsdtSafeTestState {
             .esdt_balance(TOKEN_ID, 1_000_000_000_000u64)
             .esdt_balance(NON_WHITELISTED_TOKEN, 1001u64)
             .esdt_balance(NATIVE_TOKEN_ID, 100_000u64)
-            .esdt_balance(TOKEN_WITHOUT_BURN_ROLE, 100_000u64);
+            .esdt_balance(TOKEN_WITH_BURN_ROLE, 100_000u64);
 
         Self { world }
     }
@@ -79,18 +79,24 @@ impl EsdtSafeTestState {
             .add_token_to_whitelist(
                 TOKEN_ID,
                 "TOKEN",
-                true,
                 false,
+                true,
+                BigUint::from(0u64),
+                BigUint::from(0u64),
+                BigUint::from(0u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
 
         self.esdt_raw_transction()
             .add_token_to_whitelist(
-                TOKEN_WITHOUT_BURN_ROLE,
-                "TOKEN",
+                TOKEN_WITH_BURN_ROLE,
+                "TKN",
                 true,
                 true,
+                BigUint::from(0u64),
+                BigUint::from(0u64),
+                BigUint::from(0u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
@@ -101,6 +107,9 @@ impl EsdtSafeTestState {
                 "NATIVE",
                 false,
                 true,
+                BigUint::from(0u64),
+                BigUint::from(0u64),
+                BigUint::from(0u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
@@ -121,11 +130,7 @@ impl EsdtSafeTestState {
         expected_status: u64,
         expected_error: &str,
     ) {
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+        self.esdt_raw_transction()
             .init_supply(token_id, BigUint::from(amount))
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(tx_token_id),
@@ -188,21 +193,30 @@ fn init_supply_test() {
     );
 
     state.init_supply_should_fail(
-        TOKEN_ID,
-        TOKEN_ID,
+        NATIVE_TOKEN_ID,
+        NATIVE_TOKEN_ID,
         10_000u64,
-        10_000u64,
+        1000u64,
         ERROR,
-        "Cannot init for non native tokens",
+        "Invalid amount",
     );
 
     state.init_supply_should_fail(
-        TOKEN_WITHOUT_BURN_ROLE,
-        TOKEN_WITHOUT_BURN_ROLE,
+        NON_WHITELISTED_TOKEN,
+        NON_WHITELISTED_TOKEN,
+        1000u64,
+        1000u64,
+        ERROR,
+        "Token not in whitelist",
+    );
+
+    state.init_supply_should_fail(
+        TOKEN_WITH_BURN_ROLE,
+        TOKEN_WITH_BURN_ROLE,
         1_000u64,
         1_000u64,
         ERROR,
-        "Cannot do the burn action!",
+        "Cannot init for mintable/burnable tokens",
     );
 
     state.init_supply_should_work(NATIVE_TOKEN_ID, NATIVE_TOKEN_ID, 10_000u64, 10_000u64);
@@ -236,3 +250,50 @@ fn init_supply_test() {
         "Total supply should be 0"
     )
 }
+
+
+#[test]
+fn init_supply_test_mint_burn() {
+    let mut state = EsdtSafeTestState::new();
+    state.safe_deploy();
+    state.config_esdtsafe();
+
+    state.esdt_raw_transction()
+        .init_supply_mint_burn(NON_WHITELISTED_TOKEN, BigUint::from(10_000u64), BigUint::from(10_000u64))
+        .with_result(ExpectError(ERROR, "Token not in whitelist"))
+        .run();   
+
+    state.esdt_raw_transction()
+            .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
+            .with_result(ExpectError(ERROR, "Cannot init for non mintable/burnable tokens"))
+            .run();  
+
+    state.esdt_raw_transction()
+        .init_supply_mint_burn(TOKEN_WITH_BURN_ROLE, BigUint::from(10_000u64), BigUint::from(10_000u64))
+        .with_result(ReturnsResult)
+        .run();  
+
+    let total_minted = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .mint_balances(TOKEN_WITH_BURN_ROLE)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(total_minted, BigUint::from(10_000u64), "Total supply should be 10,000");
+
+    let total_burned = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .burn_balances(TOKEN_WITH_BURN_ROLE)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(total_burned, BigUint::from(10_000u64), "Total supply should be 10,000")
+}
+
+
