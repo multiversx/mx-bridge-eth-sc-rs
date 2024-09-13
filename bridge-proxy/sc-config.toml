@@ -28,4 +28,5 @@ add-endpoints = [
     "getPendingTransactionById",
     "execute",
     "deposit",
+    "lowestTxId",
 ]

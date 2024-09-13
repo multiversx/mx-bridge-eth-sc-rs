@@ -25,12 +25,8 @@ add-endpoints = [
     "setMaxTxBatchSize",
     "setMaxTxBatchBlockDuration",
     "setMaxBridgedAmount",
+    "initSupplyMintBurn",
 ]
-
-[[proxy]]
-path = "src/esdt_safe_proxy_test_only.rs"
-add-unlabelled = false
-add-labels = ["test-only"]
 
 [[proxy]]
 path = "../bridged-tokens-wrapper/src/esdt_safe_proxy.rs"
@@ -67,7 +63,11 @@ add-endpoints = [
     "getTotalBalances",
     "getAccumulatedTransactionFees",
     "setTransactionBatchStatus",
-    "createTransaction"
+    "createTransaction",
+    "initSupplyMintBurn",
+    "getMintBalances",
+    "getBurnBalances",
+    "setEthTxGasLimit"
 ]
 
 [[proxy]]
@@ -81,4 +81,7 @@ add-endpoints = [
     "unpause",
     "addTokenToWhitelist",
     "setMultiTransferContractAddress",
+    "initSupplyMintBurn",
+    "getMintBalances",
+    "getBurnBalances",
 ]
