@@ -46,7 +46,7 @@ pub trait BridgeProxyContract:
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
         require!(
-            !self.ongoing_execution(tx_id).is_empty(),
+            self.ongoing_execution(tx_id).is_empty(),
             "Transaction is already being executed"
         );
         let tx = self.get_pending_transaction_by_id(tx_id);
