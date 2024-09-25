@@ -201,12 +201,35 @@ pub trait EsdtSafe:
                 nonce: tx_nonce,
                 from: refund_tx.to,
                 to: refund_tx.from,
-                token_identifier: refund_tx.token_identifier,
-                amount: actual_bridged_amount,
+                token_identifier: refund_tx.token_identifier.clone(),
+                amount: actual_bridged_amount.clone(),
                 is_refund_tx: true,
             };
             new_transactions.push(new_tx);
             original_tx_nonces.push(refund_tx.nonce);
+
+            let refund_token_id = refund_tx.token_identifier;
+
+            if self.mint_burn_token(&refund_token_id).get() {
+                let burn_balances_mapper = self.burn_balances(&refund_token_id);
+                let mint_balances_mapper = self.mint_balances(&refund_token_id);
+                if !self.native_token(&refund_token_id).get() {
+                    require!(
+                        mint_balances_mapper.get()
+                            >= &burn_balances_mapper.get() + &actual_bridged_amount,
+                        "Not enough minted tokens!"
+                    );
+                }
+                let burn_executed = self.internal_burn(&refund_token_id, &actual_bridged_amount);
+                require!(burn_executed, "Cannot do the burn action!");
+                burn_balances_mapper.update(|burned| {
+                    *burned += &actual_bridged_amount;
+                });
+            } else {
+                self.total_balances(&refund_token_id).update(|total| {
+                    *total += &actual_bridged_amount;
+                });
+            }
         }
 
         let batch_ids = self.add_multiple_tx_to_batch(&new_transactions);
