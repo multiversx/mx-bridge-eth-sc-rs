@@ -89,14 +89,26 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         let _ = self.token_whitelist().insert(token_id.clone());
         match mint_burn_token {
             true => {
-                require!(total_balance == &BigUint::zero(), "Mint-burn tokens must have 0 total balance!");
-                require!(self.call_value().all_esdt_transfers().is_empty(), "No payment required for mint burn tokens!");
+                require!(
+                    total_balance == &BigUint::zero(),
+                    "Mint-burn tokens must have 0 total balance!"
+                );
+                require!(
+                    self.call_value().all_esdt_transfers().is_empty(),
+                    "No payment required for mint burn tokens!"
+                );
                 self.init_supply_mint_burn(token_id, mint_balance, burn_balance);
             }
             false => {
                 require!(native_token, "Only native tokens can be stored!");
-                require!(mint_balance == &BigUint::zero(), "Stored tokens must have 0 mint balance!");
-                require!(burn_balance == &BigUint::zero(), "Stored tokens must have 0 burn balance!");
+                require!(
+                    mint_balance == &BigUint::zero(),
+                    "Stored tokens must have 0 mint balance!"
+                );
+                require!(
+                    burn_balance == &BigUint::zero(),
+                    "Stored tokens must have 0 burn balance!"
+                );
                 if total_balance > &BigUint::zero() {
                     self.init_supply(token_id, total_balance);
                 }
@@ -174,8 +186,14 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         require!(amount == &payment_amount, "Invalid amount");
 
         self.require_token_in_whitelist(token_id);
-        require!(!self.mint_burn_token(token_id).get(), "Cannot init for non mintable/burnable tokens");
-        require!(self.native_token(token_id).get(), "Only native tokens can be stored!");
+        require!(
+            !self.mint_burn_token(token_id).get(),
+            "Cannot init for non mintable/burnable tokens"
+        );
+        require!(
+            self.native_token(token_id).get(),
+            "Only native tokens can be stored!"
+        );
 
         self.total_balances(token_id).update(|total| {
             *total += amount;
@@ -184,9 +202,17 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
 
     #[only_owner]
     #[endpoint(initSupplyMintBurn)]
-    fn init_supply_mint_burn(&self, token_id: &TokenIdentifier, mint_amount: &BigUint, burn_amount: &BigUint) {
+    fn init_supply_mint_burn(
+        &self,
+        token_id: &TokenIdentifier,
+        mint_amount: &BigUint,
+        burn_amount: &BigUint,
+    ) {
         self.require_token_in_whitelist(token_id);
-        require!(self.mint_burn_token(token_id).get(), "Cannot init for non mintable/burnable tokens");
+        require!(
+            self.mint_burn_token(token_id).get(),
+            "Cannot init for non mintable/burnable tokens"
+        );
 
         self.mint_balances(token_id).set(mint_amount);
         self.burn_balances(token_id).set(burn_amount);

@@ -258,6 +258,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -327,6 +328,7 @@ fn multiple_deposit_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -338,6 +340,7 @@ fn multiple_deposit_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 2u64,
@@ -444,6 +447,7 @@ fn test_lowest_tx_id() {
                 raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
             },
             to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+            refund_address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
             token_id: BRIDGE_TOKEN_ID.into(),
             amount: BigUint::from(5u64),
             tx_nonce: i as u64,
@@ -517,5 +521,3 @@ fn test_lowest_tx_id() {
         .returns(ExpectValue(51usize))
         .run();
 }
-
-

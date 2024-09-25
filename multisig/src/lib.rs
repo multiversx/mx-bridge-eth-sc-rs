@@ -331,6 +331,19 @@ pub trait Multisig:
             .sync_call();
     }
 
+    #[only_owner]
+    #[endpoint(addUnprocessedRefundTxToBatch)]
+    fn add_unprocessed_refund_tx_to_batch(&self, tx_id: u64) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .add_unprocessed_refund_tx_to_batch(tx_id)
+            .sync_call();
+
+        self.add_unprocessed_refund_tx_to_batch_event(tx_id);
+    }
+
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) {
