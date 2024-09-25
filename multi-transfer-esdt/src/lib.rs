@@ -196,8 +196,11 @@ pub trait MultiTransferEsdt:
     #[only_owner]
     #[endpoint(addUnprocessedRefundTxToBatch)]
     fn add_unprocessed_refund_tx_to_batch(&self, tx_id: u64) {
-        let _tx = self.unprocessed_refund_txs(tx_id).get();
-        //TODO: Add tx to refund batch
+        let refund_tx = self.unprocessed_refund_txs(tx_id).get();
+        let mut refund_tx_list = ManagedVec::new();
+        refund_tx_list.push(refund_tx);
+        self.add_multiple_tx_to_batch(&refund_tx_list);
+
         self.unprocessed_refund_txs(tx_id).clear();
     }
 
@@ -215,17 +218,9 @@ pub trait MultiTransferEsdt:
     // private
 
     fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
-        if self
-            .blockchain()
-            .get_esdt_local_roles(token_id)
-            .has_role(&EsdtLocalRole::Transfer)
-        {
-            return false;
-        }
-
+        let esdt_safe_addr = self.esdt_safe_contract_address().get();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
-        let esdt_safe_addr = self.esdt_safe_contract_address().get();
 
         if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
             return false;
