@@ -215,19 +215,19 @@ pub trait EsdtSafe:
                 let mint_balances_mapper = self.mint_balances(&refund_token_id);
                 if !self.native_token(&refund_token_id).get() {
                     require!(
-                        mint_balances_mapper.get()
-                            >= &burn_balances_mapper.get() + &actual_bridged_amount,
-                        "Not enough minted tokens!"
+                        burn_balances_mapper.get()
+                            <= &mint_balances_mapper.get() - &actual_bridged_amount,
+                        "Not enough burned tokens!"
                     );
                 }
-                let burn_executed = self.internal_burn(&refund_token_id, &actual_bridged_amount);
-                require!(burn_executed, "Cannot do the burn action!");
-                burn_balances_mapper.update(|burned| {
-                    *burned += &actual_bridged_amount;
+                let mint_executed = self.internal_mint(&refund_token_id, &actual_bridged_amount);
+                require!(mint_executed, "Cannot do the mint action!");
+                mint_balances_mapper.update(|minted| {
+                    *minted += &actual_bridged_amount;
                 });
             } else {
                 self.total_balances(&refund_token_id).update(|total| {
-                    *total += &actual_bridged_amount;
+                    *total -= &actual_bridged_amount;
                 });
             }
         }
@@ -252,7 +252,7 @@ pub trait EsdtSafe:
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
     #[payable("*")]
     #[endpoint(createTransaction)]
-    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+    fn create_transaction(&self, to: EthAddress<Self::Api>, refunding_address: ManagedAddress) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
@@ -270,12 +270,11 @@ pub trait EsdtSafe:
             .update(|fees| *fees += &required_fee);
 
         let actual_bridged_amount = payment_amount - required_fee.clone();
-        let caller = self.blockchain().get_caller();
         let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: caller.as_managed_buffer().clone(),
+            from: refunding_address.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),

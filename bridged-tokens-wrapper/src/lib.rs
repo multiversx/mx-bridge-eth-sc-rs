@@ -246,12 +246,18 @@ pub trait BridgedTokensWrapper:
         &self,
         requested_token: TokenIdentifier,
         to: EthAddress<Self::Api>,
+        opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
         let converted_amount = self.unwrap_token_common(&requested_token);
+        let caller = self.blockchain().get_caller();
+        let refunding_addr = match opt_refunding_address {
+            OptionalValue::Some(refunding_addr) => refunding_addr,
+            OptionalValue::None => caller,
+        };
         self.tx()
             .to(self.esdt_safe_contract_address().get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(to)
+            .create_transaction(to, refunding_addr)
             .single_esdt(&requested_token, 0, &converted_amount)
             .sync_call();
     }

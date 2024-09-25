@@ -149,10 +149,11 @@ pub trait BridgeProxyContract:
                 )
                 .sync_call();
         } else {
+            let caller = self.blockchain().get_caller();
             self.tx()
                 .to(self.esdt_safe_contract_address().get())
                 .typed(esdt_safe_proxy::EsdtSafeProxy)
-                .create_transaction(tx.from)
+                .create_transaction(tx.from, caller)
                 .single_esdt(&tx.token_id, 0, &tx.amount)
                 .sync_call();
         }
