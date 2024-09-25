@@ -107,7 +107,7 @@ pub trait BridgeProxyContract:
 
         let tx = self.get_pending_transaction_by_id(tx_id);
         let payment = self.payments(tx_id).get();
-        self.tx().to(tx.refund_address).payment(payment).transfer();
+        self.tx().to(tx.to).payment(payment).transfer();
         self.cleanup_transaction(tx_id);
     }
     #[promises_callback]

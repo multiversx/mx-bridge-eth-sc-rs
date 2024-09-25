@@ -49,13 +49,11 @@ pub trait UtilModule: crate::storage::StorageModule {
     ) -> ManagedVec<EthTransaction<Self::Api>> {
         let mut transfers_as_eth_tx = ManagedVec::new();
         for transfer in transfers {
-            let (from, to, refund_address, token_id, amount, tx_nonce, call_data) =
-                transfer.into_tuple();
+            let (from, to, token_id, amount, tx_nonce, call_data) = transfer.into_tuple();
 
             transfers_as_eth_tx.push(EthTransaction {
                 from,
                 to,
-                refund_address,
                 token_id,
                 amount,
                 tx_nonce,
