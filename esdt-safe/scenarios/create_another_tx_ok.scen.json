@@ -19,7 +19,8 @@
                 ],
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920"
+                    "0x0102030405060708091011121314151617181920",
+                    "address:user2"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"
