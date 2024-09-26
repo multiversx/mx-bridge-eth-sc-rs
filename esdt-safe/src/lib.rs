@@ -252,7 +252,11 @@ pub trait EsdtSafe:
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
     #[payable("*")]
     #[endpoint(createTransaction)]
-    fn create_transaction(&self, to: EthAddress<Self::Api>, refunding_address: ManagedAddress) {
+    fn create_transaction(
+        &self,
+        to: EthAddress<Self::Api>,
+        opt_refund_address: OptionalValue<ManagedAddress>,
+    ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
@@ -266,6 +270,13 @@ pub trait EsdtSafe:
 
         self.require_below_max_amount(&payment_token, &payment_amount);
 
+        // This addr is used for the refund, if the transaction fails
+        // This is passed by the BridgeTokenWrapper contract
+        let user_addr = match opt_refund_address {
+            OptionalValue::Some(addr) => addr,
+            OptionalValue::None => self.blockchain().get_caller(),
+        };
+
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
@@ -274,7 +285,7 @@ pub trait EsdtSafe:
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: refunding_address.as_managed_buffer().clone(),
+            from: user_addr.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),
