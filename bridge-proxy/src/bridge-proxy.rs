@@ -10,7 +10,7 @@ use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
-const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 10;
+const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -91,17 +91,17 @@ pub trait BridgeProxyContract:
             tx_call
         };
 
-        let block_epoch = self.blockchain().get_block_epoch();
-        self.ongoing_execution(tx_id).set(block_epoch);
+        let block_round = self.blockchain().get_block_round();
+        self.ongoing_execution(tx_id).set(block_round);
         tx_call.register_promise();
     }
 
     #[endpoint(cancel)]
     fn cancel(&self, tx_id: usize) {
-        let tx_start_epoch = self.ongoing_execution(tx_id).get();
-        let current_block_epoch = self.blockchain().get_block_epoch();
+        let tx_start_round = self.ongoing_execution(tx_id).get();
+        let current_block_round = self.blockchain().get_block_round();
         require!(
-            current_block_epoch - tx_start_epoch > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
+            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
             "Transaction can't be cancelled yet"
         );
 
@@ -142,11 +142,7 @@ pub trait BridgeProxyContract:
                 .to(bridged_tokens_wrapper_addr)
                 .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
                 .unwrap_token_create_transaction(&tx.token_id, tx.from)
-                .single_esdt(
-                    &payment.token_identifier,
-                    payment.token_nonce,
-                    &payment.amount,
-                )
+                .payment(payment)
                 .sync_call();
         } else {
             let caller = self.blockchain().get_caller();
@@ -154,7 +150,7 @@ pub trait BridgeProxyContract:
                 .to(self.esdt_safe_contract_address().get())
                 .typed(esdt_safe_proxy::EsdtSafeProxy)
                 .create_transaction(tx.from, caller)
-                .single_esdt(&tx.token_id, 0, &tx.amount)
+                .payment(payment)
                 .sync_call();
         }
     }
