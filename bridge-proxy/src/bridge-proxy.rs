@@ -44,6 +44,7 @@ pub trait BridgeProxyContract:
 
     #[endpoint(execute)]
     fn execute(&self, tx_id: usize) {
+        self.debug_test();
         self.require_not_paused();
         require!(
             self.ongoing_execution(tx_id).is_empty(),
@@ -138,6 +139,7 @@ pub trait BridgeProxyContract:
 
         // Check if token is native or wrapped
         if chain_specific_token_id == payment.token_identifier {
+            self.debug_chain_specific();
             self.tx()
                 .to(bridged_tokens_wrapper_addr)
                 .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
@@ -145,6 +147,7 @@ pub trait BridgeProxyContract:
                 .payment(payment)
                 .sync_call();
         } else {
+            self.debug_non_chain_specific();
             let caller = self.blockchain().get_caller();
             self.tx()
                 .to(self.esdt_safe_contract_address().get())
@@ -200,4 +203,13 @@ pub trait BridgeProxyContract:
         }
         transactions
     }
+
+    #[event("debugChainSpecific")]
+    fn debug_chain_specific(&self);
+
+    #[event("debugNonChainSpecific")]
+    fn debug_non_chain_specific(&self);
+
+    #[event("debugTest")]
+    fn debug_test(&self);
 }
