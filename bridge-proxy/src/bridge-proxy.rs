@@ -1,5 +1,5 @@
 #![no_std]
-use multiversx_sc::{imports::*, storage::StorageKey};
+use multiversx_sc::imports::*;
 
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper_proxy;
@@ -9,7 +9,6 @@ pub mod esdt_safe_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
-const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
@@ -121,38 +120,18 @@ pub trait BridgeProxyContract:
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
         let payment = self.payments(tx_id).get();
-        let bridged_tokens_wrapper_addr = self.bridged_tokens_wrapper_address().get();
+        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
 
-        let mut storage_key = StorageKey::new(CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING);
-        storage_key.append_item(&tx.token_id);
-
-        let chain_specific_to_universal_token_mapper: SingleValueMapper<
-            TokenIdentifier,
-            ManagedAddress,
-        > = SingleValueMapper::<_, _, ManagedAddress>::new_from_address(
-            self.bridged_tokens_wrapper_address().get(),
-            storage_key,
-        );
-
-        let chain_specific_token_id = chain_specific_to_universal_token_mapper.get();
-
-        // Check if token is native or wrapped
-        if chain_specific_token_id == payment.token_identifier {
-            self.tx()
-                .to(bridged_tokens_wrapper_addr)
-                .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-                .unwrap_token_create_transaction(&tx.token_id, tx.from)
-                .payment(payment)
-                .sync_call();
-        } else {
-            let caller = self.blockchain().get_caller();
-            self.tx()
-                .to(self.esdt_safe_contract_address().get())
-                .typed(esdt_safe_proxy::EsdtSafeProxy)
-                .create_transaction(tx.from, caller)
-                .payment(payment)
-                .sync_call();
-        }
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unwrap_token_create_transaction(&tx.token_id, tx.from)
+            .single_esdt(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {

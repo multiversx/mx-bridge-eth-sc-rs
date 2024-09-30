@@ -211,10 +211,7 @@ pub trait BridgedTokensWrapper:
         let universal_bridged_token_ids = self
             .chain_specific_to_universal_mapping(requested_token)
             .get();
-        require!(
-            payment_token == universal_bridged_token_ids,
-            "Esdt token unavailable"
-        );
+
         self.require_tokens_have_set_decimals_num(&payment_token, requested_token);
 
         let chain_specific_token_id = &requested_token;
@@ -248,12 +245,23 @@ pub trait BridgedTokensWrapper:
         to: EthAddress<Self::Api>,
         opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
-        let converted_amount = self.unwrap_token_common(&requested_token);
+        let chain_specific_token_id = self
+            .chain_specific_to_universal_mapping(&requested_token)
+            .get();
+
+        let converted_amount = if chain_specific_token_id == requested_token {
+            self.unwrap_token_common(&requested_token)
+        } else {
+            let (_, payment_amount) = self.call_value().single_fungible_esdt();
+            payment_amount
+        };
+
         let caller = self.blockchain().get_caller();
         let refunding_addr = match opt_refunding_address {
             OptionalValue::Some(refunding_addr) => refunding_addr,
             OptionalValue::None => caller,
         };
+
         self.tx()
             .to(self.esdt_safe_contract_address().get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
