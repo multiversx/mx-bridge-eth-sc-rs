@@ -320,7 +320,7 @@ pub trait EsdtSafe:
             actual_bridged_amount,
             required_fee,
             tx.to,
-            tx.from,
+            user_addr.as_managed_buffer().clone(),
         );
     }
 
