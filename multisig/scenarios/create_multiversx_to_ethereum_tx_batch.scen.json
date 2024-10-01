@@ -20,8 +20,7 @@
                 ],
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user"
+                    "0x0102030405060708091011121314151617181920"
                 ],
                 "gasLimit": "60,000,000",
                 "gasPrice": "0"
@@ -99,8 +98,7 @@
                 ],
                 "function": "createTransaction",
                 "arguments": [
-                    "0x0102030405060708091011121314151617181920",
-                    "address:user"
+                    "0x0102030405060708091011121314151617181920"
                 ],
                 "gasLimit": "50,000,000",
                 "gasPrice": "0"

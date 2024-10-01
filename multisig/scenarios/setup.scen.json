@@ -69,6 +69,7 @@
                     "storage": {
                         "str:multiTransferContractAddress": "sc:multi_transfer",
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:ethTxGasLimit": "150,000",

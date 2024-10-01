@@ -272,8 +272,17 @@ pub trait EsdtSafe:
 
         // This addr is used for the refund, if the transaction fails
         // This is passed by the BridgeTokenWrapper contract
+        let mut is_refund_tx = false;
+        let caller = self.blockchain().get_caller();
         let user_addr = match opt_refund_address {
-            OptionalValue::Some(addr) => addr,
+            OptionalValue::Some(addr) => {
+                require!(
+                    caller == self.bridged_tokens_wrapper_address().get(),
+                    "Wrong caller for a refund tx"
+                );
+                is_refund_tx = true;
+                addr
+            }
             OptionalValue::None => self.blockchain().get_caller(),
         };
 
@@ -289,7 +298,7 @@ pub trait EsdtSafe:
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),
-            is_refund_tx: false,
+            is_refund_tx,
         };
 
         let batch_id = self.add_to_batch(tx.clone());
@@ -345,6 +354,24 @@ pub trait EsdtSafe:
 
         self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
+    }
+
+    #[only_owner]
+    #[endpoint(setBridgedTokensWrapperAddress)]
+    fn set_bridged_tokens_wrapper_contract_address(
+        &self,
+        opt_address: OptionalValue<ManagedAddress>,
+    ) {
+        match opt_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid bridged tokens wrapper address"
+                );
+                self.bridged_tokens_wrapper_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
+        }
     }
 
     #[view(computeTotalAmmountsFromIndex)]
@@ -493,4 +520,8 @@ pub trait EsdtSafe:
         address: &ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
+
+    #[view(getBridgedTokensWrapperAddress)]
+    #[storage_mapper("bridgedTokensWrapperAddress")]
+    fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

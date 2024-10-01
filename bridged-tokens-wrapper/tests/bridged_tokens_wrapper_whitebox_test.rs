@@ -423,6 +423,11 @@ fn test_unwrap_token_create_transaction_should_fail_case_1() {
             .esdt_transfer(UNIVERSAL_TOKEN_IDENTIFIER, 0, 0u32)
             .expect(TxExpect::user_error("str:Contract is paused")),
         |sc| {
+            sc.set_paused(true);
+            sc.set_esdt_safe_contract_address(OptionalValue::Some(ManagedAddress::new_from_bytes(
+                b"0102030405060708090a0b0c0d0e0f10",
+            )));
+
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
