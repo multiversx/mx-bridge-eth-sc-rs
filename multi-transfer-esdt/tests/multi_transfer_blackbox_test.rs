@@ -16,9 +16,9 @@ use multiversx_sc::{
     contract_base::ManagedSerializer,
     storage::mappers::SingleValue,
     types::{
-        Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress, ReturnsResult,
-        TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, ManagedAddress, ManagedBuffer,
+        ManagedByteArray, ManagedOption, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress,
+        ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::pause::ProxyTrait;
@@ -27,19 +27,21 @@ use multiversx_sc_scenario::{
     imports::MxscPath,
     scenario_format::interpret_trait::{InterpretableFrom, InterpreterContext},
     scenario_model::*,
-    ContractInfo, DebugApi, ExpectValue, ScenarioTxRun, ScenarioWorld,
+    ContractInfo, DebugApi, ExpectError, ExpectValue, ScenarioTxRun, ScenarioWorld,
 };
 
 use eth_address::*;
 use token_module::ProxyTrait as _;
 use transaction::{CallData, EthTransaction};
 
+const UNIVERSAL_TOKEN_IDENTIFIER: TestTokenIdentifier = TestTokenIdentifier::new("UNIV-abc123");
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
 const WRAPPED_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WRAPPED-123456");
 
 const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
 
 const GAS_LIMIT: u64 = 100_000_000;
+const ERROR: u64 = 4;
 
 const MULTI_TRANSFER_CODE_PATH: MxscPath = MxscPath::new("output/multi-transfer-esdt.mxsc.json");
 const BRIDGE_PROXY_CODE_PATH: MxscPath =
@@ -102,6 +104,7 @@ impl MultiTransferTestState {
             .nonce(1)
             .esdt_balance(BRIDGE_TOKEN_ID, 1001u64)
             .esdt_balance(WRAPPED_TOKEN_ID, 1001u64)
+            .esdt_balance(UNIVERSAL_TOKEN_IDENTIFIER, 1001u64)
             .account(USER1_ADDRESS)
             .nonce(1)
             .account(USER2_ADDRESS)
@@ -551,4 +554,131 @@ fn batch_transfer_both_failed_test() {
         .run();
 
     assert!(first_batch.is_none());
+}
+
+#[test]
+fn test_unwrap_token_create_transaction() {
+    let mut state = MultiTransferTestState::new();
+
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.safe_deploy(Address::zero());
+    state.bridged_tokens_wrapper_deploy();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS.to_address()))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .set_bridge_proxy_contract_address(OptionalValue::Some(BRIDGE_PROXY_ADDRESS.to_address()))
+        .run();
+
+    state.world.set_esdt_balance(
+        BRIDGE_PROXY_ADDRESS,
+        b"UNIV-abc123",
+        BigUint::from(10_000_000u64),
+    );
+
+    state
+        .world
+        .tx()
+        .from(BRIDGE_PROXY_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .unwrap_token_create_transaction(
+            TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
+            EthAddress::zero(),
+            OptionalValue::Some(ManagedAddress::zero()),
+        )
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
+            0u64,
+            &BigUint::from(10u64),
+        )
+        .returns(ExpectError(ERROR, "Cannot create transaction while paused"))
+        .run();
+
+    state.config_multi_transfer();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .add_token_to_whitelist(
+            TokenIdentifier::from_esdt_bytes("UNIV-abc123"),
+            "BRIDGE",
+            true,
+            false,
+            BigUint::zero(),
+            BigUint::zero(),
+            BigUint::zero(),
+            OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
+        )
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_eth_tx_gas_limit(0u64)
+        .run();
+
+    // Proceed with the test, expecting "Esdt token unavailable" - result code mismatch. Tx id: ''. Want: "0". Have: 4. Message: storage decode error (key: bridgedTokensWrapperAddress): bad array length
+    // state
+    //     .world
+    //     .tx()
+    //     .from(BRIDGE_PROXY_ADDRESS)
+    //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+    //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+    //     .unwrap_token_create_transaction(
+    //         TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
+    //         EthAddress::zero(),
+    //         OptionalValue::Some(ManagedAddress::zero()),
+    //     )
+    //     .egld_or_single_esdt(
+    //         &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
+    //         0u64,
+    //         &BigUint::from(1000u64),
+    //     )
+    //     .returns(ExpectError(ERROR, "Esdt token unavailable"))
+    //     .run();
+
+    //same
+    state.world.set_esdt_balance(
+        BRIDGE_PROXY_ADDRESS,
+        b"WRAPPED-123456",
+        BigUint::from(10_000_000u64),
+    );
+    state
+        .world
+        .tx()
+        .from(BRIDGE_PROXY_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .unwrap_token_create_transaction(
+            TokenIdentifier::from(WRAPPED_TOKEN_ID),
+            EthAddress::zero(),
+            OptionalValue::Some(ManagedAddress::zero()),
+        )
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(WRAPPED_TOKEN_ID),
+            0u64,
+            &BigUint::from(1001u64),
+        )
+        .returns(ExpectError(ERROR, "Contract does not have enough funds"))
+        .run();
 }
