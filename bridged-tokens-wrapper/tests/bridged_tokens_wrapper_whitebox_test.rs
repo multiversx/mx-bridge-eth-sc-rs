@@ -511,7 +511,6 @@ fn test_unwrap_token_create_transaction_should_fail_case_3() {
 }
 
 #[test]
-#[ignore] //Ignore for now; Cannot import esdt-safe code here
 fn test_unwrap_token_create_transaction_should_fail_case_4() {
     let mut world = setup();
     let bridged_tokens_wrapper = WhiteboxContract::new(
@@ -965,7 +964,6 @@ fn test_unwrap_token_should_fail_case_2() {
 }
 
 #[test]
-#[ignore] //Ignore for now
 fn test_unwrap_token_should_fail_case_3() {
     let mut world = setup();
     let bridged_tokens_wrapper = WhiteboxContract::new(

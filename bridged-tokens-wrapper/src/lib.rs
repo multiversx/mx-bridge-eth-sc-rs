@@ -212,6 +212,10 @@ pub trait BridgedTokensWrapper:
             .chain_specific_to_universal_mapping(requested_token)
             .get();
 
+        require!(
+            payment_token == universal_bridged_token_ids,
+            "Esdt token unavailable"
+        );
         self.require_tokens_have_set_decimals_num(&payment_token, requested_token);
 
         let chain_specific_token_id = &requested_token;
