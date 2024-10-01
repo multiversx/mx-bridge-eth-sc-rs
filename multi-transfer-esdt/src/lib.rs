@@ -1,6 +1,6 @@
 #![no_std]
 
-use multiversx_sc::imports::*;
+use multiversx_sc::{imports::*, storage::StorageKey};
 
 use eth_address::EthAddress;
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
@@ -12,6 +12,7 @@ pub mod multi_transfer_proxy;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
+const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -66,6 +67,8 @@ pub trait MultiTransferEsdt:
 
             require!(is_success, "Invalid token or amount");
 
+            let universal_token = self.get_universal_token(eth_tx.clone());
+
             let mut must_refund = false;
             if eth_tx.to.is_zero() {
                 self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
@@ -73,7 +76,7 @@ pub trait MultiTransferEsdt:
             } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
                 self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
-            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &eth_tx.token_id) {
+            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
                 self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
                 must_refund = true;
             }
@@ -120,9 +123,18 @@ pub trait MultiTransferEsdt:
                 let mut refund_payments = ManagedVec::new();
 
                 for tx_fields in all_tx_fields {
-                    let (_, _, _, _, token_identifier, amount) = tx_fields.clone().into_tuple();
-                    refund_batch.push(Transaction::from(tx_fields));
-                    refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
+                    let (_, tx_nonce, _, _, token_identifier, amount) =
+                        tx_fields.clone().into_tuple();
+
+                    if self.is_refund_valid(&token_identifier) {
+                        refund_batch.push(Transaction::from(tx_fields));
+                        refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
+                    } else {
+                        self.unprocessed_refund_txs(tx_nonce)
+                            .set(Transaction::from(tx_fields));
+
+                        self.unprocessed_refund_txs_event(tx_nonce);
+                    }
                 }
 
                 let esdt_safe_addr = self.esdt_safe_contract_address().get();
@@ -170,6 +182,17 @@ pub trait MultiTransferEsdt:
     }
 
     #[only_owner]
+    #[endpoint(addUnprocessedRefundTxToBatch)]
+    fn add_unprocessed_refund_tx_to_batch(&self, tx_id: u64) {
+        let refund_tx = self.unprocessed_refund_txs(tx_id).get();
+        let mut refund_tx_list = ManagedVec::new();
+        refund_tx_list.push(refund_tx);
+        self.add_multiple_tx_to_batch(&refund_tx_list);
+
+        self.unprocessed_refund_txs(tx_id).clear();
+    }
+
+    #[only_owner]
     #[endpoint(setEsdtSafeContractAddress)]
     fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
         match opt_new_address {
@@ -181,6 +204,35 @@ pub trait MultiTransferEsdt:
     }
 
     // private
+
+    fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
+        let esdt_safe_addr = self.esdt_safe_contract_address().get();
+        let own_sc_address = self.blockchain().get_sc_address();
+        let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+            return false;
+        }
+        return true;
+    }
+
+    fn get_universal_token(&self, eth_tx: EthTransaction<Self::Api>) -> TokenIdentifier {
+        let mut storage_key = StorageKey::new(CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING);
+        storage_key.append_item(&eth_tx.token_id);
+
+        let chain_specific_to_universal_token_mapper: SingleValueMapper<
+            TokenIdentifier,
+            ManagedAddress,
+        > = SingleValueMapper::<_, _, ManagedAddress>::new_from_address(
+            self.wrapping_contract_address().get(),
+            storage_key,
+        );
+        if chain_specific_to_universal_token_mapper.is_empty() {
+            eth_tx.token_id
+        } else {
+            chain_specific_to_universal_token_mapper.get()
+        }
+    }
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
         Transaction {
@@ -268,6 +320,9 @@ pub trait MultiTransferEsdt:
     #[storage_mapper("esdtSafeContractAddress")]
     fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
+    #[storage_mapper("unprocessedRefundTxs")]
+    fn unprocessed_refund_txs(&self, tx_id: u64) -> SingleValueMapper<Transaction<Self::Api>>;
+
     // events
 
     #[event("transferPerformedEvent")]
@@ -296,4 +351,7 @@ pub trait MultiTransferEsdt:
 
     #[event("transferOverMaxAmount")]
     fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("unprocessedRefundTxs")]
+    fn unprocessed_refund_txs_event(&self, #[indexed] tx_id: u64);
 }

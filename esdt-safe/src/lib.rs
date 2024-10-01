@@ -201,12 +201,35 @@ pub trait EsdtSafe:
                 nonce: tx_nonce,
                 from: refund_tx.to,
                 to: refund_tx.from,
-                token_identifier: refund_tx.token_identifier,
-                amount: actual_bridged_amount,
+                token_identifier: refund_tx.token_identifier.clone(),
+                amount: actual_bridged_amount.clone(),
                 is_refund_tx: true,
             };
             new_transactions.push(new_tx);
             original_tx_nonces.push(refund_tx.nonce);
+
+            let refund_token_id = refund_tx.token_identifier;
+
+            if self.mint_burn_token(&refund_token_id).get() {
+                let burn_balances_mapper = self.burn_balances(&refund_token_id);
+                let mint_balances_mapper = self.mint_balances(&refund_token_id);
+                if !self.native_token(&refund_token_id).get() {
+                    require!(
+                        burn_balances_mapper.get()
+                            <= &mint_balances_mapper.get() - &actual_bridged_amount,
+                        "Not enough burned tokens!"
+                    );
+                }
+                let mint_executed = self.internal_mint(&refund_token_id, &actual_bridged_amount);
+                require!(mint_executed, "Cannot do the mint action!");
+                mint_balances_mapper.update(|minted| {
+                    *minted += &actual_bridged_amount;
+                });
+            } else {
+                self.total_balances(&refund_token_id).update(|total| {
+                    *total -= &actual_bridged_amount;
+                });
+            }
         }
 
         let batch_ids = self.add_multiple_tx_to_batch(&new_transactions);
@@ -229,7 +252,11 @@ pub trait EsdtSafe:
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
     #[payable("*")]
     #[endpoint(createTransaction)]
-    fn create_transaction(&self, to: EthAddress<Self::Api>) {
+    fn create_transaction(
+        &self,
+        to: EthAddress<Self::Api>,
+        opt_refund_address: OptionalValue<ManagedAddress>,
+    ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
@@ -243,20 +270,35 @@ pub trait EsdtSafe:
 
         self.require_below_max_amount(&payment_token, &payment_amount);
 
+        // This addr is used for the refund, if the transaction fails
+        // This is passed by the BridgeTokenWrapper contract
+        let mut is_refund_tx = false;
+        let caller = self.blockchain().get_caller();
+        let user_addr = match opt_refund_address {
+            OptionalValue::Some(addr) => {
+                require!(
+                    caller == self.bridged_tokens_wrapper_address().get(),
+                    "Wrong caller for a refund tx"
+                );
+                is_refund_tx = true;
+                addr
+            }
+            OptionalValue::None => self.blockchain().get_caller(),
+        };
+
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
         let actual_bridged_amount = payment_amount - required_fee.clone();
-        let caller = self.blockchain().get_caller();
         let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: caller.as_managed_buffer().clone(),
+            from: user_addr.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),
-            is_refund_tx: false,
+            is_refund_tx,
         };
 
         let batch_id = self.add_to_batch(tx.clone());
@@ -287,7 +329,7 @@ pub trait EsdtSafe:
             actual_bridged_amount,
             required_fee,
             tx.to,
-            tx.from,
+            user_addr.as_managed_buffer().clone(),
         );
     }
 
@@ -312,6 +354,24 @@ pub trait EsdtSafe:
 
         self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
+    }
+
+    #[only_owner]
+    #[endpoint(setBridgedTokensWrapperAddress)]
+    fn set_bridged_tokens_wrapper_contract_address(
+        &self,
+        opt_address: OptionalValue<ManagedAddress>,
+    ) {
+        match opt_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid bridged tokens wrapper address"
+                );
+                self.bridged_tokens_wrapper_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
+        }
     }
 
     #[view(computeTotalAmmountsFromIndex)]
@@ -460,4 +520,8 @@ pub trait EsdtSafe:
         address: &ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
+
+    #[view(getBridgedTokensWrapperAddress)]
+    #[storage_mapper("bridgedTokensWrapperAddress")]
+    fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

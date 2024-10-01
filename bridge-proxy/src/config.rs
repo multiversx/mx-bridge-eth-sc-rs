@@ -5,7 +5,7 @@ use transaction::EthTransaction;
 #[multiversx_sc::module]
 pub trait ConfigModule {
     #[only_owner]
-    #[endpoint(setupMultiTransfer)]
+    #[endpoint(setMultiTransferAddress)]
     fn set_multi_transfer_contract_address(
         &self,
         opt_multi_transfer_address: OptionalValue<ManagedAddress>,
@@ -23,8 +23,11 @@ pub trait ConfigModule {
     }
 
     #[only_owner]
-    #[endpoint(setBridgedTokensWrapper)]
-    fn set_bridged_tokens_wrapper(&self, opt_address: OptionalValue<ManagedAddress>) {
+    #[endpoint(setBridgedTokensWrapperAddress)]
+    fn set_bridged_tokens_wrapper_contract_address(
+        &self,
+        opt_address: OptionalValue<ManagedAddress>,
+    ) {
         match opt_address {
             OptionalValue::Some(sc_addr) => {
                 require!(
@@ -37,6 +40,21 @@ pub trait ConfigModule {
         }
     }
 
+    #[only_owner]
+    #[endpoint(setEsdtSafeAddress)]
+    fn set_esdt_safe_contract_address(&self, opt_address: OptionalValue<ManagedAddress>) {
+        match opt_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid bridged tokens wrapper address"
+                );
+                self.esdt_safe_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.esdt_safe_contract_address().clear(),
+        }
+    }
+
     #[view(getMultiTransferAddress)]
     #[storage_mapper("multiTransferAddress")]
     fn multi_transfer_address(&self) -> SingleValueMapper<ManagedAddress>;
@@ -44,6 +62,10 @@ pub trait ConfigModule {
     #[view(getBridgedTokensWrapperAddress)]
     #[storage_mapper("bridgedTokensWrapperAddress")]
     fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getEsdtSafeContractAddress)]
+    #[storage_mapper("esdtSafeContractAddress")]
+    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("pending_transactions")]
     fn pending_transactions(&self) -> VecMapper<EthTransaction<Self::Api>>;
@@ -54,4 +76,7 @@ pub trait ConfigModule {
     #[view(lowestTxId)]
     #[storage_mapper("lowest_tx_id")]
     fn lowest_tx_id(&self) -> SingleValueMapper<usize>;
+
+    #[storage_mapper("ongoingExecution")]
+    fn ongoing_execution(&self, tx_id: usize) -> SingleValueMapper<u64>;
 }

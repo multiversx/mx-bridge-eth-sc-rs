@@ -40,6 +40,11 @@
                     "creatorAddress": "address:owner",
                     "creatorNonce": "1",
                     "newAddress": "sc:multi_transfer"
+                },
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "2",
+                    "newAddress": "sc:bridged_tokens_wrapper"
                 }
             ]
         },
@@ -93,6 +98,27 @@
             }
         },
         {
+            "step": "scCall",
+            "txId": "add-bridged-tokens-wrapper-addr",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "function": "setBridgedTokensWrapperAddress",
+                "arguments": [
+                    "sc:bridged_tokens_wrapper"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
             "step": "checkState",
             "accounts": {
                 "sc:esdt_safe": {
@@ -101,6 +127,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:multiTransferContractAddress": "sc:multi_transfer",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:firstBatchId": "1",
@@ -155,6 +182,7 @@
                     "storage": {
                         "str:feeEstimatorContractAddress": "sc:price_aggregator",
                         "str:multiTransferContractAddress": "sc:multi_transfer",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:firstBatchId": "1",

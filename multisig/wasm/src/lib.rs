@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           68
+// Endpoints:                           71
 // Async Callback (empty):               1
-// Total number of exported functions:  71
+// Total number of exported functions:  74
 
 #![no_std]
 
@@ -27,6 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         proposeMultiTransferEsdtBatch => propose_multi_transfer_esdt_batch
         moveRefundBatchToSafeFromChildContract => move_refund_batch_to_safe_from_child_contract
         initSupplyFromChildContract => init_supply_from_child_contract
+        addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
         performAction => perform_action_endpoint
         sign => sign
         upgradeChildContractFromSource => upgrade_child_contract_from_source
@@ -38,6 +39,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         clearMapping => clear_mapping
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
+        initSupplyEsdtSafe => init_supply_esdt_safe
+        initSupplyMintBurnEsdtSafe => init_supply_mint_burn_esdt_safe
         pauseProxy => pause_proxy
         unpauseProxy => unpause_proxy
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
