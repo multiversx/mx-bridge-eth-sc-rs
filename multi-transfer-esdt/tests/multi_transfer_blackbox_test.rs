@@ -738,7 +738,7 @@ fn test_unwrap_token_create_transaction_paused() {
 }
 
 #[test]
-fn insufficient_liquidity_test() {
+fn test_unwrap_token_create_transaction_insufficient_liquidity() {
     let mut state = MultiTransferTestState::new();
     state.deploy_contracts();
     state.config_multi_transfer();
@@ -818,25 +818,14 @@ fn test_unwrap_token_create_transaction_should_work() {
         .run();
 }
 
-#[test] //small issue, the test passes and it should not because BRIDGE_TOKEN_ID is not mapped to WRAPPED_TOKEN_ID
-fn mismatched_token_id_test() {
+#[test]
+fn test_unwrap_token_create_transaction_amount_zero() {
     let mut state = MultiTransferTestState::new();
+
     state.deploy_contracts();
 
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
-
-    let result = state
-        .world
-        .query()
-        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .chain_specific_to_universal_mapping(WRAPPED_TOKEN_ID)
-        .returns(ReturnsResult)
-        .run();
-
-    println!("{:?}", result);
-
     state
         .world
         .tx()
@@ -844,15 +833,15 @@ fn mismatched_token_id_test() {
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .unwrap_token_create_transaction(
-            WRAPPED_TOKEN_ID,
+            TokenIdentifier::from(WRAPPED_TOKEN_ID),
             EthAddress::zero(),
             OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
-            &BigUint::from(100u64),
+            &BigUint::from(0u64),
         )
-        .returns(ExpectError(ERROR, "Esdt token unavailable"))
+        .returns(ExpectError(ERROR, "Must pay more than 0 tokens!"))
         .run();
 }
