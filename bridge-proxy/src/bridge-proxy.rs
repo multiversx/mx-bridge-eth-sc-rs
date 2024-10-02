@@ -1,11 +1,9 @@
 #![no_std]
 use multiversx_sc::imports::*;
 
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper;
-pub mod bridged_tokens_wrapper_proxy;
 pub mod config;
 
+use sc_proxies::bridged_tokens_wrapper_proxy;
 use transaction::{CallData, EthTransaction};
 
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
@@ -105,7 +103,7 @@ pub trait BridgeProxyContract:
 
         self.tx()
             .to(esdt_safe_addr)
-            .typed(bridged_tokens_wrapper::BridgedTokensWrapperProxy)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .unwrap_token_create_transaction(&tx.token_id, tx.from)
             .single_esdt(
                 &payment.token_identifier,
@@ -124,11 +122,11 @@ pub trait BridgeProxyContract:
     fn update_lowest_tx_id(&self) {
         let mut new_lowest = self.lowest_tx_id().get();
         let len = self.pending_transactions().len();
-        
+
         while new_lowest < len && self.pending_transactions().item_is_empty(new_lowest) {
             new_lowest += 1;
         }
-        
+
         self.lowest_tx_id().set(new_lowest);
     }
 

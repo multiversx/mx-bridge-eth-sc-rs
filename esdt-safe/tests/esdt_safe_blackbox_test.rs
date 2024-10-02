@@ -1,8 +1,8 @@
 #![allow(unused)]
 use esdt_safe::*;
-use esdt_safe_proxy::EsdtSafeProxyMethods;
 
 use multiversx_sc_scenario::imports::*;
+use sc_proxies::esdt_safe_proxy::{self, EsdtSafeProxyMethods};
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 
@@ -251,27 +251,40 @@ fn init_supply_test() {
     )
 }
 
-
 #[test]
 fn init_supply_test_mint_burn() {
     let mut state = EsdtSafeTestState::new();
     state.safe_deploy();
     state.config_esdtsafe();
 
-    state.esdt_raw_transction()
-        .init_supply_mint_burn(NON_WHITELISTED_TOKEN, BigUint::from(10_000u64), BigUint::from(10_000u64))
+    state
+        .esdt_raw_transction()
+        .init_supply_mint_burn(
+            NON_WHITELISTED_TOKEN,
+            BigUint::from(10_000u64),
+            BigUint::from(10_000u64),
+        )
         .with_result(ExpectError(ERROR, "Token not in whitelist"))
-        .run();   
+        .run();
 
-    state.esdt_raw_transction()
-            .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
-            .with_result(ExpectError(ERROR, "Cannot init for non mintable/burnable tokens"))
-            .run();  
+    state
+        .esdt_raw_transction()
+        .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
+        .with_result(ExpectError(
+            ERROR,
+            "Cannot init for non mintable/burnable tokens",
+        ))
+        .run();
 
-    state.esdt_raw_transction()
-        .init_supply_mint_burn(TOKEN_WITH_BURN_ROLE, BigUint::from(10_000u64), BigUint::from(10_000u64))
+    state
+        .esdt_raw_transction()
+        .init_supply_mint_burn(
+            TOKEN_WITH_BURN_ROLE,
+            BigUint::from(10_000u64),
+            BigUint::from(10_000u64),
+        )
         .with_result(ReturnsResult)
-        .run();  
+        .run();
 
     let total_minted = state
         .world
@@ -282,7 +295,11 @@ fn init_supply_test_mint_burn() {
         .returns(ReturnsResult)
         .run();
 
-    assert_eq!(total_minted, BigUint::from(10_000u64), "Total supply should be 10,000");
+    assert_eq!(
+        total_minted,
+        BigUint::from(10_000u64),
+        "Total supply should be 10,000"
+    );
 
     let total_burned = state
         .world
@@ -293,7 +310,9 @@ fn init_supply_test_mint_burn() {
         .returns(ReturnsResult)
         .run();
 
-    assert_eq!(total_burned, BigUint::from(10_000u64), "Total supply should be 10,000")
+    assert_eq!(
+        total_burned,
+        BigUint::from(10_000u64),
+        "Total supply should be 10,000"
+    )
 }
-
-

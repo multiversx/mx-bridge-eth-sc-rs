@@ -3,8 +3,8 @@
 use std::collections::LinkedList;
 use std::ops::Add;
 
-use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _};
-use bridge_proxy::{bridged_tokens_wrapper_proxy, ProxyTrait};
+use bridge_proxy::config::ProxyTrait as _;
+use bridge_proxy::ProxyTrait;
 
 use crowdfunding_esdt::crowdfunding_esdt_proxy;
 use multiversx_sc::codec::NestedEncode;
@@ -37,6 +37,7 @@ use multiversx_sc_scenario::{
 use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy};
 use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
@@ -180,7 +181,9 @@ impl BridgeProxyTestState {
             .from(OWNER_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .set_bridged_tokens_wrapper(OptionalValue::Some(BRIDGED_TOKENS_WRAPPER_ADDRESS))
+            .set_bridged_tokens_wrapper_contract_address(OptionalValue::Some(
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            ))
             .run();
 
         self.world
@@ -517,5 +520,3 @@ fn test_lowest_tx_id() {
         .returns(ExpectValue(51usize))
         .run();
 }
-
-

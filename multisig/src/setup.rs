@@ -1,8 +1,7 @@
 use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-
-use crate::{esdt_safe_proxy, multi_transfer_esdt_proxy, bridge_proxy_contract_proxy};
+use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_proxy};
 
 #[multiversx_sc::module]
 pub trait SetupModule:
@@ -177,7 +176,12 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(initSupplyMintBurnEsdtSafe)]
-    fn init_supply_mint_burn_esdt_safe(&self, token_id: TokenIdentifier, mint_amount: BigUint, burn_amount: BigUint) {
+    fn init_supply_mint_burn_esdt_safe(
+        &self,
+        token_id: TokenIdentifier,
+        mint_amount: BigUint,
+        burn_amount: BigUint,
+    ) {
         let esdt_safe_addr = self.esdt_safe_address().get();
 
         self.tx()
@@ -186,7 +190,7 @@ pub trait SetupModule:
             .init_supply_mint_burn(token_id, mint_amount, burn_amount)
             .sync_call();
     }
-    
+
     #[only_owner]
     #[endpoint(pauseProxy)]
     fn pause_proxy(&self) {
@@ -322,7 +326,7 @@ pub trait SetupModule:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
             .set_esdt_safe_contract_address(OptionalValue::Some(esdt_safe_address))
             .sync_call();
     }
@@ -396,7 +400,7 @@ pub trait SetupModule:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
             .set_max_bridged_amount(token_id, max_amount)
             .sync_call();
     }
@@ -410,7 +414,7 @@ pub trait SetupModule:
 
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
             .sync_call();
     }
@@ -427,7 +431,7 @@ pub trait SetupModule:
 
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
             .sync_call();
     }
@@ -449,7 +453,7 @@ pub trait SetupModule:
 
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(opt_wrapping_contract_address)
             .sync_call();
     }
