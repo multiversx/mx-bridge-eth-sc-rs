@@ -1,3 +1,5 @@
+#![no_std]
+
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper_proxy;
 pub mod crowdfunding_esdt_proxy;
