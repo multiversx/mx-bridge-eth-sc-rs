@@ -190,7 +190,7 @@ multiTransferEsdtSetMaxBridgedAmountForToken() {
 }
 
 
-setMultiTransferOnEsdtSafe() {
+setMultiTransferOnEsdtSafeThroughMultisig() {
     CHECK_VARIABLES MULTISIG
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
@@ -198,7 +198,7 @@ setMultiTransferOnEsdtSafe() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-setEsdtSafeOnMultiTransfer() {
+setEsdtSafeOnMultiTransferThroughMultisig() {
     CHECK_VARIABLES MULTISIG
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \

@@ -13,7 +13,7 @@ deployMultiTransfer() {
     update-config MULTI_TRANSFER ${ADDRESS}
 }
 
-setBridgeProxyContractAddress() {
+setBridgeProxyContractAddressOnMultiTransfer() {
     CHECK_VARIABLES MULTI_TRANSFER BRIDGE_PROXY
 
     mxpy --verbose contract call ${MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \
@@ -22,7 +22,7 @@ setBridgeProxyContractAddress() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-setWrappingContractAddress() {
+setBridgedTokensWrapperOnMultiTransfer() {
     CHECK_VARIABLES MULTI_TRANSFER BRIDGED_TOKENS_WRAPPER
 
     mxpy --verbose contract call ${MULTI_TRANSFER} --recall-nonce --pem=${ALICE} \

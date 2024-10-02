@@ -34,3 +34,12 @@ unsetLocalRolesEsdtSafe() {
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+
+setBridgedTokensWrapperOnEsdtSafe() {
+    CHECK_VARIABLES SAFE BRIDGED_TOKENS_WRAPPER
+
+    mxpy --verbose contract call ${SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setBridgedTokensWrapperAddress" \
+    --arguments ${BRIDGED_TOKENS_WRAPPER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}

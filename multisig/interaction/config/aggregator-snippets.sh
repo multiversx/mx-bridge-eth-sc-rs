@@ -1,9 +1,10 @@
 deployAggregator() {
-    CHECK_VARIABLES AGGREGATOR_WASM CHAIN_SPECIFIC_TOKEN ALICE_ADDRESS
+    CHECK_VARIABLES AGGREGATOR_WASM CHAIN_SPECIFIC_TOKEN ORACLE_ADDR_0 ORACLE_ADDR_1 ORACLE_ADDR_2 ORACLE_ADDR_3
 
-    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
+    STAKE=$(echo "$ORACLE_REQUIRED_STAKE*10^18" | bc)
     mxpy --verbose contract deploy --bytecode=${AGGREGATOR_WASM} --recall-nonce --pem=${ALICE} \
-    --gas-limit=100000000 --arguments str:EGLD ${MIN_STAKE} 1 1 1 ${ALICE_ADDRESS} \
+    --gas-limit=100000000 --arguments str:EGLD ${STAKE} 1 3 3 \
+    ${ORACLE_ADDR_0} ${ORACLE_ADDR_1} ${ORACLE_ADDR_2} ${ORACLE_ADDR_3} \
     --send --outfile=deploy-price-agregator-testnet.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-price-agregator-testnet.interaction.json" --expression="data['emittedTransactionHash']")
@@ -17,13 +18,30 @@ deployAggregator() {
     update-config AGGREGATOR ${ADDRESS}
 }
 
-stake() {
+stakeOracles() {
     CHECK_VARIABLES AGGREGATOR
 
-    MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
-    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
-    --gas-limit=35000000 --function="stake" --value=${MIN_STAKE} \
+    STAKE=$(echo "$ORACLE_REQUIRED_STAKE*10^18" | bc)
+    echo "---------------------------------------------------------"
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET0} \
+    --gas-limit=35000000 --function="stake" --value=${STAKE} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    echo "---------------------------------------------------------"
+    echo "---------------------------------------------------------"
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET1} \
+    --gas-limit=35000000 --function="stake" --value=${STAKE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    echo "---------------------------------------------------------"
+    echo "---------------------------------------------------------"
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET2} \
+    --gas-limit=35000000 --function="stake" --value=${STAKE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    echo "---------------------------------------------------------"
+    echo "---------------------------------------------------------"
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET3} \
+    --gas-limit=35000000 --function="stake" --value=${STAKE} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    echo "---------------------------------------------------------"
 }
 
 submitAggregatorBatch() {
@@ -32,7 +50,25 @@ submitAggregatorBatch() {
     FEE=$(echo "scale=0; $FEE_AMOUNT*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
 
     CURRENT_TIME=$(date +%s)
-    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET0} \
+    --gas-limit=15000000 --function="submitBatch" \
+    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    CURRENT_TIME=$(date +%s)
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET1} \
+    --gas-limit=15000000 --function="submitBatch" \
+    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    CURRENT_TIME=$(date +%s)
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET2} \
+    --gas-limit=15000000 --function="submitBatch" \
+    --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    CURRENT_TIME=$(date +%s)
+    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET3} \
     --gas-limit=15000000 --function="submitBatch" \
     --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
