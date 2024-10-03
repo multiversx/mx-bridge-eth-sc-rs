@@ -19,12 +19,3 @@ add-endpoints = [
 
 [[proxy]]
 path = "../bridge-proxy/src/bridged_tokens_wrapper_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "init",
-    "unpause",
-    "whitelistToken",
-    "addWrappedToken",
-    "depositLiquidity",
-    "setEsdtSafeContractAddress"
-]

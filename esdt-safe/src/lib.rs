@@ -335,55 +335,59 @@ pub trait EsdtSafe:
             required_fee,
             to_address: to.as_managed_buffer().clone(),
             caller_address: user_addr.as_managed_buffer().clone(),
-        };
+        }
     }
 
     // endpoints
 
-        /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
-        ///
-        /// Every transfer will have a part of the tokens subtracted as fees.
-        /// The fee amount depends on the global eth_tx_gas_limit
-        /// and the current GWEI price, respective to the bridged token
-        ///
-        /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
-        #[payable("*")]
-        #[endpoint(createTransaction)]
-        fn create_transaction(&self, to: EthAddress<Self::Api>, opt_refund_address: OptionalValue<ManagedAddress>) {
-            let transaction_details = self.create_transaction_common(to, opt_refund_address);
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
+    #[payable("*")]
+    #[endpoint(createTransaction)]
+    fn create_transaction(
+        &self,
+        to: EthAddress<Self::Api>,
+        opt_refund_address: OptionalValue<ManagedAddress>,
+    ) {
+        let transaction_details = self.create_transaction_common(to, opt_refund_address);
 
-            self.create_transaction_event(
-                transaction_details.batch_id,
-                transaction_details.tx_nonce,
-                transaction_details.payment_token,
-                transaction_details.actual_bridged_amount,
-                transaction_details.required_fee,
-                transaction_details.to_address,
-                transaction_details.caller_address,
-            );
-        }
+        self.create_transaction_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.to_address,
+            transaction_details.caller_address,
+        );
+    }
 
-        #[payable("*")]
-        #[endpoint(createTransactionSCCall)]
-        fn create_transaction_sc_call(
-            &self,
-            to: EthAddress<Self::Api>,
-            data: ManagedBuffer<Self::Api>,
-            opt_refund_address: OptionalValue<ManagedAddress>,
-        ) {
-            let transaction_details = self.create_transaction_common(to, opt_refund_address);
+    #[payable("*")]
+    #[endpoint(createTransactionSCCall)]
+    fn create_transaction_sc_call(
+        &self,
+        to: EthAddress<Self::Api>,
+        data: ManagedBuffer<Self::Api>,
+        opt_refund_address: OptionalValue<ManagedAddress>,
+    ) {
+        let transaction_details = self.create_transaction_common(to, opt_refund_address);
 
-            self.create_transaction_sc_call_event(
-                transaction_details.batch_id,
-                transaction_details.tx_nonce,
-                transaction_details.payment_token,
-                transaction_details.actual_bridged_amount,
-                transaction_details.required_fee,
-                transaction_details.to_address,
-                transaction_details.caller_address,
-                data,
-            );
-        }
+        self.create_transaction_sc_call_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.to_address,
+            transaction_details.caller_address,
+            data,
+        );
+    }
 
     /// Claim funds for failed MultiversX -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck.
