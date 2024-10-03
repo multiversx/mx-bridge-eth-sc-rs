@@ -334,7 +334,7 @@ impl MultiTransferTestState {
         expected_error: &str,
     ) {
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero())
+            .create_transaction(EthAddress::zero(), OptionalValue::None)
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
@@ -346,7 +346,7 @@ impl MultiTransferTestState {
 
     fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero())
+            .create_transaction(EthAddress::zero(), OptionalValue::None)
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,

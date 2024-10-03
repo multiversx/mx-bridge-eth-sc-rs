@@ -62,6 +62,25 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn upgrade(
+        self,
+    ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_upgrade()
+            .original_result()
+    }
+}
+
+#[rustfmt::skip]
+impl<Env, From, To, Gas> MultiTransferEsdtProxyMethods<Env, From, To, Gas>
+where
+    Env: TxEnv,
+    Env::Api: VMApi,
+    From: TxFrom<Env>,
+    To: TxTo<Env>,
+    Gas: TxGas<Env>,
+{
     pub fn batch_transfer_esdt_token<
         Arg0: ProxyArg<u64>,
         Arg1: ProxyArg<MultiValueEncoded<Env::Api, transaction::EthTransaction<Env::Api>>>,
@@ -113,6 +132,19 @@ where
             .original_result()
     }
 
+    pub fn add_unprocessed_refund_tx_to_batch<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUnprocessedRefundTxToBatch")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn set_esdt_safe_contract_address<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
@@ -126,12 +158,147 @@ where
             .original_result()
     }
 
+    pub fn wrapping_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getWrappingContractAddress")
+            .original_result()
+    }
+
+    pub fn bridge_proxy_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgeProxyContractAddress")
+            .original_result()
+    }
+
+    pub fn esdt_safe_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeContractAddress")
+            .original_result()
+    }
+
+    pub fn set_max_tx_batch_size<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        new_max_tx_batch_size: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMaxTxBatchSize")
+            .argument(&new_max_tx_batch_size)
+            .original_result()
+    }
+
+    pub fn set_max_tx_batch_block_duration<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        new_max_tx_batch_block_duration: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMaxTxBatchBlockDuration")
+            .argument(&new_max_tx_batch_block_duration)
+            .original_result()
+    }
+
+    pub fn get_current_tx_batch(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue6<u64, u64, ManagedBuffer<Env::Api>, ManagedBuffer<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getCurrentTxBatch")
+            .original_result()
+    }
+
     pub fn get_first_batch_any_status(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue6<u64, u64, ManagedBuffer<Env::Api>, ManagedBuffer<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getFirstBatchAnyStatus")
+            .original_result()
+    }
+
+    pub fn get_batch<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        batch_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue6<u64, u64, ManagedBuffer<Env::Api>, ManagedBuffer<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBatch")
+            .argument(&batch_id)
+            .original_result()
+    }
+
+    pub fn get_batch_status<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        batch_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, tx_batch_module::batch_status::BatchStatus<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBatchStatus")
+            .argument(&batch_id)
+            .original_result()
+    }
+
+    pub fn first_batch_id(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFirstBatchId")
+            .original_result()
+    }
+
+    pub fn last_batch_id(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getLastBatchId")
+            .original_result()
+    }
+
+    pub fn set_max_bridged_amount<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        max_amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMaxBridgedAmount")
+            .argument(&token_id)
+            .argument(&max_amount)
+            .original_result()
+    }
+
+    pub fn max_bridged_amount<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxBridgedAmount")
+            .argument(&token_id)
             .original_result()
     }
 }
