@@ -209,3 +209,22 @@ setEsdtSafeOnMultiTransferThroughMultisig() {
     --gas-limit=60000000 --function="setEsdtSafeOnMultiTransfer" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+
+initSupplyMintBurn() {
+  CHECK_VARIABLES MULTISIG
+
+  echo -e
+  echo "PREREQUIREMENTS: The MINT_BALANCE & BURN_BALANCE values should be defined in configs.cfg file"
+  echo "The script automatically apply denomination factors based on the number of the decimals the token has"
+  echo -e
+
+  confirmation-with-skip manual-update-config-file
+
+  MINT=$(echo "$MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+  BURN=$(echo "$BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+
+  mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+  --gas-limit=60000000 --function="initSupplyMintBurnEsdtSafe" \
+  --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MINT} ${BURN} \
+  --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}

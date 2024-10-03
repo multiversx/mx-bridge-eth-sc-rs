@@ -87,13 +87,17 @@ case "$1" in
   confirmation upgrade-wrapper-chain-specific-token  
   ;;
 
+'init-supply-mint-burn')
+  confirmation init-supply-mint-burn
+  ;;
+
 *)
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
   echo "  { \"whitelist-token\", \"deploy-bridge-contracts\", \"upgrade-wrapper\", \"add-relayer\", \"remove-relayer\", "
   echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", "
-  echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\" }"
+  echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\", \"init-supply-mint-burn\"}"
   ;;
 
 esac
