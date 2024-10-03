@@ -110,6 +110,19 @@ where
             .original_result()
     }
 
+    pub fn cancel<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("cancel")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn get_pending_transaction_by_id<
         Arg0: ProxyArg<usize>,
     >(
@@ -140,12 +153,12 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setupMultiTransfer")
+            .raw_call("setMultiTransferAddress")
             .argument(&opt_multi_transfer_address)
             .original_result()
     }
 
-    pub fn set_bridged_tokens_wrapper<
+    pub fn set_bridged_tokens_wrapper_contract_address<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
@@ -153,7 +166,20 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setBridgedTokensWrapper")
+            .raw_call("setBridgedTokensWrapperAddress")
+            .argument(&opt_address)
+            .original_result()
+    }
+
+    pub fn set_esdt_safe_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setEsdtSafeAddress")
             .argument(&opt_address)
             .original_result()
     }
@@ -173,6 +199,24 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getBridgedTokensWrapperAddress")
+            .original_result()
+    }
+
+    pub fn esdt_safe_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeContractAddress")
+            .original_result()
+    }
+
+    pub fn lowest_tx_id(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, usize> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("lowestTxId")
             .original_result()
     }
 
