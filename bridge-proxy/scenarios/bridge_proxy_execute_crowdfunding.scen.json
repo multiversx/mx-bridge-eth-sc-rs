@@ -90,7 +90,7 @@
             "tx": {
                 "from": "address:owner",
                 "to": "sc:bridge-proxy",
-                "function": "setBridgedTokensWrapper",
+                "function": "setBridgedTokensWrapperAddress",
                 "arguments": [
                     "0x00000000000000000500627269646765642d746f6b656e732d77726170706572"
                 ],

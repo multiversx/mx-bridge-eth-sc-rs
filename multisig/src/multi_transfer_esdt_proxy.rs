@@ -113,6 +113,19 @@ where
             .original_result()
     }
 
+    pub fn add_unprocessed_refund_tx_to_batch<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addUnprocessedRefundTxToBatch")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn set_esdt_safe_contract_address<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(

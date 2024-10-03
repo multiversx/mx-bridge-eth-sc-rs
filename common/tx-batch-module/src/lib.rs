@@ -183,7 +183,7 @@ pub trait TxBatchModule {
         }
 
         let max_batch_size = self.max_tx_batch_size().get();
-        if tx_batch.len() == max_batch_size {
+        if tx_batch.len() >= max_batch_size {
             return true;
         }
 

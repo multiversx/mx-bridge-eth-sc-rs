@@ -2,7 +2,7 @@ use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
 
-use crate::{esdt_safe_proxy, multi_transfer_esdt_proxy, bridge_proxy_contract_proxy};
+use crate::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
 
 #[multiversx_sc::module]
 pub trait SetupModule:

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           70
+// Endpoints:                           71
 // Async Callback (empty):               1
-// Total number of exported functions:  73
+// Total number of exported functions:  74
 
 #![no_std]
 
@@ -27,6 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         proposeMultiTransferEsdtBatch => propose_multi_transfer_esdt_batch
         moveRefundBatchToSafeFromChildContract => move_refund_batch_to_safe_from_child_contract
         initSupplyFromChildContract => init_supply_from_child_contract
+        addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
         performAction => perform_action_endpoint
         sign => sign
         upgradeChildContractFromSource => upgrade_child_contract_from_source

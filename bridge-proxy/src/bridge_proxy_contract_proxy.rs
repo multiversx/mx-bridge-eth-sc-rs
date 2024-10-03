@@ -66,6 +66,25 @@ where
     To: TxTo<Env>,
     Gas: TxGas<Env>,
 {
+    pub fn upgrade(
+        self,
+    ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_upgrade()
+            .original_result()
+    }
+}
+
+#[rustfmt::skip]
+impl<Env, From, To, Gas> BridgeProxyContractProxyMethods<Env, From, To, Gas>
+where
+    Env: TxEnv,
+    Env::Api: VMApi,
+    From: TxFrom<Env>,
+    To: TxTo<Env>,
+    Gas: TxGas<Env>,
+{
     pub fn deposit<
         Arg0: ProxyArg<transaction::EthTransaction<Env::Api>>,
     >(
@@ -91,6 +110,19 @@ where
             .original_result()
     }
 
+    pub fn cancel<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("cancel")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn get_pending_transaction_by_id<
         Arg0: ProxyArg<usize>,
     >(
@@ -104,7 +136,29 @@ where
             .original_result()
     }
 
-    pub fn set_bridged_tokens_wrapper<
+    pub fn get_pending_transactions(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<usize, transaction::EthTransaction<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getPendingTransactions")
+            .original_result()
+    }
+
+    pub fn set_multi_transfer_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_multi_transfer_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setMultiTransferAddress")
+            .argument(&opt_multi_transfer_address)
+            .original_result()
+    }
+
+    pub fn set_bridged_tokens_wrapper_contract_address<
         Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
@@ -112,8 +166,48 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("setBridgedTokensWrapper")
+            .raw_call("setBridgedTokensWrapperAddress")
             .argument(&opt_address)
+            .original_result()
+    }
+
+    pub fn set_esdt_safe_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setEsdtSafeAddress")
+            .argument(&opt_address)
+            .original_result()
+    }
+
+    pub fn multi_transfer_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMultiTransferAddress")
+            .original_result()
+    }
+
+    pub fn bridged_tokens_wrapper_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgedTokensWrapperAddress")
+            .original_result()
+    }
+
+    pub fn esdt_safe_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEsdtSafeContractAddress")
             .original_result()
     }
 
@@ -126,12 +220,30 @@ where
             .original_result()
     }
 
+    pub fn pause_endpoint(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pause")
+            .original_result()
+    }
+
     pub fn unpause_endpoint(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("unpause")
+            .original_result()
+    }
+
+    pub fn paused_status(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isPaused")
             .original_result()
     }
 }

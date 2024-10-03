@@ -1,87 +1,13 @@
 [settings]
 
 [[proxy]]
-path = "../multisig/src/esdt_safe_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "init",
-    "upgrade",
-    "unpause",
-    "setMultiTransferContractAddress",
-    "addTokenToWhitelist",
-    "distributeFees",
-    "getCurrentTxBatch",
-    "initSupply",
-    "setTransactionBatchStatus",
-    "getBatch",
-    "pause",
-    "setFeeEstimatorContractAddress",
-    "setEthTxGasLimit",
-    "setDefaultPricePerGasUnit",
-    "setTokenTicker",
-    "addTokenToWhitelist",
-    "setMultiTransferContractAddress",
-    "removeTokenFromWhitelist",
-    "setMaxTxBatchSize",
-    "setMaxTxBatchBlockDuration",
-    "setMaxBridgedAmount",
-    "initSupplyMintBurn",
-]
-
-[[proxy]]
 path = "../bridged-tokens-wrapper/src/esdt_safe_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "upgrade",
-    "unpause",
-    "setMultiTransferContractAddress",
-    "addTokenToWhitelist",
-    "getTokens",
-    "addRefundBatch",
-    "getAccumulatedTransactionFees",
-    "getTotalBalances",
-    "getBatchStatus",
-    "getRefundAmounts",
-    "claimRefund",
-    "setTransactionBatchStatus",
-    "createTransaction"
-]
 
 [[proxy]]
 path = "../multi-transfer-esdt/src/esdt_safe_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "upgrade",
-    "unpause",
-    "setMultiTransferContractAddress",
-    "addTokenToWhitelist",
-    "getTokens",
-    "addRefundBatch",
-    "getRefundAmounts",
-    "claimRefund",
-    "getBatchStatus",
-    "getTotalBalances",
-    "getAccumulatedTransactionFees",
-    "setTransactionBatchStatus",
-    "createTransaction",
-    "initSupplyMintBurn",
-    "getMintBalances",
-    "getBurnBalances",
-    "setEthTxGasLimit"
-]
+
+[[proxy]]
+path = "../multisig/src/esdt_safe_proxy.rs"
 
 [[proxy]]
 path = "src/esdt_safe_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "init",
-    "initSupply",
-    "getTotalBalances",
-    "getBurnBalances",
-    "unpause",
-    "addTokenToWhitelist",
-    "setMultiTransferContractAddress",
-    "initSupplyMintBurn",
-    "getMintBalances",
-    "getBurnBalances",
-]
