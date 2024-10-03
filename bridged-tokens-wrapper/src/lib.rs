@@ -250,11 +250,11 @@ pub trait BridgedTokensWrapper:
         opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        let chain_specific_token_id = self
+        let universal_token_id = self
             .chain_specific_to_universal_mapping(&requested_token)
             .get();
 
-        let converted_amount = if chain_specific_token_id == payment_token {
+        let converted_amount = if universal_token_id == payment_token {
             self.unwrap_token_common(&requested_token)
         } else {
             payment_amount
