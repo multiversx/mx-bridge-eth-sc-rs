@@ -457,21 +457,6 @@ where
             .original_result()
     }
 
-    pub fn init_supply<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        amount: Arg1,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("initSupply")
-            .argument(&token_id)
-            .argument(&amount)
-            .original_result()
-    }
-
     pub fn init_supply_mint_burn<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,

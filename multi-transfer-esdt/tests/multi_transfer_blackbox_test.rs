@@ -19,8 +19,8 @@ use multiversx_sc::{
     contract_base::ManagedSerializer,
     storage::mappers::SingleValue,
     types::{
-        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EgldOrMultiEsdtPayment, EsdtLocalRole,
-        ManagedAddress, ManagedBuffer, ManagedByteArray, ManagedOption, ManagedVec,
+        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EgldOrMultiEsdtPayment,
+        EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedByteArray, ManagedOption, ManagedVec,
         MultiValueEncoded, ReturnsNewManagedAddress, ReturnsResult, TestAddress, TestSCAddress,
         TestTokenIdentifier, TokenIdentifier,
     },
@@ -199,7 +199,7 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(OptionalValue::Some(
                 BRIDGED_TOKENS_WRAPPER_ADDRESS.to_address(),
             ))
@@ -209,7 +209,7 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_bridge_proxy_contract_address(OptionalValue::Some(
                 BRIDGE_PROXY_ADDRESS.to_address(),
             ))
@@ -440,9 +440,8 @@ impl MultiTransferTestState {
         self.safe_deploy(Address::zero());
         self.bridged_tokens_wrapper_deploy();
     }
-}
 
-fn config_esdtsafe(&mut self) {
+    fn config_esdtsafe(&mut self) {
         self.world.set_esdt_local_roles(
             ESDT_SAFE_ADDRESS,
             b"TOKEN-123456",
@@ -501,7 +500,107 @@ fn config_esdtsafe(&mut self) {
             )
             .run();
     }
-fn esdt_raw_transaction(
+    fn single_transaction_should_fail(
+        &mut self,
+        token_id: TestTokenIdentifier,
+        amount: u64,
+        expected_error: &str,
+    ) {
+        let none_value: OptionalValue<i32> = OptionalValue::None;
+
+        self.esdt_raw_transaction()
+            .create_transaction(EthAddress::zero(), none_value)
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(token_id),
+                0,
+                &BigUint::from(amount),
+            )
+            .returns(ExpectError(ERROR, expected_error))
+            .run();
+    }
+
+    fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
+        self.esdt_raw_transaction()
+            .create_transaction(EthAddress::zero(), OptionalValue::None)
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(token_id),
+                0,
+                &BigUint::from(amount),
+            )
+            .returns(ReturnsResult)
+            .run();
+    }
+
+    fn set_transaction_batch_status_should_fail(
+        &mut self,
+        batch_id: u32,
+        statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
+        expected_status: u64,
+        expected_error: &str,
+    ) {
+        let mut tx = self
+            .esdt_raw_transaction()
+            .set_transaction_batch_status(batch_id, statuses)
+            .returns(ExpectError(expected_status, expected_error))
+            .run();
+    }
+
+    fn set_transaction_batch_status_should_work(
+        &mut self,
+        batch_id: u32,
+        statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
+    ) {
+        let mut tx = self
+            .esdt_raw_transaction()
+            .set_transaction_batch_status(batch_id, statuses)
+            .returns(ReturnsResult)
+            .run();
+    }
+
+    fn add_refund_batch_tx_multiple_payment_should_fail(
+        &mut self,
+        from_address: TestSCAddress,
+        to_address: TestSCAddress,
+        transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
+        payment: EgldOrMultiEsdtPayment<StaticApi>,
+        expected_error: &str,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_refund_batch(transfers)
+            .egld_or_multi_esdt(payment)
+            .returns(ExpectError(ERROR, expected_error))
+            .run();
+    }
+
+    fn add_refund_batch_tx_single_payment_should_fail(
+        &mut self,
+        from_address: TestSCAddress,
+        to_address: TestSCAddress,
+        transfers: ManagedVec<StaticApi, Transaction<StaticApi>>,
+        token_id: TestTokenIdentifier,
+        amount: u64,
+        expected_error: &str,
+    ) {
+        self.world
+            .tx()
+            .from(from_address)
+            .to(to_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_refund_batch(transfers)
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(token_id),
+                0,
+                &BigUint::from(amount),
+            )
+            .returns(ExpectError(ERROR, expected_error))
+            .run();
+    }
+
+    fn esdt_raw_transaction(
         &mut self,
     ) -> EsdtSafeProxyMethods<ScenarioEnvExec<'_>, TestAddress, TestSCAddress, ()> {
         self.world
