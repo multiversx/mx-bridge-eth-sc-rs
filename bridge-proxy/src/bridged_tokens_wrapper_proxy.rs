@@ -206,15 +206,18 @@ where
     pub fn unwrap_token_create_transaction<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg2: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
         requested_token: Arg0,
         to: Arg1,
+        opt_refunding_address: Arg2,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("unwrapTokenCreateTransaction")
             .argument(&requested_token)
             .argument(&to)
+            .argument(&opt_refunding_address)
             .original_result()
     }
 
@@ -227,6 +230,19 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("setEsdtSafeContractAddress")
+            .argument(&opt_new_address)
+            .original_result()
+    }
+
+    pub fn set_bridge_proxy_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_new_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBridgeProxyContractAddress")
             .argument(&opt_new_address)
             .original_result()
     }
@@ -285,6 +301,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getEsdtSafeContractAddress")
+            .original_result()
+    }
+
+    pub fn bridge_proxy_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgeProxyContractAddress")
             .original_result()
     }
 

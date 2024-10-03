@@ -152,16 +152,16 @@ where
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
     pub fn create_transaction<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
         to: Arg0,
-        refunding_address: Arg1,
+        opt_refund_address: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("createTransaction")
             .argument(&to)
-            .argument(&refunding_address)
+            .argument(&opt_refund_address)
             .original_result()
     }
 
@@ -178,6 +178,19 @@ where
             .payment(NotPayable)
             .raw_call("claimRefund")
             .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_bridged_tokens_wrapper_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBridgedTokensWrapperAddress")
+            .argument(&opt_address)
             .original_result()
     }
 
@@ -218,6 +231,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalRefundAmounts")
+            .original_result()
+    }
+
+    pub fn bridged_tokens_wrapper_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgedTokensWrapperAddress")
             .original_result()
     }
 
