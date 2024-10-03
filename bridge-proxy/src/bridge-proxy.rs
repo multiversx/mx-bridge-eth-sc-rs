@@ -125,7 +125,7 @@ pub trait BridgeProxyContract:
         self.tx()
             .to(esdt_safe_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .unwrap_token_create_transaction(&tx.token_id, tx.from)
+            .unwrap_token_create_transaction(&tx.token_id, tx.from, OptionalValue::Some(tx.to))
             .single_esdt(
                 &payment.token_identifier,
                 payment.token_nonce,
