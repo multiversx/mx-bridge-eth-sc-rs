@@ -374,6 +374,16 @@ pub trait EsdtSafe:
         }
     }
 
+    #[only_owner]
+    #[endpoint(withdrawTotalFeesOnEthereum)]
+    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
+        let amount_out = self.total_fees_on_ethereum(&token_id).get();
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&token_id, 0, &amount_out)
+            .transfer();
+    }
+
     #[view(computeTotalAmmountsFromIndex)]
     fn compute_total_amounts_from_index(
         &self,
