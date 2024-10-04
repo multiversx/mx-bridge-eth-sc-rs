@@ -538,8 +538,7 @@ impl MultiTransferTestState {
         expected_status: u64,
         expected_error: &str,
     ) {
-        let mut tx = self
-            .esdt_raw_transaction()
+        self.esdt_raw_transaction()
             .set_transaction_batch_status(batch_id, statuses)
             .returns(ExpectError(expected_status, expected_error))
             .run();
@@ -550,8 +549,7 @@ impl MultiTransferTestState {
         batch_id: u32,
         statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
     ) {
-        let mut tx = self
-            .esdt_raw_transaction()
+        self.esdt_raw_transaction()
             .set_transaction_batch_status(batch_id, statuses)
             .returns(ReturnsResult)
             .run();
