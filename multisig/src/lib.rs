@@ -344,6 +344,25 @@ pub trait Multisig:
         self.add_unprocessed_refund_tx_to_batch_event(tx_id);
     }
 
+    #[only_owner]
+    #[endpoint(withdrawTotalFeesOnEthereum)]
+    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .withdraw_total_fees_on_ethereum(token_id)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawSlashedAmount)]
+    fn withdraw_slashed_amount(&self) {
+        let slashed_amount = self.slashed_tokens_amount().get();
+        self.tx().to(ToCaller).egld(&slashed_amount).transfer();
+    }
+
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) {
