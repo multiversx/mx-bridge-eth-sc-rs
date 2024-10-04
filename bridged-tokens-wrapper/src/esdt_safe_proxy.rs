@@ -162,7 +162,6 @@ where
             .raw_call("createTransaction")
             .argument(&to)
             .argument(&opt_refund_address)
-            .argument(&opt_refund_address)
             .original_result()
     }
 
