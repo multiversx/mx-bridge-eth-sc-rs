@@ -328,8 +328,8 @@ pub trait EsdtSafe:
             payment_token,
             actual_bridged_amount,
             required_fee,
-            tx.to,
             user_addr.as_managed_buffer().clone(),
+            tx.to,
         );
     }
 
