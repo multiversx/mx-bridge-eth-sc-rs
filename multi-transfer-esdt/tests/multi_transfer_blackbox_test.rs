@@ -1169,6 +1169,28 @@ fn add_refund_batch_test() {
     state
         .world
         .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_eth_tx_gas_limit(100u64)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .init_supply_mint_burn(
+            TOKEN_ID,
+            BigUint::from(100_000_000u64),
+            BigUint::from(10_000u64),
+        )
+        .run();
+
+    state
+        .world
+        .tx()
         .from(MULTI_TRANSFER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
@@ -1185,6 +1207,22 @@ fn add_refund_batch_test() {
         .get_batch_status(1u64)
         .returns(ReturnsResult)
         .run();
+
+    if let BatchStatus::PartiallyFull {
+        end_block_nonce,
+        tx_ids,
+    } = result
+    {
+        assert!(!tx_ids.is_empty(), "tx_ids should not be empty");
+        let expected_tx_ids = vec![1u64, 2u64];
+        let tx_ids_vec: Vec<u64> = tx_ids.into_iter().collect();
+        assert_eq!(
+            tx_ids_vec, expected_tx_ids,
+            "tx_ids do not match expected values"
+        );
+    } else {
+        panic!("Expected BatchStatus::PartiallyFull, got {:?}", result);
+    }
 }
 
 #[test]
