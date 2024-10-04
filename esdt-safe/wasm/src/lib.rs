@@ -26,6 +26,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         createTransactionSCCall => create_transaction_sc_call
         claimRefund => claim_refund
         setBridgedTokensWrapperAddress => set_bridged_tokens_wrapper_contract_address
+        withdrawTotalFeesOnEthereum => withdraw_total_fees_on_ethereum
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
         getTotalRefundAmounts => get_total_refund_amounts

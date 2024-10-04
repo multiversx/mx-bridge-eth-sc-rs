@@ -22,9 +22,9 @@ pub trait EventsModule {
     #[event("addUnprocessedRefundTxToBatchEvent")]
     fn add_unprocessed_refund_tx_to_batch_event(&self, #[indexed] tx_id: u64);
 
-    #[event("pauseEsdtEvent")]
-    fn pause_esdt_safe_event(&self);
+    #[event("pauseBridgeProxyEvent")]
+    fn pause_bridge_proxy_event(&self);
 
-    #[event("unpauseEsdtEvent")]
-    fn unpause_esdt_safe_event(&self);
+    #[event("unpauseBridgeProxyEvent")]
+    fn unpause_bridge_proxy_event(&self);
 }
