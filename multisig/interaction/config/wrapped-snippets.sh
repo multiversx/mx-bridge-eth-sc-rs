@@ -9,7 +9,7 @@ deployBridgedTokensWrapper() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER_WASM
     
     mxpy --verbose contract deploy --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce --pem=${ALICE} \
-    --gas-limit=40000000 \
+    --gas-limit=60000000 \
     --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-bridged-tokens-wrapper-testnet.interaction.json" --expression="data['emittedTransactionHash']")
