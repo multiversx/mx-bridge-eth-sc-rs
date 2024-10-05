@@ -328,8 +328,8 @@ pub trait EsdtSafe:
             payment_token,
             actual_bridged_amount,
             required_fee,
-            tx.to,
             user_addr.as_managed_buffer().clone(),
+            tx.to,
         );
     }
 
@@ -372,6 +372,16 @@ pub trait EsdtSafe:
             }
             OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
         }
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawTotalFeesOnEthereum)]
+    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
+        let amount_out = self.total_fees_on_ethereum(&token_id).get();
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&token_id, 0, &amount_out)
+            .transfer();
     }
 
     #[view(computeTotalAmmountsFromIndex)]
