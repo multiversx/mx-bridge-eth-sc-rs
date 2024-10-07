@@ -1,13 +1,7 @@
 #![no_std]
 use multiversx_sc::imports::*;
 
-<<<<<<< HEAD
-=======
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper_proxy;
->>>>>>> origin/feat/v3.5
 pub mod config;
-pub mod esdt_safe_proxy;
 
 use sc_proxies::bridged_tokens_wrapper_proxy;
 use transaction::{CallData, EthTransaction};

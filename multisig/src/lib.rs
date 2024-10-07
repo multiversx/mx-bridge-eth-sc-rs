@@ -334,7 +334,7 @@ pub trait Multisig:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
             .add_unprocessed_refund_tx_to_batch(tx_id)
             .sync_call();
 
