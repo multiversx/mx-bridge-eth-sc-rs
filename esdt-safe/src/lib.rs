@@ -50,7 +50,6 @@ pub trait EsdtSafe:
     ) {
         self.owner_address_storage()
             .set(&self.blockchain().get_caller());
-
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
         self.multi_transfer_contract_address()
