@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           18
+// Endpoints:                           19
 // Async Callback (empty):               1
-// Total number of exported functions:  21
+// Total number of exported functions:  22
 
 #![no_std]
 
@@ -24,6 +24,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         moveRefundBatchToSafe => move_refund_batch_to_safe
         setWrappingContractAddress => set_wrapping_contract_address
         setBridgeProxyContractAddress => set_bridge_proxy_contract_address
+        addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
         setEsdtSafeContractAddress => set_esdt_safe_contract_address
         getWrappingContractAddress => wrapping_contract_address
         getBridgeProxyContractAddress => bridge_proxy_contract_address

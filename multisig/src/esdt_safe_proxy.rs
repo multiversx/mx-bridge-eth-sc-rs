@@ -126,6 +126,154 @@ where
             .original_result()
     }
 
+    /// Converts failed Ethereum -> MultiversX transactions to MultiversX -> Ethereum transaction. 
+    /// This is done every now and then to refund the tokens. 
+    ///  
+    /// As with normal MultiversX -> Ethereum transactions, a part of the tokens will be 
+    /// subtracted to pay for the fees 
+    pub fn add_refund_batch<
+        Arg0: ProxyArg<ManagedVec<Env::Api, transaction::Transaction<Env::Api>>>,
+    >(
+        self,
+        refund_transactions: Arg0,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("addRefundBatch")
+            .argument(&refund_transactions)
+            .original_result()
+    }
+
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted. 
+    ///  
+    /// Every transfer will have a part of the tokens subtracted as fees. 
+    /// The fee amount depends on the global eth_tx_gas_limit 
+    /// and the current GWEI price, respective to the bridged token 
+    ///  
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
+    pub fn create_transaction<
+        Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        to: Arg0,
+        opt_refund_address: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("createTransaction")
+            .argument(&to)
+            .argument(&opt_refund_address)
+            .original_result()
+    }
+
+    pub fn create_transaction_sc_call<
+        Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+        Arg2: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        to: Arg0,
+        data: Arg1,
+        opt_refund_address: Arg2,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("createTransactionSCCall")
+            .argument(&to)
+            .argument(&data)
+            .argument(&opt_refund_address)
+            .original_result()
+    }
+
+    /// Claim funds for failed MultiversX -> Ethereum transactions. 
+    /// These are not sent automatically to prevent the contract getting stuck. 
+    /// For example, if the receiver is a SC, a frozen account, etc. 
+    pub fn claim_refund<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EsdtTokenPayment<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimRefund")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_bridged_tokens_wrapper_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBridgedTokensWrapperAddress")
+            .argument(&opt_address)
+            .original_result()
+    }
+
+    pub fn withdraw_total_fees_on_ethereum<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawTotalFeesOnEthereum")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn compute_total_amounts_from_index<
+        Arg0: ProxyArg<u64>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        start_index: Arg0,
+        end_index: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("computeTotalAmmountsFromIndex")
+            .argument(&start_index)
+            .argument(&end_index)
+            .original_result()
+    }
+
+    /// Query function that lists all refund amounts for a user. 
+    /// Useful for knowing which token IDs to pass to the claimRefund endpoint. 
+    pub fn get_refund_amounts<
+        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRefundAmounts")
+            .argument(&address)
+            .original_result()
+    }
+
+    pub fn get_total_refund_amounts(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTotalRefundAmounts")
+            .original_result()
+    }
+
+    pub fn bridged_tokens_wrapper_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgedTokensWrapperAddress")
+            .original_result()
+    }
+
     pub fn set_fee_estimator_contract_address<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
     >(
@@ -184,6 +332,51 @@ where
             .raw_call("setTokenTicker")
             .argument(&token_id)
             .argument(&ticker)
+            .original_result()
+    }
+
+    /// Returns the fee for the given token ID (the fee amount is in the given token) 
+    pub fn calculate_required_fee<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("calculateRequiredFee")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn fee_estimator_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFeeEstimatorContractAddress")
+            .original_result()
+    }
+
+    pub fn default_price_per_gas_unit<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getDefaultPricePerGasUnit")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn eth_tx_gas_limit(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getEthTxGasLimit")
             .original_result()
     }
 
@@ -249,6 +442,22 @@ where
             .original_result()
     }
 
+    pub fn get_tokens<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<BigUint<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTokens")
+            .argument(&token_id)
+            .argument(&amount)
+            .original_result()
+    }
+
     pub fn init_supply<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,
@@ -296,6 +505,102 @@ where
             .original_result()
     }
 
+    pub fn token_whitelist(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAllKnownTokens")
+            .original_result()
+    }
+
+    pub fn native_token<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isNativeToken")
+            .argument(&token)
+            .original_result()
+    }
+
+    pub fn mint_burn_token<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isMintBurnToken")
+            .argument(&token)
+            .original_result()
+    }
+
+    pub fn multi_transfer_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMultiTransferContractAddress")
+            .original_result()
+    }
+
+    pub fn accumulated_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getAccumulatedTransactionFees")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn total_balances<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTotalBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn mint_balances<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMintBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn burn_balances<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBurnBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
@@ -331,6 +636,15 @@ where
             .original_result()
     }
 
+    pub fn get_first_batch_any_status(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, OptionalValue<MultiValue2<u64, MultiValueEncoded<Env::Api, MultiValue6<u64, u64, ManagedBuffer<Env::Api>, ManagedBuffer<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>>>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFirstBatchAnyStatus")
+            .original_result()
+    }
+
     pub fn get_batch<
         Arg0: ProxyArg<u64>,
     >(
@@ -341,6 +655,37 @@ where
             .payment(NotPayable)
             .raw_call("getBatch")
             .argument(&batch_id)
+            .original_result()
+    }
+
+    pub fn get_batch_status<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        batch_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, tx_batch_module::batch_status::BatchStatus<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBatchStatus")
+            .argument(&batch_id)
+            .original_result()
+    }
+
+    pub fn first_batch_id(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFirstBatchId")
+            .original_result()
+    }
+
+    pub fn last_batch_id(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, u64> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getLastBatchId")
             .original_result()
     }
 
@@ -360,6 +705,19 @@ where
             .original_result()
     }
 
+    pub fn max_bridged_amount<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getMaxBridgedAmount")
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn pause_endpoint(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
@@ -375,6 +733,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("unpause")
+            .original_result()
+    }
+
+    pub fn paused_status(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("isPaused")
             .original_result()
     }
 }

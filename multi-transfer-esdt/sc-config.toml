@@ -2,29 +2,7 @@
 
 [[proxy]]
 path = "../multisig/src/multi_transfer_esdt_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "init",
-    "moveRefundBatchToSafe",
-    "batchTransferEsdtToken",
-    "getFirstBatchAnyStatus",
-    "setEsdtSafeContractAddress",
-    "setMaxBridgedAmount",
-    "setMaxTxBatchSize",
-    "setMaxTxBatchBlockDuration",
-    "setWrappingContractAddress",
-    "setBridgeProxyContractAddress"
-]
 
 [[proxy]]
 path = "/src/multi_transfer_esdt_proxy.rs"
-add-unlabelled = false
-add-endpoints = [
-    "init",
-    "moveRefundBatchToSafe",
-    "batchTransferEsdtToken",
-    "getFirstBatchAnyStatus",
-    "setEsdtSafeContractAddress",
-    "setWrappingContractAddress",
-    "setBridgeProxyContractAddress",
-]
+

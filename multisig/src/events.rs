@@ -2,26 +2,29 @@ use eth_address::EthAddress;
 
 #[multiversx_sc::module]
 pub trait EventsModule {
-    #[event("add_mapping")]
+    #[event("addMapping")]
     fn add_mapping_event(
         &self,
         #[indexed] erc20_address: EthAddress<Self::Api>,
         #[indexed] token_id: TokenIdentifier,
     );
 
-    #[event("clear_mapping")]
+    #[event("clearMapping")]
     fn clear_mapping_event(
         &self,
         #[indexed] erc20_address: EthAddress<Self::Api>,
         #[indexed] token_id: TokenIdentifier,
     );
 
-    #[event("move_refund_batch_to_safe")]
+    #[event("moveRefundBatchToSafeEvent")]
     fn move_refund_batch_to_safe_event(&self);
 
-    #[event("pause_esdt_safe")]
-    fn pause_esdt_safe_event(&self);
+    #[event("addUnprocessedRefundTxToBatchEvent")]
+    fn add_unprocessed_refund_tx_to_batch_event(&self, #[indexed] tx_id: u64);
 
-    #[event("unpause_esdt_safe")]
-    fn unpause_esdt_safe_event(&self);
+    #[event("pauseBridgeProxyEvent")]
+    fn pause_bridge_proxy_event(&self);
+
+    #[event("unpauseBridgeProxyEvent")]
+    fn unpause_bridge_proxy_event(&self);
 }

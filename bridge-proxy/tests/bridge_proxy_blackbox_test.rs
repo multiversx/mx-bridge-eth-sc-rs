@@ -180,7 +180,9 @@ impl BridgeProxyTestState {
             .from(OWNER_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .set_bridged_tokens_wrapper(OptionalValue::Some(BRIDGED_TOKENS_WRAPPER_ADDRESS))
+            .set_bridged_tokens_wrapper_contract_address(OptionalValue::Some(
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            ))
             .run();
 
         self.world
@@ -517,5 +519,3 @@ fn test_lowest_tx_id() {
         .returns(ExpectValue(51usize))
         .run();
 }
-
-
