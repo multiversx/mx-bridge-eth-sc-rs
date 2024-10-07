@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           19
+// Endpoints:                           21
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Total number of exported functions:  24
 
 #![no_std]
 
@@ -31,11 +31,13 @@ multiversx_sc_wasm_adapter::endpoints! {
         unwrapToken => unwrap_token
         unwrapTokenCreateTransaction => unwrap_token_create_transaction
         setEsdtSafeContractAddress => set_esdt_safe_contract_address
+        setBridgeProxyContractAddress => set_bridge_proxy_contract_address
         getUniversalBridgedTokenIds => universal_bridged_token_ids
         getTokenLiquidity => token_liquidity
         getChainSpecificToUniversalMapping => chain_specific_to_universal_mapping
         getchainSpecificTokenIds => chain_specific_token_ids
         getEsdtSafeContractAddress => esdt_safe_contract_address
+        getBridgeProxyContractAddress => bridge_proxy_contract_address
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status

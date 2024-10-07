@@ -64,8 +64,6 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: ManagedAddress) {
-        self.remove_user(board_member.clone());
-
         let slash_amount = self.slash_amount().get();
 
         // remove slashed amount from user stake amountself
@@ -143,7 +141,7 @@ pub trait SetupModule:
             .pause_endpoint()
             .sync_call();
 
-        self.pause_esdt_safe_event();
+        self.pause_bridge_proxy_event();
     }
 
     #[only_owner]
@@ -156,7 +154,7 @@ pub trait SetupModule:
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
             .sync_call();
-        self.unpause_esdt_safe_event();
+        self.unpause_bridge_proxy_event();
     }
 
     #[only_owner]
@@ -202,7 +200,7 @@ pub trait SetupModule:
             .pause_endpoint()
             .sync_call();
 
-        self.pause_esdt_safe_event();
+        self.pause_bridge_proxy_event();
     }
 
     #[only_owner]
@@ -216,7 +214,7 @@ pub trait SetupModule:
             .unpause_endpoint()
             .sync_call();
 
-        self.pause_esdt_safe_event();
+        self.unpause_bridge_proxy_event();
     }
 
     #[only_owner]

@@ -1,13 +1,19 @@
 #![no_std]
 use multiversx_sc::imports::*;
 
+<<<<<<< HEAD
+=======
+pub mod bridge_proxy_contract_proxy;
+pub mod bridged_tokens_wrapper_proxy;
+>>>>>>> origin/feat/v3.5
 pub mod config;
+pub mod esdt_safe_proxy;
 
 use sc_proxies::bridged_tokens_wrapper_proxy;
 use transaction::{CallData, EthTransaction};
-
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
+const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -42,6 +48,10 @@ pub trait BridgeProxyContract:
     #[endpoint(execute)]
     fn execute(&self, tx_id: usize) {
         self.require_not_paused();
+        require!(
+            self.ongoing_execution(tx_id).is_empty(),
+            "Transaction is already being executed"
+        );
         let tx = self.get_pending_transaction_by_id(tx_id);
         let payment = self.payments(tx_id).get();
 
@@ -84,16 +94,31 @@ pub trait BridgeProxyContract:
             tx_call
         };
 
+        let block_round = self.blockchain().get_block_round();
+        self.ongoing_execution(tx_id).set(block_round);
         tx_call.register_promise();
     }
 
+    #[endpoint(cancel)]
+    fn cancel(&self, tx_id: usize) {
+        let tx_start_round = self.ongoing_execution(tx_id).get();
+        let current_block_round = self.blockchain().get_block_round();
+        require!(
+            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
+            "Transaction can't be cancelled yet"
+        );
+
+        let tx = self.get_pending_transaction_by_id(tx_id);
+        let payment = self.payments(tx_id).get();
+        self.tx().to(tx.to).payment(payment).transfer();
+        self.cleanup_transaction(tx_id);
+    }
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
             self.refund_transaction(tx_id);
         }
-        self.pending_transactions().clear_entry_unchecked(tx_id);
-        self.update_lowest_tx_id();
+        self.cleanup_transaction(tx_id);
     }
 
     fn refund_transaction(&self, tx_id: usize) {
@@ -104,7 +129,7 @@ pub trait BridgeProxyContract:
         self.tx()
             .to(esdt_safe_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .unwrap_token_create_transaction(&tx.token_id, tx.from)
+            .unwrap_token_create_transaction(&tx.token_id, tx.from, OptionalValue::Some(tx.to))
             .single_esdt(
                 &payment.token_identifier,
                 payment.token_nonce,
@@ -115,8 +140,13 @@ pub trait BridgeProxyContract:
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
         self.refund_transaction(tx_id);
+        self.cleanup_transaction(tx_id);
+    }
+
+    fn cleanup_transaction(&self, tx_id: usize) {
         self.pending_transactions().clear_entry_unchecked(tx_id);
         self.update_lowest_tx_id();
+        self.ongoing_execution(tx_id).clear();
     }
 
     fn update_lowest_tx_id(&self) {

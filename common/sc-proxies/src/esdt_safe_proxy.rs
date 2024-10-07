@@ -152,17 +152,35 @@ where
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
     pub fn create_transaction<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
         to: Arg0,
+        opt_refund_address: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("createTransaction")
             .argument(&to)
+            .argument(&opt_refund_address)
             .original_result()
     }
 
-    /// Claim funds for failed MultiversX -> Ethereum transactions. 
+    pub fn create_transaction_sc_call<
+        Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        to: Arg0,
+        data: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("createTransactionSCCall")
+            .argument(&to)
+            .argument(&data)
+            .original_result()
+    }
+
+    /// Claim funds for failed MultiversX -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck. 
     /// For example, if the receiver is a SC, a frozen account, etc. 
     pub fn claim_refund<
@@ -174,6 +192,32 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("claimRefund")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn set_bridged_tokens_wrapper_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+    >(
+        self,
+        opt_address: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("setBridgedTokensWrapperAddress")
+            .argument(&opt_address)
+            .original_result()
+    }
+
+    pub fn withdraw_total_fees_on_ethereum<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawTotalFeesOnEthereum")
             .argument(&token_id)
             .original_result()
     }
@@ -215,6 +259,15 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalRefundAmounts")
+            .original_result()
+    }
+
+    pub fn bridged_tokens_wrapper_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgedTokensWrapperAddress")
             .original_result()
     }
 
