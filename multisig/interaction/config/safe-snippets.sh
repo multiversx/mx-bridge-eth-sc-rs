@@ -3,7 +3,7 @@ deploySafe() {
     
     mxpy --verbose contract deploy --bytecode=${SAFE_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=150000000 \
-    --arguments ${MULTI_TRANSFER} ${AGGREGATOR} 1 \
+    --arguments ${AGGREGATOR} ${MULTI_TRANSFER} 1 \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-safe-testnet.interaction.json" --expression="data['emittedTransactionHash']")
@@ -32,5 +32,14 @@ unsetLocalRolesEsdtSafe() {
     mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="unSetSpecialRole" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn str:ESDTRoleLocalMint \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setBridgedTokensWrapperOnEsdtSafe() {
+    CHECK_VARIABLES SAFE BRIDGED_TOKENS_WRAPPER
+
+    mxpy --verbose contract call ${SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setBridgedTokensWrapperAddress" \
+    --arguments ${BRIDGED_TOKENS_WRAPPER} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

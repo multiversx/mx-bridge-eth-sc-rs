@@ -17,11 +17,29 @@ deployBridgeProxy() {
     update-config BRIDGE_PROXY ${ADDRESS}
 }
 
-setBridgedTokensWrapper() {
+setBridgedTokensWrapperOnSCProxy() {
     CHECK_VARIABLES BRIDGE_PROXY BRIDGED_TOKENS_WRAPPER
 
     mxpy --verbose contract call ${BRIDGE_PROXY} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setBridgedTokensWrapper" \
+    --gas-limit=60000000 --function="setBridgedTokensWrapperAddress" \
     --arguments ${BRIDGED_TOKENS_WRAPPER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setMultiTransferOnSCProxy() {
+    CHECK_VARIABLES BRIDGE_PROXY MULTI_TRANSFER
+
+    mxpy --verbose contract call ${BRIDGE_PROXY} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setMultiTransferAddress" \
+    --arguments ${MULTI_TRANSFER} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setEsdtSafeOnSCProxy() {
+    CHECK_VARIABLES BRIDGE_PROXY SAFE
+
+    mxpy --verbose contract call ${BRIDGE_PROXY} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setEsdtSafeAddress" \
+    --arguments ${SAFE} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }

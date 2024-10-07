@@ -87,13 +87,33 @@ case "$1" in
   confirmation upgrade-wrapper-chain-specific-token  
   ;;
 
+'init-supply-mint-burn')
+  confirmation init-supply-mint-burn
+  ;;
+
+'upgrade-aggregator')
+  confirmation upgrade-aggregator
+  ;;
+
+'whitelist-native-token')
+  confirmation whitelist-native-token
+  ;;
+
+'faucet-deposit')
+  confirmation faucet-deposit
+  ;;
+
 *)
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
-  echo "  { \"whitelist-token\", \"deploy-bridge-contracts\", \"upgrade-wrapper\", \"add-relayer\", \"remove-relayer\", "
-  echo "    \"remove-whitelist-token\", \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"pause-contracts\", \"unpause-contracts\", "
-  echo "    \"set-swap-fee\", \"mint-chain-specific\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\" }"
+  echo "  { \"deploy-bridge-contracts\", \"upgrade-aggregator\", \"upgrade-wrapper\", "
+  echo "    \"pause-contracts\", \"unpause-contracts\", \"add-relayer\", \"remove-relayer\", "
+  echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"set-swap-fee\", "
+  echo "    \"whitelist-token\", \"whitelist-native-token\", \"remove-whitelist-token\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\", "
+  echo "    \"mint-chain-specific\", \"init-supply-mint-burn\", "
+  echo "    \"faucet-deposit\", "
+  echo "  } "
   ;;
 
 esac
