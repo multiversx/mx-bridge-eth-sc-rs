@@ -1150,30 +1150,6 @@ fn setup() -> ScenarioWorld {
         },
     );
 
-    // let esdt_safe_whitebox =
-    //     WhiteboxContract::new(ESDT_SAFE_CONTRACT_ADDRESS_EXPR, esdt_safe::contract_obj);
-    // let esdt_safe_code = world.code_expression(ESDT_SAFE_CONTRACT_PATH_EXPR);
-
-    // let state_step = SetStateStep::new()
-    //     .put_account(OWNER_ADDRESS_EXPR, Account::new().nonce(1))
-    //     .new_address(OWNER_ADDRESS_EXPR, 1, ESDT_SAFE_ADDRESS)
-    //     .block_timestamp(100);
-
-    // world
-    //     .tx()
-    //     .from(OWNER_ADDRESS)
-    //     .typed(esdt_safe_proxy::EsdtSafeProxy)
-    //     .init(
-    //         ManagedAddress::zero(),
-    //         ManagedAddress::zero(),
-    //         BigUint::zero(),
-    //     )
-    //     .code(ESDT_SAFE_CODE_PATH)
-    //     .new_address(ESDT_SAFE_ADDRESS)
-    //     .run();
-
-    // world.set_state_step(state_step);
-
     world
 }
 

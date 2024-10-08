@@ -4,7 +4,7 @@ use std::ops::Add;
 
 use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _, ProxyTrait as _};
 use esdt_safe::{EsdtSafe, ProxyTrait as _};
-use multi_transfer_esdt::{bridged_tokens_wrapper_proxy, multi_transfer_proxy, ProxyTrait as _};
+use multi_transfer_esdt::{bridged_tokens_wrapper_proxy, ProxyTrait as _};
 
 use multisig::{
     __endpoints_5__::multi_transfer_esdt_address, esdt_safe_proxy, multi_transfer_esdt_proxy,
@@ -220,7 +220,7 @@ impl MultiTransferTestState {
             .tx()
             .from(MULTISIG_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(OptionalValue::Some(
                 BRIDGED_TOKENS_WRAPPER_ADDRESS.to_address(),
             ))
@@ -230,7 +230,7 @@ impl MultiTransferTestState {
             .tx()
             .from(MULTISIG_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_bridge_proxy_contract_address(OptionalValue::Some(
                 BRIDGE_PROXY_ADDRESS.to_address(),
             ))
@@ -240,7 +240,7 @@ impl MultiTransferTestState {
             .tx()
             .from(MULTISIG_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS.to_address()))
             .run();
 

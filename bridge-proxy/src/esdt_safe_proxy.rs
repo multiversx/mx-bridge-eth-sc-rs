@@ -165,7 +165,22 @@ where
             .original_result()
     }
 
-    /// Claim funds for failed MultiversX -> Ethereum transactions. 
+    pub fn create_transaction_sc_call<
+        Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
+    >(
+        self,
+        to: Arg0,
+        data: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("createTransactionSCCall")
+            .argument(&to)
+            .argument(&data)
+            .original_result()
+    }
+
+    /// Claim funds for failed MultiversX -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck. 
     /// For example, if the receiver is a SC, a frozen account, etc. 
     pub fn claim_refund<
