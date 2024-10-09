@@ -153,7 +153,9 @@ fn test_set_esdt_safe_contract_address_should_work() {
     );
 
     world.whitebox_query(&bridged_tokens_wrapper, |sc| {
-        let result = sc.esdt_safe_contract_address().get();
+        let result = sc
+            .get_esdt_safe_address(sc.blockchain().get_owner_address())
+            .get();
         assert_eq!(result, managed_address!(&esdt_address.to_address()));
     });
 

@@ -129,6 +129,7 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -150,6 +151,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -357,6 +359,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -383,6 +386,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "storage-module",
 ]
 
 [[package]]
@@ -1025,6 +1029,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
+name = "storage-module"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+]
+
+[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1081,6 +1093,7 @@ dependencies = [
  "fee-estimator-module",
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "storage-module",
 ]
 
 [[package]]

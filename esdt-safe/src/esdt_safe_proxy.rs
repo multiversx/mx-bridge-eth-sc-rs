@@ -199,19 +199,6 @@ where
             .original_result()
     }
 
-    pub fn set_bridged_tokens_wrapper_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setBridgedTokensWrapperAddress")
-            .argument(&opt_address)
-            .original_result()
-    }
-
     pub fn withdraw_total_fees_on_ethereum<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -262,15 +249,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalRefundAmounts")
-            .original_result()
-    }
-
-    pub fn bridged_tokens_wrapper_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBridgedTokensWrapperAddress")
             .original_result()
     }
 

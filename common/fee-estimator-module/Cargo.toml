@@ -9,3 +9,6 @@ version = "=0.52.3"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "=0.52.3"
+
+[dependencies.storage-module]
+path = "../storage-module"

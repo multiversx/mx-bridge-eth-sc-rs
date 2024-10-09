@@ -17,6 +17,9 @@ path = "../common/eth-address"
 [dependencies.token-module]
 path = "../common/token-module"
 
+[dependencies.storage-module]
+path = "../common/storage-module"
+
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 

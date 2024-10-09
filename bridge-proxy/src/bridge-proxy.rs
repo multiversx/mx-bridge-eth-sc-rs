@@ -1,5 +1,5 @@
 #![no_std]
-use multiversx_sc::imports::*;
+use multiversx_sc::{imports::*, storage};
 
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper_proxy;
@@ -13,7 +13,9 @@ const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
-    config::ConfigModule + multiversx_sc_modules::pause::PauseModule
+    config::ConfigModule
+    + multiversx_sc_modules::pause::PauseModule
+    + storage_module::CommonStorageModule
 {
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
@@ -34,7 +36,7 @@ pub trait BridgeProxyContract:
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
         require!(
-            caller == self.multi_transfer_address().get(),
+            caller == self.get_multi_transfer_address(owner_address),
             "Only MultiTransfer can do deposits"
         );
         let tx_id = self.pending_transactions().push(&eth_tx);
@@ -120,7 +122,7 @@ pub trait BridgeProxyContract:
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
         let payment = self.payments(tx_id).get();
-        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
+        let esdt_safe_addr = self.get_bridged_tokens_wrapper_address(owner_address);
 
         self.tx()
             .to(esdt_safe_addr)

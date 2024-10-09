@@ -407,16 +407,6 @@ impl MultiTransferTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .set_bridged_tokens_wrapper_contract_address(OptionalValue::Some(
-                BRIDGED_TOKENS_WRAPPER_ADDRESS.to_address(),
-            ))
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
             .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .add_wrapped_token(TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER), 18u32)
