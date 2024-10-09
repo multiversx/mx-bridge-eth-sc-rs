@@ -1302,6 +1302,13 @@ fn claim_refund_test() {
         .returns(ReturnsResult)
         .run();
     assert!(result3.is_empty());
+
+    state
+        .esdt_raw_transaction()
+        .claim_refund(TOKEN_ID)
+        .with_result(ExpectStatus(ERROR))
+        .returns(ExpectError(ERROR, "Nothing to refund"))
+        .run();
 }
 
 #[test]
