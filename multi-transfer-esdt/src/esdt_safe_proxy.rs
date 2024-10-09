@@ -268,7 +268,20 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getTotalFeesOnEthereum")
+            .raw_call("getRefundFeesForEthereum")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn get_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTransactionFees")
             .argument(&token_id)
             .original_result()
     }
