@@ -472,7 +472,7 @@ pub trait EsdtSafe:
         refund_amounts
     }
 
-    #[view(getTotalFeesOnEthereum)]
+    #[view(getRefundFeesForEthereum)]
     fn get_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) -> BigUint {
         let refund_fees_for_ethereum_mapper = self.refund_fees_for_ethereum(&token_id);
         if refund_fees_for_ethereum_mapper.is_empty() {
@@ -482,6 +482,15 @@ pub trait EsdtSafe:
         }
     }
 
+    #[view(getTransactionFees)]
+    fn get_transaction_fees(&self, token_id: TokenIdentifier) -> BigUint {
+        let accumulated_transaction_fees_mapper = self.accumulated_transaction_fees(&token_id);
+        if accumulated_transaction_fees_mapper.is_empty() {
+            BigUint::zero()
+        } else {
+            accumulated_transaction_fees_mapper.get()
+        }
+    }
     // private
 
     fn rebalance_for_refund(&self, token_id: &TokenIdentifier, amount: &BigUint) {
@@ -551,7 +560,7 @@ pub trait EsdtSafe:
     #[storage_mapper("totalRefundAmount")]
     fn total_refund_amount(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
-    #[storage_mapper("totalFeesForEthereum")]
+    #[storage_mapper("refundFeesForEthereum")]
     fn refund_fees_for_ethereum(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[storage_mapper("refundAmount")]
