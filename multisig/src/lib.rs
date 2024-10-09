@@ -348,11 +348,12 @@ pub trait Multisig:
     #[endpoint(withdrawRefundFeesForEthereum)]
     fn withdraw_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) {
         let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .withdraw_refund_fees_for_ethereum(token_id)
+            .withdraw_refund_fees_for_ethereum(token_id, multisig_owner)
             .sync_call();
     }
 
@@ -360,11 +361,12 @@ pub trait Multisig:
     #[endpoint(withdrawTransactionFees)]
     fn withdraw_transaction_fees(&self, token_id: TokenIdentifier) {
         let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .withdraw_transaction_fees(token_id)
+            .withdraw_transaction_fees(token_id, multisig_owner)
             .sync_call();
     }
 

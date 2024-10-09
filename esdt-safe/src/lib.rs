@@ -376,7 +376,11 @@ pub trait EsdtSafe:
 
     #[only_owner]
     #[endpoint(withdrawRefundFeesForEthereum)]
-    fn withdraw_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) {
+    fn withdraw_refund_fees_for_ethereum(
+        &self,
+        token_id: TokenIdentifier,
+        multisig_owner: ManagedAddress,
+    ) {
         let refund_fees_for_ethereum_mapper = self.refund_fees_for_ethereum(&token_id);
         require!(
             !refund_fees_for_ethereum_mapper.is_empty(),
@@ -384,7 +388,7 @@ pub trait EsdtSafe:
         );
         let amount_out = refund_fees_for_ethereum_mapper.get();
         self.tx()
-            .to(ToCaller)
+            .to(multisig_owner)
             .single_esdt(&token_id, 0, &amount_out)
             .transfer();
         refund_fees_for_ethereum_mapper.set(BigUint::zero());
@@ -392,7 +396,7 @@ pub trait EsdtSafe:
 
     #[only_owner]
     #[endpoint(withdrawTransactionFees)]
-    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier) {
+    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier, multisig_owner: ManagedAddress) {
         let accumulated_transaction_fees_mapper = self.accumulated_transaction_fees(&token_id);
         require!(
             !accumulated_transaction_fees_mapper.is_empty(),
@@ -400,7 +404,7 @@ pub trait EsdtSafe:
         );
         let amount_out = accumulated_transaction_fees_mapper.get();
         self.tx()
-            .to(ToCaller)
+            .to(multisig_owner)
             .single_esdt(&token_id, 0, &amount_out)
             .transfer();
         accumulated_transaction_fees_mapper.set(BigUint::zero());
