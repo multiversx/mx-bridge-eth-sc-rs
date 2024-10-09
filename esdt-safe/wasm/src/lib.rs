@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           46
+// Endpoints:                           47
 // Async Callback (empty):               1
-// Total number of exported functions:  49
+// Total number of exported functions:  50
 
 #![no_std]
 
@@ -29,6 +29,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
         getTotalRefundAmounts => get_total_refund_amounts
+        getTotalFeesOnEthereum => get_total_fees_on_ethereum
         getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
         setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit

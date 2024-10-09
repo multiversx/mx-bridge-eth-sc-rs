@@ -377,11 +377,17 @@ pub trait EsdtSafe:
     #[only_owner]
     #[endpoint(withdrawTotalFeesOnEthereum)]
     fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
-        let amount_out = self.total_fees_on_ethereum(&token_id).get();
+        let total_fees_on_ethereum_mapper = self.total_fees_on_ethereum(&token_id);
+        require!(
+            !total_fees_on_ethereum_mapper.is_empty(),
+            "There are no fees to withdraw"
+        );
+        let amount_out = total_fees_on_ethereum_mapper.get();
         self.tx()
             .to(ToCaller)
             .single_esdt(&token_id, 0, &amount_out)
             .transfer();
+        total_fees_on_ethereum_mapper.set(BigUint::zero());
     }
 
     #[view(computeTotalAmmountsFromIndex)]
@@ -437,8 +443,6 @@ pub trait EsdtSafe:
         refund_amounts
     }
 
-    // views
-
     #[view(getTotalRefundAmounts)]
     fn get_total_refund_amounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = MultiValueEncoded::new();
@@ -450,6 +454,16 @@ pub trait EsdtSafe:
         }
 
         refund_amounts
+    }
+
+    #[view(getTotalFeesOnEthereum)]
+    fn get_total_fees_on_ethereum(&self, token_id: TokenIdentifier) -> BigUint {
+        let total_fees_on_ethereum_mapper = self.total_fees_on_ethereum(&token_id);
+        if total_fees_on_ethereum_mapper.is_empty() {
+            BigUint::zero()
+        } else {
+            total_fees_on_ethereum_mapper.get()
+        }
     }
 
     // private
