@@ -28,7 +28,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         moveRefundBatchToSafeFromChildContract => move_refund_batch_to_safe_from_child_contract
         initSupplyFromChildContract => init_supply_from_child_contract
         addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
-        withdrawTotalFeesOnEthereum => withdraw_total_fees_on_ethereum
+        withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
         withdrawSlashedAmount => withdraw_slashed_amount
         performAction => perform_action_endpoint
         sign => sign

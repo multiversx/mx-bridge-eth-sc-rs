@@ -345,14 +345,14 @@ pub trait Multisig:
     }
 
     #[only_owner]
-    #[endpoint(withdrawTotalFeesOnEthereum)]
-    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
+    #[endpoint(withdrawRefundFeesForEthereum)]
+    fn withdraw_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) {
         let esdt_safe_addr = self.esdt_safe_address().get();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .withdraw_total_fees_on_ethereum(token_id)
+            .withdraw_refund_fees_for_ethereum(token_id)
             .sync_call();
     }
 
