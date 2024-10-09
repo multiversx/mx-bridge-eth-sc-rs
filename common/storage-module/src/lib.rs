@@ -1,5 +1,3 @@
-// storage_module.rs
-
 use multiversx_sc::imports::*;
 use multiversx_sc::storage::StorageKey;
 

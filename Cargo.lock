@@ -129,6 +129,7 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -150,6 +151,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -384,6 +386,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "storage-module",
 ]
 
 [[package]]
@@ -1090,6 +1093,7 @@ dependencies = [
  "fee-estimator-module",
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "storage-module",
 ]
 
 [[package]]

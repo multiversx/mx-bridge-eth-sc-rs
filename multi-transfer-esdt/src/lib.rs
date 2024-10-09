@@ -148,39 +148,7 @@ pub trait MultiTransferEsdt:
             OptionalValue::None => {}
         }
     }
-
-    #[only_owner]
-    #[endpoint(setWrappingContractAddress)]
-    fn set_wrapping_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid unwrapping contract address"
-                );
-
-                self.wrapping_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.wrapping_contract_address().clear(),
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgeProxyContractAddress)]
-    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridge proxy contract address"
-                );
-
-                self.bridge_proxy_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
-        }
-    }
-
+    
     #[only_owner]
     #[endpoint(addUnprocessedRefundTxToBatch)]
     fn add_unprocessed_refund_tx_to_batch(&self, tx_id: u64) {
@@ -190,17 +158,6 @@ pub trait MultiTransferEsdt:
         self.add_multiple_tx_to_batch(&refund_tx_list);
 
         self.unprocessed_refund_txs(tx_id).clear();
-    }
-
-    #[only_owner]
-    #[endpoint(setEsdtSafeContractAddress)]
-    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                self.esdt_safe_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.esdt_safe_contract_address().clear(),
-        }
     }
 
     // private
@@ -308,17 +265,6 @@ pub trait MultiTransferEsdt:
     }
 
     // storage
-    #[view(getWrappingContractAddress)]
-    #[storage_mapper("wrappingContractAddress")]
-    fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getBridgeProxyContractAddress)]
-    #[storage_mapper("bridgeProxyContractAddress")]
-    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getEsdtSafeContractAddress)]
-    #[storage_mapper("esdtSafeContractAddress")]
-    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("unprocessedRefundTxs")]
     fn unprocessed_refund_txs(&self, tx_id: u64) -> SingleValueMapper<Transaction<Self::Api>>;

@@ -48,12 +48,9 @@ pub trait EsdtSafe:
         multi_transfer_contract_address: ManagedAddress,
         eth_tx_gas_limit: BigUint,
     ) {
-        self.owner_address_storage()
-            .set(&self.blockchain().get_caller());
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.multi_transfer_contract_address()
-            .set(&multi_transfer_contract_address);
+        self.get_fee_estimator_address(self.blockchain().get_owner_address())
+            .set(fee_estimator_contract_address);
+        self.set_multi_transfer_address(multi_transfer_contract_address);
 
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
@@ -161,7 +158,9 @@ pub trait EsdtSafe:
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
         let caller = self.blockchain().get_caller();
-        let multi_transfer_address = self.multi_transfer_contract_address().get();
+        let multi_transfer_address = self
+            .get_multi_transfer_address(self.blockchain().get_owner_address())
+            .get();
         require!(caller == multi_transfer_address, "Invalid caller");
 
         let refund_payments = self.call_value().all_esdt_transfers().deref().clone();
@@ -287,7 +286,9 @@ pub trait EsdtSafe:
                 require!(
                     caller
                         == self
-                            .get_bridged_tokens_wrapper_address(self.owner_address_storage().get())
+                            .get_bridged_tokens_wrapper_address(
+                                self.blockchain().get_owner_address()
+                            )
                             .get(),
                     "Wrong caller for a refund tx"
                 );
@@ -587,7 +588,4 @@ pub trait EsdtSafe:
         address: &ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
-
-    #[storage_mapper("ownerAddress")]
-    fn owner_address_storage(&self) -> SingleValueMapper<ManagedAddress>;
 }

@@ -11,5 +11,5 @@ members = [
   "bridged-tokens-wrapper",
   "bridged-tokens-wrapper/meta",
   "test-caller",
-  "test-caller/meta"
-, "common/storage-module"]
+  "test-caller/meta",
+  "common/storage-module"]

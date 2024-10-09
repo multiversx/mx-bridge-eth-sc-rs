@@ -14,7 +14,9 @@ pub struct AddressPercentagePair<M: ManagedTypeApi> {
 }
 
 #[multiversx_sc::module]
-pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
+pub trait TokenModule:
+    fee_estimator_module::FeeEstimatorModule + storage_module::CommonStorageModule
+{
     // endpoints - owner-only
 
     /// Distributes the accumulated fees to the given addresses.
@@ -131,7 +133,10 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     fn get_tokens(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
         let caller = self.blockchain().get_caller();
         require!(
-            caller == self.multi_transfer_contract_address().get(),
+            caller
+                == self
+                    .get_multi_transfer_address(self.blockchain().get_owner_address())
+                    .get(),
             "Only MultiTransfer can get tokens"
         );
 
@@ -256,17 +261,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         roles.has_role(role)
     }
 
-    #[only_owner]
-    #[endpoint(setMultiTransferContractAddress)]
-    fn set_multi_transfer_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                self.multi_transfer_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.multi_transfer_contract_address().clear(),
-        }
-    }
-
     // storage
 
     #[view(getAllKnownTokens)]
@@ -280,10 +274,6 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
     #[view(isMintBurnToken)]
     #[storage_mapper("mintBurnToken")]
     fn mint_burn_token(&self, token: &TokenIdentifier) -> SingleValueMapper<bool>;
-
-    #[view(getMultiTransferContractAddress)]
-    #[storage_mapper("multiTransferContractAddress")]
-    fn multi_transfer_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getAccumulatedTransactionFees)]
     #[storage_mapper("accumulatedTransactionFees")]
