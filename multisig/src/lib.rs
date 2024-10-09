@@ -357,6 +357,18 @@ pub trait Multisig:
     }
 
     #[only_owner]
+    #[endpoint(withdrawTransactionFees)]
+    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .withdraw_transaction_fees(token_id)
+            .sync_call();
+    }
+
+    #[only_owner]
     #[endpoint(withdrawSlashedAmount)]
     fn withdraw_slashed_amount(&self) {
         let slashed_amount = self.slashed_tokens_amount().get();

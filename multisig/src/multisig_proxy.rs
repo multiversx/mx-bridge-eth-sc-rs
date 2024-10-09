@@ -180,7 +180,7 @@ where
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce 
     pub fn propose_multi_transfer_esdt_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, ManagedOption<Env::Api, ManagedBuffer<Env::Api>>>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, Option<ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         eth_batch_id: Arg0,
@@ -246,6 +246,19 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("withdrawRefundFeesForEthereum")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn withdraw_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawTransactionFees")
             .argument(&token_id)
             .original_result()
     }
@@ -921,7 +934,7 @@ where
     /// To check if it was executed as well, use the wasActionExecuted view 
     pub fn was_transfer_action_proposed<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, ManagedOption<Env::Api, ManagedBuffer<Env::Api>>>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, Option<ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         eth_batch_id: Arg0,
@@ -940,7 +953,7 @@ where
     /// Will return 0 if the transfers were not proposed 
     pub fn get_action_id_for_transfer_batch<
         Arg0: ProxyArg<u64>,
-        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, ManagedOption<Env::Api, ManagedBuffer<Env::Api>>>>>,
+        Arg1: ProxyArg<MultiValueEncoded<Env::Api, MultiValue6<eth_address::EthAddress<Env::Api>, ManagedAddress<Env::Api>, TokenIdentifier<Env::Api>, BigUint<Env::Api>, u64, Option<ManagedBuffer<Env::Api>>>>>,
     >(
         self,
         eth_batch_id: Arg0,
