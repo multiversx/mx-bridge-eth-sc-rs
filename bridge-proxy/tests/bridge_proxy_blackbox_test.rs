@@ -60,7 +60,7 @@ const MULTI_TRANSFER_PATH_EXPR: &str =
     "mxsc:../multi-transfer-esdt/output/multi-transfer-esdt.mxsc.json";
 const ESDT_SAFE_PATH_EXPR: &str = "mxsc:../esdt-safe/output/esdt-safe.mxsc.json";
 const BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR: MxscPath =
-    MxscPath::new("../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json");
+    MxscPath::new("../common/mock-contracts/mock-bridged-tokens-wrapper/output/mock-bridged-tokens-wrapper.mxsc.json");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -69,7 +69,7 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(CROWDFUNDING_PATH_EXPR, crowdfunding_esdt::ContractBuilder);
     blockchain.register_contract(
         BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR,
-        bridged_tokens_wrapper::ContractBuilder,
+        mock_bridged_tokens_wrapper::ContractBuilder,
     );
     blockchain.register_contract(ESDT_SAFE_PATH_EXPR, esdt_safe::ContractBuilder);
 
