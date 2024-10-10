@@ -1,11 +1,9 @@
 #![no_std]
 use multiversx_sc::imports::*;
 
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper_proxy;
 pub mod config;
-pub mod esdt_safe_proxy;
 
+use sc_proxies::bridged_tokens_wrapper_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million

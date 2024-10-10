@@ -26,6 +26,9 @@ path = "../common/tx-batch-module"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
 [dependencies.esdt-safe]
 path = "../esdt-safe"
 

@@ -20,6 +20,9 @@ path = "../common/token-module"
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
 [dependencies.multiversx-sc]
 version = "=0.52.3"
 

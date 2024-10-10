@@ -129,6 +129,7 @@ dependencies = [
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
+ "sc-proxies",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -150,6 +151,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "sc-proxies",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -357,6 +359,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "sc-proxies",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -541,6 +544,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "sc-proxies",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -569,6 +573,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
+ "sc-proxies",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -930,6 +935,18 @@ name = "ryu"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f3cb5ba0dc43242ce17de99c180e96db90b235b8a9fdc9543c96d2209116bd9f"
+
+[[package]]
+name = "sc-proxies"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "token-module",
+ "transaction",
+ "tx-batch-module",
+]
 
 [[package]]
 name = "semver"
