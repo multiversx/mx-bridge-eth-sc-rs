@@ -1,5 +1,6 @@
 #![no_std]
 
+use eth_address::EthAddress;
 #[allow(unused_imports)]
 use multiversx_sc::imports::*;
 
@@ -16,9 +17,9 @@ pub trait MockBridgedTokensWrapper {
     #[endpoint(unwrapTokenCreateTransaction)]
     fn unwrap_token_create_transaction(
         &self,
-        requested_token: TokenIdentifier,
-        to: EthAddress<Self::Api>,
-        opt_refunding_address: OptionalValue<ManagedAddress>,
+        _requested_token: TokenIdentifier,
+        _to: EthAddress<Self::Api>,
+        _opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
     }
 }

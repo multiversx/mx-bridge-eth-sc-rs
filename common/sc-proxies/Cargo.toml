@@ -5,10 +5,7 @@ authors = ["MultiversX <contact@multiversx.com>"]
 edition = "2018"
 
 [dependencies.multiversx-sc]
-version = "=0.52.3"
-
-[dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dependencies.transaction]
 path = "../transaction"
@@ -21,3 +18,6 @@ path = "../token-module"
 
 [dependencies.tx-batch-module]
 path = "../tx-batch-module"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "=0.53.2"

@@ -306,13 +306,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5443807d6dff69373d433ab9ef5378ad8df50ca6298caf15de6e52e24aaf54d5"
 
 [[package]]
-name = "eth-address"
-version = "0.0.0"
-dependencies = [
- "multiversx-sc",
-]
-
-[[package]]
 name = "fiat-crypto"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -439,20 +432,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
-name = "mock-bridged-tokens-wrapper"
+name = "mock-multisig"
 version = "0.0.0"
 dependencies = [
- "eth-address",
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
 
 [[package]]
-name = "mock-bridged-tokens-wrapper-meta"
+name = "mock-multisig-meta"
 version = "0.0.0"
 dependencies = [
- "mock-bridged-tokens-wrapper",
+ "mock-multisig",
  "multiversx-sc-meta-lib",
 ]
 
