@@ -194,16 +194,35 @@ where
             .original_result()
     }
 
-    pub fn withdraw_total_fees_on_ethereum<
+    pub fn withdraw_refund_fees_for_ethereum<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
         token_id: Arg0,
+        multisig_owner: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("withdrawTotalFeesOnEthereum")
+            .raw_call("withdrawRefundFeesForEthereum")
             .argument(&token_id)
+            .argument(&multisig_owner)
+            .original_result()
+    }
+
+    pub fn withdraw_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        multisig_owner: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawTransactionFees")
+            .argument(&token_id)
+            .argument(&multisig_owner)
             .original_result()
     }
 
@@ -244,6 +263,32 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTotalRefundAmounts")
+            .original_result()
+    }
+
+    pub fn get_refund_fees_for_ethereum<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRefundFeesForEthereum")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn get_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTransactionFees")
+            .argument(&token_id)
             .original_result()
     }
 

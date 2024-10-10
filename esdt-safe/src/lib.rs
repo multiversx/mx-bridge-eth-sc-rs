@@ -191,7 +191,7 @@ pub trait EsdtSafe:
             }
 
             let actual_bridged_amount = refund_tx.amount - &required_fee;
-            self.total_fees_on_ethereum(&refund_tx.token_identifier)
+            self.refund_fees_for_ethereum(&refund_tx.token_identifier)
                 .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
 
@@ -375,13 +375,39 @@ pub trait EsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(withdrawTotalFeesOnEthereum)]
-    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
-        let amount_out = self.total_fees_on_ethereum(&token_id).get();
+    #[endpoint(withdrawRefundFeesForEthereum)]
+    fn withdraw_refund_fees_for_ethereum(
+        &self,
+        token_id: TokenIdentifier,
+        multisig_owner: ManagedAddress,
+    ) {
+        let refund_fees_for_ethereum_mapper = self.refund_fees_for_ethereum(&token_id);
+        require!(
+            !refund_fees_for_ethereum_mapper.is_empty(),
+            "There are no fees to withdraw"
+        );
+        let amount_out = refund_fees_for_ethereum_mapper.get();
         self.tx()
-            .to(ToCaller)
+            .to(multisig_owner)
             .single_esdt(&token_id, 0, &amount_out)
             .transfer();
+        refund_fees_for_ethereum_mapper.set(BigUint::zero());
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawTransactionFees)]
+    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier, multisig_owner: ManagedAddress) {
+        let accumulated_transaction_fees_mapper = self.accumulated_transaction_fees(&token_id);
+        require!(
+            !accumulated_transaction_fees_mapper.is_empty(),
+            "There are no fees to withdraw"
+        );
+        let amount_out = accumulated_transaction_fees_mapper.get();
+        self.tx()
+            .to(multisig_owner)
+            .single_esdt(&token_id, 0, &amount_out)
+            .transfer();
+        accumulated_transaction_fees_mapper.set(BigUint::zero());
     }
 
     #[view(computeTotalAmmountsFromIndex)]
@@ -437,8 +463,6 @@ pub trait EsdtSafe:
         refund_amounts
     }
 
-    // views
-
     #[view(getTotalRefundAmounts)]
     fn get_total_refund_amounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = MultiValueEncoded::new();
@@ -452,6 +476,25 @@ pub trait EsdtSafe:
         refund_amounts
     }
 
+    #[view(getRefundFeesForEthereum)]
+    fn get_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) -> BigUint {
+        let refund_fees_for_ethereum_mapper = self.refund_fees_for_ethereum(&token_id);
+        if refund_fees_for_ethereum_mapper.is_empty() {
+            BigUint::zero()
+        } else {
+            refund_fees_for_ethereum_mapper.get()
+        }
+    }
+
+    #[view(getTransactionFees)]
+    fn get_transaction_fees(&self, token_id: TokenIdentifier) -> BigUint {
+        let accumulated_transaction_fees_mapper = self.accumulated_transaction_fees(&token_id);
+        if accumulated_transaction_fees_mapper.is_empty() {
+            BigUint::zero()
+        } else {
+            accumulated_transaction_fees_mapper.get()
+        }
+    }
     // private
 
     fn rebalance_for_refund(&self, token_id: &TokenIdentifier, amount: &BigUint) {
@@ -521,8 +564,8 @@ pub trait EsdtSafe:
     #[storage_mapper("totalRefundAmount")]
     fn total_refund_amount(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
-    #[storage_mapper("totalFeesOnEthereum")]
-    fn total_fees_on_ethereum(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+    #[storage_mapper("refundFeesForEthereum")]
+    fn refund_fees_for_ethereum(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
 
     #[storage_mapper("refundAmount")]
     fn refund_amount(
