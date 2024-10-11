@@ -51,3 +51,21 @@ unSetMintRoleForUniversalToken() {
     --arguments str:${UNIVERSAL_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+
+deployTestCaller() {
+    CHECK_VARIABLES TEST_CALLER_WASM ALICE
+
+    mxpy --verbose contract deploy --bytecode=${TEST_CALLER_WASM} --recall-nonce --pem=${ALICE} \
+    --gas-limit=20000000 \
+    --send --outfile=deploy-test-caller.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    TRANSACTION=$(mxpy data parse --file="./deploy-test-caller.interaction.json" --expression="data['emittedTransactionHash']")
+    ADDRESS=$(mxpy data parse --file="./deploy-test-caller.interaction.json" --expression="data['contractAddress']")
+
+    mxpy data store --key=address-test-caller --value=${ADDRESS}
+    mxpy data store --key=deployTransaction-testnet --value=${TRANSACTION}
+
+    echo ""
+    echo "Test caller: ${ADDRESS}"
+    update-config TEST_CALLER ${ADDRESS}
+}

@@ -50,19 +50,11 @@ submitAggregatorBatch() {
     --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
-    # super-terrible hack, I'm ashamed of it. This is to allow submissions to be executed in different blocks
-    # TODO: fix this
-    sleep 6
-
     CURRENT_TIME=$(date +%s)
     mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET1} \
     --gas-limit=15000000 --function="submitBatch" \
     --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${CURRENT_TIME} ${FEE} 0 \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
-
-    # super-terrible hack, I'm ashamed with it. This is to allow submissions to be executed in different blocks
-    # TODO: fix this
-    sleep 6
 
     CURRENT_TIME=$(date +%s)
     mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ORACLE_WALLET2} \
