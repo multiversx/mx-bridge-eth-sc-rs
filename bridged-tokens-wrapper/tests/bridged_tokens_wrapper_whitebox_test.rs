@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use bridged_tokens_wrapper::BridgedTokensWrapper;
 use eth_address::EthAddress;
 use multiversx_sc_modules::pause::PauseModule;

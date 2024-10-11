@@ -42,13 +42,13 @@ path = "../bridged-tokens-wrapper"
 path = "../bridge-proxy"
 
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dependencies.multiversx-price-aggregator-sc]
-version = "=0.52.0"
+version = "=0.53.2"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.53.2"
