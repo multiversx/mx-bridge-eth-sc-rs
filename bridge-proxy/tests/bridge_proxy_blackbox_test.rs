@@ -503,6 +503,52 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
     test.deploy_crowdfunding();
     test.config_bridge();
 
+    // let eth_tx = EthTransaction {
+    //     from: EthAddress {
+    //         raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+    //     },
+    //     to: ManagedAddress::from(NO_INIT_SC_ADDRESS.eval_to_array()),
+    //     token_id: BRIDGE_TOKEN_ID.into(),
+    //     amount: BigUint::from(500u64),
+    //     tx_nonce: 1u64,
+    //     call_data: ManagedOption::none(),
+    // };
+
+    // // Destination is not an initialized contract
+    // test.world
+    //     .tx()
+    //     .from(MULTI_TRANSFER_ADDRESS)
+    //     .to(BRIDGE_PROXY_ADDRESS)
+    //     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+    //     .deposit(&eth_tx)
+    //     .egld_or_single_esdt(
+    //         &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+    //         0,
+    //         &BigUint::from(500u64),
+    //     )
+    //     .run();
+
+    // test.world
+    //     .query()
+    //     .to(BRIDGE_PROXY_ADDRESS)
+    //     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+    //     .get_pending_transaction_by_id(1u32)
+    //     .returns(ExpectValue(eth_tx))
+    //     .run();
+
+    // test.world
+    //     .tx()
+    //     .from(OWNER_ADDRESS)
+    //     .to(BRIDGE_PROXY_ADDRESS)
+    //     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+    //     .execute(1u32)
+    //     .run();
+
+    // // Refund: Funds are transfered to BridgedTokensWrapper
+    // test.world
+    //     .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+    //     .esdt_balance(BRIDGE_TOKEN_ID, BigUint::from(500u64));
+
     let mut args = ManagedVec::new();
 
     let call_data: CallData<StaticApi> = CallData {
@@ -514,6 +560,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
     let call_data: ManagedBuffer<StaticApi> =
         ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
 
+    // No endpoint
     let eth_tx = EthTransaction {
         from: EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
@@ -522,7 +569,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
-        call_data: ManagedOption::none(),
+        call_data: ManagedOption::some(call_data),
     };
 
     test.world
