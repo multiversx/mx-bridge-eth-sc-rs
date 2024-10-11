@@ -548,6 +548,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
+name = "mock-bridge-proxy"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "mock-bridge-proxy-meta"
+version = "0.0.0"
+dependencies = [
+ "mock-bridge-proxy",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
 name = "mock-bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
@@ -555,6 +572,82 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
  "num-bigint",
+]
+
+[[package]]
+name = "mock-bridged-tokens-wrapper-meta"
+version = "0.0.0"
+dependencies = [
+ "mock-bridged-tokens-wrapper",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
+name = "mock-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "mock-esdt-safe-meta"
+version = "0.0.0"
+dependencies = [
+ "mock-esdt-safe",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
+name = "mock-multi-transfer-esdt"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "mock-multi-transfer-esdt-meta"
+version = "0.0.0"
+dependencies = [
+ "mock-multi-transfer-esdt",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
+name = "mock-multisig"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "mock-multisig-meta"
+version = "0.0.0"
+dependencies = [
+ "mock-multisig",
+ "multiversx-sc-meta-lib",
+]
+
+[[package]]
+name = "mock-price-aggregator"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+ "num-bigint",
+]
+
+[[package]]
+name = "mock-price-aggregator-meta"
+version = "0.0.0"
+dependencies = [
+ "mock-price-aggregator",
+ "multiversx-sc-meta-lib",
 ]
 
 [[package]]

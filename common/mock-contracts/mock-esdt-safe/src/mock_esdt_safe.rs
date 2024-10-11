@@ -9,9 +9,9 @@ pub trait MockEsdtSafe {
     #[init]
     fn init(
         &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
-        eth_tx_gas_limit: BigUint,
+        _fee_estimator_contract_address: ManagedAddress,
+        _multi_transfer_contract_address: ManagedAddress,
+        _eth_tx_gas_limit: BigUint,
     ) {
     }
 

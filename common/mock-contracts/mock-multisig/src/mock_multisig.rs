@@ -7,7 +7,17 @@ use multiversx_sc::imports::*;
 #[multiversx_sc::contract]
 pub trait MockMultisig {
     #[init]
-    fn init(&self) {}
+    fn init(
+        &self,
+        _esdt_safe_sc_address: ManagedAddress,
+        _multi_transfer_sc_address: ManagedAddress,
+        _proxy_sc_address: ManagedAddress,
+        _required_stake: BigUint,
+        _slash_amount: BigUint,
+        _quorum: usize,
+        _board: MultiValueEncoded<ManagedAddress>,
+    ) {
+    }
 
     #[upgrade]
     fn upgrade(&self) {}

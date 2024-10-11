@@ -7,7 +7,16 @@ use multiversx_sc::imports::*;
 #[multiversx_sc::contract]
 pub trait MockPriceAggregator {
     #[init]
-    fn init(&self) {}
+    fn init(
+        &self,
+        _staking_token: EgldOrEsdtTokenIdentifier,
+        _staking_amount: BigUint,
+        _slash_amount: BigUint,
+        _slash_quorum: usize,
+        _submission_count: usize,
+        _oracles: MultiValueEncoded<ManagedAddress>,
+    ) {
+    }
 
     #[upgrade]
     fn upgrade(&self) {}
