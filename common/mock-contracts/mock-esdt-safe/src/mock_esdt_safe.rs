@@ -7,7 +7,13 @@ use multiversx_sc::imports::*;
 #[multiversx_sc::contract]
 pub trait MockEsdtSafe {
     #[init]
-    fn init(&self) {}
+    fn init(
+        &self,
+        fee_estimator_contract_address: ManagedAddress,
+        multi_transfer_contract_address: ManagedAddress,
+        eth_tx_gas_limit: BigUint,
+    ) {
+    }
 
     #[upgrade]
     fn upgrade(&self) {}
