@@ -185,14 +185,6 @@ impl BridgeProxyTestState {
             .unpause_endpoint()
             .run();
 
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        //     .unpause_endpoint()
-        //     .run();
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -202,69 +194,6 @@ impl BridgeProxyTestState {
                 BRIDGED_TOKENS_WRAPPER_ADDRESS,
             ))
             .run();
-
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        //     .whitelist_token(BRIDGE_TOKEN_ID, 18u32, WBRIDGE_TOKEN_ID)
-        //     .run();
-
-        // let default_price_nonce: OptionalValue<BigUint<StaticApi>> = OptionalValue::None;
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
-        //     .add_token_to_whitelist(
-        //         BRIDGE_TOKEN_ID,
-        //         "BRIDGE",
-        //         true,
-        //         false,
-        //         BigUint::zero(),
-        //         BigUint::zero(),
-        //         BigUint::zero(),
-        //         default_price_nonce,
-        //     )
-        //     .run();
-
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        //     .set_bridge_proxy_contract_address(OptionalValue::Some(BRIDGE_PROXY_ADDRESS))
-        //     .run();
-
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        //     .add_wrapped_token(WBRIDGE_TOKEN_ID, 18u32)
-        //     .run();
-
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        //     .deposit_liquidity()
-        //     .single_esdt(
-        //         &TokenIdentifier::from(BRIDGE_TOKEN_ID),
-        //         0u64,
-        //         &BigUint::from(5_000u64),
-        //     )
-        //     .run();
-
-        // self.world
-        //     .tx()
-        //     .from(OWNER_ADDRESS)
-        //     .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        //     .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        //     .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS))
-        //     .run();
         self
     }
 }
