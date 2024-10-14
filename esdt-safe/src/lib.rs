@@ -124,7 +124,7 @@ pub trait EsdtSafe:
             match tx_status {
                 TransactionStatus::Executed => {}
                 TransactionStatus::Rejected => {
-                    let addr = ManagedAddress::try_from(tx.from).unwrap();
+                    let addr = ManagedAddress::try_from(tx.from.clone()).unwrap();
                     self.mark_refund(&addr, &tx.token_identifier, &tx.amount);
                 }
                 _ => {
@@ -132,7 +132,7 @@ pub trait EsdtSafe:
                 }
             }
 
-            self.set_status_event(batch_id, tx.nonce, tx_status);
+            self.set_status_event(batch_id, tx.from, tx.to, tx.token_identifier, tx.amount, tx.nonce, tx_status);
         }
 
         self.clear_first_batch(&mut tx_batch);
@@ -555,6 +555,10 @@ pub trait EsdtSafe:
     fn set_status_event(
         &self,
         #[indexed] batch_id: u64,
+        #[indexed] from: ManagedBuffer,
+        #[indexed] to: ManagedBuffer,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
         #[indexed] tx_id: u64,
         #[indexed] tx_status: TransactionStatus,
     );
