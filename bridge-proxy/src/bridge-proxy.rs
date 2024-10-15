@@ -159,7 +159,7 @@ pub trait BridgeProxyContract:
             transfers.esdt_payments.len() == 1,
             "Expected only one esdt payment"
         );
-        transfers.esdt_payments.try_get(0).unwrap()
+        transfers.esdt_payments.get(0)
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
