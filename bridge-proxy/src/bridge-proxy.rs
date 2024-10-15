@@ -123,15 +123,16 @@ pub trait BridgeProxyContract:
         let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
         let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
         // retrieve tokens from bridged_tokens_wrapper
-        self.tx()
-            .to(bridged_tokens_wrapper_address)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        let transfers = self
+            .tx()
+            .to(bridged_tokens_wrapper_address)           .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .unwrap_token(&tx.token_id)
             .single_esdt(
                 &payment.token_identifier,
                 payment.token_nonce,
                 &payment.amount,
             )
+            .returns(ReturnsBackTransfers)
             .sync_call();
 
         // use the tokens just received
@@ -139,11 +140,7 @@ pub trait BridgeProxyContract:
             .to(esdt_safe_contract_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(tx.from, OptionalValue::Some(tx.to))
-            .single_esdt(
-                &payment.token_identifier,
-                payment.token_nonce,
-                &payment.amount,
-            )
+            .multi_esdt(transfers.esdt_payments)
             .sync_call();
     }
 
