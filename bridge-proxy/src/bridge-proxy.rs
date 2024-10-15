@@ -9,7 +9,6 @@ pub mod esdt_safe_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
-const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -95,20 +94,6 @@ pub trait BridgeProxyContract:
         tx_call.register_promise();
     }
 
-    #[endpoint(cancel)]
-    fn cancel(&self, tx_id: usize) {
-        let tx_start_round = self.ongoing_execution(tx_id).get();
-        let current_block_round = self.blockchain().get_block_round();
-        require!(
-            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
-            "Transaction can't be cancelled yet"
-        );
-
-        let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
-        self.tx().to(tx.to).payment(payment).transfer();
-        self.cleanup_transaction(tx_id);
-    }
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
