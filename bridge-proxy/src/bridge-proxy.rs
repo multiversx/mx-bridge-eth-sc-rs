@@ -120,12 +120,25 @@ pub trait BridgeProxyContract:
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
         let payment = self.payments(tx_id).get();
-        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
-
+        let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
+        let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
+        // retrieve tokens from bridged_tokens_wrapper
         self.tx()
-            .to(esdt_safe_addr)
+            .to(bridged_tokens_wrapper_address)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .unwrap_token_create_transaction(&tx.token_id, tx.from, OptionalValue::Some(tx.to))
+            .unwrap_token(&tx.token_id)
+            .single_esdt(
+                &payment.token_identifier,
+                payment.token_nonce,
+                &payment.amount,
+            )
+            .sync_call();
+
+        // use the tokens just received
+        self.tx()
+            .to(esdt_safe_contract_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(tx.from, OptionalValue::Some(tx.to))
             .single_esdt(
                 &payment.token_identifier,
                 payment.token_nonce,

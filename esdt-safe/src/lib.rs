@@ -255,7 +255,7 @@ pub trait EsdtSafe:
     fn create_transaction(
         &self,
         to: EthAddress<Self::Api>,
-        opt_refund_address: OptionalValue<ManagedAddress>,
+        opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -274,16 +274,18 @@ pub trait EsdtSafe:
         // This is passed by the BridgeTokenWrapper contract
         let mut is_refund_tx = false;
         let caller = self.blockchain().get_caller();
-        let user_addr = match opt_refund_address {
-            OptionalValue::Some(addr) => {
-                require!(
-                    caller == self.bridged_tokens_wrapper_address().get(),
-                    "Wrong caller for a refund tx"
-                );
-                is_refund_tx = true;
-                addr
+        let user_addr = match opt_refunding_address {
+            OptionalValue::Some(refunding_addr) => {
+                if caller == self.bridge_proxy_contract_address().get() {
+                    is_refund_tx = true;
+                    refunding_addr
+                } else if caller == self.bridged_tokens_wrapper_address().get() {
+                    refunding_addr
+                } else {
+                    sc_panic!("Cannot specify a refund address from this caller");
+                }
             }
-            OptionalValue::None => self.blockchain().get_caller(),
+            OptionalValue::None => caller,
         };
 
         self.accumulated_transaction_fees(&payment_token)
@@ -371,6 +373,22 @@ pub trait EsdtSafe:
                 self.bridged_tokens_wrapper_address().set(&sc_addr);
             }
             OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
+        }
+    }
+
+    #[only_owner]
+    #[endpoint(setBridgeProxyContractAddress)]
+    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
+        match opt_new_address {
+            OptionalValue::Some(sc_addr) => {
+                require!(
+                    self.blockchain().is_smart_contract(&sc_addr),
+                    "Invalid bridge proxy contract address"
+                );
+
+                self.bridge_proxy_contract_address().set(&sc_addr);
+            }
+            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
         }
     }
 
@@ -581,4 +599,8 @@ pub trait EsdtSafe:
     #[view(getBridgedTokensWrapperAddress)]
     #[storage_mapper("bridgedTokensWrapperAddress")]
     fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getBridgeProxyContractAddress)]
+    #[storage_mapper("bridgeProxyContractAddress")]
+    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
