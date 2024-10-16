@@ -119,19 +119,46 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
-        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
+        let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
 
+        let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
         self.tx()
-            .to(esdt_safe_addr)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .unwrap_token_create_transaction(&tx.token_id, tx.from, OptionalValue::Some(tx.to))
+            .to(esdt_safe_contract_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(tx.from, OptionalValue::Some(tx.to))
+            .single_esdt(
+                &unwrapped_token.token_identifier,
+                unwrapped_token.token_nonce,
+                &unwrapped_token.amount,
+            )
+            .sync_call();
+    }
+
+    fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
+        let payment = self.payments(tx_id).get();
+        let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
+        
+        let transfers = self
+            .tx()
+            .to(bridged_tokens_wrapper_address)           .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unwrap_token(requested_token)
             .single_esdt(
                 &payment.token_identifier,
                 payment.token_nonce,
                 &payment.amount,
             )
+            .returns(ReturnsBackTransfers)
             .sync_call();
+
+        require!(
+            transfers.total_egld_amount == 0,
+            "Expected only one esdt payment"
+        );
+        require!(
+            transfers.esdt_payments.len() == 1,
+            "Expected only one esdt payment"
+        );
+        transfers.esdt_payments.get(0)
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
