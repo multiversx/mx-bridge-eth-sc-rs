@@ -99,7 +99,8 @@ pub trait BridgeProxyContract:
         tx_call.register_promise();
     }
 
-    #[endpoint(cancel)]
+    // TODO: will activate endpoint in a future release
+    // #[endpoint(cancel)]
     fn cancel(&self, tx_id: usize) {
         let tx_start_round = self.ongoing_execution(tx_id).get();
         let current_block_round = self.blockchain().get_block_round();

@@ -132,7 +132,15 @@ pub trait EsdtSafe:
                 }
             }
 
-            self.set_status_event(batch_id, tx.from, tx.to, tx.token_identifier, tx.amount, tx.nonce, tx_status);
+            self.set_status_event(
+                batch_id,
+                tx.from,
+                tx.to,
+                tx.token_identifier,
+                tx.amount,
+                tx.nonce,
+                tx_status,
+            );
         }
 
         self.clear_first_batch(&mut tx_batch);
@@ -215,15 +223,15 @@ pub trait EsdtSafe:
                 let mint_balances_mapper = self.mint_balances(&refund_token_id);
                 if !self.native_token(&refund_token_id).get() {
                     require!(
-                        burn_balances_mapper.get()
-                            <= &mint_balances_mapper.get() - &actual_bridged_amount,
-                        "Not enough burned tokens!"
+                        mint_balances_mapper.get()
+                            >= &burn_balances_mapper.get() + &actual_bridged_amount,
+                        "Not enough minted tokens!"
                     );
                 }
-                let mint_executed = self.internal_mint(&refund_token_id, &actual_bridged_amount);
-                require!(mint_executed, "Cannot do the mint action!");
-                mint_balances_mapper.update(|minted| {
-                    *minted += &actual_bridged_amount;
+                let burn_executed = self.internal_burn(&refund_token_id, &actual_bridged_amount);
+                require!(burn_executed, "Cannot do the burn action!");
+                burn_balances_mapper.update(|burned| {
+                    *burned += &actual_bridged_amount;
                 });
             } else {
                 self.total_balances(&refund_token_id).update(|total| {
