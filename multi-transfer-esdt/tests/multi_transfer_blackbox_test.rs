@@ -295,8 +295,8 @@ impl MultiTransferTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_bridge_proxy_contract_address(OptionalValue::Some(
                 BRIDGE_PROXY_ADDRESS.to_address(),
             ))
@@ -726,7 +726,6 @@ fn test_unwrap_token_create_transaction_paused() {
         .unwrap_token_create_transaction(
             TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -780,7 +779,6 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
         .unwrap_token_create_transaction(
             WRAPPED_TOKEN_ID,
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -808,7 +806,6 @@ fn test_unwrap_token_create_transaction_should_work() {
         .unwrap_token_create_transaction(
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(WRAPPED_TOKEN_ID),
@@ -835,7 +832,6 @@ fn test_unwrap_token_create_transaction_amount_zero() {
         .unwrap_token_create_transaction(
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
