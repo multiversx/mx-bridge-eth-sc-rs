@@ -1,5 +1,6 @@
 #![no_std]
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::ongoing_operation::*;
 
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper_proxy;
@@ -10,10 +11,13 @@ use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
+const MIN_GAS_TO_SAVE_PROGRESS: u64 = 100_000;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
-    config::ConfigModule + multiversx_sc_modules::pause::PauseModule
+    config::ConfigModule 
+    + multiversx_sc_modules::pause::PauseModule
+    + multiversx_sc_modules::ongoing_operation::OngoingOperationModule
 {
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
@@ -173,15 +177,26 @@ pub trait BridgeProxyContract:
         self.ongoing_execution(tx_id).clear();
     }
 
+    #[endpoint(updateLowestTxId)]
     fn update_lowest_tx_id(&self) {
         let mut new_lowest = self.lowest_tx_id().get();
         let len = self.pending_transactions().len();
 
-        while new_lowest < len && self.pending_transactions().item_is_empty(new_lowest) {
+        self.run_while_it_has_gas(MIN_GAS_TO_SAVE_PROGRESS, || {
+            if !self.empty_element(new_lowest, len) {
+                return STOP_OP;
+            }
+
             new_lowest += 1;
-        }
+
+            CONTINUE_OP
+        });
 
         self.lowest_tx_id().set(new_lowest);
+    }
+
+    fn empty_element(&self, current_index: usize, len: usize) -> bool {
+        current_index < len && self.pending_transactions().item_is_empty(current_index)
     }
 
     #[view(getPendingTransactionById)]
