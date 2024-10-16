@@ -13,10 +13,6 @@ case "$1" in
   confirmation deploy-bridge-contracts
   ;;
 
-'upgrade-wrapper')
-  confirmation upgrade-wrapper    
-  ;;
-
 'add-relayer')
   confirmation addBoardMember
   ;;
@@ -95,6 +91,26 @@ case "$1" in
   confirmation upgrade-aggregator
   ;;
 
+'upgrade-wrapper')
+  confirmation upgrade-wrapper
+  ;;
+
+'upgrade-safe')
+  confirmation upgrade-safe
+  ;;
+
+'upgrade-multi-transfer')
+  confirmation upgrade-multi-transfer
+  ;;
+
+'upgrade-proxy')
+  confirmation upgrade-proxy
+  ;;
+
+'upgrade-multisig')
+  confirmation upgrade-multisig
+  ;;
+
 'whitelist-native-token')
   confirmation whitelist-native-token
   ;;
@@ -111,7 +127,8 @@ case "$1" in
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
-  echo "  { \"deploy-bridge-contracts\", \"upgrade-aggregator\", \"upgrade-wrapper\", "
+  echo "  { \"deploy-bridge-contracts\", "
+  echo "    \"upgrade-aggregator\", \"upgrade-wrapper\", \"upgrade-safe\", \"upgrade-multi-transfer\", \"upgrade-proxy\", \"upgrade-multisig\" "
   echo "    \"pause-contracts\", \"unpause-contracts\", \"add-relayer\", \"remove-relayer\", "
   echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"set-swap-fee\", "
   echo "    \"whitelist-token\", \"whitelist-native-token\", \"remove-whitelist-token\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\", "

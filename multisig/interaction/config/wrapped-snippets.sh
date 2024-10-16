@@ -137,12 +137,3 @@ setEsdtSafeOnWrapper() {
     --arguments ${SAFE} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
-
-setSCProxyOnWrapper() {
-    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGE_PROXY
-
-    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setBridgeProxyContractAddress" \
-    --arguments ${BRIDGE_PROXY} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
