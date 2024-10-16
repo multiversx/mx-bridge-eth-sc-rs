@@ -119,10 +119,9 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
         let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
 
-        let unwrapped_token = self.unwrap_token(&payment.token_identifier, tx_id);
+        let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
         self.tx()
             .to(esdt_safe_contract_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
