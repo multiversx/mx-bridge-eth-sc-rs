@@ -373,8 +373,10 @@ pub trait Multisig:
     #[only_owner]
     #[endpoint(withdrawSlashedAmount)]
     fn withdraw_slashed_amount(&self) {
-        let slashed_amount = self.slashed_tokens_amount().get();
+        let slashed_tokens_amount_mapper = self.slashed_tokens_amount();
+        let slashed_amount = slashed_tokens_amount_mapper.get();
         self.tx().to(ToCaller).egld(&slashed_amount).transfer();
+        slashed_tokens_amount_mapper.clear();
     }
 
     /// Proposers and board members use this to launch signed actions.
