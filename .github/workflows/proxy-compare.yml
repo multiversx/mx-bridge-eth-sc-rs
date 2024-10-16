@@ -28,5 +28,4 @@ jobs:
 
       - name: Run proxy compare
         run: |
-          cd contracts
           sc-meta all proxy --compare
