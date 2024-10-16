@@ -164,6 +164,7 @@ impl MultiTransferTestState {
             .upgrade(
                 ManagedAddress::zero(),
                 MULTI_TRANSFER_ADDRESS.to_address(),
+                BRIDGE_PROXY_ADDRESS.to_address(),
                 ESDT_SAFE_ETH_TX_GAS_LIMIT,
             )
             .code(ESDT_SAFE_CODE_PATH)
