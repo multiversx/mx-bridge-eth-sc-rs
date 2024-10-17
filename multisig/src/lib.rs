@@ -10,7 +10,7 @@ mod storage;
 mod user_role;
 mod util;
 
-use sc_proxies::{esdt_safe_proxy, multi_transfer_proxy};
+use sc_proxies::{esdt_safe_proxy, multi_transfer_esdt_proxy};
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
@@ -306,7 +306,7 @@ pub trait Multisig:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .move_refund_batch_to_safe()
             .sync_call();
 
@@ -334,7 +334,7 @@ pub trait Multisig:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .add_unprocessed_refund_tx_to_batch(tx_id)
             .sync_call();
 
@@ -444,7 +444,7 @@ pub trait Multisig:
 
                 self.tx()
                     .to(multi_transfer_esdt_addr)
-                    .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+                    .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .sync_call();
             }
