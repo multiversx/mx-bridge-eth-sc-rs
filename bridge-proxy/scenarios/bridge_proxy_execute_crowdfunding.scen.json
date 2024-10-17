@@ -226,7 +226,7 @@
                 "arguments": [
                     "0x01"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "200000000"
             },
             "expect": {
                 "out": [],

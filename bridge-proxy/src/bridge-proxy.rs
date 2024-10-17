@@ -9,6 +9,7 @@ pub mod esdt_safe_proxy;
 
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 const MIN_GAS_TO_SAVE_PROGRESS: u64 = 100_000;
@@ -71,12 +72,15 @@ pub trait BridgeProxyContract:
         };
 
         if call_data.endpoint.is_empty()
-            || call_data.gas_limit == 0
             || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
+            || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
         {
             self.finish_execute_gracefully(tx_id);
             return;
         }
+
+        let gas_left = self.blockchain().get_gas_left();
+        require!(gas_left > call_data.gas_limit + DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK, "Not enough gas to execute");
 
         let tx_call = self
             .tx()
