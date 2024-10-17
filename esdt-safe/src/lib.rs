@@ -16,6 +16,14 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+pub struct RefundInfo<M: ManagedTypeApi> {
+    address: ManagedAddress<M>,
+    initial_batch_id: u64, 
+    initial_nonce: u64
+}
+
 #[multiversx_sc::contract]
 pub trait EsdtSafe:
     fee_estimator_module::FeeEstimatorModule
@@ -266,7 +274,7 @@ pub trait EsdtSafe:
     fn create_transaction(
         &self,
         to: EthAddress<Self::Api>,
-        opt_refunding_address: OptionalValue<ManagedAddress>,
+        opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -285,18 +293,18 @@ pub trait EsdtSafe:
         // This is passed by the BridgeTokenWrapper contract
         let mut is_refund_tx = false;
         let caller = self.blockchain().get_caller();
-        let user_addr = match opt_refunding_address {
-            OptionalValue::Some(refunding_addr) => {
+        let refund_info = match opt_refund_info {
+            OptionalValue::Some(refund_info) => {
                 if caller == self.bridge_proxy_contract_address().get() {
                     is_refund_tx = true;
-                    refunding_addr
+                    refund_info
                 } else if caller == self.bridged_tokens_wrapper_address().get() {
-                    refunding_addr
+                    refund_info
                 } else {
                     sc_panic!("Cannot specify a refund address from this caller");
                 }
             }
-            OptionalValue::None => caller,
+            OptionalValue::None => RefundInfo{ address: caller, initial_batch_id: 0, initial_nonce: 0},
         };
 
         self.accumulated_transaction_fees(&payment_token)
@@ -307,7 +315,7 @@ pub trait EsdtSafe:
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: user_addr.as_managed_buffer().clone(),
+            from: refund_info.address.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),
@@ -335,15 +343,28 @@ pub trait EsdtSafe:
                 *total += &actual_bridged_amount;
             });
         }
-        self.create_transaction_event(
-            batch_id,
-            tx_nonce,
-            payment_token,
-            actual_bridged_amount,
-            required_fee,
-            user_addr.as_managed_buffer().clone(),
-            tx.to,
-        );
+        if !is_refund_tx {
+            self.create_transaction_event(
+                batch_id,
+                tx_nonce,
+                payment_token,
+                actual_bridged_amount,
+                required_fee,
+                refund_info.address.as_managed_buffer().clone(),
+                tx.to,
+            );
+        } else {
+            self.create_refund_transaction_event(
+                batch_id,
+                tx_nonce,
+                payment_token,
+                actual_bridged_amount,
+                required_fee,
+                refund_info.initial_batch_id,
+                refund_info.initial_nonce,
+            );
+        }
+        
     }
 
     /// Claim funds for failed MultiversX -> Ethereum transactions.
@@ -563,6 +584,18 @@ pub trait EsdtSafe:
         #[indexed] fee: BigUint,
         #[indexed] sender: ManagedBuffer,
         #[indexed] recipient: ManagedBuffer,
+    );
+
+    #[event("createRefundTransactionEvent")]
+    fn create_refund_transaction_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] initial_batch_id: u64,
+        #[indexed] initial_tx_id: u64,
     );
 
     #[event("addRefundTransactionEvent")]
