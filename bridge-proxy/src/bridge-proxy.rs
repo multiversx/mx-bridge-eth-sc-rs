@@ -79,6 +79,9 @@ pub trait BridgeProxyContract:
             return;
         }
 
+        let gas_left = self.blockchain().get_gas_left();
+        require!(gas_left > call_data.gas_limit + DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK, "Not enough gas to execute");
+
         let tx_call = self
             .tx()
             .to(&tx.to)
