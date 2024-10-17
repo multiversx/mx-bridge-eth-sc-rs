@@ -65,12 +65,15 @@ pub trait EsdtSafe:
         &self,
         fee_estimator_contract_address: ManagedAddress,
         multi_transfer_contract_address: ManagedAddress,
+        bridge_proxy_contract_address: ManagedAddress,
         eth_tx_gas_limit: BigUint,
     ) {
         self.fee_estimator_contract_address()
             .set(&fee_estimator_contract_address);
         self.multi_transfer_contract_address()
             .set(&multi_transfer_contract_address);
+        self.bridge_proxy_contract_address().
+            set(&bridge_proxy_contract_address);
 
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 

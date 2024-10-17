@@ -228,3 +228,18 @@ initSupplyMintBurn() {
   --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MINT} ${BURN} \
   --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+
+upgradeMultisig() {
+    CHECK_VARIABLES SAFE MULTI_TRANSFER BRIDGE_PROXY MULTISIG_WASM
+
+    mxpy --verbose contract upgrade ${MULTISIG} --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
+      --gas-limit=100000000 --send \
+      --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} \
+      --outfile="upgrade-multisig-child-sc.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    TRANSACTION=$(mxpy data parse --file="./upgrade-multisig-child-sc.json" --expression="data['emitted_tx']['hash']")
+    ADDRESS=$(mxpy data parse --file="./upgrade-multisig-child-sc.json" --expression="data['contractAddress']")
+
+    echo ""
+    echo "Multisig contract updated: ${ADDRESS}"
+}

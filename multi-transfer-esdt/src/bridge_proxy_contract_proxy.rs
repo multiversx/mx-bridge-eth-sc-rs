@@ -110,16 +110,12 @@ where
             .original_result()
     }
 
-    pub fn cancel<
-        Arg0: ProxyArg<usize>,
-    >(
+    pub fn update_lowest_tx_id(
         self,
-        tx_id: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("cancel")
-            .argument(&tx_id)
+            .raw_call("updateLowestTxId")
             .original_result()
     }
 
