@@ -1,0 +1,51 @@
+{
+    "name": "add refund batch",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "create_another_tx_ok.scen.json"
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "5"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-refund-batch",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt_safe",
+                "function": "addRefundBatch",
+                "arguments": [
+                    {
+                        "01-block_nonce": "u64:2",
+                        "02-nonce": "u64:1",
+                        "03-from": "u32:20|0x0102030405060708091011121314151617181920",
+                        "04-to": "u32:32|address:user1",
+                        "05-token_identifier": "nested:str:BRIDGE-123456",
+                        "06-amount": "biguint:2,000,000",
+                        "07-is_refund_tx": "u8:1",
+                        "11-block_nonce": "u64:3",
+                        "12-nonce": "u64:2",
+                        "13-from": "u32:20|0x0102030405060708091011121314151617181920",
+                        "14-to": "u32:32|address:user2",
+                        "15-token_identifier": "nested:str:BRIDGE-123456",
+                        "16-amount": "biguint:3,000,000",
+                        "17-is_refund_tx": "u8:1"
+                    }
+                ],
+                "gasLimit": "100,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "out": [],
+                "message": "str:Invalid caller",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

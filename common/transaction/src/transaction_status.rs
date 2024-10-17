@@ -1,16 +1,8 @@
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
 
+#[type_abi]
 #[derive(
-    TopEncode,
-    TopDecode,
-    NestedEncode,
-    NestedDecode,
-    TypeAbi,
-    PartialEq,
-    Clone,
-    Copy,
-    ManagedVecItem,
+    TopEncode, TopDecode, NestedEncode, NestedDecode, PartialEq, Clone, Copy, ManagedVecItem,
 )]
 pub enum TransactionStatus {
     None,

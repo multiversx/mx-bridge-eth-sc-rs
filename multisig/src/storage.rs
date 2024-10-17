@@ -1,5 +1,4 @@
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
 use transaction::transaction_status::TransactionStatus;
@@ -74,7 +73,7 @@ pub trait StorageModule {
         esdt_safe_batch_id: u64,
     ) -> MapMapper<ManagedVec<TransactionStatus>, usize>;
 
-    /// Mapping between ERC20 Ethereum address and Elrond ESDT Token Identifiers
+    /// Mapping between ERC20 Ethereum address and MultiversX ESDT Token Identifiers
 
     #[view(getErc20AddressForTokenId)]
     #[storage_mapper("erc20AddressForTokenId")]
@@ -99,4 +98,8 @@ pub trait StorageModule {
     #[view(getMultiTransferEsdtAddress)]
     #[storage_mapper("multiTransferEsdtAddress")]
     fn multi_transfer_esdt_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getProxyAddress)]
+    #[storage_mapper("proxyAddress")]
+    fn proxy_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

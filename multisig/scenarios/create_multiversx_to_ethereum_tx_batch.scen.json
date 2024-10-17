@@ -1,0 +1,208 @@
+{
+    "name": "batch tx from MultiversX to Ethereum",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "setup.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "first-create-transaction",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "value": "0",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:WEGLD-123456",
+                        "value": "85,000,000,000"
+                    }
+                ],
+                "function": "createTransaction",
+                "arguments": [
+                    "0x0102030405060708091011121314151617181920"
+                ],
+                "gasLimit": "60,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "out": [],
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:user": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": "15,000,000,000",
+                        "str:ETH-123456": "200,000,000,000"
+                    },
+                    "storage": {}
+                },
+                "sc:esdt_safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": {
+                            "balance": "1,500,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:ETH-123456": {
+                            "balance": "0",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:pendingBatches|u64:1|str:.item|u32:1": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u64:1",
+                            "3-from": "u32:32|address:user",
+                            "4-to": "u32:20|0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:WEGLD-123456",
+                            "6-amount": "biguint:84,998,500,000",
+                            "7-is_refund_tx": "u8:0"
+                        },
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "1,500,000",
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "second-create-transaction",
+            "tx": {
+                "from": "address:user",
+                "to": "sc:esdt_safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "str:ETH-123456",
+                        "value": "95,000,000,000"
+                    }
+                ],
+                "function": "createTransaction",
+                "arguments": [
+                    "0x0102030405060708091011121314151617181920"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "out": [],
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "checkState",
+            "accounts": {
+                "address:user": {
+                    "nonce": "*",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": "15,000,000,000",
+                        "str:ETH-123456": "105,000,000,000"
+                    },
+                    "storage": {}
+                },
+                "sc:esdt_safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "esdt": {
+                        "str:WEGLD-123456": {
+                            "balance": "1,500,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        },
+                        "str:ETH-123456": {
+                            "balance": "1,500,000",
+                            "roles": [
+                                "ESDTRoleLocalMint",
+                                "ESDTRoleLocalBurn"
+                            ]
+                        }
+                    },
+                    "storage": {
+                        "str:pendingBatches|u64:1|str:.item|u32:1": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u64:1",
+                            "3-from": "u32:32|address:user",
+                            "4-to": "u32:20|0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:WEGLD-123456",
+                            "6-amount": "biguint:84,998,500,000",
+                            "7-is_refund_tx": "u8:0"
+                        },
+                        "str:pendingBatches|u64:1|str:.item|u32:2": {
+                            "1-block_nonce": "u64:0",
+                            "2-nonce": "u64:2",
+                            "3-from": "u32:32|address:user",
+                            "4-to": "u32:20|0x0102030405060708091011121314151617181920",
+                            "5-token_identifier": "nested:str:ETH-123456",
+                            "6-amount": "biguint:94,998,500,000",
+                            "7-is_refund_tx": "u8:0"
+                        },
+                        "str:firstBatchId": "1",
+                        "str:lastBatchId": "1",
+                        "str:accumulatedTransactionFees|nested:str:WEGLD-123456": "1,500,000",
+                        "str:accumulatedTransactionFees|nested:str:ETH-123456": "1,500,000",
+                        "+": ""
+                    },
+                    "code": "*"
+                },
+                "+": {}
+            }
+        },
+        {
+            "step": "setState",
+            "currentBlockInfo": {
+                "blockNonce": "500"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-current-tx-batch",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getCurrentTxBatch",
+                "arguments": []
+            },
+            "expect": {
+                "out": [
+                    "1",
+                    "0",
+                    "1",
+                    "address:user",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:WEGLD-123456",
+                    "84,998,500,000",
+                    "0",
+                    "2",
+                    "address:user",
+                    "0x0102030405060708091011121314151617181920",
+                    "str:ETH-123456",
+                    "94,998,500,000"
+                ]
+            }
+        }
+    ]
+}

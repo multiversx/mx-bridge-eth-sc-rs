@@ -1,10 +1,9 @@
 #![no_std]
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
+use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-
 pub mod transaction_status;
 
 // revert protection
@@ -26,19 +25,46 @@ pub type TxAsMultiValue<M> = MultiValue6<
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 pub type TxBatchSplitInFields<M> = MultiValue2<u64, MultiValueEncoded<M, TxAsMultiValue<M>>>;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopDecode, TopEncode, Clone, ManagedVecItem)]
+pub struct CallData<M: ManagedTypeApi> {
+    pub endpoint: ManagedBuffer<M>,
+    pub gas_limit: u64,
+    pub args: ManagedOption<M, ManagedVec<M, ManagedBuffer<M>>>,
+}
+
+impl<M: ManagedTypeApi> Default for CallData<M> {
+    fn default() -> Self {
+        CallData {
+            endpoint: ManagedBuffer::new(),
+            gas_limit: 0u64,
+            args: ManagedOption::none(),
+        }
+    }
+}
+
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, Clone, ManagedVecItem)]
 pub struct EthTransaction<M: ManagedTypeApi> {
     pub from: EthAddress<M>,
     pub to: ManagedAddress<M>,
     pub token_id: TokenIdentifier<M>,
     pub amount: BigUint<M>,
     pub tx_nonce: TxNonce,
+    pub call_data: ManagedOption<M, ManagedBuffer<M>>,
 }
 
-pub type EthTxAsMultiValue<M> =
-    MultiValue5<EthAddress<M>, ManagedAddress<M>, TokenIdentifier<M>, BigUint<M>, TxNonce>;
+pub type EthTxAsMultiValue<M> = MultiValue6<
+    EthAddress<M>,
+    ManagedAddress<M>,
+    TokenIdentifier<M>,
+    BigUint<M>,
+    TxNonce,
+    ManagedOption<M, ManagedBuffer<M>>,
+>;
 
-#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, TypeAbi, ManagedVecItem, Clone)]
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, ManagedVecItem, Clone)]
 pub struct Transaction<M: ManagedTypeApi> {
     pub block_nonce: BlockNonce,
     pub nonce: TxNonce,
