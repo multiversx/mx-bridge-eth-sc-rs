@@ -74,7 +74,7 @@ pub trait BridgeProxyContract:
         if call_data.endpoint.is_empty()
             || call_data.gas_limit == 0
             || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
-            || call_data.gas_limit < MAX_GAS_LIMIT_IN_MINIBLOCK
+            || call_data.gas_limit > MAX_GAS_LIMIT_IN_MINIBLOCK
         {
             self.finish_execute_gracefully(tx_id);
             return;
