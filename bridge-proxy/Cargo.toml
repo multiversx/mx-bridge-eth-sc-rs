@@ -40,7 +40,7 @@ version = "0.53.2"
 
 [dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-contracts-rs"
-rev = "9c18d7c"
+rev = "e72c201"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
