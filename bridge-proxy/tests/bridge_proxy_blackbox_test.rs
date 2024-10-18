@@ -211,8 +211,6 @@ fn deploy_test() {
 fn bridge_proxy_execute_crowdfunding_test() {
     let mut test = BridgeProxyTestState::new();
 
-    test.world.start_trace();
-
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();
@@ -275,9 +273,6 @@ fn bridge_proxy_execute_crowdfunding_test() {
         .get_current_funds()
         .returns(ExpectValue(500u64))
         .run();
-
-    // test.world
-    //     .write_scenario_trace("scenarios/bridge_proxy_execute_crowdfunding.scen.json");
 }
 
 #[test]
@@ -496,8 +491,6 @@ fn test_lowest_tx_id() {
 #[test]
 fn bridge_proxy_wrong_formatting_sc_call_test() {
     let mut test = BridgeProxyTestState::new();
-
-    test.world.start_trace();
 
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
