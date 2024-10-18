@@ -28,6 +28,7 @@ dependencies = [
  "crowdfunding-esdt",
  "esdt-safe",
  "eth-address",
+ "mock-bridged-tokens-wrapper",
  "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
@@ -161,6 +162,14 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "mock-bridged-tokens-wrapper"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
  "multiversx-sc",
 ]
 
