@@ -72,7 +72,6 @@ fn world() -> ScenarioWorld {
         MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR,
         mock_bridged_tokens_wrapper::ContractBuilder,
     );
-    // blockchain.register_contract(MOCK_ESDT_SAFE_PATH_EXPR, mock_esdt_safe::ContractBuilder);
 
     blockchain
 }
