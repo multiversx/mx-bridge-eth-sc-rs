@@ -263,7 +263,11 @@ pub trait BridgedTokensWrapper:
         self.tx()
             .to(self.esdt_safe_contract_address().get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(to, OptionalValue::Some(caller))
+            .create_transaction(to, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                address: caller,
+                initial_batch_id: 0,
+                initial_nonce: 0,
+            }))
             .single_esdt(&requested_token, 0, &converted_amount)
             .sync_call();
     }

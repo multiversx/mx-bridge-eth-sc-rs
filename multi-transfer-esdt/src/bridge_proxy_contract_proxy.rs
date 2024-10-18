@@ -87,13 +87,16 @@ where
 {
     pub fn deposit<
         Arg0: ProxyArg<transaction::EthTransaction<Env::Api>>,
+        Arg1: ProxyArg<u64>,
     >(
         self,
         eth_tx: Arg0,
+        batch_id: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deposit")
             .argument(&eth_tx)
+            .argument(&batch_id)
             .original_result()
     }
 
