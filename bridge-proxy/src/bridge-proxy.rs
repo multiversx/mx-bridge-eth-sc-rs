@@ -5,6 +5,7 @@ use multiversx_sc_modules::ongoing_operation::*;
 pub mod config;
 
 use sc_proxies::bridged_tokens_wrapper_proxy;
+use sc_proxies::esdt_safe_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;

@@ -2,7 +2,7 @@
 
 use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
 use bridged_tokens_wrapper::ProxyTrait as _;
-use esdt_safe::{EsdtSafe, ProxyTrait as _};
+use esdt_safe::{EsdtSafe, ProxyTrait as _, RefundInfo};
 use esdt_safe_proxy::EsdtSafeProxyMethods;
 use multi_transfer_esdt::*;
 
@@ -507,9 +507,8 @@ impl MultiTransferTestState {
         amount: u64,
         expected_error: &str,
     ) {
-        let none_addr: OptionalValue<ManagedAddress<StaticApi>> = OptionalValue::None;
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero(), none_addr)
+            .create_transaction(EthAddress::zero(),OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>)
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
@@ -520,9 +519,8 @@ impl MultiTransferTestState {
     }
 
     fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
-        let none_addr: OptionalValue<ManagedAddress<StaticApi>> = OptionalValue::None;
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero(), none_addr)
+            .create_transaction(EthAddress::zero(), OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>)
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,

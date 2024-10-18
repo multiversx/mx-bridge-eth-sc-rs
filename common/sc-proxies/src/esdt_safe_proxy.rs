@@ -171,18 +171,18 @@ where
     pub fn create_transaction_sc_call<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg2: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+        Arg2: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
     >(
         self,
         to: Arg0,
         data: Arg1,
-        opt_refund_address: Arg2,
+        opt_refund_info: Arg2,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("createTransactionSCCall")
             .argument(&to)
             .argument(&data)
-            .argument(&opt_refund_address)
+            .argument(&opt_refund_info)
             .original_result()
     }
 
