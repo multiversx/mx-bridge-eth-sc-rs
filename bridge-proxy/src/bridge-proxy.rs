@@ -34,7 +34,7 @@ pub trait BridgeProxyContract:
 
     #[payable("*")]
     #[endpoint]
-    fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
+    fn deposit(&self, eth_tx: EthTransaction<Self::Api>, batch_id: u64) {
         self.require_not_paused();
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
@@ -44,6 +44,7 @@ pub trait BridgeProxyContract:
         );
         let tx_id = self.pending_transactions().push(&eth_tx);
         self.payments(tx_id).set(&payment);
+        self.batch_id(tx_id).set(batch_id);
     }
 
     #[endpoint(execute)]
@@ -131,10 +132,15 @@ pub trait BridgeProxyContract:
         let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
 
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
+        let batch_id = self.batch_id(tx_id).get();
         self.tx()
             .to(esdt_safe_contract_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(tx.from, OptionalValue::Some(tx.to))
+            .create_transaction(tx.from, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                address: tx.to,
+                initial_batch_id: batch_id,
+                initial_nonce: tx.tx_nonce,
+            }))
             .single_esdt(
                 &unwrapped_token.token_identifier,
                 unwrapped_token.token_nonce,

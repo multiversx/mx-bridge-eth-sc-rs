@@ -155,16 +155,16 @@ where
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
     pub fn create_transaction<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+        Arg1: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
     >(
         self,
         to: Arg0,
-        opt_refunding_address: Arg1,
+        opt_refund_info: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("createTransaction")
             .argument(&to)
-            .argument(&opt_refunding_address)
+            .argument(&opt_refund_info)
             .original_result()
     }
 
@@ -796,4 +796,15 @@ where
             .raw_call("isPaused")
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+pub struct RefundInfo<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub address: ManagedAddress<Api>,
+    pub initial_batch_id: u64,
+    pub initial_nonce: u64,
 }

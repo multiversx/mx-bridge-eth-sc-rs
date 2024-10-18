@@ -19,9 +19,9 @@ pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub struct RefundInfo<M: ManagedTypeApi> {
-    address: ManagedAddress<M>,
-    initial_batch_id: u64, 
-    initial_nonce: u64
+    pub address: ManagedAddress<M>,
+    pub initial_batch_id: u64, 
+    pub initial_nonce: u64
 }
 
 #[multiversx_sc::contract]
