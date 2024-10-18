@@ -1,12 +1,12 @@
 deployMultisig() {
     CHECK_VARIABLES RELAYER_ADDR_0 RELAYER_ADDR_1 RELAYER_ADDR_2 RELAYER_ADDR_3 \
     RELAYER_ADDR_4 RELAYER_ADDR_5 RELAYER_ADDR_6 RELAYER_ADDR_7 RELAYER_ADDR_8 \
-    RELAYER_ADDR_9 SAFE MULTI_TRANSFER RELAYER_REQUIRED_STAKE SLASH_AMOUNT QUORUM MULTISIG_WASM
+    RELAYER_ADDR_9 SAFE MULTI_TRANSFER BRIDGE_PROXY RELAYER_REQUIRED_STAKE SLASH_AMOUNT QUORUM MULTISIG_WASM
 
     MIN_STAKE=$(echo "$RELAYER_REQUIRED_STAKE*10^18" | bc)
     mxpy --verbose contract deploy --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
     --gas-limit=200000000 \
-    --arguments ${SAFE} ${MULTI_TRANSFER} \
+    --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} \
     ${MIN_STAKE} ${SLASH_AMOUNT} ${QUORUM} \
     ${RELAYER_ADDR_0} ${RELAYER_ADDR_1} ${RELAYER_ADDR_2} ${RELAYER_ADDR_3} \
     --send --outfile="deploy-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -19,12 +19,22 @@ deployMultisig() {
 
     echo ""
     echo "Multisig contract address: ${ADDRESS}"
+    update-config MULTISIG ${ADDRESS}
 }
 
 changeChildContractsOwnershipSafe() {
     CHECK_VARIABLES SAFE MULTISIG
 
     mxpy --verbose contract call ${SAFE} --recall-nonce --pem=${ALICE} \
+    --gas-limit=10000000 --function="ChangeOwnerAddress" \
+    --arguments ${MULTISIG} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+changeChildContractsOwnershipProxy() {
+    CHECK_VARIABLES BRIDGE_PROXY MULTISIG
+
+    mxpy --verbose contract call ${BRIDGE_PROXY} --recall-nonce --pem=${ALICE} \
     --gas-limit=10000000 --function="ChangeOwnerAddress" \
     --arguments ${MULTISIG} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -58,12 +68,16 @@ addMapping() {
 }
 
 addTokenToWhitelist() {
-    CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG
+    CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG MINTBURN_WHITELIST NATIVE_TOKEN
+
+    BALANCE=$(echo "$TOTAL_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    MINT=$(echo "$MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    BURN=$(echo "$BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${CHAIN_SPECIFIC_TOKEN_TICKER} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} str:${CHAIN_SPECIFIC_TOKEN_TICKER} ${MINTBURN_WHITELIST} ${NATIVE_TOKEN} \
+    ${BALANCE} ${MINT} ${BURN} --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 removeTokenFromWhitelist() {
@@ -127,6 +141,14 @@ pauseEsdtSafe() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+pauseProxy() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="pauseProxy" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 unpause() {
     CHECK_VARIABLES MULTISIG
 
@@ -140,6 +162,14 @@ unpauseEsdtSafe() {
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="unpauseEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+unpauseProxy() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="unpauseProxy" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
@@ -161,4 +191,55 @@ multiTransferEsdtSetMaxBridgedAmountForToken() {
     --gas-limit=40000000 --function="multiTransferEsdtSetMaxBridgedAmountForToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MAX} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+
+setMultiTransferOnEsdtSafeThroughMultisig() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setMultiTransferOnEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+setEsdtSafeOnMultiTransferThroughMultisig() {
+    CHECK_VARIABLES MULTISIG
+
+    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=60000000 --function="setEsdtSafeOnMultiTransfer" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+initSupplyMintBurn() {
+  CHECK_VARIABLES MULTISIG
+
+  echo -e
+  echo "PREREQUIREMENTS: The MINT_BALANCE & BURN_BALANCE values should be defined in configs.cfg file"
+  echo "The script automatically apply denomination factors based on the number of the decimals the token has"
+  echo -e
+
+  confirmation-with-skip manual-update-config-file
+
+  MINT=$(echo "$MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+  BURN=$(echo "$BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+
+  mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+  --gas-limit=60000000 --function="initSupplyMintBurnEsdtSafe" \
+  --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MINT} ${BURN} \
+  --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+upgradeMultisig() {
+    CHECK_VARIABLES SAFE MULTI_TRANSFER BRIDGE_PROXY MULTISIG_WASM
+
+    mxpy --verbose contract upgrade ${MULTISIG} --bytecode=${MULTISIG_WASM} --recall-nonce --pem=${ALICE} \
+      --gas-limit=100000000 --send \
+      --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} \
+      --outfile="upgrade-multisig-child-sc.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
+
+    TRANSACTION=$(mxpy data parse --file="./upgrade-multisig-child-sc.json" --expression="data['emitted_tx']['hash']")
+    ADDRESS=$(mxpy data parse --file="./upgrade-multisig-child-sc.json" --expression="data['contractAddress']")
+
+    echo ""
+    echo "Multisig contract updated: ${ADDRESS}"
 }

@@ -1,9 +1,10 @@
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
 
 use multiversx_sc::{api::ManagedTypeApi, types::ManagedVec};
 use transaction::{BlockNonce, TxNonce};
 
-#[derive(TopEncode, TopDecode, TypeAbi)]
+#[type_abi]
+#[derive(TopEncode, TopDecode)]
 pub enum BatchStatus<M: ManagedTypeApi> {
     AlreadyProcessed,
     Empty,

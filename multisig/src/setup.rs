@@ -1,20 +1,15 @@
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
 
-use fee_estimator_module::ProxyTrait as _;
-use max_bridged_amount_module::ProxyTrait as _;
-use multi_transfer_esdt::ProxyTrait as _;
-use multiversx_sc_modules::pause::ProxyTrait as _;
-use token_module::ProxyTrait as _;
-use tx_batch_module::ProxyTrait as _;
+use crate::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
 
 #[multiversx_sc::module]
 pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
     + crate::storage::StorageModule
     + crate::util::UtilModule
+    + crate::events::EventsModule
     + multiversx_sc_modules::pause::PauseModule
 {
     #[only_owner]
@@ -70,8 +65,6 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(slashBoardMember)]
     fn slash_board_member(&self, board_member: ManagedAddress) {
-        self.remove_user(board_member.clone());
-
         let slash_amount = self.slash_amount().get();
 
         // remove slashed amount from user stake amountself
@@ -110,6 +103,7 @@ pub trait SetupModule:
             .set(&erc20_address);
         self.token_id_for_erc20_address(&erc20_address)
             .set(&token_id);
+        self.add_mapping_event(erc20_address, token_id);
     }
 
     #[only_owner]
@@ -134,33 +128,106 @@ pub trait SetupModule:
 
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
+        self.clear_mapping_event(erc20_address, token_id);
     }
 
     #[only_owner]
     #[endpoint(pauseEsdtSafe)]
     fn pause_esdt_safe(&self) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .pause_endpoint()
-            .execute_on_dest_context();
+            .sync_call();
+
+        self.pause_bridge_proxy_event();
     }
 
     #[only_owner]
     #[endpoint(unpauseEsdtSafe)]
     fn unpause_esdt_safe(&self) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
-            .execute_on_dest_context();
+            .sync_call();
+        self.unpause_bridge_proxy_event();
+    }
+
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupplyEsdtSafe)]
+    fn init_supply_esdt_safe(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply(token_id, amount)
+            .single_esdt(&payment_token, 0, &payment_amount) // enforce only single FT transfer
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(initSupplyMintBurnEsdtSafe)]
+    fn init_supply_mint_burn_esdt_safe(
+        &self,
+        token_id: TokenIdentifier,
+        mint_amount: BigUint,
+        burn_amount: BigUint,
+    ) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply_mint_burn(token_id, mint_amount, burn_amount)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(pauseProxy)]
+    fn pause_proxy(&self) {
+        let proxy_addr = self.proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_bridge_proxy_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseProxy)]
+    fn unpause_proxy(&self) {
+        let proxy_addr = self.proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .unpause_endpoint()
+            .sync_call();
+
+        self.unpause_bridge_proxy_event();
     }
 
     #[only_owner]
     #[endpoint(changeFeeEstimatorContractAddress)]
     fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_fee_estimator_contract_address(new_address)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Sets the gas limit being used for Ethereum transactions
@@ -170,12 +237,15 @@ pub trait SetupModule:
     ///
     /// where price_per_gas_unit is queried from the aggregator (fee estimator SC)
     #[only_owner]
-    #[endpoint(changeElrondToEthGasLimit)]
-    fn change_elrond_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+    #[endpoint(changeMultiversXToEthGasLimit)]
+    fn change_multiversx_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_eth_tx_gas_limit(new_gas_limit)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Default price being used if the aggregator lacks a mapping for this token
@@ -183,43 +253,92 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(changeDefaultPricePerGasUnit)]
     fn change_default_price_per_gas_unit(&self, token_id: TokenIdentifier, new_value: BigUint) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_default_price_per_gas_unit(token_id, new_value)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Token ticker being used when querying the aggregator for GWEI prices
     #[only_owner]
     #[endpoint(changeTokenTicker)]
     fn change_token_ticker(&self, token_id: TokenIdentifier, new_ticker: ManagedBuffer) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_token_ticker(token_id, new_ticker)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     #[only_owner]
     #[endpoint(esdtSafeAddTokenToWhitelist)]
     fn esdt_safe_add_token_to_whitelist(
         &self,
-        token_id: TokenIdentifier,
+        token_id: &TokenIdentifier,
         ticker: ManagedBuffer,
+        mint_burn_allowed: bool,
+        is_native_token: bool,
+        total_balance: &BigUint,
+        mint_balance: &BigUint,
+        burn_balance: &BigUint,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
-            .add_token_to_whitelist(token_id, ticker, opt_default_price_per_gas_unit)
-            .execute_on_dest_context();
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_token_to_whitelist(
+                token_id,
+                ticker,
+                mint_burn_allowed,
+                is_native_token,
+                total_balance,
+                mint_balance,
+                burn_balance,
+                opt_default_price_per_gas_unit,
+            )
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(setMultiTransferOnEsdtSafe)]
+    fn set_multi_transfer_on_esdt_safe(&self) {
+        let multi_transfer_esdt_address = self.multi_transfer_esdt_address().get();
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .set_multi_transfer_contract_address(OptionalValue::Some(multi_transfer_esdt_address))
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(setEsdtSafeOnMultiTransfer)]
+    fn set_esdt_safe_on_multi_transfer(&self) {
+        let esdt_safe_address = self.esdt_safe_address().get();
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .set_esdt_safe_contract_address(OptionalValue::Some(esdt_safe_address))
+            .sync_call();
     }
 
     #[only_owner]
     #[endpoint(esdtSafeRemoveTokenFromWhitelist)]
     fn esdt_safe_remove_token_from_whitelist(&self, token_id: TokenIdentifier) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .remove_token_from_whitelist(token_id)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Sets maximum batch size for the EsdtSafe SC.
@@ -228,10 +347,12 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchSize)]
     fn esdt_safe_set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Sets the maximum block duration in which an EsdtSafe batch accepts transactions
@@ -240,13 +361,16 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(esdtSafeSetMaxTxBatchBlockDuration)]
     fn esdt_safe_set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
-    /// Sets the maximum bridged amount for the token for the Elrond -> Ethereum direction.
+    /// Sets the maximum bridged amount for the token for the MultiversX -> Ethereum direction.
     /// Any attempt to transfer over this amount will be rejected.
     #[only_owner]
     #[endpoint(esdtSafeSetMaxBridgedAmountForToken)]
@@ -255,13 +379,16 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         max_amount: BigUint,
     ) {
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_max_bridged_amount(token_id, max_amount)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
-    /// Same as the function above, but for Ethereum -> Elrond transactions.
+    /// Same as the function above, but for Ethereum -> MultiversX transactions.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxBridgedAmountForToken)]
     fn multi_transfer_esdt_set_max_bridged_amount_for_token(
@@ -269,21 +396,26 @@ pub trait SetupModule:
         token_id: TokenIdentifier,
         max_amount: BigUint,
     ) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_bridged_amount(token_id, max_amount)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
-    /// Any failed Ethereum -> Elrond transactions are added into so-called "refund batches"
+    /// Any failed Ethereum -> MultiversX transactions are added into so-called "refund batches"
     /// This configures the size of a batch.
     #[only_owner]
     #[endpoint(multiTransferEsdtSetMaxRefundTxBatchSize)]
     fn multi_transfer_esdt_set_max_refund_tx_batch_size(&self, new_max_tx_batch_size: usize) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_size(new_max_tx_batch_size)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Max block duration for refund batches. Default is "infinite" (u64::MAX)
@@ -294,10 +426,13 @@ pub trait SetupModule:
         &self,
         new_max_tx_batch_block_duration: u64,
     ) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Sets the wrapping contract address.
@@ -313,9 +448,12 @@ pub trait SetupModule:
         &self,
         opt_wrapping_contract_address: OptionalValue<ManagedAddress>,
     ) {
-        let _: IgnoreValue = self
-            .get_multi_transfer_esdt_proxy_instance()
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(opt_wrapping_contract_address)
-            .execute_on_dest_context();
+            .sync_call();
     }
 }

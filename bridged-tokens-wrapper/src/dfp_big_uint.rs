@@ -1,5 +1,4 @@
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct DFPBigUint<M: ManagedTypeApi> {

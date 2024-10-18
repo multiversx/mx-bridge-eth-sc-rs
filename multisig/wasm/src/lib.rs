@@ -5,15 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           62
+// Upgrade:                              1
+// Endpoints:                           74
 // Async Callback (empty):               1
-// Total number of exported functions:  64
+// Total number of exported functions:  77
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
-#![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -28,7 +25,12 @@ multiversx_sc_wasm_adapter::endpoints! {
         unstake => unstake
         proposeEsdtSafeSetCurrentTransactionBatchStatus => propose_esdt_safe_set_current_transaction_batch_status
         proposeMultiTransferEsdtBatch => propose_multi_transfer_esdt_batch
-        moveRefundBatchToSafe => move_refund_batch_to_safe
+        moveRefundBatchToSafeFromChildContract => move_refund_batch_to_safe_from_child_contract
+        initSupplyFromChildContract => init_supply_from_child_contract
+        addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
+        withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
+        withdrawTransactionFees => withdraw_transaction_fees
+        withdrawSlashedAmount => withdraw_slashed_amount
         performAction => perform_action_endpoint
         sign => sign
         upgradeChildContractFromSource => upgrade_child_contract_from_source
@@ -40,11 +42,17 @@ multiversx_sc_wasm_adapter::endpoints! {
         clearMapping => clear_mapping
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
+        initSupplyEsdtSafe => init_supply_esdt_safe
+        initSupplyMintBurnEsdtSafe => init_supply_mint_burn_esdt_safe
+        pauseProxy => pause_proxy
+        unpauseProxy => unpause_proxy
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
-        changeElrondToEthGasLimit => change_elrond_to_eth_gas_limit
+        changeMultiversXToEthGasLimit => change_multiversx_to_eth_gas_limit
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
         changeTokenTicker => change_token_ticker
         esdtSafeAddTokenToWhitelist => esdt_safe_add_token_to_whitelist
+        setMultiTransferOnEsdtSafe => set_multi_transfer_on_esdt_safe
+        setEsdtSafeOnMultiTransfer => set_esdt_safe_on_multi_transfer
         esdtSafeRemoveTokenFromWhitelist => esdt_safe_remove_token_from_whitelist
         esdtSafeSetMaxTxBatchSize => esdt_safe_set_max_tx_batch_size
         esdtSafeSetMaxTxBatchBlockDuration => esdt_safe_set_max_tx_batch_block_duration
@@ -65,7 +73,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokenIdForErc20Address => token_id_for_erc20_address
         getEsdtSafeAddress => esdt_safe_address
         getMultiTransferEsdtAddress => multi_transfer_esdt_address
+        getProxyAddress => proxy_address
         getCurrentTxBatch => get_current_tx_batch
+        getBatch => get_batch
         getCurrentRefundBatch => get_current_refund_batch
         wasActionExecuted => was_action_executed
         wasTransferActionProposed => was_transfer_action_proposed
