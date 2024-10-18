@@ -80,18 +80,21 @@ where
     pub fn upgrade<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
+        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
         fee_estimator_contract_address: Arg0,
         multi_transfer_contract_address: Arg1,
-        eth_tx_gas_limit: Arg2,
+        bridge_proxy_contract_address: Arg2,
+        eth_tx_gas_limit: Arg3,
     ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_upgrade()
             .argument(&fee_estimator_contract_address)
             .argument(&multi_transfer_contract_address)
+            .argument(&bridge_proxy_contract_address)
             .argument(&eth_tx_gas_limit)
             .original_result()
     }
@@ -152,34 +155,34 @@ where
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
     pub fn create_transaction<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
-        Arg1: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+        Arg1: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
     >(
         self,
         to: Arg0,
-        opt_refund_address: Arg1,
+        opt_refund_info: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("createTransaction")
             .argument(&to)
-            .argument(&opt_refund_address)
+            .argument(&opt_refund_info)
             .original_result()
     }
 
     pub fn create_transaction_sc_call<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
-        Arg2: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
+        Arg2: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
     >(
         self,
         to: Arg0,
         data: Arg1,
-        opt_refund_address: Arg2,
+        opt_refund_info: Arg2,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("createTransactionSCCall")
             .argument(&to)
             .argument(&data)
-            .argument(&opt_refund_address)
+            .argument(&opt_refund_info)
             .original_result()
     }
 
@@ -212,16 +215,48 @@ where
             .original_result()
     }
 
-    pub fn withdraw_total_fees_on_ethereum<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    pub fn set_bridge_proxy_contract_address<
+        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
     >(
         self,
-        token_id: Arg0,
+        opt_new_address: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("withdrawTotalFeesOnEthereum")
+            .raw_call("setBridgeProxyContractAddress")
+            .argument(&opt_new_address)
+            .original_result()
+    }
+
+    pub fn withdraw_refund_fees_for_ethereum<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        multisig_owner: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawRefundFeesForEthereum")
             .argument(&token_id)
+            .argument(&multisig_owner)
+            .original_result()
+    }
+
+    pub fn withdraw_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+        multisig_owner: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawTransactionFees")
+            .argument(&token_id)
+            .argument(&multisig_owner)
             .original_result()
     }
 
@@ -265,12 +300,47 @@ where
             .original_result()
     }
 
+    pub fn get_refund_fees_for_ethereum<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRefundFeesForEthereum")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn get_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, BigUint<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTransactionFees")
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn bridged_tokens_wrapper_address(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getBridgedTokensWrapperAddress")
+            .original_result()
+    }
+
+    pub fn bridge_proxy_contract_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgeProxyContractAddress")
             .original_result()
     }
 
@@ -744,4 +814,15 @@ where
             .raw_call("isPaused")
             .original_result()
     }
+}
+
+#[type_abi]
+#[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
+pub struct RefundInfo<Api>
+where
+    Api: ManagedTypeApi,
+{
+    pub address: ManagedAddress<Api>,
+    pub initial_batch_id: u64,
+    pub initial_nonce: u64,
 }

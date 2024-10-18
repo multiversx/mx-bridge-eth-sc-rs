@@ -23,7 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deposit => deposit
         execute => execute
-        cancel => cancel
+        updateLowestTxId => update_lowest_tx_id
         getPendingTransactionById => get_pending_transaction_by_id
         getPendingTransactions => get_pending_transactions
         setMultiTransferAddress => set_multi_transfer_contract_address

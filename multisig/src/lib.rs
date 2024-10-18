@@ -342,22 +342,38 @@ pub trait Multisig:
     }
 
     #[only_owner]
-    #[endpoint(withdrawTotalFeesOnEthereum)]
-    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
+    #[endpoint(withdrawRefundFeesForEthereum)]
+    fn withdraw_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) {
         let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .withdraw_total_fees_on_ethereum(token_id)
+            .withdraw_refund_fees_for_ethereum(token_id, multisig_owner)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawTransactionFees)]
+    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .withdraw_transaction_fees(token_id, multisig_owner)
             .sync_call();
     }
 
     #[only_owner]
     #[endpoint(withdrawSlashedAmount)]
     fn withdraw_slashed_amount(&self) {
-        let slashed_amount = self.slashed_tokens_amount().get();
+        let slashed_tokens_amount_mapper = self.slashed_tokens_amount();
+        let slashed_amount = slashed_tokens_amount_mapper.get();
         self.tx().to(ToCaller).egld(&slashed_amount).transfer();
+        slashed_tokens_amount_mapper.clear();
     }
 
     /// Proposers and board members use this to launch signed actions.
