@@ -6,7 +6,6 @@ mod events;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
-use esdt_safe_proxy::RefundInfo;
 use transaction::PaymentsVec;
 
 use eth_address::*;
@@ -264,7 +263,7 @@ pub trait BridgedTokensWrapper:
         self.tx()
             .to(self.esdt_safe_contract_address().get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(to, OptionalValue::Some(RefundInfo {
+            .create_transaction(to, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
                 address: caller,
                 initial_batch_id: 0,
                 initial_nonce: 0,
