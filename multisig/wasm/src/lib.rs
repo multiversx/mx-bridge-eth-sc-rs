@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           79
+// Endpoints:                           81
 // Async Callback (empty):               1
-// Total number of exported functions:  82
+// Total number of exported functions:  84
 
 #![no_std]
 
@@ -57,6 +57,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         multiTransferEsdtSetMaxRefundTxBatchSize => multi_transfer_esdt_set_max_refund_tx_batch_size
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration => multi_transfer_esdt_set_max_refund_tx_batch_block_duration
         multiTransferEsdtSetWrappingContractAddress => multi_transfer_esdt_set_wrapping_contract_address
+        pauseAllChildContracts => pause_all_child_contracts
+        unpauseAllChildContracts => unpause_all_child_contracts
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
         pauseBridgeProxy => pause_bridge_proxy
