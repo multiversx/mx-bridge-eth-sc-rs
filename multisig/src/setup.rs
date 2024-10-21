@@ -1,7 +1,10 @@
 use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
+use sc_proxies::{
+    bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
+    multi_transfer_esdt_proxy,
+};
 
 #[multiversx_sc::module]
 pub trait SetupModule:
@@ -131,33 +134,6 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(pauseEsdtSafe)]
-    fn pause_esdt_safe(&self) {
-        let esdt_safe_addr = self.esdt_safe_address().get();
-
-        self.tx()
-            .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .pause_endpoint()
-            .sync_call();
-
-        self.pause_bridge_proxy_event();
-    }
-
-    #[only_owner]
-    #[endpoint(unpauseEsdtSafe)]
-    fn unpause_esdt_safe(&self) {
-        let esdt_safe_addr = self.esdt_safe_address().get();
-
-        self.tx()
-            .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .unpause_endpoint()
-            .sync_call();
-        self.unpause_bridge_proxy_event();
-    }
-
-    #[only_owner]
     #[payable("*")]
     #[endpoint(initSupplyEsdtSafe)]
     fn init_supply_esdt_safe(&self, token_id: TokenIdentifier, amount: BigUint) {
@@ -187,34 +163,6 @@ pub trait SetupModule:
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init_supply_mint_burn(token_id, mint_amount, burn_amount)
             .sync_call();
-    }
-
-    #[only_owner]
-    #[endpoint(pauseProxy)]
-    fn pause_proxy(&self) {
-        let proxy_addr = self.proxy_address().get();
-
-        self.tx()
-            .to(proxy_addr)
-            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .pause_endpoint()
-            .sync_call();
-
-        self.pause_bridge_proxy_event();
-    }
-
-    #[only_owner]
-    #[endpoint(unpauseProxy)]
-    fn unpause_proxy(&self) {
-        let proxy_addr = self.proxy_address().get();
-
-        self.tx()
-            .to(proxy_addr)
-            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .unpause_endpoint()
-            .sync_call();
-
-        self.unpause_bridge_proxy_event();
     }
 
     #[only_owner]
@@ -454,5 +402,118 @@ pub trait SetupModule:
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(opt_wrapping_contract_address)
             .sync_call();
+    }
+
+    // Pause/Unpause endpoints
+
+    #[only_owner]
+    #[endpoint(pauseEsdtSafe)]
+    fn pause_esdt_safe(&self) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_esdt_safe_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseEsdtSafe)]
+    fn unpause_esdt_safe(&self) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .unpause_endpoint()
+            .sync_call();
+        self.unpause_esdt_safe_event();
+    }
+
+    #[only_owner]
+    #[endpoint(pauseBridgeProxy)]
+    fn pause_bridge_proxy(&self) {
+        let proxy_addr = self.bridge_proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_bridge_proxy_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseBridgeProxy)]
+    fn unpause_bridge_proxy(&self) {
+        let proxy_addr = self.bridge_proxy_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .unpause_endpoint()
+            .sync_call();
+
+        self.unpause_bridge_proxy_event();
+    }
+
+    #[only_owner]
+    #[endpoint(pauseBridgedTokensWrapper)]
+    fn pause_bridged_tokens_wrapper(&self) {
+        let proxy_addr = self.bridged_tokens_wrapper_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_bridged_tokens_wrapper_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseBridgedTokensWrapper)]
+    fn unpause_bridged_tokens_wrapper(&self) {
+        let proxy_addr = self.bridged_tokens_wrapper_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unpause_endpoint()
+            .sync_call();
+
+        self.unpause_bridged_tokens_wrapper_event();
+    }
+
+    #[only_owner]
+    #[endpoint(pauseMultiTransferEsdt)]
+    fn pause_multi_transfer_esdt(&self) {
+        let proxy_addr = self.multi_transfer_esdt_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .pause_endpoint()
+            .sync_call();
+
+        self.pause_multi_transfer_esdt_event();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseMultiTransferEsdt)]
+    fn unpause_multi_transfer_esdt(&self) {
+        let proxy_addr = self.multi_transfer_esdt_address().get();
+
+        self.tx()
+            .to(proxy_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .unpause_endpoint()
+            .sync_call();
+
+        self.unpause_multi_transfer_esdt_event();
     }
 }

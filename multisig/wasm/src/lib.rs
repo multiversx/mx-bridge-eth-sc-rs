@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           74
+// Endpoints:                           79
 // Async Callback (empty):               1
-// Total number of exported functions:  77
+// Total number of exported functions:  82
 
 #![no_std]
 
@@ -40,12 +40,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         changeQuorum => change_quorum
         addMapping => add_mapping
         clearMapping => clear_mapping
-        pauseEsdtSafe => pause_esdt_safe
-        unpauseEsdtSafe => unpause_esdt_safe
         initSupplyEsdtSafe => init_supply_esdt_safe
         initSupplyMintBurnEsdtSafe => init_supply_mint_burn_esdt_safe
-        pauseProxy => pause_proxy
-        unpauseProxy => unpause_proxy
         changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
         changeMultiversXToEthGasLimit => change_multiversx_to_eth_gas_limit
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
@@ -61,6 +57,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         multiTransferEsdtSetMaxRefundTxBatchSize => multi_transfer_esdt_set_max_refund_tx_batch_size
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration => multi_transfer_esdt_set_max_refund_tx_batch_block_duration
         multiTransferEsdtSetWrappingContractAddress => multi_transfer_esdt_set_wrapping_contract_address
+        pauseEsdtSafe => pause_esdt_safe
+        unpauseEsdtSafe => unpause_esdt_safe
+        pauseBridgeProxy => pause_bridge_proxy
+        unpauseBridgeProxy => unpause_bridge_proxy
+        pauseBridgedTokensWrapper => pause_bridged_tokens_wrapper
+        unpauseBridgedTokensWrapper => unpause_bridged_tokens_wrapper
+        pauseMultiTransferEsdt => pause_multi_transfer_esdt
+        unpauseMultiTransferEsdt => unpause_multi_transfer_esdt
         getQuorum => quorum
         getNumBoardMembers => num_board_members
         getRequiredStakeAmount => required_stake_amount
@@ -73,7 +77,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokenIdForErc20Address => token_id_for_erc20_address
         getEsdtSafeAddress => esdt_safe_address
         getMultiTransferEsdtAddress => multi_transfer_esdt_address
-        getProxyAddress => proxy_address
+        getBridgeProxyAddress => bridge_proxy_address
+        getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
         getCurrentTxBatch => get_current_tx_batch
         getBatch => get_batch
         getCurrentRefundBatch => get_current_refund_batch

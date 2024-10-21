@@ -99,7 +99,11 @@ pub trait StorageModule {
     #[storage_mapper("multiTransferEsdtAddress")]
     fn multi_transfer_esdt_address(&self) -> SingleValueMapper<ManagedAddress>;
 
-    #[view(getProxyAddress)]
-    #[storage_mapper("proxyAddress")]
-    fn proxy_address(&self) -> SingleValueMapper<ManagedAddress>;
+    #[view(getBridgeProxyAddress)]
+    #[storage_mapper("bridgeProxyAddress")]
+    fn bridge_proxy_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getBridgedTokensWrapperAddress)]
+    #[storage_mapper("bridgedTokensWrapperAddress")]
+    fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

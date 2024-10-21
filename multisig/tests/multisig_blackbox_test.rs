@@ -148,6 +148,7 @@ impl MultiTransferTestState {
                 ESDT_SAFE_ADDRESS,
                 MULTI_TRANSFER_ADDRESS,
                 BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
                 1_000u64,
                 500u64,
                 2usize,
