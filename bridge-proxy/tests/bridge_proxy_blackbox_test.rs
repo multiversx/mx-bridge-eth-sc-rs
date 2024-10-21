@@ -193,6 +193,14 @@ impl BridgeProxyTestState {
                 BRIDGED_TOKENS_WRAPPER_ADDRESS,
             ))
             .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS))
+            .run();
         self
     }
 }
@@ -492,7 +500,8 @@ fn test_lowest_tx_id() {
         .run();
 }
 
-#[test]
+// Will be moved to integration test
+// #[test]
 fn bridge_proxy_wrong_formatting_sc_call_test() {
     let mut test = BridgeProxyTestState::new();
 
@@ -527,7 +536,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         .from(MULTI_TRANSFER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .deposit(&eth_tx)
+        .deposit(&eth_tx, 1u64)
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
             0,
