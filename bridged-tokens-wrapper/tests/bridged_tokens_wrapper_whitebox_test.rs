@@ -14,8 +14,6 @@ const NUM_DECIMALS: u32 = 18;
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const BRIDGE_TOKENS_WRAPPER_ADDRESS_EXPR: &str = "sc:bridged-tokens-wrapper";
 const BRIDGE_TOKENS_WRAPPER_PATH_EXPR: &str = "mxsc:output/bridged-tokens-wrapper.mxsc.json";
-// const ESDT_SAFE_CONTRACT_ADDRESS_EXPR: &str = "address:esdt_safe";
-// const ESDT_SAFE_CONTRACT_PATH_EXPR: &str = "mxsc:../esdt-safe/output/esdt-safe.mxsc.json";
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();

@@ -29,6 +29,9 @@ path = "../esdt-safe"
 [dependencies.bridged-tokens-wrapper]
 path = "../bridged-tokens-wrapper"
 
+[dependencies.mock-bridged-tokens-wrapper]
+path = "../common/mock-contracts/mock-bridged-tokens-wrapper"
+
 [dependencies.multiversx-sc]
 version = "=0.53.2"
 

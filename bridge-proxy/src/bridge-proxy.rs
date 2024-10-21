@@ -15,7 +15,7 @@ const MIN_GAS_TO_SAVE_PROGRESS: u64 = 100_000;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
-    config::ConfigModule 
+    config::ConfigModule
     + multiversx_sc_modules::pause::PauseModule
     + multiversx_sc_modules::ongoing_operation::OngoingOperationModule
 {
@@ -80,7 +80,10 @@ pub trait BridgeProxyContract:
         }
 
         let gas_left = self.blockchain().get_gas_left();
-        require!(gas_left > call_data.gas_limit + DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK, "Not enough gas to execute");
+        require!(
+            gas_left > call_data.gas_limit + DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK,
+            "Not enough gas to execute"
+        );
 
         let tx_call = self
             .tx()
@@ -135,11 +138,14 @@ pub trait BridgeProxyContract:
         self.tx()
             .to(esdt_safe_contract_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(tx.from, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
-                address: tx.to,
-                initial_batch_id: batch_id,
-                initial_nonce: tx.tx_nonce,
-            }))
+            .create_transaction(
+                tx.from,
+                OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                    address: tx.to,
+                    initial_batch_id: batch_id,
+                    initial_nonce: tx.tx_nonce,
+                }),
+            )
             .single_esdt(
                 &unwrapped_token.token_identifier,
                 unwrapped_token.token_nonce,
@@ -151,10 +157,11 @@ pub trait BridgeProxyContract:
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
         let payment = self.payments(tx_id).get();
         let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
-        
+
         let transfers = self
             .tx()
-            .to(bridged_tokens_wrapper_address)           .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .to(bridged_tokens_wrapper_address)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .unwrap_token(requested_token)
             .single_esdt(
                 &payment.token_identifier,
