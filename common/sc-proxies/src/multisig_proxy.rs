@@ -49,26 +49,29 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg3: ProxyArg<BigUint<Env::Api>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
         Arg4: ProxyArg<BigUint<Env::Api>>,
-        Arg5: ProxyArg<usize>,
-        Arg6: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg5: ProxyArg<BigUint<Env::Api>>,
+        Arg6: ProxyArg<usize>,
+        Arg7: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
         esdt_safe_sc_address: Arg0,
         multi_transfer_sc_address: Arg1,
-        proxy_sc_address: Arg2,
-        required_stake: Arg3,
-        slash_amount: Arg4,
-        quorum: Arg5,
-        board: Arg6,
+        bridge_proxy_sc_address: Arg2,
+        bridged_tokens_wrapper_sc_address: Arg3,
+        required_stake: Arg4,
+        slash_amount: Arg5,
+        quorum: Arg6,
+        board: Arg7,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
             .argument(&esdt_safe_sc_address)
             .argument(&multi_transfer_sc_address)
-            .argument(&proxy_sc_address)
+            .argument(&bridge_proxy_sc_address)
+            .argument(&bridged_tokens_wrapper_sc_address)
             .argument(&required_stake)
             .argument(&slash_amount)
             .argument(&quorum)
@@ -90,18 +93,21 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
         esdt_safe_sc_address: Arg0,
         multi_transfer_sc_address: Arg1,
-        proxy_sc_address: Arg2,
+        bridge_proxy_sc_address: Arg2,
+        bridged_tokens_wrapper_sc_address: Arg3,
     ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_upgrade()
             .argument(&esdt_safe_sc_address)
             .argument(&multi_transfer_sc_address)
-            .argument(&proxy_sc_address)
+            .argument(&bridge_proxy_sc_address)
+            .argument(&bridged_tokens_wrapper_sc_address)
             .original_result()
     }
 }
@@ -413,24 +419,6 @@ where
             .original_result()
     }
 
-    pub fn pause_esdt_safe(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("pauseEsdtSafe")
-            .original_result()
-    }
-
-    pub fn unpause_esdt_safe(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("unpauseEsdtSafe")
-            .original_result()
-    }
-
     pub fn init_supply_esdt_safe<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<BigUint<Env::Api>>,
@@ -462,24 +450,6 @@ where
             .argument(&token_id)
             .argument(&mint_amount)
             .argument(&burn_amount)
-            .original_result()
-    }
-
-    pub fn pause_proxy(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("pauseProxy")
-            .original_result()
-    }
-
-    pub fn unpause_proxy(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("unpauseProxy")
             .original_result()
     }
 
@@ -732,6 +702,60 @@ where
             .original_result()
     }
 
+    pub fn pause_esdt_safe(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseEsdtSafe")
+            .original_result()
+    }
+
+    pub fn unpause_esdt_safe(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseEsdtSafe")
+            .original_result()
+    }
+
+    pub fn pause_bridge_proxy(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseBridgeProxy")
+            .original_result()
+    }
+
+    pub fn unpause_bridge_proxy(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseBridgeProxy")
+            .original_result()
+    }
+
+    pub fn pause_bridged_tokens_wrapper(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseBridgedTokensWrapper")
+            .original_result()
+    }
+
+    pub fn unpause_bridged_tokens_wrapper(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseBridgedTokensWrapper")
+            .original_result()
+    }
+
     /// Minimum number of signatures needed to perform any action. 
     pub fn quorum(
         self,
@@ -860,12 +884,21 @@ where
             .original_result()
     }
 
-    pub fn proxy_address(
+    pub fn bridge_proxy_address(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("getProxyAddress")
+            .raw_call("getBridgeProxyAddress")
+            .original_result()
+    }
+
+    pub fn bridged_tokens_wrapper_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgedTokensWrapperAddress")
             .original_result()
     }
 

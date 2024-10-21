@@ -12,7 +12,9 @@ const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniver
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
-    tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
+    tx_batch_module::TxBatchModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + multiversx_sc_modules::pause::PauseModule
 {
     #[init]
     fn init(&self) {

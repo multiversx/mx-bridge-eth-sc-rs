@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           19
+// Endpoints:                           22
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Total number of exported functions:  25
 
 #![no_std]
 
@@ -39,6 +39,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLastBatchId => last_batch_id
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
+        pause => pause_endpoint
+        unpause => unpause_endpoint
+        isPaused => paused_status
     )
 }
 
