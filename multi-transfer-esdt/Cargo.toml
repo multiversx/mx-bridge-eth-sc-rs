@@ -32,11 +32,14 @@ path = "../esdt-safe"
 [dependencies.token-module]
 path = "../common/token-module"
 
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.53.2"

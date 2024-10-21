@@ -4,7 +4,7 @@ use multiversx_sc::{api::ManagedTypeApi, types::ManagedVec};
 use transaction::{BlockNonce, TxNonce};
 
 #[type_abi]
-#[derive(TopEncode, TopDecode)]
+#[derive(TopEncode, TopDecode, Debug, PartialEq, Eq)]
 pub enum BatchStatus<M: ManagedTypeApi> {
     AlreadyProcessed,
     Empty,

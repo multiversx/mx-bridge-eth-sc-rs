@@ -10,10 +10,7 @@ mod storage;
 mod user_role;
 mod util;
 
-pub mod bridge_proxy_contract_proxy;
-pub mod esdt_safe_proxy;
-pub mod multi_transfer_esdt_proxy;
-pub mod multisig_proxy;
+use sc_proxies::{esdt_safe_proxy, multi_transfer_esdt_proxy};
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
