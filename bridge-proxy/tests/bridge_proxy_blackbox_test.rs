@@ -241,7 +241,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
         .from(MULTI_TRANSFER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .deposit(&eth_tx)
+        .deposit(&eth_tx, 1u64)
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
             0,
@@ -261,6 +261,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
+        .gas(200_000_000)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .execute(1u32)
         .run();
@@ -318,7 +319,7 @@ fn multiple_deposit_test() {
         .from(MULTI_TRANSFER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .deposit(&eth_tx1)
+        .deposit(&eth_tx1, 1u64)
         .single_esdt(
             &TokenIdentifier::from(BRIDGE_TOKEN_ID),
             0u64,
@@ -331,7 +332,7 @@ fn multiple_deposit_test() {
         .from(MULTI_TRANSFER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .deposit(&eth_tx2)
+        .deposit(&eth_tx2, 1u64)
         .single_esdt(
             &TokenIdentifier::from(BRIDGE_TOKEN_ID),
             0u64,
@@ -351,6 +352,7 @@ fn multiple_deposit_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
+        .gas(200_000_000)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .execute(1u32)
         .run();
@@ -367,6 +369,7 @@ fn multiple_deposit_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
+        .gas(200_000_000)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .execute(2u32)
         .run();
@@ -428,7 +431,7 @@ fn test_lowest_tx_id() {
             .from(MULTI_TRANSFER_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .deposit(tx)
+            .deposit(tx, 1u64)
             .single_esdt(
                 &TokenIdentifier::from(BRIDGE_TOKEN_ID),
                 0u64,
@@ -452,6 +455,7 @@ fn test_lowest_tx_id() {
             .tx()
             .from(OWNER_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
+            .gas(200_000_000)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
             .execute(i)
             .run();
@@ -472,6 +476,7 @@ fn test_lowest_tx_id() {
             .tx()
             .from(OWNER_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
+            .gas(200_000_000)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
             .execute(i)
             .run();
