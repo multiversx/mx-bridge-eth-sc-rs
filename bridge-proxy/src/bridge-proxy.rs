@@ -153,9 +153,22 @@ pub trait BridgeProxyContract:
         let payment = self.payments(tx_id).get();
         let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
         
+        let universal_token = self
+            .tx()
+            .to(&bridged_tokens_wrapper_address)           
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .chain_specific_to_universal_mapping(requested_token)
+            .returns(ReturnsResult)
+            .sync_call();
+
+        if universal_token != payment.token_identifier {
+            return payment;
+        }
+
         let transfers = self
             .tx()
-            .to(bridged_tokens_wrapper_address)           .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .to(&bridged_tokens_wrapper_address)           
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .unwrap_token(requested_token)
             .single_esdt(
                 &payment.token_identifier,
