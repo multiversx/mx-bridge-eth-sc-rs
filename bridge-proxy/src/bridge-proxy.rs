@@ -152,10 +152,15 @@ pub trait BridgeProxyContract:
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
         let payment = self.payments(tx_id).get();
         let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
-        
+
+        if requested_token == &payment.token_identifier {
+            return payment;
+        }
+
         let transfers = self
             .tx()
-            .to(bridged_tokens_wrapper_address)           .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .to(&bridged_tokens_wrapper_address)           
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .unwrap_token(requested_token)
             .single_esdt(
                 &payment.token_identifier,
