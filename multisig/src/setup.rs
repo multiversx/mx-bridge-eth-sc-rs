@@ -409,6 +409,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(pauseAllChildContracts)]
     fn pause_all_child_contracts(&self) {
+        self.pause_endpoint();
         self.pause_esdt_safe();
         self.pause_bridge_proxy();
         self.pause_bridged_tokens_wrapper();
@@ -418,6 +419,7 @@ pub trait SetupModule:
     #[only_owner]
     #[endpoint(unpauseAllChildContracts)]
     fn unpause_all_child_contracts(&self) {
+        self.unpause_endpoint();
         self.unpause_esdt_safe();
         self.unpause_bridge_proxy();
         self.unpause_bridged_tokens_wrapper();
