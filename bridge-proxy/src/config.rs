@@ -13,6 +13,9 @@ pub trait ConfigModule {
     #[storage_mapper("payments")]
     fn payments(&self, tx_id: usize) -> SingleValueMapper<EsdtTokenPayment<Self::Api>>;
 
+    #[storage_mapper("batch_id")]
+    fn batch_id(&self, tx_id: usize) -> SingleValueMapper<u64>;
+
     #[view(lowestTxId)]
     #[storage_mapper("lowest_tx_id")]
     fn lowest_tx_id(&self) -> SingleValueMapper<usize>;

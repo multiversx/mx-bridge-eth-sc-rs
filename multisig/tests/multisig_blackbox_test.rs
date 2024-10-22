@@ -2,14 +2,10 @@
 
 use std::ops::Add;
 
-use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _, ProxyTrait as _};
+use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
 use esdt_safe::{EsdtSafe, ProxyTrait as _};
-use multi_transfer_esdt::{bridged_tokens_wrapper_proxy, ProxyTrait as _};
 
-use multisig::{
-    __endpoints_5__::multi_transfer_esdt_address, esdt_safe_proxy, multi_transfer_esdt_proxy,
-    multisig_proxy,
-};
+use multisig::__endpoints_5__::multi_transfer_esdt_address;
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
     codec::{
@@ -35,6 +31,10 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
+use sc_proxies::{
+    bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
+    multi_transfer_esdt_proxy, multisig_proxy,
+};
 use token_module::ProxyTrait as _;
 use transaction::{CallData, EthTransaction, EthTxAsMultiValue, TxBatchSplitInFields};
 
@@ -207,6 +207,7 @@ impl MultiTransferTestState {
             .upgrade(
                 ManagedAddress::zero(),
                 MULTI_TRANSFER_ADDRESS.to_address(),
+                BRIDGE_PROXY_ADDRESS.to_address(),
                 ESDT_SAFE_ETH_TX_GAS_LIMIT,
             )
             .code(ESDT_SAFE_CODE_PATH)

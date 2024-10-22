@@ -6,6 +6,7 @@ mod events;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
+use sc_proxies::esdt_safe_proxy;
 use transaction::PaymentsVec;
 
 use eth_address::*;
@@ -249,7 +250,6 @@ pub trait BridgedTokensWrapper:
         &self,
         requested_token: TokenIdentifier,
         to: EthAddress<Self::Api>,
-        opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         let universal_token_id = self
@@ -263,26 +263,16 @@ pub trait BridgedTokensWrapper:
         };
 
         let caller = self.blockchain().get_caller();
-        let refunding_addr = match opt_refunding_address {
-            OptionalValue::Some(refunding_addr) => {
-                require!(
-                    caller
-                        == self
-                            .get_bridge_proxy_address(self.blockchain().get_owner_address())
-                            .get(),
-                    "Wrong caller for a refund tx"
-                );
-                refunding_addr
-            }
-            OptionalValue::None => caller,
-        };
-
         self.tx()
             .to(self
                 .get_esdt_safe_address(self.blockchain().get_owner_address())
                 .get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(to, OptionalValue::Some(refunding_addr))
+            .create_transaction(to, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                address: caller,
+                initial_batch_id: 0,
+                initial_nonce: 0,
+            }))
             .single_esdt(&requested_token, 0, &converted_amount)
             .sync_call();
     }

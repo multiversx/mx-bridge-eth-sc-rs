@@ -3,6 +3,7 @@ use esdt_safe::*;
 use esdt_safe_proxy::EsdtSafeProxyMethods;
 
 use multiversx_sc_scenario::imports::*;
+use sc_proxies::esdt_safe_proxy::{self, EsdtSafeProxyMethods};
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 
@@ -251,6 +252,7 @@ fn init_supply_test() {
     )
 }
 
+
 #[test]
 fn init_supply_test_mint_burn() {
     let mut state = EsdtSafeTestState::new();
@@ -316,3 +318,5 @@ fn init_supply_test_mint_burn() {
         "Total supply should be 10,000"
     );
 }
+
+

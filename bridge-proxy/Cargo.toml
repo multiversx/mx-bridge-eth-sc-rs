@@ -23,24 +23,30 @@ path = "../common/storage-module"
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
 [dependencies.esdt-safe]
 path = "../esdt-safe"
 
 [dependencies.bridged-tokens-wrapper]
 path = "../bridged-tokens-wrapper"
 
+[dependencies.mock-bridged-tokens-wrapper]
+path = "../common/mock-contracts/mock-bridged-tokens-wrapper"
+
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dependencies.multiversx-sc-modules]
-version = "0.52.3"
+version = "0.53.2"
 
 [dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-contracts-rs"
-rev = "d91bbff"
+rev = "e72c201"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.53.2"

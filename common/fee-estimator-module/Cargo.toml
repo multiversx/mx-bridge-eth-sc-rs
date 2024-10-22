@@ -5,10 +5,10 @@ authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
 
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.53.2"
 
 [dependencies.storage-module]
 path = "../storage-module"

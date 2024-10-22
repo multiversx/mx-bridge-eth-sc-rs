@@ -1,7 +1,7 @@
 [settings]
 
 [[proxy]]
-path = "src/multisig_proxy.rs"
+path = "../common/sc-proxies/src/multisig_proxy.rs"
 
 [[proxy]]
 path = "../common/storage_module/src/multisig_proxy.rs"
