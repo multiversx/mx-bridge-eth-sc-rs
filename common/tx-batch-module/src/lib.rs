@@ -1,7 +1,6 @@
 #![no_std]
 
-multiversx_sc::imports!();
-multiversx_sc::derive_imports!();
+use multiversx_sc::imports::*;
 
 pub use batch_status::BatchStatus;
 use transaction::{Transaction, TxBatchSplitInFields, MIN_BLOCKS_FOR_FINALITY};
@@ -184,7 +183,7 @@ pub trait TxBatchModule {
         }
 
         let max_batch_size = self.max_tx_batch_size().get();
-        if tx_batch.len() == max_batch_size {
+        if tx_batch.len() >= max_batch_size {
             return true;
         }
 

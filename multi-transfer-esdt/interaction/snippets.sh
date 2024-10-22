@@ -1,8 +1,8 @@
-ALICE="/home/elrond/elrond-sdk/mxpy/testnet/wallets/users/alice.pem"
-BOB="/home/elrond/elrond-sdk/mxpy/testnet/wallets/users/bob.pem"
+ALICE="/home/multiversx/multiversx-sdk/mxpy/testnet/wallets/users/alice.pem"
+BOB="/home/multiversx/multiversx-sdk/mxpy/testnet/wallets/users/bob.pem"
 ADDRESS=$(mxpy data load --key=address-testnet-multi-transfer-esdt)
 DEPLOY_TRANSACTION=$(mxpy data load --key=deployTransaction-testnet)
-PROXY=https://testnet-gateway.elrond.com
+PROXY=https://testnet-gateway.multiversx.com
 CHAIN_ID=T
 
 ALICE_ADDRESS=0x0139472eff6886771a982f3083da5d421f24c29181e63888228dc81ca60d69e1

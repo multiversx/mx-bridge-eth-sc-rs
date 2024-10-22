@@ -1,0 +1,4 @@
+[settings]
+
+[[proxy]]
+path = "../multisig/src/multisig_proxy.rs"

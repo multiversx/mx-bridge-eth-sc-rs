@@ -3,9 +3,10 @@ use multiversx_sc::types::ManagedVec;
 use transaction::transaction_status::TransactionStatus;
 use transaction::EthTransaction;
 
-multiversx_sc::derive_imports!();
+use multiversx_sc::derive_imports::*;
 
-#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, TypeAbi)]
+#[type_abi]
+#[derive(NestedEncode, NestedDecode, TopEncode, TopDecode)]
 pub enum Action<M: ManagedTypeApi> {
     Nothing,
     SetCurrentTransactionBatchStatus {

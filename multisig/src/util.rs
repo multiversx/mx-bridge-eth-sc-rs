@@ -1,4 +1,4 @@
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 use transaction::{EthTransaction, EthTxAsMultiValue};
 
@@ -49,7 +49,7 @@ pub trait UtilModule: crate::storage::StorageModule {
     ) -> ManagedVec<EthTransaction<Self::Api>> {
         let mut transfers_as_eth_tx = ManagedVec::new();
         for transfer in transfers {
-            let (from, to, token_id, amount, tx_nonce) = transfer.into_tuple();
+            let (from, to, token_id, amount, tx_nonce, call_data) = transfer.into_tuple();
 
             transfers_as_eth_tx.push(EthTransaction {
                 from,
@@ -57,6 +57,7 @@ pub trait UtilModule: crate::storage::StorageModule {
                 token_id,
                 amount,
                 tx_nonce,
+                call_data,
             });
         }
 
@@ -83,24 +84,5 @@ pub trait UtilModule: crate::storage::StorageModule {
         }
 
         self.crypto().keccak256(&serialized)
-    }
-
-    // proxies
-
-    #[proxy]
-    fn esdt_safe_proxy(&self, sc_address: ManagedAddress) -> esdt_safe::Proxy<Self::Api>;
-
-    #[proxy]
-    fn multi_transfer_esdt_proxy(
-        &self,
-        sc_address: ManagedAddress,
-    ) -> multi_transfer_esdt::Proxy<Self::Api>;
-
-    fn get_esdt_safe_proxy_instance(&self) -> esdt_safe::Proxy<Self::Api> {
-        self.esdt_safe_proxy(self.esdt_safe_address().get())
-    }
-
-    fn get_multi_transfer_esdt_proxy_instance(&self) -> multi_transfer_esdt::Proxy<Self::Api> {
-        self.multi_transfer_esdt_proxy(self.multi_transfer_esdt_address().get())
     }
 }

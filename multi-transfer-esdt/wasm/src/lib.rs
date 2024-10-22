@@ -5,15 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
-// Endpoints:                           15
+// Upgrade:                              1
+// Endpoints:                           19
 // Async Callback (empty):               1
-// Total number of exported functions:  17
+// Total number of exported functions:  22
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
-#![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -24,9 +21,14 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         batchTransferEsdtToken => batch_transfer_esdt_token
-        getAndClearFirstRefundBatch => get_and_clear_first_refund_batch
+        moveRefundBatchToSafe => move_refund_batch_to_safe
         setWrappingContractAddress => set_wrapping_contract_address
+        setBridgeProxyContractAddress => set_bridge_proxy_contract_address
+        addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
+        setEsdtSafeContractAddress => set_esdt_safe_contract_address
         getWrappingContractAddress => wrapping_contract_address
+        getBridgeProxyContractAddress => bridge_proxy_contract_address
+        getEsdtSafeContractAddress => esdt_safe_contract_address
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
