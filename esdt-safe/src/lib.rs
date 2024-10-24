@@ -52,14 +52,8 @@ pub trait EsdtSafe:
     #[init]
     fn init(
         &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
         eth_tx_gas_limit: BigUint,
     ) {
-        self.get_fee_estimator_address(self.blockchain().get_owner_address())
-            .set(fee_estimator_contract_address);
-        self.set_multi_transfer_address(multi_transfer_contract_address);
-
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -82,18 +76,8 @@ pub trait EsdtSafe:
     #[upgrade]
     fn upgrade(
         &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
-        bridge_proxy_contract_address: ManagedAddress,
         eth_tx_gas_limit: BigUint,
     ) {
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.multi_transfer_contract_address()
-            .set(&multi_transfer_contract_address);
-        self.bridge_proxy_contract_address().
-            set(&bridge_proxy_contract_address);
-
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -297,10 +281,10 @@ pub trait EsdtSafe:
         let caller = self.blockchain().get_caller();
         let refund_info = match opt_refund_info {
             OptionalValue::Some(refund_info) => {
-                if caller == self.bridge_proxy_contract_address().get() {
+                if caller == self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get() {
                     is_refund_tx = true;
                     refund_info
-                } else if caller == self.bridged_tokens_wrapper_address().get() {
+                } else if caller == self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get() {
                     refund_info
                 } else {
                     sc_panic!("Cannot specify a refund address from this caller");
@@ -454,22 +438,6 @@ pub trait EsdtSafe:
 
         self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgeProxyContractAddress)]
-    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridge proxy contract address"
-                );
-
-                self.bridge_proxy_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
-        }
     }
 
     #[only_owner]

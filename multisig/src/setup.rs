@@ -1,7 +1,9 @@
 use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
+use sc_proxies::{
+    bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy, multisig_proxy,
+};
 
 #[multiversx_sc::module]
 pub trait SetupModule:
@@ -218,24 +220,6 @@ pub trait SetupModule:
     }
 
     #[only_owner]
-    #[endpoint(changeFeeEstimatorContractAddress)]
-    fn change_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
-        let esdt_safe_addr = self.esdt_safe_address().get();
-
-        self.tx()
-            .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .set_fee_estimator_contract_address(new_address)
-            .sync_call();
-    }
-
-    /// Sets the gas limit being used for Ethereum transactions
-    /// This is used in the EsdtSafe contract to determine the fee amount
-    ///
-    /// fee_amount = eth_gas_limit * price_per_gas_unit
-    ///
-    /// where price_per_gas_unit is queried from the aggregator (fee estimator SC)
-    #[only_owner]
     #[endpoint(changeMultiversXToEthGasLimit)]
     fn change_multiversx_to_eth_gas_limit(&self, new_gas_limit: BigUint) {
         let esdt_safe_addr = self.esdt_safe_address().get();
@@ -302,30 +286,6 @@ pub trait SetupModule:
                 burn_balance,
                 opt_default_price_per_gas_unit,
             )
-            .sync_call();
-    }
-
-    #[only_owner]
-    #[endpoint(setMultiTransferOnEsdtSafe)]
-    fn set_multi_transfer_on_esdt_safe(&self) {
-        let multi_transfer_esdt_address = self.multi_transfer_esdt_address().get();
-        let esdt_safe_addr = self.esdt_safe_address().get();
-        self.tx()
-            .to(esdt_safe_addr)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .set_multi_transfer_contract_address(OptionalValue::Some(multi_transfer_esdt_address))
-            .sync_call();
-    }
-
-    #[only_owner]
-    #[endpoint(setEsdtSafeOnMultiTransfer)]
-    fn set_esdt_safe_on_multi_transfer(&self) {
-        let esdt_safe_address = self.esdt_safe_address().get();
-        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
-        self.tx()
-            .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-            .set_esdt_safe_contract_address(OptionalValue::Some(esdt_safe_address))
             .sync_call();
     }
 
@@ -431,28 +391,6 @@ pub trait SetupModule:
             .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
-            .sync_call();
-    }
-
-    /// Sets the wrapping contract address.
-    /// This contract is used to map multiple tokens to a universal one.
-    /// Useful in cases where a single token (USDC for example)
-    /// is being transferred from multiple chains.
-    ///
-    /// They will all have different token IDs, but can be swapped 1:1 in the wrapping SC.
-    /// The wrapping is done automatically, so the user only receives the universal token.
-    #[only_owner]
-    #[endpoint(multiTransferEsdtSetWrappingContractAddress)]
-    fn multi_transfer_esdt_set_wrapping_contract_address(
-        &self,
-        opt_wrapping_contract_address: OptionalValue<ManagedAddress>,
-    ) {
-        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
-
-        self.tx()
-            .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-            .set_wrapping_contract_address(opt_wrapping_contract_address)
             .sync_call();
     }
 }

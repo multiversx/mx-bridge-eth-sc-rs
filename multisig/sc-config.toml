@@ -2,6 +2,3 @@
 
 [[proxy]]
 path = "../common/sc-proxies/src/multisig_proxy.rs"
-
-[[proxy]]
-path = "../common/storage_module/src/multisig_proxy.rs"

@@ -32,6 +32,15 @@ path = "../esdt-safe"
 [dependencies.token-module]
 path = "../common/token-module"
 
+[dependencies.storage-module]
+path = "../common/storage-module"
+
+[dependencies.mock-multisig]
+path = "../common/mock-contracts/mock-multisig"
+
+[dependencies.mock-price-aggregator]
+path = "../common/mock-contracts/mock-price-aggregator"
+
 [dependencies.sc-proxies]
 path = "../common/sc-proxies"
 

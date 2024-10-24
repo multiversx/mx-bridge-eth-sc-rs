@@ -4,15 +4,14 @@ use std::collections::LinkedList;
 use std::ops::Add;
 
 use bridge_proxy::config::ProxyTrait as _;
-use bridge_proxy::ProxyTrait;
 
 use crowdfunding_esdt::crowdfunding_esdt_proxy;
 use multiversx_sc::codec::NestedEncode;
 use multiversx_sc::contract_base::ManagedSerializer;
 use multiversx_sc::sc_print;
 use multiversx_sc::types::{
-    EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedOption, ReturnsNewAddress, TestAddress,
-    TestSCAddress, TestTokenIdentifier,
+    EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedOption, MultiValueEncoded,
+    ReturnsNewAddress, ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
@@ -37,7 +36,9 @@ use multiversx_sc_scenario::{
 use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
-use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
+use sc_proxies::{
+    bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy, mock_multisig_proxy,
+};
 use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
@@ -51,17 +52,30 @@ const BRIDGE_PROXY_ADDRESS: TestSCAddress = TestSCAddress::new("bridge-proxy");
 const CROWDFUNDING_ADDRESS: TestSCAddress = TestSCAddress::new("crowfunding");
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
 const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+const FEE_ESTIMATOR_ADDRESS: TestSCAddress = TestSCAddress::new("fee-estimator");
+const MULTISIG_ADDRESS: TestSCAddress = TestSCAddress::new("multisig");
 const BRIDGED_TOKENS_WRAPPER_ADDRESS: TestSCAddress = TestSCAddress::new("bridged-tokens-wrapper");
 const NO_INIT_SC_ADDRESS: TestSCAddress = TestSCAddress::new("no-init-sc");
 
 const BRIDGE_PROXY_PATH_EXPR: MxscPath = MxscPath::new("output/bridge-proxy.mxsc.json");
 const CROWDFUNDING_PATH_EXPR: MxscPath =
     MxscPath::new("tests/test-contract/crowdfunding-esdt.mxsc.json");
-const MOCK_MULTI_TRANSFER_PATH_EXPR: MxscPath = MxscPath::new("mxsc:../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json");
+const MOCK_MULTI_TRANSFER_PATH_EXPR: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
 const MOCK_ESDT_SAFE_PATH_EXPR: MxscPath =
-    MxscPath::new("mxsc:../common/mock-contrats/mock-esdt-safe/output/mock-esdt-safe.mxsc.json");
+    MxscPath::new("../common/mock-contrats/mock-esdt-safe/output/mock-esdt-safe.mxsc.json");
 const MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR: MxscPath =
     MxscPath::new("../common/mock-contracts/mock-bridged-tokens-wrapper/output/mock-bridged-tokens-wrapper.mxsc.json");
+const MOCK_MULTISIG_CODE_PATH: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json");
+const MOCK_PRICE_AGGREGATOR_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-price-aggregator/output/mock-price-aggregator.mxsc.json",
+);
+const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
+const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
+const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
+const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -72,6 +86,16 @@ fn world() -> ScenarioWorld {
         MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR,
         mock_bridged_tokens_wrapper::ContractBuilder,
     );
+    blockchain.register_contract(
+        MOCK_PRICE_AGGREGATOR_CODE_PATH,
+        mock_price_aggregator::ContractBuilder,
+    );
+    blockchain.register_contract(
+        MOCK_MULTI_TRANSFER_PATH_EXPR,
+        mock_multi_transfer_esdt::ContractBuilder,
+    );
+    blockchain.register_contract(MOCK_ESDT_SAFE_PATH_EXPR, mock_esdt_safe::ContractBuilder);
+    blockchain.register_contract(MOCK_MULTISIG_CODE_PATH, mock_multisig::ContractBuilder);
 
     blockchain
 }
@@ -119,9 +143,9 @@ impl BridgeProxyTestState {
     fn deploy_bridge_proxy(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .init(OptionalValue::Some(MULTI_TRANSFER_ADDRESS))
+            .init()
             .code(BRIDGE_PROXY_PATH_EXPR)
             .new_address(BRIDGE_PROXY_ADDRESS)
             .run();
@@ -129,16 +153,38 @@ impl BridgeProxyTestState {
         self
     }
 
-    fn deploy_esdt_safe(&mut self) -> &mut Self {
+    fn multisig_deploy(&mut self) -> &mut Self {
+        let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+            MultiValueEncoded::new();
+        board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+        board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(mock_multisig_proxy::MockMultisigProxy)
             .init(
-                ManagedAddress::zero(),
-                ManagedAddress::zero(),
-                BigUint::zero(),
+                ESDT_SAFE_ADDRESS,
+                MULTI_TRANSFER_ADDRESS,
+                BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+                FEE_ESTIMATOR_ADDRESS,
+                1_000u64,
+                500u64,
+                2usize,
+                board,
             )
+            .code(MOCK_MULTISIG_CODE_PATH)
+            .new_address(MULTISIG_ADDRESS)
+            .run();
+        self
+    }
+
+    fn deploy_esdt_safe(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init(BigUint::zero())
             .code(MOCK_ESDT_SAFE_PATH_EXPR)
             .new_address(BRIDGE_PROXY_ADDRESS)
             .run();
@@ -149,7 +195,7 @@ impl BridgeProxyTestState {
     fn deploy_bridged_tokens_wrapper(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .init()
             .code(MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR)
@@ -162,7 +208,7 @@ impl BridgeProxyTestState {
     fn deploy_crowdfunding(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(crowdfunding_esdt_proxy::CrowdfundingProxy)
             .init(
                 2_000u32,
@@ -178,29 +224,12 @@ impl BridgeProxyTestState {
     fn config_bridge(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
             .unpause_endpoint()
             .run();
 
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGE_PROXY_ADDRESS)
-            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .set_bridged_tokens_wrapper_contract_address(OptionalValue::Some(
-                BRIDGED_TOKENS_WRAPPER_ADDRESS,
-            ))
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGE_PROXY_ADDRESS)
-            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS))
-            .run();
         self
     }
 }
@@ -208,15 +237,44 @@ impl BridgeProxyTestState {
 #[test]
 fn deploy_test() {
     let mut test = BridgeProxyTestState::new();
-
+    test.multisig_deploy();
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
+
     test.config_bridge();
+
+    let multi_tr = test
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(mock_multisig_proxy::MockMultisigProxy)
+        .multi_transfer_esdt_address()
+        .returns(ExpectValue(MULTI_TRANSFER_ADDRESS))
+        .run();
+
+    let esdt_addr = test
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(mock_multisig_proxy::MockMultisigProxy)
+        .esdt_safe_address()
+        .returns(ExpectValue(ESDT_SAFE_ADDRESS))
+        .run();
+
+    let btw_addr = test
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(mock_multisig_proxy::MockMultisigProxy)
+        .bridged_tokens_wrapper_address()
+        .returns(ExpectValue(BRIDGED_TOKENS_WRAPPER_ADDRESS))
+        .run();
 }
 
 #[test]
 fn bridge_proxy_execute_crowdfunding_test() {
     let mut test = BridgeProxyTestState::new();
+    test.multisig_deploy();
 
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
@@ -287,6 +345,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
 fn multiple_deposit_test() {
     let mut test = BridgeProxyTestState::new();
 
+    test.multisig_deploy();
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();
@@ -403,6 +462,7 @@ fn multiple_deposit_test() {
 fn test_lowest_tx_id() {
     let mut test = BridgeProxyTestState::new();
 
+    test.multisig_deploy();
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();
@@ -505,6 +565,7 @@ fn test_lowest_tx_id() {
 fn bridge_proxy_wrong_formatting_sc_call_test() {
     let mut test = BridgeProxyTestState::new();
 
+    test.multisig_deploy();
     test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();

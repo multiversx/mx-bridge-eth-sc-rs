@@ -132,45 +132,6 @@ fn test_require_tokens_have_set_decimals_num_should_work() {
 }
 
 #[test]
-fn test_set_esdt_safe_contract_address_should_work() {
-    let mut world = setup();
-    let bridged_tokens_wrapper = WhiteboxContract::new(
-        BRIDGE_TOKENS_WRAPPER_ADDRESS_EXPR,
-        bridged_tokens_wrapper::contract_obj,
-    );
-
-    let esdt_address_expr = "address:from".to_string();
-    let esdt_address = AddressValue::from(esdt_address_expr.as_str());
-
-    world.whitebox_call(
-        &bridged_tokens_wrapper,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.set_esdt_safe_contract_address(OptionalValue::Some(managed_address!(
-                &esdt_address.to_address()
-            )));
-        },
-    );
-
-    world.whitebox_query(&bridged_tokens_wrapper, |sc| {
-        let result = sc
-            .get_esdt_safe_address(sc.blockchain().get_owner_address())
-            .get();
-        assert_eq!(result, managed_address!(&esdt_address.to_address()));
-    });
-
-    world.whitebox_call(
-        &bridged_tokens_wrapper,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.set_esdt_safe_contract_address(OptionalValue::None);
-            let result = sc.esdt_safe_contract_address().is_empty();
-            assert!(result);
-        },
-    );
-}
-
-#[test]
 fn test_require_mint_and_burn_roles_should_fail() {
     let mut world = setup();
     let bridged_tokens_wrapper = WhiteboxContract::new(
@@ -426,9 +387,6 @@ fn test_unwrap_token_create_transaction_should_fail_case_1() {
             .expect(TxExpect::user_error("str:Contract is paused")),
         |sc| {
             sc.set_paused(true);
-            sc.set_esdt_safe_contract_address(OptionalValue::Some(ManagedAddress::new_from_bytes(
-                b"0102030405060708090a0b0c0d0e0f10",
-            )));
 
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
@@ -623,11 +581,6 @@ fn test_unwrap_token_create_transaction_should_work() {
             sc.deposit_liquidity();
             sc.chain_specific_to_universal_mapping(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
                 .set(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
-            let esdt_address_expr = "sc:esdt_safe".to_string();
-            let esdt_address = AddressValue::from(esdt_address_expr.as_str());
-            sc.set_esdt_safe_contract_address(OptionalValue::Some(managed_address!(
-                &esdt_address.to_address()
-            )));
         },
     );
 }

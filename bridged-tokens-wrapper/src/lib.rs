@@ -1,7 +1,6 @@
 #![no_std]
 
 mod dfp_big_uint;
-mod esdt_safe_proxy;
 mod events;
 use core::ops::Deref;
 
@@ -268,11 +267,14 @@ pub trait BridgedTokensWrapper:
                 .get_esdt_safe_address(self.blockchain().get_owner_address())
                 .get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(to, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
-                address: caller,
-                initial_batch_id: 0,
-                initial_nonce: 0,
-            }))
+            .create_transaction(
+                to,
+                OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                    address: caller,
+                    initial_batch_id: 0,
+                    initial_nonce: 0,
+                }),
+            )
             .single_esdt(&requested_token, 0, &converted_amount)
             .sync_call();
     }

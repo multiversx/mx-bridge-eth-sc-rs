@@ -43,16 +43,12 @@ where
     From: TxFrom<Env>,
     Gas: TxGas<Env>,
 {
-    pub fn init<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
+    pub fn init(
         self,
-        opt_multi_transfer_address: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&opt_multi_transfer_address)
             .original_result()
     }
 }
@@ -141,72 +137,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getPendingTransactions")
-            .original_result()
-    }
-
-    pub fn set_multi_transfer_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_multi_transfer_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMultiTransferAddress")
-            .argument(&opt_multi_transfer_address)
-            .original_result()
-    }
-
-    pub fn set_bridged_tokens_wrapper_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setBridgedTokensWrapperAddress")
-            .argument(&opt_address)
-            .original_result()
-    }
-
-    pub fn set_esdt_safe_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeAddress")
-            .argument(&opt_address)
-            .original_result()
-    }
-
-    pub fn multi_transfer_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMultiTransferAddress")
-            .original_result()
-    }
-
-    pub fn bridged_tokens_wrapper_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBridgedTokensWrapperAddress")
-            .original_result()
-    }
-
-    pub fn esdt_safe_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getEsdtSafeContractAddress")
             .original_result()
     }
 

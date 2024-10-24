@@ -32,6 +32,21 @@ path = "../common/storage-module"
 [dependencies.sc-proxies]
 path = "../common/sc-proxies"
 
+[dependencies.mock-bridged-tokens-wrapper]
+path = "../common/mock-contracts/mock-bridged-tokens-wrapper"
+
+[dependencies.mock-multisig]
+path = "../common/mock-contracts/mock-multisig"
+
+[dependencies.mock-bridge-proxy]
+path = "../common/mock-contracts/mock-bridge-proxy"
+
+[dependencies.mock-price-aggregator]
+path = "../common/mock-contracts/mock-price-aggregator"
+
+[dependencies.mock-multi-transfer-esdt]
+path = "../common/mock-contracts/mock-multi-transfer-esdt"
+
 [dependencies.multiversx-price-aggregator-sc]
 version = "=0.53.2"
 

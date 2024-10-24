@@ -1,17 +1,34 @@
 #![allow(unused)]
 use esdt_safe::*;
-use esdt_safe_proxy::EsdtSafeProxyMethods;
 
 use multiversx_sc_scenario::imports::*;
 use sc_proxies::esdt_safe_proxy::{self, EsdtSafeProxyMethods};
+use sc_proxies::mock_multisig_proxy;
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 
+const BRIDGE_PROXY_ADDRESS: TestSCAddress = TestSCAddress::new("bridge-proxy");
+const CROWDFUNDING_ADDRESS: TestSCAddress = TestSCAddress::new("crowfunding");
+const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
 const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
-const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer-esdt");
-const FEE_ESTIMATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price-aggregator");
+const FEE_ESTIMATOR_ADDRESS: TestSCAddress = TestSCAddress::new("fee-estimator");
+const MULTISIG_ADDRESS: TestSCAddress = TestSCAddress::new("multisig");
+const BRIDGED_TOKENS_WRAPPER_ADDRESS: TestSCAddress = TestSCAddress::new("bridged-tokens-wrapper");
 
 const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("output/esdt-safe.mxsc.json");
+const MOCK_MULTI_TRANSFER_PATH_EXPR: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
+const MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-bridged-tokens-wrapper/output/mock-bridged-tokens-wrapper.mxsc.json");
+const MOCK_MULTISIG_CODE_PATH: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json");
+const MOCK_PRICE_AGGREGATOR_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-price-aggregator/output/mock-price-aggregator.mxsc.json",
+);
+const MOCK_BRIDGE_PROXY_PATH_EXPR: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json");
+
 const TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-123456");
 const NON_WHITELISTED_TOKEN: TestTokenIdentifier =
     TestTokenIdentifier::new("NON-WHITELISTED-123456");
@@ -20,10 +37,32 @@ const NATIVE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ESDT-123"
 const ETH_TX_GAS_LIMIT: u64 = 150_000;
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
 const ERROR: u64 = 4;
+const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
+const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
+const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
+const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
     blockchain.register_contract(ESDT_SAFE_CODE_PATH, esdt_safe::ContractBuilder);
+    blockchain.register_contract(
+        MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR,
+        mock_bridged_tokens_wrapper::ContractBuilder,
+    );
+    blockchain.register_contract(
+        MOCK_PRICE_AGGREGATOR_CODE_PATH,
+        mock_price_aggregator::ContractBuilder,
+    );
+    blockchain.register_contract(
+        MOCK_MULTI_TRANSFER_PATH_EXPR,
+        mock_multi_transfer_esdt::ContractBuilder,
+    );
+    blockchain.register_contract(MOCK_MULTISIG_CODE_PATH, mock_multisig::ContractBuilder);
+    blockchain.register_contract(
+        MOCK_BRIDGE_PROXY_PATH_EXPR,
+        mock_bridge_proxy::ContractBuilder,
+    );
+
     blockchain
 }
 
@@ -46,16 +85,38 @@ impl EsdtSafeTestState {
         Self { world }
     }
 
-    fn safe_deploy(&mut self) -> &mut Self {
+    fn multisig_deploy(&mut self) -> &mut Self {
+        let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+            MultiValueEncoded::new();
+        board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+        board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .typed(mock_multisig_proxy::MockMultisigProxy)
             .init(
-                FEE_ESTIMATOR_ADDRESS.to_address(),
-                MULTI_TRANSFER_ADDRESS.to_address(),
-                ETH_TX_GAS_LIMIT,
+                ESDT_SAFE_ADDRESS,
+                MULTI_TRANSFER_ADDRESS,
+                BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+                FEE_ESTIMATOR_ADDRESS,
+                1_000u64,
+                500u64,
+                2usize,
+                board,
             )
+            .code(MOCK_MULTISIG_CODE_PATH)
+            .new_address(MULTISIG_ADDRESS)
+            .run();
+        self
+    }
+
+    fn safe_deploy(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init(ETH_TX_GAS_LIMIT)
             .code(ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
             .run();
@@ -64,7 +125,14 @@ impl EsdtSafeTestState {
     }
 
     fn config_esdtsafe(&mut self) {
-        self.esdt_raw_transction().unpause_endpoint().run();
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .unpause_endpoint()
+            .run();
+
         self.world.set_esdt_local_roles(
             ESDT_SAFE_ADDRESS,
             b"TOKEN-123456",
@@ -73,6 +141,33 @@ impl EsdtSafeTestState {
         self.world.set_esdt_balance(
             ESDT_SAFE_ADDRESS,
             b"TOKEN-123456",
+            BigUint::from(10_000_000u64),
+        );
+
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"TOKEN-123456",
+            BigUint::from(10_000_000u64),
+        );
+
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"NON-WHITELISTED-123456",
+            BigUint::from(10_000_000u64),
+        );
+
+        self.world
+            .set_esdt_balance(MULTISIG_ADDRESS, b"ESDT-123", BigUint::from(10_000_000u64));
+
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"TOKEN-WITH-OUT",
+            BigUint::from(10_000_000u64),
+        );
+
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"ETH-123456",
             BigUint::from(10_000_000u64),
         );
 
@@ -113,12 +208,6 @@ impl EsdtSafeTestState {
                 BigUint::from(0u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
-            .run();
-
-        self.esdt_raw_transction()
-            .set_multi_transfer_contract_address(OptionalValue::Some(
-                MULTI_TRANSFER_ADDRESS.to_address(),
-            ))
             .run();
     }
 
@@ -162,10 +251,10 @@ impl EsdtSafeTestState {
 
     fn esdt_raw_transction(
         &mut self,
-    ) -> EsdtSafeProxyMethods<ScenarioEnvExec<'_>, TestAddress, TestSCAddress, ()> {
+    ) -> EsdtSafeProxyMethods<ScenarioEnvExec<'_>, TestSCAddress, TestSCAddress, ()> {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
     }
@@ -174,6 +263,7 @@ impl EsdtSafeTestState {
 #[test]
 fn config_test() {
     let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
     state.safe_deploy();
     state.config_esdtsafe();
 }
@@ -181,6 +271,7 @@ fn config_test() {
 #[test]
 fn init_supply_test() {
     let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
     state.safe_deploy();
     state.config_esdtsafe();
 
@@ -252,10 +343,10 @@ fn init_supply_test() {
     )
 }
 
-
 #[test]
 fn init_supply_test_mint_burn() {
     let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
     state.safe_deploy();
     state.config_esdtsafe();
 
@@ -318,5 +409,3 @@ fn init_supply_test_mint_burn() {
         "Total supply should be 10,000"
     );
 }
-
-
