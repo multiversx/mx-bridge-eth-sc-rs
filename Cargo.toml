@@ -13,7 +13,6 @@ members = [
   "test-caller",
   "test-caller/meta",
   "common/storage-module",
-  "test-caller/meta",
   "common/mock-contracts/mock-price-aggregator/meta",
   "common/mock-contracts/mock-multi-transfer-esdt/meta",
   "common/mock-contracts/mock-bridge-proxy/meta",
