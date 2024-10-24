@@ -17,11 +17,11 @@ const MIN_GAS_TO_SAVE_PROGRESS: u64 = 100_000;
 pub trait BridgeProxyContract:
     config::ConfigModule
     + multiversx_sc_modules::pause::PauseModule
+    + storage_module::CommonStorageModule
     + multiversx_sc_modules::ongoing_operation::OngoingOperationModule
 {
     #[init]
-    fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
-        self.set_multi_transfer_contract_address(opt_multi_transfer_address);
+    fn init(&self) {
         self.lowest_tx_id().set(1);
         self.set_paused(true);
     }
@@ -38,7 +38,10 @@ pub trait BridgeProxyContract:
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
         require!(
-            caller == self.multi_transfer_address().get(),
+            caller
+                == self
+                    .get_multi_transfer_address(self.blockchain().get_owner_address())
+                    .get(),
             "Only MultiTransfer can do deposits"
         );
         let tx_id = self.pending_transactions().push(&eth_tx);
@@ -131,7 +134,9 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
+        let esdt_safe_contract_address = self
+            .get_esdt_safe_address(self.blockchain().get_owner_address())
+            .get();
 
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
         let batch_id = self.batch_id(tx_id).get();
@@ -156,7 +161,9 @@ pub trait BridgeProxyContract:
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
         let payment = self.payments(tx_id).get();
-        let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
+        let bridged_tokens_wrapper_address = self
+            .get_bridged_tokens_wrapper_address(self.blockchain().get_owner_address())
+            .get();
 
         let transfers = self
             .tx()

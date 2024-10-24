@@ -49,19 +49,23 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg3: ProxyArg<BigUint<Env::Api>>,
-        Arg4: ProxyArg<BigUint<Env::Api>>,
-        Arg5: ProxyArg<usize>,
-        Arg6: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg4: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg5: ProxyArg<BigUint<Env::Api>>,
+        Arg6: ProxyArg<BigUint<Env::Api>>,
+        Arg7: ProxyArg<usize>,
+        Arg8: ProxyArg<MultiValueEncoded<Env::Api, ManagedAddress<Env::Api>>>,
     >(
         self,
         esdt_safe_sc_address: Arg0,
         multi_transfer_sc_address: Arg1,
         proxy_sc_address: Arg2,
-        required_stake: Arg3,
-        slash_amount: Arg4,
-        quorum: Arg5,
-        board: Arg6,
+        bridged_tokens_wrapper_sc_address: Arg3,
+        price_aggregator_sc_address: Arg4,
+        required_stake: Arg5,
+        slash_amount: Arg6,
+        quorum: Arg7,
+        board: Arg8,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -69,6 +73,8 @@ where
             .argument(&esdt_safe_sc_address)
             .argument(&multi_transfer_sc_address)
             .argument(&proxy_sc_address)
+            .argument(&bridged_tokens_wrapper_sc_address)
+            .argument(&price_aggregator_sc_address)
             .argument(&required_stake)
             .argument(&slash_amount)
             .argument(&quorum)
@@ -90,11 +96,15 @@ where
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg3: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg4: ProxyArg<ManagedAddress<Env::Api>>,
     >(
         self,
         esdt_safe_sc_address: Arg0,
         multi_transfer_sc_address: Arg1,
         proxy_sc_address: Arg2,
+        bridged_tokens_wrapper_sc_address: Arg3,
+        price_aggregator_sc_address: Arg4,
     ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
@@ -102,6 +112,8 @@ where
             .argument(&esdt_safe_sc_address)
             .argument(&multi_transfer_sc_address)
             .argument(&proxy_sc_address)
+            .argument(&bridged_tokens_wrapper_sc_address)
+            .argument(&price_aggregator_sc_address)
             .original_result()
     }
 }
@@ -483,25 +495,6 @@ where
             .original_result()
     }
 
-    pub fn change_fee_estimator_contract_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("changeFeeEstimatorContractAddress")
-            .argument(&new_address)
-            .original_result()
-    }
-
-    /// Sets the gas limit being used for Ethereum transactions 
-    /// This is used in the EsdtSafe contract to determine the fee amount 
-    ///  
-    /// fee_amount = eth_gas_limit * price_per_gas_unit 
-    ///  
-    /// where price_per_gas_unit is queried from the aggregator (fee estimator SC) 
     pub fn change_multiversx_to_eth_gas_limit<
         Arg0: ProxyArg<BigUint<Env::Api>>,
     >(
@@ -581,24 +574,6 @@ where
             .argument(&mint_balance)
             .argument(&burn_balance)
             .argument(&opt_default_price_per_gas_unit)
-            .original_result()
-    }
-
-    pub fn set_multi_transfer_on_esdt_safe(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMultiTransferOnEsdtSafe")
-            .original_result()
-    }
-
-    pub fn set_esdt_safe_on_multi_transfer(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeOnMultiTransfer")
             .original_result()
     }
 
@@ -709,26 +684,6 @@ where
             .payment(NotPayable)
             .raw_call("multiTransferEsdtSetMaxRefundTxBatchBlockDuration")
             .argument(&new_max_tx_batch_block_duration)
-            .original_result()
-    }
-
-    /// Sets the wrapping contract address. 
-    /// This contract is used to map multiple tokens to a universal one. 
-    /// Useful in cases where a single token (USDC for example) 
-    /// is being transferred from multiple chains. 
-    ///  
-    /// They will all have different token IDs, but can be swapped 1:1 in the wrapping SC. 
-    /// The wrapping is done automatically, so the user only receives the universal token. 
-    pub fn multi_transfer_esdt_set_wrapping_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_wrapping_contract_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("multiTransferEsdtSetWrappingContractAddress")
-            .argument(&opt_wrapping_contract_address)
             .original_result()
     }
 
@@ -866,6 +821,24 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getProxyAddress")
+            .original_result()
+    }
+
+    pub fn bridged_tokens_wrapper_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getBridgedTokensWrapperAddress")
+            .original_result()
+    }
+
+    pub fn fee_estimator_address(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getFeeEstimatorAddress")
             .original_result()
     }
 

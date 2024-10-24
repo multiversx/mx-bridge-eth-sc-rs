@@ -7,6 +7,9 @@ edition = "2018"
 [dependencies.fee-estimator-module]
 path = "../fee-estimator-module"
 
+[dependencies.storage-module]
+path = "../storage-module"
+
 [dependencies.multiversx-sc]
 version = "=0.53.2"
 

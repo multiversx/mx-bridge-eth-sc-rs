@@ -106,32 +106,6 @@ where
             .original_result()
     }
 
-    pub fn set_wrapping_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setWrappingContractAddress")
-            .argument(&opt_new_address)
-            .original_result()
-    }
-
-    pub fn set_bridge_proxy_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setBridgeProxyContractAddress")
-            .argument(&opt_new_address)
-            .original_result()
-    }
-
     pub fn add_unprocessed_refund_tx_to_batch<
         Arg0: ProxyArg<u64>,
     >(
@@ -142,46 +116,6 @@ where
             .payment(NotPayable)
             .raw_call("addUnprocessedRefundTxToBatch")
             .argument(&tx_id)
-            .original_result()
-    }
-
-    pub fn set_esdt_safe_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setEsdtSafeContractAddress")
-            .argument(&opt_new_address)
-            .original_result()
-    }
-
-    pub fn wrapping_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getWrappingContractAddress")
-            .original_result()
-    }
-
-    pub fn bridge_proxy_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBridgeProxyContractAddress")
-            .original_result()
-    }
-
-    pub fn esdt_safe_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getEsdtSafeContractAddress")
             .original_result()
     }
 

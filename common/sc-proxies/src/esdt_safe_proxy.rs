@@ -49,20 +49,14 @@ where
     /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side. 
     /// Will be used to compute the fees for the transfer 
     pub fn init<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<BigUint<Env::Api>>,
+        Arg0: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        fee_estimator_contract_address: Arg0,
-        multi_transfer_contract_address: Arg1,
-        eth_tx_gas_limit: Arg2,
+        eth_tx_gas_limit: Arg0,
     ) -> TxTypedDeploy<Env, From, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_deploy()
-            .argument(&fee_estimator_contract_address)
-            .argument(&multi_transfer_contract_address)
             .argument(&eth_tx_gas_limit)
             .original_result()
     }
@@ -78,23 +72,14 @@ where
     Gas: TxGas<Env>,
 {
     pub fn upgrade<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg3: ProxyArg<BigUint<Env::Api>>,
+        Arg0: ProxyArg<BigUint<Env::Api>>,
     >(
         self,
-        fee_estimator_contract_address: Arg0,
-        multi_transfer_contract_address: Arg1,
-        bridge_proxy_contract_address: Arg2,
-        eth_tx_gas_limit: Arg3,
+        eth_tx_gas_limit: Arg0,
     ) -> TxTypedUpgrade<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_upgrade()
-            .argument(&fee_estimator_contract_address)
-            .argument(&multi_transfer_contract_address)
-            .argument(&bridge_proxy_contract_address)
             .argument(&eth_tx_gas_limit)
             .original_result()
     }
@@ -202,32 +187,6 @@ where
             .original_result()
     }
 
-    pub fn set_bridged_tokens_wrapper_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setBridgedTokensWrapperAddress")
-            .argument(&opt_address)
-            .original_result()
-    }
-
-    pub fn set_bridge_proxy_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setBridgeProxyContractAddress")
-            .argument(&opt_new_address)
-            .original_result()
-    }
-
     pub fn withdraw_refund_fees_for_ethereum<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -326,37 +285,6 @@ where
             .original_result()
     }
 
-    pub fn bridged_tokens_wrapper_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBridgedTokensWrapperAddress")
-            .original_result()
-    }
-
-    pub fn bridge_proxy_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getBridgeProxyContractAddress")
-            .original_result()
-    }
-
-    pub fn set_fee_estimator_contract_address<
-        Arg0: ProxyArg<ManagedAddress<Env::Api>>,
-    >(
-        self,
-        new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setFeeEstimatorContractAddress")
-            .argument(&new_address)
-            .original_result()
-    }
-
     pub fn set_eth_tx_gas_limit<
         Arg0: ProxyArg<BigUint<Env::Api>>,
     >(
@@ -416,15 +344,6 @@ where
             .payment(NotPayable)
             .raw_call("calculateRequiredFee")
             .argument(&token_id)
-            .original_result()
-    }
-
-    pub fn fee_estimator_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getFeeEstimatorContractAddress")
             .original_result()
     }
 
@@ -562,19 +481,6 @@ where
             .original_result()
     }
 
-    pub fn set_multi_transfer_contract_address<
-        Arg0: ProxyArg<OptionalValue<ManagedAddress<Env::Api>>>,
-    >(
-        self,
-        opt_new_address: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("setMultiTransferContractAddress")
-            .argument(&opt_new_address)
-            .original_result()
-    }
-
     pub fn token_whitelist(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>> {
@@ -607,15 +513,6 @@ where
             .payment(NotPayable)
             .raw_call("isMintBurnToken")
             .argument(&token)
-            .original_result()
-    }
-
-    pub fn multi_transfer_contract_address(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedAddress<Env::Api>> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getMultiTransferContractAddress")
             .original_result()
     }
 

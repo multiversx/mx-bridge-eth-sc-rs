@@ -42,6 +42,7 @@ pub trait EsdtSafe:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
+    + storage_module::CommonStorageModule
 {
     /// fee_estimator_contract_address - The address of a Price Aggregator contract,
     /// which will get the price of token A in token B
@@ -51,15 +52,8 @@ pub trait EsdtSafe:
     #[init]
     fn init(
         &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
         eth_tx_gas_limit: BigUint,
     ) {
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.multi_transfer_contract_address()
-            .set(&multi_transfer_contract_address);
-
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -82,18 +76,8 @@ pub trait EsdtSafe:
     #[upgrade]
     fn upgrade(
         &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
-        bridge_proxy_contract_address: ManagedAddress,
         eth_tx_gas_limit: BigUint,
     ) {
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.multi_transfer_contract_address()
-            .set(&multi_transfer_contract_address);
-        self.bridge_proxy_contract_address().
-            set(&bridge_proxy_contract_address);
-
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -177,7 +161,9 @@ pub trait EsdtSafe:
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
         let caller = self.blockchain().get_caller();
-        let multi_transfer_address = self.multi_transfer_contract_address().get();
+        let multi_transfer_address = self
+            .get_multi_transfer_address(self.blockchain().get_owner_address())
+            .get();
         require!(caller == multi_transfer_address, "Invalid caller");
 
         let refund_payments = self.call_value().all_esdt_transfers().deref().clone();
@@ -295,10 +281,10 @@ pub trait EsdtSafe:
         let caller = self.blockchain().get_caller();
         let refund_info = match opt_refund_info {
             OptionalValue::Some(refund_info) => {
-                if caller == self.bridge_proxy_contract_address().get() {
+                if caller == self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get() {
                     is_refund_tx = true;
                     refund_info
-                } else if caller == self.bridged_tokens_wrapper_address().get() {
+                } else if caller == self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get() {
                     refund_info
                 } else {
                     sc_panic!("Cannot specify a refund address from this caller");
@@ -355,7 +341,7 @@ pub trait EsdtSafe:
         }
     }
 
-    // endpoints
+        // endpoints
 
     /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
     ///
@@ -455,40 +441,6 @@ pub trait EsdtSafe:
     }
 
     #[only_owner]
-    #[endpoint(setBridgedTokensWrapperAddress)]
-    fn set_bridged_tokens_wrapper_contract_address(
-        &self,
-        opt_address: OptionalValue<ManagedAddress>,
-    ) {
-        match opt_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridged tokens wrapper address"
-                );
-                self.bridged_tokens_wrapper_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgeProxyContractAddress)]
-    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridge proxy contract address"
-                );
-
-                self.bridge_proxy_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
-        }
-    }
-
-    #[only_owner]
     #[endpoint(withdrawRefundFeesForEthereum)]
     fn withdraw_refund_fees_for_ethereum(
         &self,
@@ -576,6 +528,8 @@ pub trait EsdtSafe:
 
         refund_amounts
     }
+
+    // views
 
     #[view(getTotalRefundAmounts)]
     fn get_total_refund_amounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
@@ -729,12 +683,4 @@ pub trait EsdtSafe:
         address: &ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
-
-    #[view(getBridgedTokensWrapperAddress)]
-    #[storage_mapper("bridgedTokensWrapperAddress")]
-    fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getBridgeProxyContractAddress)]
-    #[storage_mapper("bridgeProxyContractAddress")]
-    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }
