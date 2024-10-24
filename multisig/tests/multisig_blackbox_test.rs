@@ -965,17 +965,7 @@ fn multisig_pause_all_child_scs_test() {
         .from(OWNER_ADDRESS)
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
-        .pause_all_child_contracts()
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .paused_status()
-        .returns(ExpectValue(true))
+        .pause_deposits()
         .run();
 
     state
@@ -1004,16 +994,6 @@ fn multisig_pause_all_child_scs_test() {
         .from(MULTISIG_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .paused_status()
-        .returns(ExpectValue(true))
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .paused_status()
         .returns(ExpectValue(true))
         .run();
@@ -1025,17 +1005,7 @@ fn multisig_pause_all_child_scs_test() {
         .from(OWNER_ADDRESS)
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
-        .unpause_all_child_contracts()
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .paused_status()
-        .returns(ExpectValue(false))
+        .unpause_deposits()
         .run();
 
     state
@@ -1071,9 +1041,37 @@ fn multisig_pause_all_child_scs_test() {
     state
         .world
         .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .pause_processing()
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .paused_status()
+        .returns(ExpectValue(true))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .unpause_processing()
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
         .paused_status()
         .returns(ExpectValue(false))
         .run();

@@ -356,6 +356,74 @@
             "step": "scCall",
             "id": "",
             "tx": {
+                "from": "address:owner",
+                "to": "sc:multi-transfer",
+                "function": "ChangeOwnerAddress",
+                "arguments": [
+                    "0x000000000000000005006d756c74697369675f5f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "function": "ChangeOwnerAddress",
+                "arguments": [
+                    "0x000000000000000005006d756c74697369675f5f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridge-proxy",
+                "function": "ChangeOwnerAddress",
+                "arguments": [
+                    "0x000000000000000005006d756c74697369675f5f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:bridged-tokens-wrapper",
+                "function": "ChangeOwnerAddress",
+                "arguments": [
+                    "0x000000000000000005006d756c74697369675f5f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
                 "from": "address:relayer1",
                 "to": "sc:multisig",
                 "function": "proposeMultiTransferEsdtBatch",

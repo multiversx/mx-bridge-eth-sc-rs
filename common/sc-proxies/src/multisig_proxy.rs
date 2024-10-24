@@ -702,21 +702,39 @@ where
             .original_result()
     }
 
-    pub fn pause_all_child_contracts(
+    pub fn pause_processing(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("pauseAllChildContracts")
+            .raw_call("pauseProcessing")
             .original_result()
     }
 
-    pub fn unpause_all_child_contracts(
+    pub fn unpause_processing(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("unpauseAllChildContracts")
+            .raw_call("unpauseProcessing")
+            .original_result()
+    }
+
+    pub fn pause_deposits(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("pauseDeposits")
+            .original_result()
+    }
+
+    pub fn unpause_deposits(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("unpauseDeposits")
             .original_result()
     }
 
@@ -771,24 +789,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("unpauseBridgedTokensWrapper")
-            .original_result()
-    }
-
-    pub fn pause_multi_transfer_esdt(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("pauseMultiTransferEsdt")
-            .original_result()
-    }
-
-    pub fn unpause_multi_transfer_esdt(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("unpauseMultiTransferEsdt")
             .original_result()
     }
 

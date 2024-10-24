@@ -407,23 +407,31 @@ pub trait SetupModule:
     // Pause/Unpause endpoints
 
     #[only_owner]
-    #[endpoint(pauseAllChildContracts)]
-    fn pause_all_child_contracts(&self) {
+    #[endpoint(pauseProcessing)]
+    fn pause_processing(&self) {
         self.pause_endpoint();
-        self.pause_esdt_safe();
-        self.pause_bridge_proxy();
-        self.pause_bridged_tokens_wrapper();
-        self.pause_multi_transfer_esdt();
     }
 
     #[only_owner]
-    #[endpoint(unpauseAllChildContracts)]
-    fn unpause_all_child_contracts(&self) {
+    #[endpoint(unpauseProcessing)]
+    fn unpause_processing(&self) {
         self.unpause_endpoint();
+    }
+
+    #[only_owner]
+    #[endpoint(pauseDeposits)]
+    fn pause_deposits(&self) {
+        self.pause_esdt_safe();
+        self.pause_bridge_proxy();
+        self.pause_bridged_tokens_wrapper();
+    }
+
+    #[only_owner]
+    #[endpoint(unpauseDeposits)]
+    fn unpause_deposits(&self) {
         self.unpause_esdt_safe();
         self.unpause_bridge_proxy();
         self.unpause_bridged_tokens_wrapper();
-        self.unpause_multi_transfer_esdt();
     }
 
     #[only_owner]
@@ -507,33 +515,5 @@ pub trait SetupModule:
             .sync_call();
 
         self.unpause_bridged_tokens_wrapper_event();
-    }
-
-    #[only_owner]
-    #[endpoint(pauseMultiTransferEsdt)]
-    fn pause_multi_transfer_esdt(&self) {
-        let proxy_addr = self.multi_transfer_esdt_address().get();
-
-        self.tx()
-            .to(proxy_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-            .pause_endpoint()
-            .sync_call();
-
-        self.pause_multi_transfer_esdt_event();
-    }
-
-    #[only_owner]
-    #[endpoint(unpauseMultiTransferEsdt)]
-    fn unpause_multi_transfer_esdt(&self) {
-        let proxy_addr = self.multi_transfer_esdt_address().get();
-
-        self.tx()
-            .to(proxy_addr)
-            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-            .unpause_endpoint()
-            .sync_call();
-
-        self.unpause_multi_transfer_esdt_event();
     }
 }
