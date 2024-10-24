@@ -243,8 +243,7 @@ fn deploy_test() {
 
     test.config_bridge();
 
-    let multi_tr = test
-        .world
+    test.world
         .query()
         .to(MULTISIG_ADDRESS)
         .typed(mock_multisig_proxy::MockMultisigProxy)
@@ -252,8 +251,7 @@ fn deploy_test() {
         .returns(ExpectValue(MULTI_TRANSFER_ADDRESS))
         .run();
 
-    let esdt_addr = test
-        .world
+    test.world
         .query()
         .to(MULTISIG_ADDRESS)
         .typed(mock_multisig_proxy::MockMultisigProxy)
@@ -261,8 +259,7 @@ fn deploy_test() {
         .returns(ExpectValue(ESDT_SAFE_ADDRESS))
         .run();
 
-    let btw_addr = test
-        .world
+    test.world
         .query()
         .to(MULTISIG_ADDRESS)
         .typed(mock_multisig_proxy::MockMultisigProxy)
