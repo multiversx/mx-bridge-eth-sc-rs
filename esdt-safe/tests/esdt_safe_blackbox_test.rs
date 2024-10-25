@@ -695,11 +695,9 @@ fn esdt_safe_create_transaction() {
         .total_balances(TOKEN_WITH_BURN_ROLE)
         .returns(ReturnsResult)
         .run();
-
 }
 
 #[test]
-#[ignore] //This will be rewritten
 fn add_refund_batch_test() {
     let mut state = EsdtSafeTestState::new();
     state.multisig_deploy();
@@ -804,7 +802,7 @@ fn add_refund_batch_test() {
         "Token identifiers do not match",
     );
 
-    let payments_invalid = vec![
+    let payments_invalid: Vec<EsdtTokenPayment<StaticApi>> = vec![
         EsdtTokenPayment::new(NATIVE_TOKEN_ID.into(), 0, BigUint::from(1_000u64)),
         EsdtTokenPayment::new(NATIVE_TOKEN_ID.into(), 0, BigUint::from(100u64)),
     ];
@@ -816,13 +814,6 @@ fn add_refund_batch_test() {
         transfers.clone(),
         payment_invalid.clone(),
         "Amounts do not match",
-    );
-
-    state.init_supply_should_work(
-        NATIVE_TOKEN_ID,
-        NATIVE_TOKEN_ID,
-        100_000_000u64,
-        100_000_000u64,
     );
 
     state
