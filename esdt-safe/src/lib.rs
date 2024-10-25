@@ -20,8 +20,8 @@ pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub struct RefundInfo<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
-    pub initial_batch_id: u64, 
-    pub initial_nonce: u64
+    pub initial_batch_id: u64,
+    pub initial_nonce: u64,
 }
 
 #[multiversx_sc::contract]
@@ -80,8 +80,8 @@ pub trait EsdtSafe:
             .set(&fee_estimator_contract_address);
         self.multi_transfer_contract_address()
             .set(&multi_transfer_contract_address);
-        self.bridge_proxy_contract_address().
-            set(&bridge_proxy_contract_address);
+        self.bridge_proxy_contract_address()
+            .set(&bridge_proxy_contract_address);
 
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
@@ -246,7 +246,7 @@ pub trait EsdtSafe:
                 });
             } else {
                 self.total_balances(&refund_token_id).update(|total| {
-                    *total -= &actual_bridged_amount;
+                    *total += &actual_bridged_amount;
                 });
             }
         }
@@ -304,7 +304,11 @@ pub trait EsdtSafe:
                     sc_panic!("Cannot specify a refund address from this caller");
                 }
             }
-            OptionalValue::None => RefundInfo{ address: caller, initial_batch_id: 0, initial_nonce: 0},
+            OptionalValue::None => RefundInfo {
+                address: caller,
+                initial_batch_id: 0,
+                initial_nonce: 0,
+            },
         };
 
         self.accumulated_transaction_fees(&payment_token)
@@ -364,7 +368,6 @@ pub trait EsdtSafe:
                 refund_info.initial_nonce,
             );
         }
-        
     }
 
     /// Claim funds for failed MultiversX -> Ethereum transactions.
