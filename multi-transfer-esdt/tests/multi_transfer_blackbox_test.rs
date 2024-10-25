@@ -469,6 +469,58 @@ impl MultiTransferTestState {
             )
             .run();
     }
+
+    fn check_balances_on_safe(
+        &mut self,
+        total_supply: BigUint<StaticApi>,
+        total_minted: BigUint<StaticApi>,
+        total_burned: BigUint<StaticApi>,
+    ) {
+        let actual_total_supply = self
+            .world
+            .query()
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .total_balances(TOKEN_ID)
+            .returns(ReturnsResult)
+            .run();
+
+        assert_eq!(
+            actual_total_supply,
+            BigUint::from(total_supply),
+            "Total supply balance is wrong"
+        );
+        let actual_total_burned = self
+            .world
+            .query()
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .burn_balances(TOKEN_ID)
+            .returns(ReturnsResult)
+            .run();
+
+        assert_eq!(
+            actual_total_burned,
+            BigUint::from(total_burned),
+            "Total burned balance is wrong"
+        );
+
+        let actual_total_minted = self
+            .world
+            .query()
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .mint_balances(TOKEN_ID)
+            .returns(ReturnsResult)
+            .run();
+
+        assert_eq!(
+            actual_total_minted,
+            BigUint::from(total_minted),
+            "Total minted balance is wrong"
+        );
+    }
+
     fn deploy_contracts(&mut self) {
         self.multi_transfer_deploy();
         self.bridge_proxy_deploy();
@@ -896,6 +948,9 @@ fn add_refund_batch_test() {
         MultiValueEncoded::new();
     transfers.push(eth_tx.clone());
 
+    let fee = 22_500_000_000u64;
+    state.check_balances_on_safe(BigUint::from(MAX_AMOUNT), BigUint::zero(), BigUint::zero());
+
     state
         .world
         .tx()
@@ -904,6 +959,7 @@ fn add_refund_batch_test() {
         .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
+    state.check_balances_on_safe(BigUint::zero(), BigUint::zero(), BigUint::zero());
 
     state
         .world
@@ -913,4 +969,10 @@ fn add_refund_batch_test() {
         .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
         .move_refund_batch_to_safe()
         .run();
+
+    state.check_balances_on_safe(
+        BigUint::from(MAX_AMOUNT) - fee,
+        BigUint::zero(),
+        BigUint::zero(),
+    );
 }
