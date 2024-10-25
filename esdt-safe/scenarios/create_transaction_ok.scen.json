@@ -110,7 +110,7 @@
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm",
-                    "owner": "address:owner"
+                    "owner": "sc:multisig"
                 },
                 "+": {}
             }

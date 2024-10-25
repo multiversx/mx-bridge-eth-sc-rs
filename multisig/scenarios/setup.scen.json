@@ -15,7 +15,7 @@
                     "balance": "0"
                 },
                 "sc:bridged_tokens_wrapper": {
-                    "code": "file:../../bridge-proxy/output/bridged-tokens-wrapper.wasm",
+                    "code": "file:../../bridged-tokens-wrapper/output/bridged-tokens-wrapper.wasm",
                     "nonce": "0",
                     "balance": "0"
                 },

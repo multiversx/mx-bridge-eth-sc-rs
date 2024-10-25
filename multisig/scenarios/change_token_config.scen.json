@@ -7,32 +7,6 @@
         },
         {
             "step": "scCall",
-            "txId": "change-fee-estimator-sc-address",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multisig",
-                "value": "0",
-                "function": "upgrade",
-                "arguments": [
-                    "sc:esdt_safe",
-                    "sc:multi_transfer",
-                    "sc:bridge_proxy",
-                    "sc:bridged_tokens_wrapper",
-                    "sc:egld_esdt_swap"
-                ],
-                "gasLimit": "55,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
             "txId": "change-default-price-per-gas-unit",
             "tx": {
                 "from": "address:owner",
