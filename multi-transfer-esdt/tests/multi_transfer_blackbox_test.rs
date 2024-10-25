@@ -945,7 +945,15 @@ fn add_refund_batch_test() {
         MultiValueEncoded::new();
     transfers.push(eth_tx.clone());
 
-    let fee = 22_500_000_000u64;
+    let fee = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .calculate_required_fee(TOKEN_ID)
+        .returns(ReturnsResult)
+        .run();
+
     state.check_balances_on_safe(BigUint::from(MAX_AMOUNT), BigUint::zero(), BigUint::zero());
 
     state
