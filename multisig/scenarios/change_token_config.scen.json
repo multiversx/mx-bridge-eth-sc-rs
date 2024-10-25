@@ -12,8 +12,12 @@
                 "from": "address:owner",
                 "to": "sc:multisig",
                 "value": "0",
-                "function": "changeFeeEstimatorContractAddress",
+                "function": "upgrade",
                 "arguments": [
+                    "sc:esdt_safe",
+                    "sc:multi_transfer",
+                    "sc:bridge_proxy",
+                    "sc:bridged_tokens_wrapper",
                     "sc:egld_esdt_swap"
                 ],
                 "gasLimit": "55,000,000",
@@ -25,22 +29,6 @@
                 "out": [],
                 "gas": "*",
                 "refund": "*"
-            }
-        },
-        {
-            "step": "checkState",
-            "accounts": {
-                "sc:esdt_safe": {
-                    "nonce": "0",
-                    "balance": "0",
-                    "esdt": "*",
-                    "storage": {
-                        "str:feeEstimatorContractAddress": "sc:egld_esdt_swap",
-                        "+": ""
-                    },
-                    "code": "*"
-                },
-                "+": {}
             }
         },
         {

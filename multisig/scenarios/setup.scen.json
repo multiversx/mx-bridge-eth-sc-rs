@@ -12,10 +12,12 @@
                 "sc:bridge_proxy": {
                     "code": "file:../../bridge-proxy/output/bridge-proxy.wasm",
                     "nonce": "0",
-                    "balance": "0",
-                    "storage": {
-                        "str:multiTransferAddress": "sc:multi_transfer"
-                    }
+                    "balance": "0"
+                },
+                "sc:bridged_tokens_wrapper": {
+                    "code": "file:../../bridge-proxy/output/bridged-tokens-wrapper.wasm",
+                    "nonce": "0",
+                    "balance": "0"
                 },
                 "sc:multi_transfer": {
                     "nonce": "0",
@@ -35,8 +37,6 @@
                         }
                     },
                     "storage": {
-                        "str:esdtSafeContractAddress": "sc:esdt_safe",
-                        "str:bridgeProxyContractAddress": "sc:bridge_proxy",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "3,600",
                         "str:maxBridgedAmount|nested:str:WEGLD-123456": "100,000,000,000",
@@ -67,9 +67,6 @@
                         }
                     },
                     "storage": {
-                        "str:multiTransferContractAddress": "sc:multi_transfer",
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
-                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:ethTxGasLimit": "150,000",
@@ -143,6 +140,8 @@
                     "sc:esdt_safe",
                     "sc:multi_transfer",
                     "sc:bridge_proxy",
+                    "sc:bridged_tokens_wrapper",
+                    "sc:price_aggregator",
                     "1000",
                     "500",
                     "2",
@@ -169,6 +168,8 @@
                         "str:esdtSafeAddress": "sc:esdt_safe",
                         "str:multiTransferEsdtAddress": "sc:multi_transfer",
                         "str:proxyAddress": "sc:bridge_proxy",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
+                        "str:feeEstimatorAddress": "sc:price_aggregator",
                         "str:num_board_members": "2",
                         "str:quorum": "2",
                         "str:requiredStakeAmount": "1000",
