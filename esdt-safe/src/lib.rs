@@ -24,7 +24,7 @@ pub struct TransactionDetails<Api: ManagedTypeApi> {
     pub required_fee: BigUint<Api>,
     pub to_address: ManagedBuffer<Api>,
     pub is_refund_tx: bool,
-    pub refund_info: RefundInfo<Api>
+    pub refund_info: RefundInfo<Api>,
 }
 
 #[type_abi]
@@ -32,7 +32,7 @@ pub struct TransactionDetails<Api: ManagedTypeApi> {
 pub struct RefundInfo<M: ManagedTypeApi> {
     pub address: ManagedAddress<M>,
     pub initial_batch_id: u64,
-    pub initial_nonce: u64
+    pub initial_nonce: u64,
 }
 
 #[multiversx_sc::contract]
@@ -50,10 +50,7 @@ pub trait EsdtSafe:
     /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side.
     /// Will be used to compute the fees for the transfer
     #[init]
-    fn init(
-        &self,
-        eth_tx_gas_limit: BigUint,
-    ) {
+    fn init(&self, eth_tx_gas_limit: BigUint) {
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -74,10 +71,7 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(
-        &self,
-        eth_tx_gas_limit: BigUint,
-    ) {
+    fn upgrade(&self, eth_tx_gas_limit: BigUint) {
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -281,16 +275,28 @@ pub trait EsdtSafe:
         let caller = self.blockchain().get_caller();
         let refund_info = match opt_refund_info {
             OptionalValue::Some(refund_info) => {
-                if caller == self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get() {
+                if caller
+                    == self
+                        .get_bridge_proxy_address(self.blockchain().get_owner_address())
+                        .get()
+                {
                     is_refund_tx = true;
                     refund_info
-                } else if caller == self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get() {
+                } else if caller
+                    == self
+                        .get_bridged_tokens_wrapper_address(self.blockchain().get_owner_address())
+                        .get()
+                {
                     refund_info
                 } else {
                     sc_panic!("Cannot specify a refund address from this caller");
                 }
             }
-            OptionalValue::None => RefundInfo{ address: caller, initial_batch_id: 0, initial_nonce: 0},
+            OptionalValue::None => RefundInfo {
+                address: caller,
+                initial_batch_id: 0,
+                initial_nonce: 0,
+            },
         };
 
         self.accumulated_transaction_fees(&payment_token)
@@ -337,11 +343,11 @@ pub trait EsdtSafe:
             required_fee,
             to_address: tx.to,
             is_refund_tx,
-            refund_info
+            refund_info,
         }
     }
 
-        // endpoints
+    // endpoints
 
     /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
     ///
@@ -366,8 +372,12 @@ pub trait EsdtSafe:
                 transaction_details.payment_token,
                 transaction_details.actual_bridged_amount,
                 transaction_details.required_fee,
-                transaction_details.refund_info.address.as_managed_buffer().clone(),
-                transaction_details.to_address
+                transaction_details
+                    .refund_info
+                    .address
+                    .as_managed_buffer()
+                    .clone(),
+                transaction_details.to_address,
             );
         } else {
             self.create_refund_transaction_event(
@@ -399,9 +409,13 @@ pub trait EsdtSafe:
                 transaction_details.payment_token,
                 transaction_details.actual_bridged_amount,
                 transaction_details.required_fee,
-                transaction_details.refund_info.address.as_managed_buffer().clone(),
+                transaction_details
+                    .refund_info
+                    .address
+                    .as_managed_buffer()
+                    .clone(),
                 transaction_details.to_address,
-                data
+                data,
             );
         } else {
             self.create_refund_transaction_sc_call_event(
@@ -412,7 +426,7 @@ pub trait EsdtSafe:
                 transaction_details.required_fee,
                 transaction_details.refund_info.initial_batch_id,
                 transaction_details.refund_info.initial_nonce,
-                data
+                data,
             );
         }
     }
