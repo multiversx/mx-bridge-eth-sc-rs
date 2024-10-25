@@ -53,7 +53,7 @@ pub trait FeeEstimatorModule: storage_module::CommonStorageModule {
         from: &TokenIdentifier,
         to: &TokenIdentifier,
     ) -> Option<BigUint> {
-        let fee_estimator_sc_address = self.get_fee_estimator_address().get();
+        let fee_estimator_sc_address = self.get_fee_estimator_address();
         if fee_estimator_sc_address.is_zero() {
             return None;
         }

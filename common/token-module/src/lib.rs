@@ -133,7 +133,7 @@ pub trait TokenModule:
     fn get_tokens(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
         let caller = self.blockchain().get_caller();
         require!(
-            caller == self.get_multi_transfer_address().get(),
+            caller == self.get_multi_transfer_address(),
             "Only MultiTransfer can get tokens"
         );
 

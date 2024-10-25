@@ -263,7 +263,7 @@ pub trait BridgedTokensWrapper:
 
         let caller = self.blockchain().get_caller();
         self.tx()
-            .to(self.get_esdt_safe_address().get())
+            .to(self.get_esdt_safe_address())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
                 to,
