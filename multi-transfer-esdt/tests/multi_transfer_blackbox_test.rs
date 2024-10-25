@@ -486,8 +486,7 @@ impl MultiTransferTestState {
             .run();
 
         assert_eq!(
-            actual_total_supply,
-            BigUint::from(total_supply),
+            actual_total_supply, total_supply,
             "Total supply balance is wrong"
         );
         let actual_total_burned = self
@@ -500,8 +499,7 @@ impl MultiTransferTestState {
             .run();
 
         assert_eq!(
-            actual_total_burned,
-            BigUint::from(total_burned),
+            actual_total_burned, total_burned,
             "Total burned balance is wrong"
         );
 
@@ -515,8 +513,7 @@ impl MultiTransferTestState {
             .run();
 
         assert_eq!(
-            actual_total_minted,
-            BigUint::from(total_minted),
+            actual_total_minted, total_minted,
             "Total minted balance is wrong"
         );
     }
