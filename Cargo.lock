@@ -151,6 +151,7 @@ name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
+ "mock-esdt-safe",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
