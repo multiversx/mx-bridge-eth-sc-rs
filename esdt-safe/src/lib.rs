@@ -155,9 +155,7 @@ pub trait EsdtSafe:
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
         let caller = self.blockchain().get_caller();
-        let multi_transfer_address = self
-            .get_multi_transfer_address(self.blockchain().get_owner_address())
-            .get();
+        let multi_transfer_address = self.get_multi_transfer_address().get();
         require!(caller == multi_transfer_address, "Invalid caller");
 
         let refund_payments = self.call_value().all_esdt_transfers().deref().clone();
@@ -275,18 +273,10 @@ pub trait EsdtSafe:
         let caller = self.blockchain().get_caller();
         let refund_info = match opt_refund_info {
             OptionalValue::Some(refund_info) => {
-                if caller
-                    == self
-                        .get_bridge_proxy_address(self.blockchain().get_owner_address())
-                        .get()
-                {
+                if caller == self.get_bridge_proxy_address().get() {
                     is_refund_tx = true;
                     refund_info
-                } else if caller
-                    == self
-                        .get_bridged_tokens_wrapper_address(self.blockchain().get_owner_address())
-                        .get()
-                {
+                } else if caller == self.get_bridged_tokens_wrapper_address().get() {
                     refund_info
                 } else {
                     sc_panic!("Cannot specify a refund address from this caller");

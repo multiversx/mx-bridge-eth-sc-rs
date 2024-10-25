@@ -12,7 +12,9 @@ const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniver
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
-    tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule + storage_module::CommonStorageModule
+    tx_batch_module::TxBatchModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + storage_module::CommonStorageModule
 {
     #[init]
     fn init(&self) {
@@ -50,7 +52,7 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        let safe_address = self.get_esdt_safe_address(self.blockchain().get_owner_address()).get();
+        let safe_address = self.get_esdt_safe_address().get();
 
         for eth_tx in transfers {
             let is_success: bool = self
@@ -133,7 +135,7 @@ pub trait MultiTransferEsdt:
                     }
                 }
 
-                let esdt_safe_addr = self.get_esdt_safe_address(self.blockchain().get_owner_address()).get();
+                let esdt_safe_addr = self.get_esdt_safe_address().get();
                 self.tx()
                     .to(esdt_safe_addr)
                     .typed(esdt_safe_proxy::EsdtSafeProxy)
@@ -144,7 +146,7 @@ pub trait MultiTransferEsdt:
             OptionalValue::None => {}
         }
     }
-    
+
     #[only_owner]
     #[endpoint(addUnprocessedRefundTxToBatch)]
     fn add_unprocessed_refund_tx_to_batch(&self, tx_id: u64) {
@@ -159,7 +161,7 @@ pub trait MultiTransferEsdt:
     // private
 
     fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
-        let esdt_safe_addr = self.get_esdt_safe_address(self.blockchain().get_owner_address()).get();
+        let esdt_safe_addr = self.get_esdt_safe_address().get();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
@@ -177,7 +179,7 @@ pub trait MultiTransferEsdt:
             TokenIdentifier,
             ManagedAddress,
         > = SingleValueMapper::<_, _, ManagedAddress>::new_from_address(
-            self.get_bridged_tokens_wrapper_address(self.blockchain().get_owner_address()).get(),
+            self.get_bridged_tokens_wrapper_address().get(),
             storage_key,
         );
         if chain_specific_to_universal_token_mapper.is_empty() {
@@ -223,11 +225,11 @@ pub trait MultiTransferEsdt:
     }
 
     fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
-        if self.get_bridged_tokens_wrapper_address(self.blockchain().get_owner_address()).is_empty() {
+        if self.get_bridged_tokens_wrapper_address().is_empty() {
             return payments;
         }
 
-        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address(self.blockchain().get_owner_address()).get();
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address().get();
         self.tx()
             .to(bridged_tokens_wrapper_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
@@ -243,7 +245,7 @@ pub trait MultiTransferEsdt:
         payments: PaymentsVec<Self::Api>,
         batch_id: u64,
     ) {
-        let bridge_proxy_addr = self.get_bridge_proxy_address(self.blockchain().get_owner_address()).get();
+        let bridge_proxy_addr = self.get_bridge_proxy_address().get();
         for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
             if self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.tx()

@@ -4,9 +4,6 @@ use transaction::EthTransaction;
 
 #[multiversx_sc::module]
 pub trait ConfigModule {
-    #[storage_mapper("ownerAddress")]
-    fn owner_address_storage(&self) -> SingleValueMapper<ManagedAddress<Self::Api>>;
-
     #[storage_mapper("pending_transactions")]
     fn pending_transactions(&self) -> VecMapper<EthTransaction<Self::Api>>;
 
