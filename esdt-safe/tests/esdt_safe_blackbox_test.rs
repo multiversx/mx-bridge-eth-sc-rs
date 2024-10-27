@@ -698,7 +698,6 @@ fn esdt_safe_create_transaction() {
 }
 
 #[test]
-#[ignore] //This will be rewritten
 fn add_refund_batch_test() {
     let mut state = EsdtSafeTestState::new();
     state.multisig_deploy();

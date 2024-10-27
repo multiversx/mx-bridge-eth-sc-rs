@@ -235,7 +235,7 @@ pub trait EsdtSafe:
                 });
             } else {
                 self.total_balances(&refund_token_id).update(|total| {
-                    *total -= &actual_bridged_amount;
+                    *total += &actual_bridged_amount;
                 });
             }
         }
