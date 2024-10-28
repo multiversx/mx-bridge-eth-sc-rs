@@ -12,10 +12,10 @@ path = "src/lib.rs"
 path = "../common/transaction"
 
 [dependencies.elrond-wasm]
-version = "0.32.0"
+version = "=0.32.0"
 
 [dev-dependencies.elrond-wasm-debug]
-version = "0.32.0"
+version = "=0.32.0"
 
 [dependencies.elrond-wasm-modules]
-version = "0.32.0"
+version = "=0.32.0"
