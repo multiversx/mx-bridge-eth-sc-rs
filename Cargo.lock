@@ -151,7 +151,11 @@ name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
+ "mock-bridge-proxy",
  "mock-esdt-safe",
+ "mock-multi-transfer-esdt",
+ "mock-multisig",
+ "mock-price-aggregator",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",

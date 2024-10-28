@@ -29,6 +29,18 @@ path = "../common/sc-proxies"
 [dependencies.mock-esdt-safe]
 path = "../common/mock-contracts/mock-esdt-safe"
 
+[dependencies.mock-multisig]
+path = "../common/mock-contracts/mock-multisig"
+
+[dependencies.mock-multi-transfer-esdt]
+path = "../common/mock-contracts/mock-multi-transfer-esdt"
+
+[dependencies.mock-bridge-proxy]
+path = "../common/mock-contracts/mock-bridge-proxy"
+
+[dependencies.mock-price-aggregator]
+path = "../common/mock-contracts/mock-price-aggregator"
+
 [dependencies.multiversx-sc]
 version = "=0.53.2"
 
