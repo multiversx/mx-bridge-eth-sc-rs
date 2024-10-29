@@ -472,6 +472,7 @@ impl MultiTransferTestState {
 
     fn check_balances_on_safe(
         &mut self,
+        token_id: TestTokenIdentifier,
         total_supply: BigUint<StaticApi>,
         total_minted: BigUint<StaticApi>,
         total_burned: BigUint<StaticApi>,
@@ -481,7 +482,7 @@ impl MultiTransferTestState {
             .query()
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .total_balances(TOKEN_ID)
+            .total_balances(token_id)
             .returns(ReturnsResult)
             .run();
 
@@ -494,7 +495,7 @@ impl MultiTransferTestState {
             .query()
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .burn_balances(TOKEN_ID)
+            .burn_balances(token_id)
             .returns(ReturnsResult)
             .run();
 
@@ -508,7 +509,7 @@ impl MultiTransferTestState {
             .query()
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .mint_balances(TOKEN_ID)
+            .mint_balances(token_id)
             .returns(ReturnsResult)
             .run();
 
@@ -896,6 +897,13 @@ fn test_unwrap_token_create_transaction_should_work() {
         .world
         .set_esdt_balance(USER1_ADDRESS, b"UNIV-abc123", BigUint::from(5_000u64));
 
+    state.check_balances_on_safe(
+        WRAPPED_TOKEN_ID,
+        BigUint::zero(),
+        BigUint::from(600000u64),
+        BigUint::zero(),
+    );
+
     state
         .world
         .tx()
@@ -909,6 +917,13 @@ fn test_unwrap_token_create_transaction_should_work() {
             &BigUint::from(1_000u64),
         )
         .run();
+
+    state.check_balances_on_safe(
+        WRAPPED_TOKEN_ID,
+        BigUint::zero(),
+        BigUint::from(600000u64),
+        BigUint::from(1_000u64),
+    );
 }
 
 #[test]
@@ -999,7 +1014,12 @@ fn add_refund_batch_test() {
         .returns(ReturnsResult)
         .run();
 
-    state.check_balances_on_safe(BigUint::from(MAX_AMOUNT), BigUint::zero(), BigUint::zero());
+    state.check_balances_on_safe(
+        TOKEN_ID,
+        BigUint::from(MAX_AMOUNT),
+        BigUint::zero(),
+        BigUint::zero(),
+    );
 
     state
         .world
@@ -1009,7 +1029,7 @@ fn add_refund_batch_test() {
         .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
-    state.check_balances_on_safe(BigUint::zero(), BigUint::zero(), BigUint::zero());
+    state.check_balances_on_safe(TOKEN_ID, BigUint::zero(), BigUint::zero(), BigUint::zero());
 
     state
         .world
@@ -1021,6 +1041,7 @@ fn add_refund_batch_test() {
         .run();
 
     state.check_balances_on_safe(
+        TOKEN_ID,
         BigUint::from(MAX_AMOUNT) - fee,
         BigUint::zero(),
         BigUint::zero(),
