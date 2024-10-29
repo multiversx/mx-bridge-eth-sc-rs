@@ -1,11 +1,11 @@
 #![no_std]
 
 mod dfp_big_uint;
-mod esdt_safe_proxy;
 mod events;
 use core::ops::Deref;
 
 pub use dfp_big_uint::DFPBigUint;
+use sc_proxies::esdt_safe_proxy;
 use transaction::PaymentsVec;
 
 use eth_address::*;

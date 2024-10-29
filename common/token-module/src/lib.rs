@@ -188,7 +188,7 @@ pub trait TokenModule: fee_estimator_module::FeeEstimatorModule {
         self.require_token_in_whitelist(token_id);
         require!(
             !self.mint_burn_token(token_id).get(),
-            "Cannot init for non mintable/burnable tokens"
+            "Cannot init for mintable/burnable tokens"
         );
         require!(
             self.native_token(token_id).get(),

@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           51
+// Endpoints:                           52
 // Async Callback (empty):               1
-// Total number of exported functions:  54
+// Total number of exported functions:  55
 
 #![no_std]
 
@@ -23,6 +23,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
         createTransaction => create_transaction
+        createTransactionSCCall => create_transaction_sc_call
         claimRefund => claim_refund
         setBridgedTokensWrapperAddress => set_bridged_tokens_wrapper_contract_address
         setBridgeProxyContractAddress => set_bridge_proxy_contract_address

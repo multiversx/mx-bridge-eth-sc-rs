@@ -3,12 +3,8 @@
 use multiversx_sc::{imports::*, storage::StorageKey};
 
 use eth_address::EthAddress;
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
-
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper_proxy;
-pub mod esdt_safe_proxy;
-pub mod multi_transfer_proxy;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
