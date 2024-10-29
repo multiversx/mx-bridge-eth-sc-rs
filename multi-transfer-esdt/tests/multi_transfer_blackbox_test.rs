@@ -903,6 +903,15 @@ fn test_unwrap_token_create_transaction_should_work() {
         BigUint::from(600000u64),
         BigUint::zero(),
     );
+    
+    state
+        .world
+        .query()
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .token_liquidity(WRAPPED_TOKEN_ID)
+        .returns(ExpectValue(BigUint::from(1000u64)))
+        .run();
 
     state
         .world
@@ -914,15 +923,24 @@ fn test_unwrap_token_create_transaction_should_work() {
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
-            &BigUint::from(1_000u64),
+            &BigUint::from(900u64),
         )
+        .run();
+
+    state
+        .world
+        .query()
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .token_liquidity(WRAPPED_TOKEN_ID)
+        .returns(ExpectValue(BigUint::from(100u64)))
         .run();
 
     state.check_balances_on_safe(
         WRAPPED_TOKEN_ID,
         BigUint::zero(),
         BigUint::from(600000u64),
-        BigUint::from(1_000u64),
+        BigUint::from(900u64),
     );
 }
 
