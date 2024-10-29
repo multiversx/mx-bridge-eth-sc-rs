@@ -36,6 +36,7 @@ const MOCK_BRIDGE_PROXY_PATH_EXPR: MxscPath =
     MxscPath::new("../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json");
 
 const TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-123456");
+const MINT_BURN_TOKEN: TestTokenIdentifier = TestTokenIdentifier::new("MINT-BURN-123456");
 const NON_WHITELISTED_TOKEN: TestTokenIdentifier =
     TestTokenIdentifier::new("NON-WHITELISTED-123456");
 const TOKEN_WITH_BURN_ROLE: TestTokenIdentifier = TestTokenIdentifier::new("TOKEN-WITH");
@@ -86,7 +87,8 @@ impl EsdtSafeTestState {
             .esdt_balance(TOKEN_ID, 1_000_000_000_000u64)
             .esdt_balance(NON_WHITELISTED_TOKEN, 1001u64)
             .esdt_balance(NATIVE_TOKEN_ID, 300_000_000_000u64)
-            .esdt_balance(TOKEN_WITH_BURN_ROLE, 100_000u64);
+            .esdt_balance(MINT_BURN_TOKEN, 200000u64)
+            .esdt_balance(TOKEN_WITH_BURN_ROLE, 100_000_000_000u64);
 
         world
             .account(PRICE_AGGREGATOR)
@@ -94,7 +96,16 @@ impl EsdtSafeTestState {
 
         world
             .account(MULTI_TRANSFER_ADDRESS)
-            .code(MOCK_MULTI_TRANSFER_PATH_EXPR);
+            .esdt_balance(NATIVE_TOKEN_ID, 300_000_000_000u64)
+            .esdt_balance(TOKEN_WITH_BURN_ROLE, 100_000_000_000u64)
+            .esdt_balance(TOKEN_ID, 300_000_000u64)
+            .code(MOCK_MULTI_TRANSFER_PATH_EXPR)
+            .account(BRIDGE_PROXY_ADDRESS)
+            .esdt_balance(TOKEN_ID, 100_000_000u64)
+            .code(MOCK_BRIDGE_PROXY_PATH_EXPR)
+            .account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+            .esdt_balance(TOKEN_ID, 100_000_000u64)
+            .code(MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR);
 
         Self { world }
     }
@@ -163,7 +174,17 @@ impl EsdtSafeTestState {
             b"TOKEN-123456",
             BigUint::from(10_000_000u64),
         );
+        self.world.set_esdt_balance(
+            ESDT_SAFE_ADDRESS,
+            b"MINT-BURN-123456",
+            BigUint::from(20_000_000u64),
+        );
 
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"MINT-BURN-123456",
+            BigUint::from(200_000_000_000u64),
+        );
         self.world.set_esdt_balance(
             MULTISIG_ADDRESS,
             b"NON-WHITELISTED-123456",
@@ -200,10 +221,23 @@ impl EsdtSafeTestState {
 
         self.esdt_raw_transaction()
             .add_token_to_whitelist(
+                MINT_BURN_TOKEN,
+                "TOKEN",
+                true,
+                false,
+                BigUint::from(0u64),
+                BigUint::from(2000u64),
+                BigUint::from(0u64),
+                OptionalValue::Some(BigUint::from(0u64)),
+            )
+            .run();
+
+        self.esdt_raw_transaction()
+            .add_token_to_whitelist(
                 TOKEN_WITH_BURN_ROLE,
                 "TKN",
                 true,
-                true,
+                false,
                 BigUint::from(0u64),
                 BigUint::from(0u64),
                 BigUint::from(0u64),
@@ -215,6 +249,19 @@ impl EsdtSafeTestState {
             .add_token_to_whitelist(
                 NATIVE_TOKEN_ID,
                 "NATIVE",
+                false,
+                true,
+                BigUint::from(0u64),
+                BigUint::from(0u64),
+                BigUint::from(0u64),
+                OptionalValue::Some(BigUint::from(0u64)),
+            )
+            .run();
+
+        self.esdt_raw_transaction()
+            .add_token_to_whitelist(
+                TOKEN_ID,
+                "TOKEN_ID",
                 false,
                 true,
                 BigUint::from(0u64),
@@ -381,6 +428,79 @@ fn config_test() {
     state.multisig_deploy();
     state.safe_deploy();
     state.config_esdtsafe();
+}
+
+#[test]
+fn upgrade_test() {
+    let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.config_esdtsafe();
+
+    let eth_tx_gas_limit_before = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .eth_tx_gas_limit()
+        .returns(ReturnsResult)
+        .run();
+    assert_eq!(
+        eth_tx_gas_limit_before,
+        BigUint::from(ETH_TX_GAS_LIMIT),
+        "Initial eth_tx_gas_limit should match the set value"
+    );
+
+    let paused_state_before = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .paused_status()
+        .returns(ReturnsResult)
+        .run();
+    assert_eq!(
+        paused_state_before, false,
+        "Contract should not be paused before upgrade"
+    );
+
+    let new_eth_tx_gas_limit = BigUint::from(5000u64);
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .upgrade(new_eth_tx_gas_limit.clone())
+        .code(ESDT_SAFE_CODE_PATH)
+        .run();
+
+    let eth_tx_gas_limit_after = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .eth_tx_gas_limit()
+        .returns(ReturnsResult)
+        .run();
+    assert_eq!(
+        eth_tx_gas_limit_after,
+        new_eth_tx_gas_limit.clone(),
+        "eth_tx_gas_limit should be updated after upgrade"
+    );
+
+    let paused_state_after = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .paused_status()
+        .returns(ReturnsResult)
+        .run();
+    assert_eq!(
+        paused_state_after, true,
+        "Contract should be paused after upgrade"
+    );
 }
 
 #[test]
@@ -618,52 +738,57 @@ fn esdt_safe_create_transaction() {
 
     state.config_esdtsafe();
 
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_eth_tx_gas_limit(1000u64)
-        .run();
-
     state.single_transaction_should_fail(
         TOKEN_WITH_BURN_ROLE,
         0u64,
         "Transaction fees cost more than the entire bridged amount",
     );
 
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_eth_tx_gas_limit(10_000u64)
-        .run();
-
-    //state.single_transaction_should_fail(TOKEN_ID, 100_000u64, "Not enough minted tokens!");
-
     state.single_transaction_should_fail(NON_WHITELISTED_TOKEN, 100u64, "Token not in whitelist");
 
+    state.single_transaction_should_fail(TOKEN_WITH_BURN_ROLE, 100u64, "Not enough minted tokens!");
+
+    state.single_transaction_should_fail(MINT_BURN_TOKEN, 10u64, "Cannot do the burn action!");
+
+    let refund_info = sc_proxies::esdt_safe_proxy::RefundInfo::<StaticApi> {
+        address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
+        initial_batch_id: 1u64,
+        initial_nonce: 1u64,
+    };
+
     state
         .world
         .tx()
-        .from(MULTISIG_ADDRESS)
+        .from(BRIDGE_PROXY_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply_mint_burn(
-            TOKEN_WITH_BURN_ROLE,
-            BigUint::from(100u64),
-            BigUint::from(100u64),
-        )
+        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
         .run();
 
-    state.single_transaction_should_fail(
-        TOKEN_WITH_BURN_ROLE,
-        100u64,
-        "Cannot do the burn action!",
-    );
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .returns(ExpectError(
+            ERROR,
+            "Cannot specify a refund address from this caller",
+        ))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .run();
 
     state
         .world
@@ -672,6 +797,15 @@ fn esdt_safe_create_transaction() {
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .set_eth_tx_gas_limit(1000u64)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_default_price_per_gas_unit(TOKEN_ID, 10u64)
         .run();
 
     state.single_transaction_should_work(TOKEN_ID, 100_000u64);
@@ -685,14 +819,71 @@ fn esdt_safe_create_transaction() {
         .returns(ReturnsResult)
         .run();
 
-    state.single_transaction_should_work(TOKEN_ID, 120_000u64);
+    assert_eq!(total_accumulated_transaction_fee, 10000u64);
+
+    state.single_transaction_should_work(NATIVE_TOKEN_ID, 120_000u64);
 
     let total_balances = state
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .total_balances(TOKEN_WITH_BURN_ROLE)
+        .total_balances(NATIVE_TOKEN_ID)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(total_balances, 120000u64);
+}
+
+#[test]
+fn esdt_create_transaction_sc_call_test() {
+    let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
+    state.safe_deploy();
+
+    state.world.set_esdt_balance(
+        MULTISIG_ADDRESS,
+        b"TOKEN-WITH",
+        BigUint::from(10_000_000u64),
+    );
+
+    state.config_esdtsafe();
+
+    let refund_info = sc_proxies::esdt_safe_proxy::RefundInfo::<StaticApi> {
+        address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
+        initial_batch_id: 1u64,
+        initial_nonce: 1u64,
+    };
+
+    let data = ManagedBuffer::<StaticApi>::from(b"Some data");
+
+    state
+        .world
+        .tx()
+        .from(BRIDGE_PROXY_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction_sc_call(
+            EthAddress::zero(),
+            data.clone(),
+            OptionalValue::Some(refund_info.clone()),
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .returns(ReturnsResult)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction_sc_call(
+            EthAddress::zero(),
+            data.clone(),
+            OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
         .returns(ReturnsResult)
         .run();
 }
@@ -783,6 +974,12 @@ fn add_refund_batch_test() {
         BigUint::from(10_000u64),
     );
 
+    state.world.set_esdt_balance(
+        MULTI_TRANSFER_ADDRESS,
+        b"MINT-BURN-123456",
+        BigUint::from(10_000u64),
+    );
+
     state
         .world
         .tx()
@@ -816,6 +1013,70 @@ fn add_refund_batch_test() {
         "Amounts do not match",
     );
 
+    let eth_tx3 = Transaction {
+        from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
+        to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
+        amount: BigUint::from(10_000u64),
+        block_nonce: 0u64,
+        nonce: 0u64,
+        token_identifier: TokenIdentifier::from(MINT_BURN_TOKEN),
+        is_refund_tx: true,
+    };
+
+    let mut transfers2: ManagedVec<StaticApi, Transaction<StaticApi>> = ManagedVec::new();
+    transfers2.push(eth_tx3);
+
+    state
+        .world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .add_refund_batch(transfers2)
+        .single_esdt(&MINT_BURN_TOKEN.into(), 0, &BigUint::from(10_000u64))
+        .returns(ExpectError(ERROR, "Not enough minted tokens!"))
+        .run();
+
+    let eth_tx4 = Transaction {
+        from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
+        to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
+        amount: BigUint::from(1_000u64),
+        block_nonce: 0u64,
+        nonce: 0u64,
+        token_identifier: TokenIdentifier::from(MINT_BURN_TOKEN),
+        is_refund_tx: true,
+    };
+
+    let mut transfers3: ManagedVec<StaticApi, Transaction<StaticApi>> = ManagedVec::new();
+    transfers3.push(eth_tx4);
+
+    state
+        .world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .add_refund_batch(transfers3.clone())
+        .single_esdt(&MINT_BURN_TOKEN.into(), 0, &BigUint::from(1_000u64))
+        .returns(ExpectError(ERROR, "Cannot do the burn action!"))
+        .run();
+
+    state.world.set_esdt_local_roles(
+        ESDT_SAFE_ADDRESS,
+        b"MINT-BURN-123456",
+        &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
+    );
+
+    state
+        .world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .add_refund_batch(transfers3)
+        .single_esdt(&MINT_BURN_TOKEN.into(), 0, &BigUint::from(1_000u64))
+        .run();
+
     state
         .world
         .tx()
@@ -842,7 +1103,7 @@ fn add_refund_batch_test() {
     } = result
     {
         assert!(!tx_ids.is_empty(), "tx_ids should not be empty");
-        let expected_tx_ids = vec![1u64, 2u64];
+        let expected_tx_ids = vec![1u64, 2u64, 3u64];
         let tx_ids_vec: Vec<u64> = tx_ids.into_iter().collect();
         assert_eq!(
             tx_ids_vec, expected_tx_ids,
@@ -854,7 +1115,6 @@ fn add_refund_batch_test() {
 }
 
 #[test]
-#[ignore] //This will be rewritten
 fn claim_refund_test() {
     let mut state = EsdtSafeTestState::new();
     state.multisig_deploy();
@@ -877,6 +1137,70 @@ fn claim_refund_test() {
         .from(MULTISIG_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_eth_tx_gas_limit(100u64)
+        .run();
+
+    state.world.set_esdt_local_roles(
+        ESDT_SAFE_ADDRESS,
+        b"MINT-BURN-123456",
+        &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
+    );
+
+    state.single_transaction_should_work(MINT_BURN_TOKEN, 1000u64);
+    state.set_transaction_batch_status_should_work(1, tx_statuses.clone());
+
+    let refund = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_refund_amounts(MULTISIG_ADDRESS)
+        .returns(ReturnsResult)
+        .run();
+
+    let (token_id, amount) = refund.into_iter().next().unwrap().into_tuple();
+    assert_eq!(token_id, TokenIdentifier::from(MINT_BURN_TOKEN));
+    assert_eq!(amount, BigUint::from(1000u64));
+
+    let claim_refund = state
+        .esdt_raw_transaction()
+        .claim_refund(MINT_BURN_TOKEN)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(token_id, claim_refund.token_identifier);
+    assert_eq!(amount, claim_refund.amount);
+
+    let refund_after = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_refund_amounts(OWNER_ADDRESS)
+        .returns(ReturnsResult)
+        .run();
+    assert!(refund_after.is_empty());
+
+    let claim_refund_second = state
+        .esdt_raw_transaction()
+        .claim_refund(MINT_BURN_TOKEN)
+        .returns(ExpectError(ERROR, "Nothing to refund"))
+        .run();
+}
+
+#[test]
+fn withdraw_refund_fees_for_ethereum_test() {
+    let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.config_esdtsafe();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
         .set_eth_tx_gas_limit(1000u64)
         .run();
 
@@ -886,45 +1210,178 @@ fn claim_refund_test() {
         .from(MULTISIG_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply_mint_burn(
-            TOKEN_ID,
-            BigUint::from(100_000u64),
-            BigUint::from(10_000u64),
+        .set_default_price_per_gas_unit(TOKEN_ID, 10u64)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .withdraw_refund_fees_for_ethereum(TOKEN_ID, MULTISIG_ADDRESS)
+        .returns(ExpectError(ERROR, "There are no fees to withdraw"))
+        .run();
+
+    let refund_tx = Transaction {
+        from: ManagedBuffer::from(OWNER_ADDRESS_EXPR),
+        to: ManagedBuffer::from(ESTD_SAFE_ADDRESS_EXPR),
+        amount: BigUint::from(1_000_000u64),
+        block_nonce: 0u64,
+        nonce: 0u64,
+        token_identifier: TokenIdentifier::from(TOKEN_ID),
+        is_refund_tx: true,
+    };
+
+    let mut transfers: ManagedVec<StaticApi, Transaction<StaticApi>> = ManagedVec::new();
+    transfers.push(refund_tx.clone());
+
+    let payment = EsdtTokenPayment::new(TOKEN_ID.into(), 0, BigUint::from(1_000_000u64));
+    let payments = vec![payment];
+    let payment = EgldOrMultiEsdtPayment::MultiEsdt(payments.into());
+
+    state.world.set_esdt_balance(
+        MULTI_TRANSFER_ADDRESS,
+        b"TOKEN-123456",
+        BigUint::from(1_000_000u64),
+    );
+
+    state
+        .world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .add_refund_batch(transfers.clone())
+        .egld_or_multi_esdt(payment.clone())
+        .returns(ReturnsResult)
+        .run();
+
+    let refund_fees = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_refund_fees_for_ethereum(TOKEN_ID)
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(
+        refund_fees > BigUint::zero(),
+        "refund_fees_for_ethereum should be greater than zero"
+    );
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .withdraw_refund_fees_for_ethereum(TOKEN_ID, MULTISIG_ADDRESS)
+        .returns(ReturnsResult)
+        .run();
+
+    let refund_fees_after = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_refund_fees_for_ethereum(TOKEN_ID)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        refund_fees_after,
+        BigUint::zero(),
+        "refund_fees_for_ethereum should be zero after withdrawal"
+    );
+}
+
+#[test]
+fn withdraw_transaction_fees_test() {
+    let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.config_esdtsafe();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_eth_tx_gas_limit(1000u64)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .withdraw_transaction_fees(TOKEN_ID, MULTISIG_ADDRESS)
+        .returns(ExpectError(ERROR, "There are no fees to withdraw"))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_default_price_per_gas_unit(TOKEN_ID, 10u64)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress::zero(),
+            OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
         )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(1_000_000u64))
+        .returns(ReturnsResult)
         .run();
 
-    state.single_transaction_should_work(TOKEN_ID, 100_000u64);
-    state.set_transaction_batch_status_should_work(1, tx_statuses.clone());
-
-    let result = state
+    let transaction_fees = state
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_refund_amounts(OWNER_ADDRESS)
+        .get_transaction_fees(TOKEN_ID)
         .returns(ReturnsResult)
         .run();
 
-    let (token_id, amount) = result.into_iter().next().unwrap().into_tuple();
-    assert_eq!(token_id, TokenIdentifier::from(TOKEN_ID));
-    assert_eq!(amount, BigUint::from(90_000u64));
+    assert!(
+        transaction_fees > BigUint::zero(),
+        "accumulated_transaction_fees should be greater than zero"
+    );
 
-    let result2 = state
-        .esdt_raw_transaction()
-        .claim_refund(TOKEN_ID)
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .withdraw_transaction_fees(TOKEN_ID, MULTISIG_ADDRESS)
         .returns(ReturnsResult)
         .run();
 
-    assert_eq!(token_id, result2.token_identifier);
-    assert_eq!(amount, result2.amount);
-
-    let result3 = state
+    let transaction_fees_after = state
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_refund_amounts(OWNER_ADDRESS)
+        .get_transaction_fees(TOKEN_ID)
         .returns(ReturnsResult)
         .run();
-    assert!(result3.is_empty());
+
+    assert_eq!(
+        transaction_fees_after,
+        BigUint::zero(),
+        "accumulated_transaction_fees should be zero after withdrawal"
+    );
 }
