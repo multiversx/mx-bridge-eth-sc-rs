@@ -815,7 +815,7 @@ fn test_unwrap_token_create_transaction_paused() {
             0u64,
             &BigUint::from(10u64),
         )
-        .returns(ExpectError(ERROR, "Cannot create transaction while paused"))
+        .returns(ExpectError(ERROR, "Contract is paused"))
         .run();
 }
 
@@ -877,21 +877,66 @@ fn test_unwrap_token_create_transaction_should_work() {
 
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
+
     state
         .world
         .tx()
-        .from(BRIDGE_PROXY_ADDRESS)
+        .from(OWNER_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(
-            TokenIdentifier::from(WRAPPED_TOKEN_ID),
-            EthAddress::zero(),
-        )
+        .deposit_liquidity()
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(WRAPPED_TOKEN_ID),
             0u64,
-            &BigUint::from(100u64),
+            &BigUint::from(1_000u64),
         )
+        .run();
+
+    state
+        .world
+        .set_esdt_balance(USER1_ADDRESS, b"UNIV-abc123", BigUint::from(5_000u64));
+
+    state
+        .world
+        .tx()
+        .from(USER1_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
+            0u64,
+            &BigUint::from(1_000u64),
+        )
+        .run();
+}
+
+#[test]
+fn test_unwrap_token_create_transaction_should_fail() {
+    let mut state = MultiTransferTestState::new();
+
+    state.deploy_contracts();
+
+    state.config_multi_transfer();
+    state.config_bridged_tokens_wrapper();
+
+    state
+        .world
+        .set_esdt_balance(USER1_ADDRESS, b"TOKEN", BigUint::from(5_000u64));
+
+    state
+        .world
+        .tx()
+        .from(USER1_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
+            0u64,
+            &BigUint::from(1_000u64),
+        )
+        .returns(ExpectError(ERROR, "Esdt token unavailable"))
         .run();
 }
 
