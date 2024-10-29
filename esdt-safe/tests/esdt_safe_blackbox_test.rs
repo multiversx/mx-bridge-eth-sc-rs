@@ -459,8 +459,8 @@ fn upgrade_test() {
         .paused_status()
         .returns(ReturnsResult)
         .run();
-    assert_eq!(
-        paused_state_before, false,
+    assert!(
+        !paused_state_before,
         "Contract should not be paused before upgrade"
     );
 
@@ -497,8 +497,8 @@ fn upgrade_test() {
         .paused_status()
         .returns(ReturnsResult)
         .run();
-    assert_eq!(
-        paused_state_after, true,
+    assert!(
+        paused_state_after,
         "Contract should be paused after upgrade"
     );
 }
@@ -1181,7 +1181,7 @@ fn claim_refund_test() {
         .run();
     assert!(refund_after.is_empty());
 
-    let claim_refund_second = state
+    state
         .esdt_raw_transaction()
         .claim_refund(MINT_BURN_TOKEN)
         .returns(ExpectError(ERROR, "Nothing to refund"))
