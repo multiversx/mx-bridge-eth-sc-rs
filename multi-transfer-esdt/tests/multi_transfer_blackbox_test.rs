@@ -999,8 +999,6 @@ fn batch_transfer_both_failed_test() {
     assert!(first_batch.is_none());
 }
 
-
-
 #[test]
 fn test_unwrap_token_create_transaction_paused() {
     let mut state = MultiTransferTestState::new();
