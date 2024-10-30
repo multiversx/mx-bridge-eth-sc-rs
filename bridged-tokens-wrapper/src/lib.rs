@@ -248,26 +248,20 @@ pub trait BridgedTokensWrapper:
         requested_token: TokenIdentifier,
         to: EthAddress<Self::Api>,
     ) {
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        let universal_token_id = self
-            .chain_specific_to_universal_mapping(&requested_token)
-            .get();
-
-        let converted_amount = if universal_token_id == payment_token {
-            self.unwrap_token_common(&requested_token)
-        } else {
-            payment_amount
-        };
+        let converted_amount = self.unwrap_token_common(&requested_token);
 
         let caller = self.blockchain().get_caller();
         self.tx()
             .to(self.esdt_safe_contract_address().get())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(to, OptionalValue::Some(esdt_safe_proxy::RefundInfo {
-                address: caller,
-                initial_batch_id: 0,
-                initial_nonce: 0,
-            }))
+            .create_transaction(
+                to,
+                OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                    address: caller,
+                    initial_batch_id: 0,
+                    initial_nonce: 0,
+                }),
+            )
             .single_esdt(&requested_token, 0, &converted_amount)
             .sync_call();
     }
@@ -347,5 +341,4 @@ pub trait BridgedTokensWrapper:
     #[view(getEsdtSafeContractAddress)]
     #[storage_mapper("esdtSafeContractAddress")]
     fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
 }
