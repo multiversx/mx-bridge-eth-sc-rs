@@ -1,11 +1,7 @@
 #![allow(unused)]
 
-use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
-use bridged_tokens_wrapper::ProxyTrait as _;
-use esdt_safe::{EsdtSafe, ProxyTrait as _, RefundInfo};
 use esdt_safe_proxy::EsdtSafeProxyMethods;
 use multi_transfer_esdt::*;
-
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
     codec::{
@@ -119,7 +115,7 @@ impl MultiTransferTestState {
             .account(OWNER_ADDRESS)
             .nonce(1)
             .esdt_balance(BRIDGE_TOKEN_ID, 1001u64)
-            .esdt_balance(TOKEN_ID, MAX_AMOUNT)
+            .esdt_balance(TOKEN_TICKER, MAX_AMOUNT)
             .esdt_balance(WRAPPED_TOKEN_ID, 1001u64)
             .esdt_balance(TOKEN_ID, 1_000_000_000_000u64)
             .esdt_balance(NON_WHITELISTED_TOKEN, 1_000_000u64)
@@ -268,8 +264,8 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
-            .set_max_bridged_amount(TOKEN_ID, MAX_AMOUNT - 1)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .set_max_bridged_amount(TOKEN_TICKER, MAX_AMOUNT - 1)
             .run();
 
         self.world
@@ -591,7 +587,10 @@ impl MultiTransferTestState {
         expected_error: &str,
     ) {
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero(),OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>)
+            .create_transaction(
+                EthAddress::zero(),
+                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+            )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
@@ -603,7 +602,10 @@ impl MultiTransferTestState {
 
     fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero(), OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>)
+            .create_transaction(
+                EthAddress::zero(),
+                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+            )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
@@ -1496,7 +1498,7 @@ fn test_unwrap_token_create_transaction_should_work() {
         BigUint::from(600000u64),
         BigUint::zero(),
     );
-    
+
     state
         .world
         .query()
@@ -1558,7 +1560,7 @@ fn test_unwrap_token_create_transaction_should_fail() {
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
         .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
+            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_TICKER),
             0u64,
             &BigUint::from(1_000u64),
         )
@@ -1594,7 +1596,7 @@ fn test_unwrap_token_create_transaction_amount_zero() {
 }
 
 #[test]
-fn add_refund_batch_test() {
+fn add_refund_batch_test_should_work() {
     let mut state = MultiTransferTestState::new();
 
     state.multi_transfer_deploy();
@@ -1606,7 +1608,7 @@ fn add_refund_batch_test() {
     let eth_tx = EthTransaction {
         from: EthAddress::zero(),
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
-        token_id: TokenIdentifier::from(TOKEN_ID),
+        token_id: TokenIdentifier::from(TOKEN_TICKER),
         amount: BigUint::from(MAX_AMOUNT),
         tx_nonce: 1u64,
         call_data: ManagedOption::none(),
@@ -1621,12 +1623,12 @@ fn add_refund_batch_test() {
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .calculate_required_fee(TOKEN_ID)
+        .calculate_required_fee(TOKEN_TICKER)
         .returns(ReturnsResult)
         .run();
 
     state.check_balances_on_safe(
-        TOKEN_ID,
+        TOKEN_TICKER,
         BigUint::from(MAX_AMOUNT),
         BigUint::zero(),
         BigUint::zero(),
@@ -1637,22 +1639,27 @@ fn add_refund_batch_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
-    state.check_balances_on_safe(TOKEN_ID, BigUint::zero(), BigUint::zero(), BigUint::zero());
+    state.check_balances_on_safe(
+        TOKEN_TICKER,
+        BigUint::zero(),
+        BigUint::zero(),
+        BigUint::zero(),
+    );
 
     state
         .world
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .move_refund_batch_to_safe()
         .run();
 
     state.check_balances_on_safe(
-        TOKEN_ID,
+        TOKEN_TICKER,
         BigUint::from(MAX_AMOUNT) - fee,
         BigUint::zero(),
         BigUint::zero(),
