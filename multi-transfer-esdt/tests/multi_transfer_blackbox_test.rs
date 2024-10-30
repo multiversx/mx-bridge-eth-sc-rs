@@ -65,6 +65,9 @@ const BRIDGED_TOKENS_WRAPPER_CODE_PATH: MxscPath =
     MxscPath::new("../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json");
 const MOCK_MULTISIG_CODE_PATH: MxscPath =
     MxscPath::new("../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json");
+const MOCK_MULTI_TRANSFER_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
 const MOCK_PRICE_AGGREGATOR_CODE_PATH: MxscPath = MxscPath::new(
     "../common/mock-contracts/mock-price-aggregator/output/mock-price-aggregator.mxsc.json",
 );
@@ -108,6 +111,11 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(
         MOCK_PRICE_AGGREGATOR_CODE_PATH,
         mock_price_aggregator::ContractBuilder,
+    );
+
+    blockchain.register_contract(
+        MOCK_MULTI_TRANSFER_CODE_PATH,
+        mock_multi_transfer_esdt::ContractBuilder,
     );
 
     blockchain
@@ -515,6 +523,21 @@ fn test_config() {
 }
 
 #[test]
+fn test_upgrade() {
+    let mut state = MultiTransferTestState::new();
+    state.deploy_contracts();
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .upgrade()
+        .code(MULTI_TRANSFER_CODE_PATH)
+        .run();
+}
+
+#[test]
 fn basic_transfer_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(500u64);
@@ -780,6 +803,8 @@ fn batch_transfer_both_failed_test() {
     assert!(first_batch.is_none());
 }
 
+
+
 #[test]
 fn test_unwrap_token_create_transaction_paused() {
     let mut state = MultiTransferTestState::new();
@@ -866,7 +891,7 @@ fn test_unwrap_token_create_transaction_should_work() {
 
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
-    
+
     state
         .world
         .tx()

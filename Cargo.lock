@@ -679,6 +679,7 @@ dependencies = [
  "esdt-safe",
  "eth-address",
  "max-bridged-amount-module",
+ "mock-multi-transfer-esdt",
  "mock-multisig",
  "mock-price-aggregator",
  "multiversx-sc",
