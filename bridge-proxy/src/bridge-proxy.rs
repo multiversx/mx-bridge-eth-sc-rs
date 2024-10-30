@@ -13,6 +13,7 @@ const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 const MIN_GAS_TO_SAVE_PROGRESS: u64 = 1_000_000;
+const MAX_ITERATIONS: usize = 1000;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -203,8 +204,14 @@ pub trait BridgeProxyContract:
         let mut new_lowest = self.lowest_tx_id().get();
         let len = self.pending_transactions().len();
 
+        let capped_len = if len > new_lowest + MAX_ITERATIONS {
+            new_lowest + MAX_ITERATIONS
+        } else {
+            len
+        };
+
         self.run_while_it_has_gas(MIN_GAS_TO_SAVE_PROGRESS, || {
-            if !self.empty_element(new_lowest, len) {
+            if !self.empty_element(new_lowest, capped_len) {
                 return STOP_OP;
             }
 
