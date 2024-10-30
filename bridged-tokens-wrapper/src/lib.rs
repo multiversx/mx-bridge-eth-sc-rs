@@ -250,16 +250,7 @@ pub trait BridgedTokensWrapper:
         requested_token: TokenIdentifier,
         to: EthAddress<Self::Api>,
     ) {
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        let universal_token_id = self
-            .chain_specific_to_universal_mapping(&requested_token)
-            .get();
-
-        let converted_amount = if universal_token_id == payment_token {
-            self.unwrap_token_common(&requested_token)
-        } else {
-            payment_amount
-        };
+        let converted_amount = self.unwrap_token_common(&requested_token);
 
         let caller = self.blockchain().get_caller();
         self.tx()
