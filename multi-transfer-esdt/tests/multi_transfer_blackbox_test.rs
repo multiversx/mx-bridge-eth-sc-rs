@@ -1208,7 +1208,7 @@ fn test_unwrap_token_create_transaction_amount_zero() {
 
 #[test]
 fn add_refund_batch_test_should_work() {
-    let mut state = MultiTransferTestState::new();
+    let mut state: MultiTransferTestState = MultiTransferTestState::new();
 
     state.multisig_deploy();
     state.multi_transfer_deploy();
@@ -1276,4 +1276,38 @@ fn add_refund_batch_test_should_work() {
         BigUint::zero(),
         BigUint::zero(),
     );
+}
+
+#[test]
+fn batch_transfer_esdt_token_to_address_zero() {
+    let mut state: MultiTransferTestState = MultiTransferTestState::new();
+
+    state.multisig_deploy();
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.safe_deploy_real_contract();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multi_transfer();
+
+    let eth_tx = EthTransaction {
+        from: EthAddress::zero(),
+        to: ManagedAddress::zero(),
+        token_id: TokenIdentifier::from(TOKEN_TICKER),
+        amount: BigUint::from(MAX_AMOUNT),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx.clone());
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
 }
