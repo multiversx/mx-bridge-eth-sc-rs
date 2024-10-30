@@ -37,7 +37,10 @@ use sc_proxies::{
     multi_transfer_esdt_proxy, multisig_proxy,
 };
 use token_module::ProxyTrait as _;
-use transaction::{CallData, EthTransaction, EthTxAsMultiValue, TxBatchSplitInFields};
+use transaction::{
+    transaction_status::TransactionStatus, CallData, EthTransaction, EthTxAsMultiValue,
+    TxBatchSplitInFields,
+};
 
 const WEGLD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
@@ -69,6 +72,7 @@ const ORACLE_ADDRESS: TestAddress = TestAddress::new("oracle");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
 const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
+const NON_BOARD_MEMEBER_ADDRESS: TestAddress = TestAddress::new("non-board-member");
 const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
 const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
@@ -125,7 +129,9 @@ impl MultiTransferTestState {
             .balance(1_000u64)
             .account(RELAYER2_ADDRESS)
             .nonce(1)
-            .balance(1_000u64);
+            .balance(1_000u64)
+            .account(NON_BOARD_MEMEBER_ADDRESS)
+            .nonce(1);
 
         let roles = vec![
             "ESDTRoleLocalMint".to_string(),
@@ -887,5 +893,160 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .move_refund_batch_to_safe_from_child_contract()
+        .run();
+}
+
+#[test]
+fn multisig_non_board_member_interaction_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(NON_BOARD_MEMEBER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers.clone())
+        .returns(ExpectError(4, "only board members can propose"))
+        .run();
+
+    let mut tx_batch_status: MultiValueEncoded<StaticApi, TransactionStatus> =
+        MultiValueEncoded::<StaticApi, TransactionStatus>::new();
+    tx_batch_status.push(TransactionStatus::InProgress);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+}
+
+#[test]
+fn multisig_insuficient_signatures_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .returns(ExpectError(4, "quorum has not been reached"))
+        .run();
+}
+
+#[test]
+fn multisig_non_board_member_sign_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(NON_BOARD_MEMEBER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .returns(ExpectError(4, "only board members can sign"))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .returns(ExpectError(4, "quorum has not been reached"))
         .run();
 }
