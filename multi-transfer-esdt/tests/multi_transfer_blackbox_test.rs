@@ -2,7 +2,7 @@
 
 use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
 use bridged_tokens_wrapper::ProxyTrait as _;
-use esdt_safe::{EsdtSafe, ProxyTrait as _};
+use esdt_safe::{EsdtSafe, ProxyTrait as _, RefundInfo};
 use esdt_safe_proxy::EsdtSafeProxyMethods;
 use multi_transfer_esdt::*;
 
@@ -33,7 +33,7 @@ use multiversx_sc_scenario::{
 use eth_address::*;
 use sc_proxies::{
     bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
-    multi_transfer_proxy,
+    multi_transfer_esdt_proxy,
 };
 use token_module::ProxyTrait as _;
 use transaction::{transaction_status::TransactionStatus, CallData, EthTransaction, Transaction};
@@ -147,7 +147,7 @@ impl MultiTransferTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .init()
             .code(MULTI_TRANSFER_CODE_PATH)
             .new_address(MULTI_TRANSFER_ADDRESS)
@@ -173,6 +173,7 @@ impl MultiTransferTestState {
             .upgrade(
                 ManagedAddress::zero(),
                 MULTI_TRANSFER_ADDRESS.to_address(),
+                BRIDGE_PROXY_ADDRESS.to_address(),
                 ESDT_SAFE_ETH_TX_GAS_LIMIT,
             )
             .code(ESDT_SAFE_CODE_PATH)
@@ -199,7 +200,7 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(OptionalValue::Some(
                 BRIDGED_TOKENS_WRAPPER_ADDRESS.to_address(),
             ))
@@ -209,7 +210,7 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_bridge_proxy_contract_address(OptionalValue::Some(
                 BRIDGE_PROXY_ADDRESS.to_address(),
             ))
@@ -219,7 +220,7 @@ impl MultiTransferTestState {
             .tx()
             .from(OWNER_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS.to_address()))
             .run();
 
@@ -294,8 +295,8 @@ impl MultiTransferTestState {
         self.world
             .tx()
             .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_bridge_proxy_contract_address(OptionalValue::Some(
                 BRIDGE_PROXY_ADDRESS.to_address(),
             ))
@@ -506,9 +507,8 @@ impl MultiTransferTestState {
         amount: u64,
         expected_error: &str,
     ) {
-        let none_addr: OptionalValue<ManagedAddress<StaticApi>> = OptionalValue::None;
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero(), none_addr)
+            .create_transaction(EthAddress::zero(),OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>)
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
@@ -519,9 +519,8 @@ impl MultiTransferTestState {
     }
 
     fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
-        let none_addr: OptionalValue<ManagedAddress<StaticApi>> = OptionalValue::None;
         self.esdt_raw_transaction()
-            .create_transaction(EthAddress::zero(), none_addr)
+            .create_transaction(EthAddress::zero(), OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>)
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
                 0,
@@ -643,7 +642,7 @@ fn basic_transfer_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
 
@@ -705,7 +704,7 @@ fn batch_transfer_both_executed_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
 
@@ -772,7 +771,7 @@ fn batch_two_transfers_same_token_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
 
@@ -839,7 +838,7 @@ fn batch_transfer_both_failed_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
 
@@ -847,7 +846,7 @@ fn batch_transfer_both_failed_test() {
         .world
         .query()
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .get_first_batch_any_status()
         .returns(ReturnsResult)
         .run();
@@ -859,7 +858,7 @@ fn batch_transfer_both_failed_test() {
         .tx()
         .from(OWNER_ADDRESS)
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .move_refund_batch_to_safe()
         .run();
 
@@ -867,7 +866,7 @@ fn batch_transfer_both_failed_test() {
         .world
         .query()
         .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .get_first_batch_any_status()
         .returns(ReturnsResult)
         .run();
@@ -1321,7 +1320,6 @@ fn test_unwrap_token_create_transaction_paused() {
         .unwrap_token_create_transaction(
             TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1375,7 +1373,6 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
         .unwrap_token_create_transaction(
             WRAPPED_TOKEN_ID,
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1403,7 +1400,6 @@ fn test_unwrap_token_create_transaction_should_work() {
         .unwrap_token_create_transaction(
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(WRAPPED_TOKEN_ID),
@@ -1430,7 +1426,6 @@ fn test_unwrap_token_create_transaction_amount_zero() {
         .unwrap_token_create_transaction(
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
             EthAddress::zero(),
-            OptionalValue::Some(ManagedAddress::zero()),
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),

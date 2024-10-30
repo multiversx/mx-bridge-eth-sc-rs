@@ -1,17 +1,23 @@
 #![no_std]
 use multiversx_sc::imports::*;
+use multiversx_sc_modules::ongoing_operation::*;
 
 pub mod config;
 
 use sc_proxies::bridged_tokens_wrapper_proxy;
+use sc_proxies::esdt_safe_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
+const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
+const MIN_GAS_TO_SAVE_PROGRESS: u64 = 100_000;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
-    config::ConfigModule + multiversx_sc_modules::pause::PauseModule
+    config::ConfigModule
+    + multiversx_sc_modules::pause::PauseModule
+    + multiversx_sc_modules::ongoing_operation::OngoingOperationModule
 {
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
@@ -27,7 +33,7 @@ pub trait BridgeProxyContract:
 
     #[payable("*")]
     #[endpoint]
-    fn deposit(&self, eth_tx: EthTransaction<Self::Api>) {
+    fn deposit(&self, eth_tx: EthTransaction<Self::Api>, batch_id: u64) {
         self.require_not_paused();
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
@@ -37,6 +43,7 @@ pub trait BridgeProxyContract:
         );
         let tx_id = self.pending_transactions().push(&eth_tx);
         self.payments(tx_id).set(&payment);
+        self.batch_id(tx_id).set(batch_id);
     }
 
     #[endpoint(execute)]
@@ -65,12 +72,18 @@ pub trait BridgeProxyContract:
         };
 
         if call_data.endpoint.is_empty()
-            || call_data.gas_limit == 0
             || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
+            || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
         {
             self.finish_execute_gracefully(tx_id);
             return;
         }
+
+        let gas_left = self.blockchain().get_gas_left();
+        require!(
+            gas_left > call_data.gas_limit + DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK,
+            "Not enough gas to execute"
+        );
 
         let tx_call = self
             .tx()
@@ -93,7 +106,8 @@ pub trait BridgeProxyContract:
         tx_call.register_promise();
     }
 
-    #[endpoint(cancel)]
+    // TODO: will activate endpoint in a future release
+    // #[endpoint(cancel)]
     fn cancel(&self, tx_id: usize) {
         let tx_start_round = self.ongoing_execution(tx_id).get();
         let current_block_round = self.blockchain().get_block_round();
@@ -117,19 +131,55 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
-        let esdt_safe_addr = self.bridged_tokens_wrapper_address().get();
+        let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
 
+        let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
+        let batch_id = self.batch_id(tx_id).get();
         self.tx()
-            .to(esdt_safe_addr)
+            .to(esdt_safe_contract_address)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(
+                tx.from,
+                OptionalValue::Some(esdt_safe_proxy::RefundInfo {
+                    address: tx.to,
+                    initial_batch_id: batch_id,
+                    initial_nonce: tx.tx_nonce,
+                }),
+            )
+            .single_esdt(
+                &unwrapped_token.token_identifier,
+                unwrapped_token.token_nonce,
+                &unwrapped_token.amount,
+            )
+            .sync_call();
+    }
+
+    fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
+        let payment = self.payments(tx_id).get();
+        let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
+
+        let transfers = self
+            .tx()
+            .to(bridged_tokens_wrapper_address)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .unwrap_token_create_transaction(&tx.token_id, tx.from, OptionalValue::Some(tx.to))
+            .unwrap_token(requested_token)
             .single_esdt(
                 &payment.token_identifier,
                 payment.token_nonce,
                 &payment.amount,
             )
+            .returns(ReturnsBackTransfers)
             .sync_call();
+
+        require!(
+            transfers.total_egld_amount == 0,
+            "Expected only one esdt payment"
+        );
+        require!(
+            transfers.esdt_payments.len() == 1,
+            "Expected only one esdt payment"
+        );
+        transfers.esdt_payments.get(0)
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
@@ -143,15 +193,26 @@ pub trait BridgeProxyContract:
         self.ongoing_execution(tx_id).clear();
     }
 
+    #[endpoint(updateLowestTxId)]
     fn update_lowest_tx_id(&self) {
         let mut new_lowest = self.lowest_tx_id().get();
         let len = self.pending_transactions().len();
 
-        while new_lowest < len && self.pending_transactions().item_is_empty(new_lowest) {
+        self.run_while_it_has_gas(MIN_GAS_TO_SAVE_PROGRESS, || {
+            if !self.empty_element(new_lowest, len) {
+                return STOP_OP;
+            }
+
             new_lowest += 1;
-        }
+
+            CONTINUE_OP
+        });
 
         self.lowest_tx_id().set(new_lowest);
+    }
+
+    fn empty_element(&self, current_index: usize, len: usize) -> bool {
+        current_index < len && self.pending_transactions().item_is_empty(current_index)
     }
 
     #[view(getPendingTransactionById)]

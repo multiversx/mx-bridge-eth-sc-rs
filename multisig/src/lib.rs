@@ -10,7 +10,7 @@ mod storage;
 mod user_role;
 mod util;
 
-use sc_proxies::{esdt_safe_proxy, multi_transfer_proxy};
+use sc_proxies::{esdt_safe_proxy, multi_transfer_esdt_proxy};
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
@@ -306,7 +306,7 @@ pub trait Multisig:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .move_refund_batch_to_safe()
             .sync_call();
 
@@ -334,7 +334,7 @@ pub trait Multisig:
         let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
         self.tx()
             .to(multi_transfer_esdt_addr)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .add_unprocessed_refund_tx_to_batch(tx_id)
             .sync_call();
 
@@ -342,22 +342,38 @@ pub trait Multisig:
     }
 
     #[only_owner]
-    #[endpoint(withdrawTotalFeesOnEthereum)]
-    fn withdraw_total_fees_on_ethereum(&self, token_id: TokenIdentifier) {
+    #[endpoint(withdrawRefundFeesForEthereum)]
+    fn withdraw_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) {
         let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .withdraw_total_fees_on_ethereum(token_id)
+            .withdraw_refund_fees_for_ethereum(token_id, multisig_owner)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawTransactionFees)]
+    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .withdraw_transaction_fees(token_id, multisig_owner)
             .sync_call();
     }
 
     #[only_owner]
     #[endpoint(withdrawSlashedAmount)]
     fn withdraw_slashed_amount(&self) {
-        let slashed_amount = self.slashed_tokens_amount().get();
+        let slashed_tokens_amount_mapper = self.slashed_tokens_amount();
+        let slashed_amount = slashed_tokens_amount_mapper.get();
         self.tx().to(ToCaller).egld(&slashed_amount).transfer();
+        slashed_tokens_amount_mapper.clear();
     }
 
     /// Proposers and board members use this to launch signed actions.
@@ -444,7 +460,7 @@ pub trait Multisig:
 
                 self.tx()
                     .to(multi_transfer_esdt_addr)
-                    .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+                    .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .sync_call();
             }

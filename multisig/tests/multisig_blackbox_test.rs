@@ -33,7 +33,7 @@ use multiversx_sc_scenario::{
 use eth_address::*;
 use sc_proxies::{
     bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
-    multi_transfer_proxy, multisig_proxy,
+    multi_transfer_esdt_proxy, multisig_proxy,
 };
 use token_module::ProxyTrait as _;
 use transaction::{
@@ -169,7 +169,7 @@ impl MultiTransferTestState {
         self.world
             .tx()
             .from(MULTISIG_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .init()
             .code(MULTI_TRANSFER_CODE_PATH)
             .new_address(MULTI_TRANSFER_ADDRESS)
@@ -213,6 +213,7 @@ impl MultiTransferTestState {
             .upgrade(
                 ManagedAddress::zero(),
                 MULTI_TRANSFER_ADDRESS.to_address(),
+                BRIDGE_PROXY_ADDRESS.to_address(),
                 ESDT_SAFE_ETH_TX_GAS_LIMIT,
             )
             .code(ESDT_SAFE_CODE_PATH)
@@ -226,7 +227,7 @@ impl MultiTransferTestState {
             .tx()
             .from(MULTISIG_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_wrapping_contract_address(OptionalValue::Some(
                 BRIDGED_TOKENS_WRAPPER_ADDRESS.to_address(),
             ))
@@ -236,7 +237,7 @@ impl MultiTransferTestState {
             .tx()
             .from(MULTISIG_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_bridge_proxy_contract_address(OptionalValue::Some(
                 BRIDGE_PROXY_ADDRESS.to_address(),
             ))
@@ -246,7 +247,7 @@ impl MultiTransferTestState {
             .tx()
             .from(MULTISIG_ADDRESS)
             .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS.to_address()))
             .run();
 

@@ -14,8 +14,6 @@ const NUM_DECIMALS: u32 = 18;
 const OWNER_ADDRESS_EXPR: &str = "address:owner";
 const BRIDGE_TOKENS_WRAPPER_ADDRESS_EXPR: &str = "sc:bridged-tokens-wrapper";
 const BRIDGE_TOKENS_WRAPPER_PATH_EXPR: &str = "mxsc:output/bridged-tokens-wrapper.mxsc.json";
-// const ESDT_SAFE_CONTRACT_ADDRESS_EXPR: &str = "address:esdt_safe";
-// const ESDT_SAFE_CONTRACT_PATH_EXPR: &str = "mxsc:../esdt-safe/output/esdt-safe.mxsc.json";
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -434,7 +432,6 @@ fn test_unwrap_token_create_transaction_should_fail_case_1() {
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 address,
-                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Contract is paused"),
@@ -472,7 +469,6 @@ fn test_unwrap_token_create_transaction_should_fail_case_2() {
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 address,
-                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Must pay more than 0 tokens!"),
@@ -510,7 +506,6 @@ fn test_unwrap_token_create_transaction_should_fail_case_3() {
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 address,
-                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Esdt token unavailable"),
@@ -583,7 +578,6 @@ fn test_unwrap_token_create_transaction_should_fail_case_4() {
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 address,
-                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Contract does not have enough funds"),

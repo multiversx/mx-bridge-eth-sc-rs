@@ -237,6 +237,41 @@ where
             .original_result()
     }
 
+    pub fn withdraw_refund_fees_for_ethereum<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawRefundFeesForEthereum")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn withdraw_transaction_fees<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawTransactionFees")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn withdraw_slashed_amount(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("withdrawSlashedAmount")
+            .original_result()
+    }
+
     /// Proposers and board members use this to launch signed actions. 
     pub fn perform_action_endpoint<
         Arg0: ProxyArg<usize>,
