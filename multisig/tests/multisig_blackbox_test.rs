@@ -897,12 +897,99 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
 }
 
 #[test]
+fn init_test() {
+    let mut state = MultiTransferTestState::new();
+
+    let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+        MultiValueEncoded::new();
+    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .init(
+            ESDT_SAFE_ADDRESS,
+            MULTI_TRANSFER_ADDRESS,
+            BRIDGE_PROXY_ADDRESS,
+            BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            PRICE_AGGREGATOR_ADDRESS,
+            1_000u64,
+            5000u64,
+            2usize,
+            board.clone(),
+        )
+        .code(MULTISIG_CODE_PATH)
+        .new_address(MULTISIG_ADDRESS)
+        .returns(ExpectError(
+            4,
+            "slash amount must be less than or equal to required stake",
+        ))
+        .run();
+
+    let mut board2: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+        MultiValueEncoded::new();
+    board2.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+    board2.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+    let multisig2 = TestSCAddress::new("multisig2");
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .init(
+            ESDT_SAFE_ADDRESS,
+            MULTI_TRANSFER_ADDRESS,
+            BRIDGE_PROXY_ADDRESS,
+            BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            PRICE_AGGREGATOR_ADDRESS,
+            1_000u64,
+            500u64,
+            2usize,
+            board2.clone(),
+        )
+        .code(MULTISIG_CODE_PATH)
+        .new_address(multisig2)
+        .returns(ExpectError(4, "duplicate board member"))
+        .run();
+}
+
+#[test]
+fn upgrade_test() {
+    let mut state = MultiTransferTestState::new();
+
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .upgrade(
+            ESDT_SAFE_ADDRESS,
+            MULTI_TRANSFER_ADDRESS,
+            BRIDGE_PROXY_ADDRESS,
+            BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            PRICE_AGGREGATOR_ADDRESS,
+        )
+        .code(MULTISIG_CODE_PATH)
+        .run();
+}
+
+#[test]
 fn multisig_non_board_member_interaction_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -953,7 +1040,7 @@ fn multisig_insuficient_signatures_test() {
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -1000,7 +1087,7 @@ fn multisig_non_board_member_sign_test() {
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
