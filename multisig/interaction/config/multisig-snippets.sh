@@ -133,10 +133,26 @@ pause() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+pauseV2() {
+    CHECK_VARIABLES MULTISIG_v2
+
+    mxpy --verbose contract call ${MULTISIG_v2} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="pause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 pauseEsdtSafe() {
     CHECK_VARIABLES MULTISIG
 
     mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    --gas-limit=40000000 --function="pauseEsdtSafe" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+pauseEsdtSafeV2() {
+    CHECK_VARIABLES MULTISIG_v2
+
+    mxpy --verbose contract call ${MULTISIG_v2} --recall-nonce --pem=${ALICE} \
     --gas-limit=40000000 --function="pauseEsdtSafe" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
@@ -222,6 +238,9 @@ initSupplyMintBurn() {
 
   MINT=$(echo "$MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
   BURN=$(echo "$BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+
+  MINT=$(echo ${MINT%.*}) # trim decimals, if existing
+  BURN=$(echo ${BURN%.*}) # trim decimals, if existing
 
   mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
   --gas-limit=60000000 --function="initSupplyMintBurnEsdtSafe" \
