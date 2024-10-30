@@ -472,6 +472,7 @@ impl MultiTransferTestState {
 
     fn check_balances_on_safe(
         &mut self,
+        token_id: TestTokenIdentifier,
         total_supply: BigUint<StaticApi>,
         total_minted: BigUint<StaticApi>,
         total_burned: BigUint<StaticApi>,
@@ -481,7 +482,7 @@ impl MultiTransferTestState {
             .query()
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .total_balances(TOKEN_ID)
+            .total_balances(token_id)
             .returns(ReturnsResult)
             .run();
 
@@ -494,7 +495,7 @@ impl MultiTransferTestState {
             .query()
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .burn_balances(TOKEN_ID)
+            .burn_balances(token_id)
             .returns(ReturnsResult)
             .run();
 
@@ -508,7 +509,7 @@ impl MultiTransferTestState {
             .query()
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .mint_balances(TOKEN_ID)
+            .mint_balances(token_id)
             .returns(ReturnsResult)
             .run();
 
@@ -815,7 +816,7 @@ fn test_unwrap_token_create_transaction_paused() {
             0u64,
             &BigUint::from(10u64),
         )
-        .returns(ExpectError(ERROR, "Cannot create transaction while paused"))
+        .returns(ExpectError(ERROR, "Contract is paused"))
         .run();
 }
 
@@ -877,21 +878,98 @@ fn test_unwrap_token_create_transaction_should_work() {
 
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
+
     state
         .world
         .tx()
-        .from(BRIDGE_PROXY_ADDRESS)
+        .from(OWNER_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(
-            TokenIdentifier::from(WRAPPED_TOKEN_ID),
-            EthAddress::zero(),
-        )
+        .deposit_liquidity()
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(WRAPPED_TOKEN_ID),
             0u64,
-            &BigUint::from(100u64),
+            &BigUint::from(1_000u64),
         )
+        .run();
+
+    state
+        .world
+        .set_esdt_balance(USER1_ADDRESS, b"UNIV-abc123", BigUint::from(5_000u64));
+
+    state.check_balances_on_safe(
+        WRAPPED_TOKEN_ID,
+        BigUint::zero(),
+        BigUint::from(600000u64),
+        BigUint::zero(),
+    );
+    
+    state
+        .world
+        .query()
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .token_liquidity(WRAPPED_TOKEN_ID)
+        .returns(ExpectValue(BigUint::from(1000u64)))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(USER1_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
+            0u64,
+            &BigUint::from(900u64),
+        )
+        .run();
+
+    state
+        .world
+        .query()
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .token_liquidity(WRAPPED_TOKEN_ID)
+        .returns(ExpectValue(BigUint::from(100u64)))
+        .run();
+
+    state.check_balances_on_safe(
+        WRAPPED_TOKEN_ID,
+        BigUint::zero(),
+        BigUint::from(600000u64),
+        BigUint::from(900u64),
+    );
+}
+
+#[test]
+fn test_unwrap_token_create_transaction_should_fail() {
+    let mut state = MultiTransferTestState::new();
+
+    state.deploy_contracts();
+
+    state.config_multi_transfer();
+    state.config_bridged_tokens_wrapper();
+
+    state
+        .world
+        .set_esdt_balance(USER1_ADDRESS, b"TOKEN", BigUint::from(5_000u64));
+
+    state
+        .world
+        .tx()
+        .from(USER1_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
+            0u64,
+            &BigUint::from(1_000u64),
+        )
+        .returns(ExpectError(ERROR, "Esdt token unavailable"))
         .run();
 }
 
@@ -954,7 +1032,12 @@ fn add_refund_batch_test() {
         .returns(ReturnsResult)
         .run();
 
-    state.check_balances_on_safe(BigUint::from(MAX_AMOUNT), BigUint::zero(), BigUint::zero());
+    state.check_balances_on_safe(
+        TOKEN_ID,
+        BigUint::from(MAX_AMOUNT),
+        BigUint::zero(),
+        BigUint::zero(),
+    );
 
     state
         .world
@@ -964,7 +1047,7 @@ fn add_refund_batch_test() {
         .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
-    state.check_balances_on_safe(BigUint::zero(), BigUint::zero(), BigUint::zero());
+    state.check_balances_on_safe(TOKEN_ID, BigUint::zero(), BigUint::zero(), BigUint::zero());
 
     state
         .world
@@ -976,6 +1059,7 @@ fn add_refund_batch_test() {
         .run();
 
     state.check_balances_on_safe(
+        TOKEN_ID,
         BigUint::from(MAX_AMOUNT) - fee,
         BigUint::zero(),
         BigUint::zero(),
