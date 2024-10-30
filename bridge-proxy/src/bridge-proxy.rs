@@ -1,6 +1,5 @@
 #![no_std]
 use multiversx_sc::imports::*;
-use multiversx_sc_modules::ongoing_operation::*;
 
 pub mod bridge_proxy_contract_proxy;
 pub mod bridged_tokens_wrapper_proxy;
@@ -12,18 +11,15 @@ const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
 const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
-const MIN_GAS_TO_SAVE_PROGRESS: u64 = 1_000_000;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
     config::ConfigModule
     + multiversx_sc_modules::pause::PauseModule
-    + multiversx_sc_modules::ongoing_operation::OngoingOperationModule
 {
     #[init]
     fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
         self.set_multi_transfer_contract_address(opt_multi_transfer_address);
-        self.lowest_tx_id().set(1);
         self.set_paused(true);
     }
 
@@ -42,9 +38,10 @@ pub trait BridgeProxyContract:
             caller == self.multi_transfer_address().get(),
             "Only MultiTransfer can do deposits"
         );
-        let tx_id = self.pending_transactions().push(&eth_tx);
-        self.payments(tx_id).set(&payment);
-        self.batch_id(tx_id).set(batch_id);
+        let next_tx_id = self.get_next_tx_id();
+        self.pending_transactions().insert(next_tx_id, eth_tx);
+        self.payments(next_tx_id).set(&payment);
+        self.batch_id(next_tx_id).set(batch_id);
     }
 
     #[endpoint(execute)]
@@ -193,53 +190,31 @@ pub trait BridgeProxyContract:
     }
 
     fn cleanup_transaction(&self, tx_id: usize) {
-        self.pending_transactions().clear_entry_unchecked(tx_id);
-        self.update_lowest_tx_id();
+        self.pending_transactions().remove(&tx_id);
         self.ongoing_execution(tx_id).clear();
     }
 
-    #[endpoint(updateLowestTxId)]
-    fn update_lowest_tx_id(&self) {
-        let mut new_lowest = self.lowest_tx_id().get();
-        let len = self.pending_transactions().len();
-
-        self.run_while_it_has_gas(MIN_GAS_TO_SAVE_PROGRESS, || {
-            if !self.empty_element(new_lowest, len) {
-                return STOP_OP;
-            }
-
-            new_lowest += 1;
-
-            CONTINUE_OP
-        });
-
-        self.lowest_tx_id().set(new_lowest);
-    }
-
-    fn empty_element(&self, current_index: usize, len: usize) -> bool {
-        current_index < len && self.pending_transactions().item_is_empty(current_index)
+    fn get_next_tx_id(&self) -> usize {
+        let mut next_tx_id = self.highest_tx_id().get();
+        next_tx_id += 1;
+        self.highest_tx_id().set(next_tx_id);
+        next_tx_id
     }
 
     #[view(getPendingTransactionById)]
     fn get_pending_transaction_by_id(&self, tx_id: usize) -> EthTransaction<Self::Api> {
-        self.pending_transactions()
-            .get_or_else(tx_id, || panic!("Invalid tx id"))
+        let tx = self.pending_transactions().get(&tx_id);
+        require!(tx.is_some(), "Invalid tx id");
+        tx.unwrap()
     }
 
     #[view(getPendingTransactions)]
     fn get_pending_transactions(
         &self,
     ) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
-        let lowest_tx_id = self.lowest_tx_id().get();
-        let len = self.pending_transactions().len();
-
         let mut transactions = MultiValueEncoded::new();
-        for i in lowest_tx_id..=len {
-            if self.pending_transactions().item_is_empty(i) {
-                continue;
-            }
-            let tx = self.pending_transactions().get_unchecked(i);
-            transactions.push(MultiValue2((i, tx)));
+        for (tx_id, tx) in self.pending_transactions().iter() {
+            transactions.push(MultiValue2((tx_id, tx)));
         }
         transactions
     }
