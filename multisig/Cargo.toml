@@ -26,6 +26,9 @@ path = "../common/tx-batch-module"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
+[dependencies.mock-multi-transfer-esdt]
+path = "../common/mock-contracts/mock-multi-transfer-esdt"
+
 [dependencies.sc-proxies]
 path = "../common/sc-proxies"
 

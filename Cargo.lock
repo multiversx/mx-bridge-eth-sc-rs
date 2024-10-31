@@ -710,6 +710,7 @@ dependencies = [
  "eth-address",
  "fee-estimator-module",
  "max-bridged-amount-module",
+ "mock-multi-transfer-esdt",
  "multi-transfer-esdt",
  "multiversx-price-aggregator-sc",
  "multiversx-sc",
