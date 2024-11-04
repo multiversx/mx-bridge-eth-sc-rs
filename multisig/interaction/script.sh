@@ -123,13 +123,17 @@ case "$1" in
   confirmation deploy-test-caller
   ;;
 
+'pause-v2-contracts')
+  confirmation pause-v2-contracts
+  ;;
+
 *)
   echo "Usage: Invalid choice: '"$1"'" 
   echo -e 
   echo "Choose from:"
   echo "  { \"deploy-bridge-contracts\", "
   echo "    \"upgrade-aggregator\", \"upgrade-wrapper\", \"upgrade-safe\", \"upgrade-multi-transfer\", \"upgrade-proxy\", \"upgrade-multisig\" "
-  echo "    \"pause-contracts\", \"unpause-contracts\", \"add-relayer\", \"remove-relayer\", "
+  echo "    \"pause-contracts\", \"unpause-contracts\", \"add-relayer\", \"remove-relayer\", \"pause-v2-contracts\", "
   echo "    \"set-safe-max-tx\", \"set-safe-batch-block-duration\", \"change-quorum\", \"set-swap-fee\", "
   echo "    \"whitelist-token\", \"whitelist-native-token\", \"remove-whitelist-token\", \"upgrade-wrapper-universal-token\", \"upgrade-wrapper-chain-specific-token\", "
   echo "    \"mint-chain-specific\", \"init-supply-mint-burn\", "

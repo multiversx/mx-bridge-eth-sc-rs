@@ -80,6 +80,14 @@ pauseAggregator() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
+pauseAggregatorV2() {
+    CHECK_VARIABLES AGGREGATOR_v2
+
+    mxpy --verbose contract call ${AGGREGATOR_v2} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
 unpauseAggregator() {
     CHECK_VARIABLES AGGREGATOR
 
