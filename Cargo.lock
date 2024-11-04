@@ -127,6 +127,7 @@ dependencies = [
  "mock-multi-transfer-esdt",
  "mock-multisig",
  "mock-price-aggregator",
+ "mock-proxies",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
@@ -387,6 +388,7 @@ dependencies = [
  "mock-multi-transfer-esdt",
  "mock-multisig",
  "mock-price-aggregator",
+ "mock-proxies",
  "multiversx-price-aggregator-sc",
  "multiversx-sc",
  "multiversx-sc-modules",
@@ -671,6 +673,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "mock-proxies"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
@@ -682,6 +691,7 @@ dependencies = [
  "mock-multi-transfer-esdt",
  "mock-multisig",
  "mock-price-aggregator",
+ "mock-proxies",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",

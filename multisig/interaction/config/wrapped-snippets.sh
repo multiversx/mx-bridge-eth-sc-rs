@@ -121,6 +121,14 @@ wrapper-pause() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
+wrapper-pauseV2() {
+    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER_v2
+
+    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER_v2} --recall-nonce --pem=${ALICE} \
+    --gas-limit=5000000 --function="pause" \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
+}
+
 wrapper-upgrade() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGED_TOKENS_WRAPPER_WASM
 

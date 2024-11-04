@@ -2,9 +2,9 @@
 use esdt_safe::*;
 
 use eth_address::EthAddress;
+use mock_proxies::mock_multisig_proxy;
 use multiversx_sc_scenario::imports::*;
 use sc_proxies::esdt_safe_proxy::{self, EsdtSafeProxyMethods};
-use sc_proxies::mock_multisig_proxy;
 use transaction::transaction_status::TransactionStatus;
 use transaction::Transaction;
 use tx_batch_module::BatchStatus;
