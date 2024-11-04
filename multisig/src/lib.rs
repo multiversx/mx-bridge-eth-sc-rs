@@ -40,7 +40,8 @@ pub trait Multisig:
         &self,
         esdt_safe_sc_address: ManagedAddress,
         multi_transfer_sc_address: ManagedAddress,
-        proxy_sc_address: ManagedAddress,
+        bridge_proxy_sc_address: ManagedAddress,
+        bridged_tokens_wrapper_sc_address: ManagedAddress,
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
@@ -83,10 +84,19 @@ pub trait Multisig:
             .set(&multi_transfer_sc_address);
 
         require!(
-            self.blockchain().is_smart_contract(&proxy_sc_address),
-            "Proxy address is not a Smart Contract address"
+            self.blockchain()
+                .is_smart_contract(&bridge_proxy_sc_address),
+            "Bridge Proxy address is not a Smart Contract address"
         );
-        self.proxy_address().set(&proxy_sc_address);
+        self.bridge_proxy_address().set(&bridge_proxy_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&bridged_tokens_wrapper_sc_address),
+            "Bridged Tokens Wrapper address is not a Smart Contract address"
+        );
+        self.bridged_tokens_wrapper_address()
+            .set(&bridged_tokens_wrapper_sc_address);
 
         self.set_paused(true);
     }
@@ -96,7 +106,8 @@ pub trait Multisig:
         &self,
         esdt_safe_sc_address: ManagedAddress,
         multi_transfer_sc_address: ManagedAddress,
-        proxy_sc_address: ManagedAddress,
+        bridge_proxy_sc_address: ManagedAddress,
+        bridged_tokens_wrapper_sc_address: ManagedAddress,
     ) {
         require!(
             self.blockchain().is_smart_contract(&esdt_safe_sc_address),
@@ -113,10 +124,19 @@ pub trait Multisig:
             .set(&multi_transfer_sc_address);
 
         require!(
-            self.blockchain().is_smart_contract(&proxy_sc_address),
-            "Proxy address is not a Smart Contract address"
+            self.blockchain()
+                .is_smart_contract(&bridge_proxy_sc_address),
+            "Bridge Proxy address is not a Smart Contract address"
         );
-        self.proxy_address().set(&proxy_sc_address);
+        self.bridge_proxy_address().set(&bridge_proxy_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&bridged_tokens_wrapper_sc_address),
+            "Bridged Tokens Wrapper address is not a Smart Contract address"
+        );
+        self.bridged_tokens_wrapper_address()
+            .set(&bridged_tokens_wrapper_sc_address);
 
         self.set_paused(true);
     }

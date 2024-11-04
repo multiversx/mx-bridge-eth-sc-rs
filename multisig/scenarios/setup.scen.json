@@ -143,6 +143,7 @@
                     "sc:esdt_safe",
                     "sc:multi_transfer",
                     "sc:bridge_proxy",
+                    "sc:bridged_tokens_wrapper",
                     "1000",
                     "500",
                     "2",
@@ -168,7 +169,8 @@
                     "storage": {
                         "str:esdtSafeAddress": "sc:esdt_safe",
                         "str:multiTransferEsdtAddress": "sc:multi_transfer",
-                        "str:proxyAddress": "sc:bridge_proxy",
+                        "str:bridgeProxyAddress": "sc:bridge_proxy",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:num_board_members": "2",
                         "str:quorum": "2",
                         "str:requiredStakeAmount": "1000",

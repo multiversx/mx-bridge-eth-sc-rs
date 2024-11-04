@@ -14,6 +14,7 @@ use multiversx_sc::{
     },
     contract_base::ManagedSerializer,
     hex_literal::hex,
+    imports::UserBuiltinProxy,
     storage::mappers::SingleValue,
     types::{
         Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
@@ -148,6 +149,7 @@ impl MultiTransferTestState {
                 ESDT_SAFE_ADDRESS,
                 MULTI_TRANSFER_ADDRESS,
                 BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
                 1_000u64,
                 500u64,
                 2usize,
@@ -354,6 +356,42 @@ impl MultiTransferTestState {
         assert!(staked_relayers
             .to_vec()
             .contains(&RELAYER2_ADDRESS.to_managed_address()));
+
+        self.yield_ownership();
+    }
+
+    fn yield_ownership(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(MULTI_TRANSFER_ADDRESS)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&ManagedAddress::from(MULTISIG_ADDRESS.to_address()))
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&ManagedAddress::from(MULTISIG_ADDRESS.to_address()))
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&ManagedAddress::from(MULTISIG_ADDRESS.to_address()))
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+            .typed(UserBuiltinProxy)
+            .change_owner_address(&ManagedAddress::from(MULTISIG_ADDRESS.to_address()))
+            .run();
     }
 }
 
@@ -906,5 +944,135 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .move_refund_batch_to_safe_from_child_contract()
+        .run();
+}
+
+#[test]
+fn multisig_pause_all_child_scs_test() {
+    let mut state = MultiTransferTestState::new();
+
+    state.multisig_deploy();
+    state.safe_deploy(Address::zero());
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    //Pause
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .pause_deposits()
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .paused_status()
+        .returns(ExpectValue(true))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .paused_status()
+        .returns(ExpectValue(true))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .paused_status()
+        .returns(ExpectValue(true))
+        .run();
+
+    // Unpause
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .unpause_deposits()
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .paused_status()
+        .returns(ExpectValue(false))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+        .paused_status()
+        .returns(ExpectValue(false))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .paused_status()
+        .returns(ExpectValue(false))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .pause_processing()
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .paused_status()
+        .returns(ExpectValue(true))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .unpause_processing()
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .paused_status()
+        .returns(ExpectValue(false))
         .run();
 }
