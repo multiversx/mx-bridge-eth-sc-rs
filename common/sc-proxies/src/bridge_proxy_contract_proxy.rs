@@ -109,15 +109,6 @@ where
             .original_result()
     }
 
-    pub fn update_lowest_tx_id(
-        self,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateLowestTxId")
-            .original_result()
-    }
-
     pub fn get_pending_transaction_by_id<
         Arg0: ProxyArg<usize>,
     >(
@@ -140,12 +131,12 @@ where
             .original_result()
     }
 
-    pub fn lowest_tx_id(
+    pub fn highest_tx_id(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, usize> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("lowestTxId")
+            .raw_call("highestTxId")
             .original_result()
     }
 
