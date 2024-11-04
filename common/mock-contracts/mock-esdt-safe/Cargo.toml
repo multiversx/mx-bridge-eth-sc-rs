@@ -9,10 +9,13 @@ authors = ["you"]
 path = "src/mock_esdt_safe.rs"
 
 [dependencies.multiversx-sc]
-version = "0.53.2"
+version = "=0.53.2"
 
-[dev-dependencies]
-num-bigint = "0.4"
+[dependencies.multiversx-sc-modules]
+version = "=0.53.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.53.2"
+version = "=0.53.2"
+
+[dependencies.eth-address]
+path = "../../eth-address"

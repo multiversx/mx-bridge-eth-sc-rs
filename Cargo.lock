@@ -608,9 +608,10 @@ dependencies = [
 name = "mock-esdt-safe"
 version = "0.0.0"
 dependencies = [
+ "eth-address",
  "multiversx-sc",
+ "multiversx-sc-modules",
  "multiversx-sc-scenario",
- "num-bigint",
 ]
 
 [[package]]
