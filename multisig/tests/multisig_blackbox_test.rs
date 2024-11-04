@@ -17,10 +17,10 @@ use multiversx_sc::{
     imports::MultiValue2,
     storage::mappers::SingleValue,
     types::{
-        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EsdtLocalRole, ManagedAddress,
-        ManagedBuffer, ManagedByteArray, ManagedOption, ManagedType, ManagedVec, MultiValueEncoded,
-        ReturnsNewManagedAddress, ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier,
-        TokenIdentifier,
+        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EgldOrMultiEsdtPayment,
+        EsdtLocalRole, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedByteArray,
+        ManagedOption, ManagedType, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress,
+        ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_modules::pause::ProxyTrait;
@@ -40,7 +40,7 @@ use sc_proxies::{
 use token_module::ProxyTrait as _;
 use transaction::{
     transaction_status::TransactionStatus, CallData, EthTransaction, EthTxAsMultiValue,
-    TxBatchSplitInFields,
+    Transaction, TxBatchSplitInFields,
 };
 
 const WEGLD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
@@ -58,6 +58,8 @@ const MULTI_TRANSFER_CODE_PATH: MxscPath =
 const MOCK_MULTI_TRANSFER_PATH_EXPR: MxscPath = MxscPath::new(
     "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
 );
+const MOCK_ESDT_SAFE_PATH_EXPR: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-esdt-safe/output/mock-esdt-safe.mxsc.json");
 const BRIDGE_PROXY_CODE_PATH: MxscPath =
     MxscPath::new("../bridge-proxy/output/bridge-proxy.mxsc.json");
 const ESDT_SAFE_CODE_PATH: MxscPath = MxscPath::new("../esdt-safe/output/esdt-safe.mxsc.json");
@@ -71,6 +73,7 @@ const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer
 const MOCK_MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("mock-multi-transfer");
 const BRIDGE_PROXY_ADDRESS: TestSCAddress = TestSCAddress::new("bridge-proxy");
 const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+const MOCK_ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("mock-esdt-safe");
 const BRIDGED_TOKENS_WRAPPER_ADDRESS: TestSCAddress = TestSCAddress::new("bridged-tokens-wrapper");
 const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price-aggregator");
 
@@ -110,6 +113,7 @@ fn world() -> ScenarioWorld {
         MOCK_MULTI_TRANSFER_PATH_EXPR,
         mock_multi_transfer_esdt::ContractBuilder,
     );
+    blockchain.register_contract(MOCK_ESDT_SAFE_PATH_EXPR, mock_esdt_safe::ContractBuilder);
 
     blockchain
 }
@@ -237,6 +241,17 @@ impl MultiTransferTestState {
             .init(ETH_TX_GAS_LIMIT)
             .code(ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
+            .run();
+    }
+
+    fn mock_safe_deploy(&mut self) {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init(ETH_TX_GAS_LIMIT)
+            .code(MOCK_ESDT_SAFE_PATH_EXPR)
+            .new_address(MOCK_ESDT_SAFE_ADDRESS)
             .run();
     }
 
@@ -1531,5 +1546,236 @@ fn test_add_unprocessed_refund_tx_to_batch_success() {
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .add_unprocessed_refund_tx_to_batch(tx_id)
+        .run();
+}
+
+#[test]
+fn test_withdraw_slashed_amount_success() {
+    let mut state = MultiTransferTestState::new();
+
+    state.deploy_contracts_config();
+
+    let slashed_amount = BigUint::from(500u64);
+    state.world.set_esdt_balance(
+        MULTISIG_ADDRESS,
+        WEGLD_TOKEN_ID.as_bytes(),
+        slashed_amount.clone(),
+    );
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .slash_board_member(RELAYER1_ADDRESS.to_managed_address())
+        .run();
+
+    let remaining_stake = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .amount_staked(RELAYER1_ADDRESS.to_managed_address())
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(remaining_stake, BigUint::from(500u64));
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .withdraw_slashed_amount()
+        .run();
+
+    let remaining_slashed_amount = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .slash_amount()
+        .returns(ReturnsResult)
+        .run();
+    assert_eq!(remaining_slashed_amount, BigUint::from(500u64));
+}
+
+#[test]
+fn test_perform_action_endpoint_set_current_transaction_batch_status_success() {
+    let mut state = MultiTransferTestState::new();
+
+    state.deploy_contracts_config();
+
+    let esdt_safe_address = ESDT_SAFE_ADDRESS;
+    let token_id = WEGLD_TOKEN_ID;
+    let amount: BigUint<StaticApi> = BigUint::from(1_000u64);
+    let destination: ManagedAddress<StaticApi> = USER1_ADDRESS.to_managed_address();
+    let nonce = 1u64;
+
+    // let eth_tx = EthTransaction {
+    //     from: EthAddress::<StaticApi>::zero(),
+    //     to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+    //     token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
+    //     amount: BigUint::from(1000u64),
+    //     tx_nonce: 1u64,
+    //     call_data: ManagedOption::none(),
+    // };
+
+    // let mut txs = ManagedVec::new();
+    // txs.push(eth_tx.clone());
+
+    // state
+    //     .world
+    //     .tx()
+    //     .from(MULTISIG_ADDRESS)
+    //     .to(esdt_safe_address)
+    //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+    //     .set_transaction_batch_status(1, statuses.clone())
+    //     .run();
+
+    // let current_batch: OptionalValue<TxBatchSplitInFields<StaticApi>> = state
+    //     .world
+    //     .query()
+    //     .to(esdt_safe_address)
+    //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+    //     .get_current_tx_batch()
+    //     .returns(ReturnsResult)
+    //     .run();
+
+    // let (current_batch_id, _current_batch_transactions) = match current_batch {
+    //     OptionalValue::Some(batch) => batch.into_tuple(),
+    //     OptionalValue::None => panic!("No current batch found in EsdtSafe"),
+    // };
+
+    // let statuses = MultiValueEncoded::from(vec![TransactionStatus::Success]);
+
+    // let action_id: usize = state
+    //     .world
+    //     .tx()
+    //     .from(RELAYER1_ADDRESS)
+    //     .to(MULTISIG_ADDRESS)
+    //     .typed(multisig_proxy::MultisigProxy)
+    //     .propose_esdt_safe_set_current_transaction_batch_status(current_batch_id, statuses.clone())
+    //     .returns(ReturnsResult)
+    //     .run();
+
+    // state
+    //     .world
+    //     .tx()
+    //     .from(RELAYER2_ADDRESS) // Another board member
+    //     .to(MULTISIG_ADDRESS)
+    //     .typed(multisig_proxy::MultisigProxy)
+    //     .sign(action_id)
+    //     .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS) // Board member
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .run();
+
+    // let action_exists = state
+    //     .world
+    //     .query()
+    //     .to(MULTISIG_ADDRESS)
+    //     .typed(multisig_proxy::MultisigProxy)
+    //     .action_exists(action_id)
+    //     .returns(ReturnsResult)
+    //     .run();
+
+    // assert!(!action_exists);
+
+    // let batch_statuses: MultiValueEncoded<StaticApi, TransactionStatus> = state
+    //     .world
+    //     .query()
+    //     .to(esdt_safe_address)
+    //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+    //     .get_transaction_batch_status(current_batch_id)
+    //     .returns(ReturnsResult)
+    //     .run();
+
+    // assert_eq!(batch_statuses.to_vec(), statuses.to_vec());
+}
+
+#[test]
+fn test_withdraw_refund_fees_for_ethereum_success() {
+    let mut state = MultiTransferTestState::new();
+
+    let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+        MultiValueEncoded::new();
+    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .init(
+            MOCK_ESDT_SAFE_ADDRESS,
+            MULTI_TRANSFER_ADDRESS,
+            BRIDGE_PROXY_ADDRESS,
+            BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            PRICE_AGGREGATOR_ADDRESS,
+            1_000u64,
+            500u64,
+            2usize,
+            board,
+        )
+        .code(MULTISIG_CODE_PATH)
+        .new_address(MULTISIG_ADDRESS)
+        .run();
+    state.mock_safe_deploy();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .withdraw_refund_fees_for_ethereum(TokenIdentifier::from(WEGLD_TOKEN_ID))
+        .run();
+}
+
+#[test]
+fn test_withdraw_transaction_fees_success() {
+    let mut state = MultiTransferTestState::new();
+
+    let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+        MultiValueEncoded::new();
+    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .init(
+            MOCK_ESDT_SAFE_ADDRESS,
+            MULTI_TRANSFER_ADDRESS,
+            BRIDGE_PROXY_ADDRESS,
+            BRIDGED_TOKENS_WRAPPER_ADDRESS,
+            PRICE_AGGREGATOR_ADDRESS,
+            1_000u64,
+            500u64,
+            2usize,
+            board,
+        )
+        .code(MULTISIG_CODE_PATH)
+        .new_address(MULTISIG_ADDRESS)
+        .run();
+    state.mock_safe_deploy();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .withdraw_transaction_fees(TokenIdentifier::from(WEGLD_TOKEN_ID))
         .run();
 }

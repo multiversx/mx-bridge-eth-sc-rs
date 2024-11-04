@@ -16,13 +16,7 @@ pub struct RefundInfo<M: ManagedTypeApi> {
 #[multiversx_sc::contract]
 pub trait MockEsdtSafe {
     #[init]
-    fn init(
-        &self,
-        _fee_estimator_contract_address: ManagedAddress,
-        _multi_transfer_contract_address: ManagedAddress,
-        _eth_tx_gas_limit: BigUint,
-    ) {
-    }
+    fn init(&self, _eth_tx_gas_limit: BigUint) {}
 
     #[upgrade]
     fn upgrade(&self) {}
@@ -35,4 +29,17 @@ pub trait MockEsdtSafe {
         _opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) {
     }
+
+    #[only_owner]
+    #[endpoint(withdrawTransactionFees)]
+    fn withdraw_transaction_fees(
+        &self,
+        _token_id: TokenIdentifier,
+        _multisig_owner: ManagedAddress,
+    ) {
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawRefundFeesForEthereum)]
+    fn withdraw_refund_fees_for_ethereum(&self, _token_id: TokenIdentifier) {}
 }
