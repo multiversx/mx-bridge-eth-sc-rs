@@ -41,6 +41,8 @@ pub trait Multisig:
         esdt_safe_sc_address: ManagedAddress,
         multi_transfer_sc_address: ManagedAddress,
         proxy_sc_address: ManagedAddress,
+        bridged_tokens_wrapper_sc_address: ManagedAddress,
+        price_aggregator_sc_address: ManagedAddress,
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
@@ -88,6 +90,22 @@ pub trait Multisig:
         );
         self.proxy_address().set(&proxy_sc_address);
 
+        require!(
+            self.blockchain()
+                .is_smart_contract(&bridged_tokens_wrapper_sc_address),
+            "Bridged Tokens Wrapper address is not a Smart Contract address"
+        );
+        self.bridged_tokens_wrapper_address()
+            .set(&bridged_tokens_wrapper_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&price_aggregator_sc_address),
+            "Price Aggregator address is not a Smart Contract address"
+        );
+        self.fee_estimator_address()
+            .set(&price_aggregator_sc_address);
+
         self.set_paused(true);
     }
 
@@ -97,6 +115,8 @@ pub trait Multisig:
         esdt_safe_sc_address: ManagedAddress,
         multi_transfer_sc_address: ManagedAddress,
         proxy_sc_address: ManagedAddress,
+        bridged_tokens_wrapper_sc_address: ManagedAddress,
+        price_aggregator_sc_address: ManagedAddress,
     ) {
         require!(
             self.blockchain().is_smart_contract(&esdt_safe_sc_address),
@@ -117,6 +137,22 @@ pub trait Multisig:
             "Proxy address is not a Smart Contract address"
         );
         self.proxy_address().set(&proxy_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&bridged_tokens_wrapper_sc_address),
+            "Bridged Tokens Wrapper address is not a Smart Contract address"
+        );
+        self.bridged_tokens_wrapper_address()
+            .set(&bridged_tokens_wrapper_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&price_aggregator_sc_address),
+            "Price Aggregator address is not a Smart Contract address"
+        );
+        self.fee_estimator_address()
+            .set(&price_aggregator_sc_address);
 
         self.set_paused(true);
     }

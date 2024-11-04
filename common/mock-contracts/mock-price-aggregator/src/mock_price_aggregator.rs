@@ -20,4 +20,7 @@ pub trait MockPriceAggregator {
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[view(latestPriceFeedOptional)]
+    fn latest_price_feed_optional(&self, _from: ManagedBuffer, _to: ManagedBuffer) {}
 }

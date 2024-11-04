@@ -123,11 +123,17 @@ dependencies = [
  "esdt-safe",
  "eth-address",
  "mock-bridged-tokens-wrapper",
+ "mock-esdt-safe",
+ "mock-multi-transfer-esdt",
+ "mock-multisig",
+ "mock-price-aggregator",
+ "mock-proxies",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -146,10 +152,12 @@ name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
+ "mock-esdt-safe",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -375,11 +383,18 @@ dependencies = [
  "eth-address",
  "fee-estimator-module",
  "max-bridged-amount-module",
+ "mock-bridge-proxy",
+ "mock-bridged-tokens-wrapper",
+ "mock-multi-transfer-esdt",
+ "mock-multisig",
+ "mock-price-aggregator",
+ "mock-proxies",
  "multiversx-price-aggregator-sc",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -406,6 +421,7 @@ version = "0.0.0"
 dependencies = [
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "storage-module",
 ]
 
 [[package]]
@@ -657,6 +673,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "mock-proxies"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
@@ -665,10 +688,14 @@ dependencies = [
  "esdt-safe",
  "eth-address",
  "max-bridged-amount-module",
+ "mock-multisig",
+ "mock-price-aggregator",
+ "mock-proxies",
  "multiversx-sc",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -1129,6 +1156,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "storage-module"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+ "multiversx-sc-scenario",
+]
+
+[[package]]
 name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1185,6 +1220,7 @@ dependencies = [
  "fee-estimator-module",
  "multiversx-sc",
  "multiversx-sc-scenario",
+ "storage-module",
 ]
 
 [[package]]

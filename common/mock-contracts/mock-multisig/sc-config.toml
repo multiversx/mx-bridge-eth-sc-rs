@@ -1,0 +1,4 @@
+[settings]
+
+[[proxy]]
+path = "../../sc-proxies/src/mock_multisig_proxy.rs"

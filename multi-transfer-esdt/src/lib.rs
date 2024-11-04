@@ -12,7 +12,9 @@ const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniver
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
-    tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
+    tx_batch_module::TxBatchModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + storage_module::CommonStorageModule
 {
     #[init]
     fn init(&self) {
@@ -50,7 +52,7 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        let safe_address = self.esdt_safe_contract_address().get();
+        let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
             let is_success: bool = self
@@ -133,7 +135,7 @@ pub trait MultiTransferEsdt:
                     }
                 }
 
-                let esdt_safe_addr = self.esdt_safe_contract_address().get();
+                let esdt_safe_addr = self.get_esdt_safe_address();
                 self.tx()
                     .to(esdt_safe_addr)
                     .typed(esdt_safe_proxy::EsdtSafeProxy)
@@ -142,38 +144,6 @@ pub trait MultiTransferEsdt:
                     .sync_call();
             }
             OptionalValue::None => {}
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setWrappingContractAddress)]
-    fn set_wrapping_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid unwrapping contract address"
-                );
-
-                self.wrapping_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.wrapping_contract_address().clear(),
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgeProxyContractAddress)]
-    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridge proxy contract address"
-                );
-
-                self.bridge_proxy_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
         }
     }
 
@@ -188,21 +158,10 @@ pub trait MultiTransferEsdt:
         self.unprocessed_refund_txs(tx_id).clear();
     }
 
-    #[only_owner]
-    #[endpoint(setEsdtSafeContractAddress)]
-    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                self.esdt_safe_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.esdt_safe_contract_address().clear(),
-        }
-    }
-
     // private
 
     fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
-        let esdt_safe_addr = self.esdt_safe_contract_address().get();
+        let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
@@ -220,7 +179,7 @@ pub trait MultiTransferEsdt:
             TokenIdentifier,
             ManagedAddress,
         > = SingleValueMapper::<_, _, ManagedAddress>::new_from_address(
-            self.wrapping_contract_address().get(),
+            self.get_bridged_tokens_wrapper_address(),
             storage_key,
         );
         if chain_specific_to_universal_token_mapper.is_empty() {
@@ -266,11 +225,11 @@ pub trait MultiTransferEsdt:
     }
 
     fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
-        if self.wrapping_contract_address().is_empty() {
+        if self.get_bridged_tokens_wrapper_address().is_zero() {
             return payments;
         }
 
-        let bridged_tokens_wrapper_addr = self.wrapping_contract_address().get();
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
         self.tx()
             .to(bridged_tokens_wrapper_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
@@ -286,7 +245,7 @@ pub trait MultiTransferEsdt:
         payments: PaymentsVec<Self::Api>,
         batch_id: u64,
     ) {
-        let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
+        let bridge_proxy_addr = self.get_bridge_proxy_address();
         for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
             if self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.tx()
@@ -305,17 +264,6 @@ pub trait MultiTransferEsdt:
     }
 
     // storage
-    #[view(getWrappingContractAddress)]
-    #[storage_mapper("wrappingContractAddress")]
-    fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getBridgeProxyContractAddress)]
-    #[storage_mapper("bridgeProxyContractAddress")]
-    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getEsdtSafeContractAddress)]
-    #[storage_mapper("esdtSafeContractAddress")]
-    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("unprocessedRefundTxs")]
     fn unprocessed_refund_txs(&self, tx_id: u64) -> SingleValueMapper<Transaction<Self::Api>>;

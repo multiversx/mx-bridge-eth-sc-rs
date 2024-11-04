@@ -9,7 +9,7 @@
             "step": "scCall",
             "txId": "owner-distribute-fees",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:esdt_safe",
                 "value": "0",
                 "function": "distributeFees",

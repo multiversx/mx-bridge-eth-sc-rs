@@ -17,11 +17,17 @@ path = "../common/eth-address"
 [dependencies.token-module]
 path = "../common/token-module"
 
+[dependencies.storage-module]
+path = "../common/storage-module"
+
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 
 [dependencies.sc-proxies]
 path = "../common/sc-proxies"
+
+[dependencies.mock-proxies]
+path = "../common/mock-proxies"
 
 [dependencies.esdt-safe]
 path = "../esdt-safe"
@@ -31,6 +37,18 @@ path = "../bridged-tokens-wrapper"
 
 [dependencies.mock-bridged-tokens-wrapper]
 path = "../common/mock-contracts/mock-bridged-tokens-wrapper"
+
+[dependencies.mock-esdt-safe]
+path = "../common/mock-contracts/mock-esdt-safe"
+
+[dependencies.mock-multisig]
+path = "../common/mock-contracts/mock-multisig"
+
+[dependencies.mock-price-aggregator]
+path = "../common/mock-contracts/mock-price-aggregator"
+
+[dependencies.mock-multi-transfer-esdt]
+path = "../common/mock-contracts/mock-multi-transfer-esdt"
 
 [dependencies.multiversx-sc]
 version = "=0.53.2"
