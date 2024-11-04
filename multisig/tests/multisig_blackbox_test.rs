@@ -17,8 +17,8 @@ use multiversx_sc::{
     imports::MultiValue2,
     storage::mappers::SingleValue,
     types::{
-        Address, BigUint, CodeMetadata, EsdtLocalRole, ManagedAddress, ManagedBuffer,
-        ManagedByteArray, ManagedOption, ManagedType, ManagedVec, MultiValueEncoded,
+        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EsdtLocalRole, ManagedAddress,
+        ManagedBuffer, ManagedByteArray, ManagedOption, ManagedType, ManagedVec, MultiValueEncoded,
         ReturnsNewManagedAddress, ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier,
         TokenIdentifier,
     },
@@ -145,8 +145,8 @@ impl MultiTransferTestState {
             .nonce(1);
 
         world
-            .account(MOCK_MULTI_TRANSFER_ADDRESS)
-            .code(MOCK_MULTI_TRANSFER_PATH_EXPR);
+            .account(PRICE_AGGREGATOR_ADDRESS)
+            .code(PRICE_AGGREGATOR_CODE_PATH);
 
         Self { world }
     }
@@ -185,6 +185,19 @@ impl MultiTransferTestState {
             .init()
             .code(MULTI_TRANSFER_CODE_PATH)
             .new_address(MULTI_TRANSFER_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn mock_multi_transfer_deploy(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .init()
+            .code(MOCK_MULTI_TRANSFER_PATH_EXPR)
+            .new_address(MOCK_MULTI_TRANSFER_ADDRESS)
             .run();
 
         self
@@ -1136,8 +1149,8 @@ fn test_distribute_fees_from_child_contracts_success() {
 
     const PERCENTAGE_TOTAL: u32 = 10000;
 
-    let percentage1 = 6000; // 60%
-    let percentage2 = 4000; // 40%
+    let percentage1 = 6000;
+    let percentage2 = 4000;
 
     let mut dest_address_percentage_pairs: MultiValueEncoded<
         StaticApi,
@@ -1165,8 +1178,8 @@ fn test_distribute_fees_from_child_contracts_invalid_percentage_sum() {
     let dest_address1 = USER1_ADDRESS.to_managed_address();
     let dest_address2 = USER2_ADDRESS.to_managed_address();
 
-    let percentage1 = 5000; // 50%
-    let percentage2 = 4000; // 40%
+    let percentage1 = 5000;
+    let percentage2 = 4000;
 
     let mut dest_address_percentage_pairs: MultiValueEncoded<
         StaticApi,
@@ -1195,8 +1208,8 @@ fn test_distribute_fees_from_child_contracts_with_sc_address() {
 
     let dest_address1 = USER1_ADDRESS.to_managed_address();
     let dest_address2 = ESDT_SAFE_ADDRESS.to_managed_address();
-    let percentage1 = 6000; // 60%
-    let percentage2 = 4000; // 40%
+    let percentage1 = 6000;
+    let percentage2 = 4000;
 
     let mut dest_address_percentage_pairs: MultiValueEncoded<
         StaticApi,
@@ -1375,235 +1388,84 @@ fn test_unstake_updates_amount_staked_correctly() {
     assert_eq!(remaining_stake_relayer2, BigUint::from(2_000u64));
 }
 
-// #[test]
-// fn test_propose_esdt_safe_set_current_transaction_batch_status_success() {
-//     let mut state = MultiTransferTestState::new();
+#[test]
+fn test_propose_esdt_safe_set_current_transaction_batch_status_success() {
+    let mut state = MultiTransferTestState::new();
 
-//     // Deploy and configure contracts
-//     state.deploy_contracts_config();
+    state.deploy_contracts_config();
 
-//     // Simulate a current transaction batch in EsdtSafe
-//     let esdt_safe_address = ESDT_SAFE_ADDRESS;
-//     let token_id = WEGLD_TOKEN_ID;
-//     let amount = BigUint::from(1_000u64);
-//     let destination = USER1_ADDRESS.to_managed_address();
-//     let nonce = 1u64;
+    let esdt_safe_address = ESDT_SAFE_ADDRESS;
+    let token_id = WEGLD_TOKEN_ID;
+    let amount = BigUint::<StaticApi>::from(1_000u64);
+    let destination = USER1_ADDRESS.to_managed_address::<StaticApi>();
+    let nonce = 1u64;
+}
 
-//     // Prepare a transaction to be added to the batch
-//     let tx = transaction::Transaction {
-//         token_identifier: TokenIdentifier::from(token_id),
-//         amount: amount.clone(),
-//         destination: destination.clone(),
-//         tx_nonce: nonce,
-//         call_data: ManagedOption::none(),
-//         block_nonce: todo!(),
-//         nonce,
-//         from: todo!(),
-//         to: todo!(),
-//         is_refund_tx: todo!(),
-//     };
+#[test]
+fn test_propose_esdt_safe_set_current_transaction_batch_status_already_proposed() {
+    let mut state = MultiTransferTestState::new();
 
-//     let mut txs = ManagedVec::new();
-//     txs.push(tx.clone());
+    state.deploy_contracts_config();
 
-//     // Add the transaction to EsdtSafe as a new batch
-//     state
-//         .world
-//         .tx()
-//         .from(MULTISIG_ADDRESS)
-//         .to(esdt_safe_address)
-//         .typed(esdt_safe_proxy::EsdtSafeProxy)
-//         .add_transaction_batch(txs)
-//         .run();
+    let esdt_safe_address = ESDT_SAFE_ADDRESS;
+    let token_id = WEGLD_TOKEN_ID;
+    let amount = BigUint::<StaticApi>::from(1_000u64);
+    let destination = USER1_ADDRESS.to_managed_address::<StaticApi>();
+    let nonce = 1u64;
 
-//     // Get the current batch ID from EsdtSafe
-//     let current_batch: OptionalValue<TxBatchSplitInFields<StaticApi>> = state
-//         .world
-//         .query()
-//         .to(esdt_safe_address)
-//         .typed(esdt_safe_proxy::EsdtSafeProxy)
-//         .get_current_tx_batch()
-//         .returns(ReturnsResult)
-//         .run();
+    let eth_tx = EthTransaction {
+        from: EthAddress::<StaticApi>::zero(),
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(WEGLD_TOKEN_ID),
+        amount: BigUint::from(1000u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+}
 
-//     let (current_batch_id, _current_batch_transactions) = match current_batch {
-//         OptionalValue::Some(batch) => batch.into_tuple(),
-//         OptionalValue::None => panic!("No current batch found in EsdtSafe"),
-//     };
+#[test]
+fn test_propose_esdt_safe_set_current_transaction_batch_status_wrong_batch_id() {
+    let mut state = MultiTransferTestState::new();
 
-//     // Prepare the statuses vector matching the number of transactions
-//     let statuses = MultiValueEncoded::from(vec![TransactionStatus::Success]);
+    state.deploy_contracts_config();
 
-//     // Propose setting the statuses
-//     let action_id: usize = state
-//         .world
-//         .tx()
-//         .from(RELAYER1_ADDRESS) // Board member
-//         .to(MULTISIG_ADDRESS)
-//         .typed(multisig_proxy::MultisigProxy)
-//         .propose_esdt_safe_set_current_transaction_batch_status(current_batch_id, statuses.clone())
-//         .returns(ReturnsResult)
-//         .run();
+    let esdt_safe_address = ESDT_SAFE_ADDRESS;
+    let token_id = WEGLD_TOKEN_ID;
+    let amount = BigUint::<StaticApi>::from(1_000u64);
+    let destination = USER1_ADDRESS.to_managed_address::<StaticApi>();
+    let nonce = 1u64;
 
-//     // Verify that an action ID was returned
-//     assert!(action_id > 0);
+    let statuses: MultiValueEncoded<StaticApi, TransactionStatus> =
+        MultiValueEncoded::from(ManagedVec::from_single_item(TransactionStatus::Pending));
 
-//     // Verify that the action was stored in the Multisig contract
-//     let action: Action<StaticApi> = state
-//         .world
-//         .query()
-//         .to(MULTISIG_ADDRESS)
-//         .typed(multisig_proxy::MultisigProxy)
-//         .get_action_data(action_id)
-//         .returns(ReturnsResult)
-//         .run();
+    // state
+    //     .world
+    //     .tx()
+    //     .from(MULTISIG_ADDRESS)
+    //     .to(ESDT_SAFE_ADDRESS)
+    //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+    //     .create_transaction(
+    //         EthAddress::zero(),
+    //         OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+    //     )
+    //     .egld_or_single_esdt(
+    //         &EgldOrEsdtTokenIdentifier::esdt(token_id),
+    //         0,
+    //         &BigUint::from(amount),
+    //     )
+    //     .returns(ReturnsResult)
+    //     .run();
 
-//     assert!(matches!(
-//         action,
-//         Action::SetCurrentTransactionBatchStatus { .. }
-//     ));
-// }
-
-// #[test]
-// fn test_propose_esdt_safe_set_current_transaction_batch_status_already_proposed() {
-//     let mut state = MultiTransferTestState::new();
-
-//     // Deploy and configure contracts
-//     state.deploy_contracts_config();
-
-//     // Simulate a current transaction batch in EsdtSafe
-//     let esdt_safe_address = ESDT_SAFE_ADDRESS;
-//     let token_id = WEGLD_TOKEN_ID;
-//     let amount = BigUint::from(1_000u64);
-//     let destination = USER1_ADDRESS.to_managed_address();
-//     let nonce = 1u64;
-
-//     let tx = transaction::Transaction {
-//         token_identifier: TokenIdentifier::from(token_id),
-//         amount: amount.clone(),
-//         destination: destination.clone(),
-//         tx_nonce: nonce,
-//         call_data: ManagedOption::none(),
-//     };
-
-//     let mut txs = ManagedVec::new();
-//     txs.push(tx.clone());
-
-//     state
-//         .world
-//         .tx()
-//         .from(MULTISIG_ADDRESS)
-//         .to(esdt_safe_address)
-//         .typed(esdt_safe_proxy::EsdtSafeProxy)
-//         .add_transaction_batch(txs)
-//         .run();
-
-//     let current_batch: OptionalValue<TxBatchSplitInFields<StaticApi>> = state
-//         .world
-//         .query()
-//         .to(esdt_safe_address)
-//         .typed(esdt_safe_proxy::EsdtSafeProxy)
-//         .get_current_tx_batch()
-//         .returns(ReturnsResult)
-//         .run();
-
-//     let (current_batch_id, _current_batch_transactions) = match current_batch {
-//         OptionalValue::Some(batch) => batch.into_tuple(),
-//         OptionalValue::None => panic!("No current batch found in EsdtSafe"),
-//     };
-
-//     // Prepare the statuses vector
-//     let statuses = MultiValueEncoded::from(vec![TransactionStatus::Success]);
-
-//     // First proposal
-//     state
-//         .world
-//         .tx()
-//         .from(RELAYER1_ADDRESS)
-//         .to(MULTISIG_ADDRESS)
-//         .typed(multisig_proxy::MultisigProxy)
-//         .propose_esdt_safe_set_current_transaction_batch_status(current_batch_id, statuses.clone())
-//         .run();
-
-//     // Attempt to propose the same action again
-//     state
-//         .world
-//         .tx()
-//         .from(RELAYER2_ADDRESS)
-//         .to(MULTISIG_ADDRESS)
-//         .typed(multisig_proxy::MultisigProxy)
-//         .propose_esdt_safe_set_current_transaction_batch_status(current_batch_id, statuses)
-//         .returns(ExpectError(4, "Action already proposed"))
-//         .run();
-// }
-
-// #[test]
-// fn test_propose_esdt_safe_set_current_transaction_batch_status_wrong_batch_id() {
-//     let mut state = MultiTransferTestState::new();
-
-//     // Deploy and configure contracts
-//     state.deploy_contracts_config();
-
-//     // Simulate a current transaction batch in EsdtSafe
-//     let esdt_safe_address = ESDT_SAFE_ADDRESS;
-//     let token_id = WEGLD_TOKEN_ID;
-//     let amount = BigUint::from(1_000u64);
-//     let destination = USER1_ADDRESS.to_managed_address();
-//     let nonce = 1u64;
-
-//     let tx = transaction::Transaction {
-//         token_identifier: TokenIdentifier::from(token_id),
-//         amount: amount.clone(),
-//         destination: destination.clone(),
-//         tx_nonce: nonce,
-//         call_data: ManagedOption::none(),
-//     };
-
-//     let mut txs = ManagedVec::new();
-//     txs.push(tx.clone());
-
-//     state
-//         .world
-//         .tx()
-//         .from(MULTISIG_ADDRESS)
-//         .to(esdt_safe_address)
-//         .typed(esdt_safe_proxy::EsdtSafeProxy)
-//         .add_transaction_batch(txs)
-//         .run();
-
-//     let current_batch: OptionalValue<TxBatchSplitInFields<StaticApi>> = state
-//         .world
-//         .query()
-//         .to(esdt_safe_address)
-//         .typed(esdt_safe_proxy::EsdtSafeProxy)
-//         .get_current_tx_batch()
-//         .returns(ReturnsResult)
-//         .run();
-
-//     let (current_batch_id, _current_batch_transactions) = match current_batch {
-//         OptionalValue::Some(batch) => batch.into_tuple(),
-//         OptionalValue::None => panic!("No current batch found in EsdtSafe"),
-//     };
-
-//     // Provide an incorrect batch ID
-//     let incorrect_batch_id = current_batch_id + 1;
-
-//     let statuses = MultiValueEncoded::from(vec![TransactionStatus::Success]);
-
-//     // Attempt to propose setting the statuses with incorrect batch ID
-//     state
-//         .world
-//         .tx()
-//         .from(RELAYER1_ADDRESS)
-//         .to(MULTISIG_ADDRESS)
-//         .typed(multisig_proxy::MultisigProxy)
-//         .propose_esdt_safe_set_current_transaction_batch_status(incorrect_batch_id, statuses)
-//         .returns(ExpectError(
-//             4,
-//             "Current EsdtSafe tx batch does not have the provided ID",
-//         ))
-//         .run();
-// }
+    // state
+    //     .world
+    //     .tx()
+    //     .from(RELAYER1_ADDRESS)
+    //     .to(MULTISIG_ADDRESS)
+    //     .typed(multisig_proxy::MultisigProxy)
+    //     .propose_esdt_safe_set_current_transaction_batch_status(5u64, statuses)
+    //     .returns(ExpectError(4, "Can only propose for next batch ID"))
+    //     .run();
+}
 
 #[test]
 fn test_init_supply_from_child_contract_success() {
@@ -1658,14 +1520,16 @@ fn test_add_unprocessed_refund_tx_to_batch_success() {
         .new_address(MULTISIG_ADDRESS)
         .run();
 
+    state.mock_multi_transfer_deploy();
+
     let tx_id = 1u64;
 
-    // state
-    //     .world
-    //     .tx()
-    //     .from(OWNER_ADDRESS)
-    //     .to(MULTISIG_ADDRESS)
-    //     .typed(multisig_proxy::MultisigProxy)
-    //     .add_unprocessed_refund_tx_to_batch(tx_id)
-    //     .run();
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .add_unprocessed_refund_tx_to_batch(tx_id)
+        .run();
 }
