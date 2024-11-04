@@ -15,7 +15,9 @@ impl<M: ManagedTypeApi> DFPBigUint<M> {}
 
 #[multiversx_sc::contract]
 pub trait BridgedTokensWrapper:
-    multiversx_sc_modules::pause::PauseModule + events::EventsModule
+    multiversx_sc_modules::pause::PauseModule
+    + events::EventsModule
+    + storage_module::CommonStorageModule
 {
     #[init]
     fn init(&self) {
@@ -252,7 +254,7 @@ pub trait BridgedTokensWrapper:
 
         let caller = self.blockchain().get_caller();
         self.tx()
-            .to(self.esdt_safe_contract_address().get())
+            .to(self.get_esdt_safe_address())
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
                 to,
@@ -302,17 +304,6 @@ pub trait BridgedTokensWrapper:
         );
     }
 
-    #[only_owner]
-    #[endpoint(setEsdtSafeContractAddress)]
-    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                self.esdt_safe_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.esdt_safe_contract_address().clear(),
-        }
-    }
-
     #[view(getUniversalBridgedTokenIds)]
     #[storage_mapper("universalBridgedTokenIds")]
     fn universal_bridged_token_ids(&self) -> UnorderedSetMapper<TokenIdentifier>;
@@ -337,8 +328,4 @@ pub trait BridgedTokensWrapper:
 
     #[storage_mapper("token_decimals_num")]
     fn token_decimals_num(&self, token: &TokenIdentifier) -> SingleValueMapper<u32>;
-
-    #[view(getEsdtSafeContractAddress)]
-    #[storage_mapper("esdtSafeContractAddress")]
-    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 }

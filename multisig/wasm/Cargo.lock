@@ -29,9 +29,14 @@ dependencies = [
  "esdt-safe",
  "eth-address",
  "mock-bridged-tokens-wrapper",
+ "mock-esdt-safe",
+ "mock-multi-transfer-esdt",
+ "mock-multisig",
+ "mock-price-aggregator",
  "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -45,6 +50,7 @@ dependencies = [
  "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -89,10 +95,16 @@ dependencies = [
  "eth-address",
  "fee-estimator-module",
  "max-bridged-amount-module",
+ "mock-bridge-proxy",
+ "mock-bridged-tokens-wrapper",
+ "mock-multi-transfer-esdt",
+ "mock-multisig",
+ "mock-price-aggregator",
  "multiversx-price-aggregator-sc",
  "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -110,6 +122,7 @@ name = "fee-estimator-module"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
+ "storage-module",
 ]
 
 [[package]]
@@ -166,10 +179,45 @@ dependencies = [
 ]
 
 [[package]]
+name = "mock-bridge-proxy"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "mock-bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
+ "multiversx-sc",
+]
+
+[[package]]
+name = "mock-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "mock-multi-transfer-esdt"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "mock-multisig"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
+name = "mock-price-aggregator"
+version = "0.0.0"
+dependencies = [
  "multiversx-sc",
 ]
 
@@ -182,9 +230,12 @@ dependencies = [
  "esdt-safe",
  "eth-address",
  "max-bridged-amount-module",
+ "mock-multisig",
+ "mock-price-aggregator",
  "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
+ "storage-module",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -408,6 +459,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 
 [[package]]
+name = "storage-module"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
+
+[[package]]
 name = "syn"
 version = "2.0.77"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -424,6 +482,7 @@ version = "0.0.0"
 dependencies = [
  "fee-estimator-module",
  "multiversx-sc",
+ "storage-module",
 ]
 
 [[package]]

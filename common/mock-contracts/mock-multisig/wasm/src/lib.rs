@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            0
+// Endpoints:                            5
 // Async Callback (empty):               1
-// Total number of exported functions:   3
+// Total number of exported functions:   8
 
 #![no_std]
 
@@ -20,6 +20,11 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        getEsdtSafeAddress => esdt_safe_address
+        getMultiTransferEsdtAddress => multi_transfer_esdt_address
+        getProxyAddress => proxy_address
+        getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
+        getFeeEstimatorAddress => fee_estimator_address
     )
 }
 
