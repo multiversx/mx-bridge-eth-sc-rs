@@ -902,7 +902,7 @@ fn multisig_non_board_member_interaction_test() {
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -953,7 +953,7 @@ fn multisig_insuficient_signatures_test() {
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -1000,7 +1000,7 @@ fn multisig_non_board_member_sign_test() {
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
