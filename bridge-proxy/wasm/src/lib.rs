@@ -23,10 +23,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deposit => deposit
         execute => execute
-        updateLowestTxId => update_lowest_tx_id
         getPendingTransactionById => get_pending_transaction_by_id
         getPendingTransactions => get_pending_transactions
-        lowestTxId => lowest_tx_id
+        highestTxId => highest_tx_id
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
