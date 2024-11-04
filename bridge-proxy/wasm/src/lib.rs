@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           15
+// Endpoints:                           14
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  19
+// Total number of exported functions:  18
 
 #![no_std]
 
@@ -23,7 +23,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deposit => deposit
         execute => execute
-        updateLowestTxId => update_lowest_tx_id
         getPendingTransactionById => get_pending_transaction_by_id
         getPendingTransactions => get_pending_transactions
         setMultiTransferAddress => set_multi_transfer_contract_address
@@ -32,7 +31,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getMultiTransferAddress => multi_transfer_address
         getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
         getEsdtSafeContractAddress => esdt_safe_contract_address
-        lowestTxId => lowest_tx_id
+        highestTxId => highest_tx_id
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
