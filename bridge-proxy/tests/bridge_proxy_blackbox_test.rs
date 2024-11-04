@@ -36,9 +36,8 @@ use multiversx_sc_scenario::{
 use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
-use sc_proxies::{
-    bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy, mock_multisig_proxy,
-};
+use mock_proxies::mock_multisig_proxy;
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
 use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");

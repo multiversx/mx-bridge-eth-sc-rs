@@ -32,6 +32,9 @@ path = "../common/storage-module"
 [dependencies.sc-proxies]
 path = "../common/sc-proxies"
 
+[dependencies.mock-proxies]
+path = "../common/mock-proxies"
+
 [dependencies.mock-bridged-tokens-wrapper]
 path = "../common/mock-contracts/mock-bridged-tokens-wrapper"
 

@@ -27,9 +27,10 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
+use mock_proxies::mock_multisig_proxy;
 use sc_proxies::{
     bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
-    mock_multisig_proxy, multi_transfer_esdt_proxy,
+    multi_transfer_esdt_proxy,
 };
 use token_module::ProxyTrait as _;
 use transaction::{transaction_status::TransactionStatus, CallData, EthTransaction, Transaction};
