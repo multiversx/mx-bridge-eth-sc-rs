@@ -87,13 +87,16 @@ where
 {
     pub fn deposit<
         Arg0: ProxyArg<transaction::EthTransaction<Env::Api>>,
+        Arg1: ProxyArg<u64>,
     >(
         self,
         eth_tx: Arg0,
+        batch_id: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("deposit")
             .argument(&eth_tx)
+            .argument(&batch_id)
             .original_result()
     }
 
@@ -110,16 +113,12 @@ where
             .original_result()
     }
 
-    pub fn cancel<
-        Arg0: ProxyArg<usize>,
-    >(
+    pub fn update_lowest_tx_id(
         self,
-        tx_id: Arg0,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("cancel")
-            .argument(&tx_id)
+            .raw_call("updateLowestTxId")
             .original_result()
     }
 

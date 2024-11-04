@@ -3,12 +3,8 @@
 use multiversx_sc::{imports::*, storage::StorageKey};
 
 use eth_address::EthAddress;
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
-
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper_proxy;
-pub mod esdt_safe_proxy;
-pub mod multi_transfer_esdt_proxy;
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
@@ -103,7 +99,7 @@ pub trait MultiTransferEsdt:
         }
 
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
-        self.distribute_payments(valid_tx_list, payments_after_wrapping);
+        self.distribute_payments(valid_tx_list, payments_after_wrapping, batch_id);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -288,6 +284,7 @@ pub trait MultiTransferEsdt:
         &self,
         transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
+        batch_id: u64,
     ) {
         let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
         for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
@@ -295,7 +292,7 @@ pub trait MultiTransferEsdt:
                 self.tx()
                     .to(bridge_proxy_addr.clone())
                     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-                    .deposit(&eth_tx)
+                    .deposit(&eth_tx, batch_id)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .sync_call();
             } else {
