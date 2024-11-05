@@ -1808,7 +1808,7 @@ fn test_upgrade_child_contract_from_source_success() {
         .typed(multisig_proxy::MultisigProxy)
         .upgrade_child_contract_from_source(
             child_sc_address.clone(),
-            MOCK_MULTI_TRANSFER_ADDRESS.clone(),
+            MOCK_MULTI_TRANSFER_ADDRESS,
             false,
             init_args.clone(),
         )
@@ -1822,7 +1822,7 @@ fn test_upgrade_child_contract_from_source_success() {
         .typed(multisig_proxy::MultisigProxy)
         .upgrade_child_contract_from_source(
             child_sc_address.clone(),
-            MOCK_MULTI_TRANSFER_ADDRESS.clone(),
+            MOCK_MULTI_TRANSFER_ADDRESS,
             true,
             init_args.clone(),
         )
@@ -2346,7 +2346,7 @@ fn test_init_supply_functions_success() {
         .from(OWNER_ADDRESS)
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
-        .init_supply_esdt_safe(NATIVE_TOKEN_ID.clone(), amount.clone())
+        .init_supply_esdt_safe(NATIVE_TOKEN_ID, amount.clone())
         .single_esdt(&TokenIdentifier::from(NATIVE_TOKEN_ID), 0, &amount)
         .run();
 
@@ -2356,7 +2356,7 @@ fn test_init_supply_functions_success() {
         .from(OWNER_ADDRESS)
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
-        .init_supply_mint_burn_esdt_safe(ETH_TOKEN_ID.clone(), amount.clone(), amount.clone())
+        .init_supply_mint_burn_esdt_safe(ETH_TOKEN_ID, amount.clone(), amount.clone())
         .run();
 }
 
@@ -2557,7 +2557,7 @@ fn test_esdt_safe_settings_management() {
     let esdt_safe_address = ESDT_SAFE_ADDRESS;
 
     let new_max_tx_batch_size = 100usize;
-    let new_max_tx_batch_block_duration = 600u64; 
+    let new_max_tx_batch_block_duration = 600u64;
     let token_id = TokenIdentifier::from("TEST-123456");
     let max_bridged_amount = BigUint::from(1_000_000u64);
 
