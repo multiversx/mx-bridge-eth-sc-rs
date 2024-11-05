@@ -1814,6 +1814,20 @@ fn test_upgrade_child_contract_from_source_success() {
         )
         .run();
 
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .upgrade_child_contract_from_source(
+            child_sc_address.clone(),
+            MOCK_MULTI_TRANSFER_ADDRESS.clone(),
+            true,
+            init_args.clone(),
+        )
+        .run();
+
     // how to check ?
 }
 
