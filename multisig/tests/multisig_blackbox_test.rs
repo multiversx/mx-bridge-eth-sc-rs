@@ -1664,7 +1664,7 @@ fn test_perform_action_endpoint_set_current_transaction_batch_status_success() {
     // state
     //     .world
     //     .tx()
-    //     .from(RELAYER2_ADDRESS) // Another board member
+    //     .from(RELAYER2_ADDRESS)
     //     .to(MULTISIG_ADDRESS)
     //     .typed(multisig_proxy::MultisigProxy)
     //     .sign(action_id)
@@ -1673,7 +1673,7 @@ fn test_perform_action_endpoint_set_current_transaction_batch_status_success() {
     state
         .world
         .tx()
-        .from(RELAYER1_ADDRESS) // Board member
+        .from(RELAYER1_ADDRESS)
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .perform_action_endpoint(1usize)
@@ -2557,7 +2557,7 @@ fn test_esdt_safe_settings_management() {
     let esdt_safe_address = ESDT_SAFE_ADDRESS;
 
     let new_max_tx_batch_size = 100usize;
-    let new_max_tx_batch_block_duration = 600u64; // e.g., 600 blocks
+    let new_max_tx_batch_block_duration = 600u64; 
     let token_id = TokenIdentifier::from("TEST-123456");
     let max_bridged_amount = BigUint::from(1_000_000u64);
 
