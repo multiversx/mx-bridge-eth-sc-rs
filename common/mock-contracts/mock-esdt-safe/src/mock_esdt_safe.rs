@@ -41,5 +41,10 @@ pub trait MockEsdtSafe {
 
     #[only_owner]
     #[endpoint(withdrawRefundFeesForEthereum)]
-    fn withdraw_refund_fees_for_ethereum(&self, _token_id: TokenIdentifier) {}
+    fn withdraw_refund_fees_for_ethereum(
+        &self,
+        _token_id: TokenIdentifier,
+        _multisig_owner: ManagedAddress,
+    ) {
+    }
 }
