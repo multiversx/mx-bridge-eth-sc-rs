@@ -136,12 +136,3 @@ wrapper-upgrade() {
     --gas-limit=50000000 --send \
     --outfile="upgrade-bridged-tokens-wrapper.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return 
 }
-
-setEsdtSafeOnWrapper() {
-    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER SAFE
-
-    mxpy --verbose contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce --pem=${ALICE} \
-    --gas-limit=60000000 --function="setEsdtSafeContractAddress" \
-    --arguments ${SAFE} \
-    --send --proxy=${PROXY} --chain=${CHAIN_ID}
-}
