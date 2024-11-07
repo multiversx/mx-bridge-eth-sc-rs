@@ -214,13 +214,6 @@ impl BridgeProxyTestState {
             )
             .run();
 
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS))
-            .run();
         self
     }
 }
