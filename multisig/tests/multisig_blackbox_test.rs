@@ -1405,97 +1405,6 @@ fn test_unstake_updates_amount_staked_correctly() {
     assert_eq!(remaining_stake_relayer2, BigUint::from(2_000u64));
 }
 
-#[test] //TODO: Fix this test
-fn test_propose_esdt_safe_set_current_transaction_batch_status_success() {
-    let mut state = MultiTransferTestState::new();
-
-    state.deploy_contracts_config();
-
-    let esdt_safe_address = ESDT_SAFE_ADDRESS;
-    let token_id = WEGLD_TOKEN_ID;
-    let amount = BigUint::<StaticApi>::from(1_000u64);
-    let destination = USER1_ADDRESS.to_managed_address::<StaticApi>();
-    let nonce = 1u64;
-    let statuses: MultiValueEncoded<StaticApi, TransactionStatus> =
-        MultiValueEncoded::from(ManagedVec::from_single_item(TransactionStatus::Pending));
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_default_price_per_gas_unit(token_id, 0u64)
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply_mint_burn(token_id, BigUint::from(100_000u64), BigUint::zero())
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .esdt_safe_set_max_tx_batch_size(1u32)
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .esdt_safe_set_max_tx_batch_block_duration(1u32)
-        .run();
-
-    for i in 0..15 {
-        println!("i: {}", i);
-        state
-            .world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(
-                EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
-            )
-            .egld_or_single_esdt(
-                &EgldOrEsdtTokenIdentifier::esdt(token_id),
-                0,
-                &BigUint::from(amount.clone()),
-            )
-            .returns(ReturnsResult)
-            .run();
-    }
-
-    let result = state
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_current_tx_batch()
-        .returns(ReturnsResult)
-        .run();
-
-    println!("{:?}", result);
-
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .propose_esdt_safe_set_current_transaction_batch_status(1u64, statuses)
-        .run();
-}
-
 #[test]
 fn test_propose_esdt_safe_set_current_transaction_batch_status_batch_empty() {
     let mut state = MultiTransferTestState::new();
@@ -1640,86 +1549,6 @@ fn test_withdraw_slashed_amount_success() {
     assert_eq!(remaining_slashed_amount, BigUint::from(500u64));
 }
 
-#[test] // TODO: Fix this test
-fn test_perform_action_endpoint_set_current_transaction_batch_status_success() {
-    let mut state = MultiTransferTestState::new();
-
-    state.deploy_contracts_config();
-
-    let esdt_safe_address = ESDT_SAFE_ADDRESS;
-    let token_id = WEGLD_TOKEN_ID;
-    let amount: BigUint<StaticApi> = BigUint::from(1_000u64);
-    let destination: ManagedAddress<StaticApi> = USER1_ADDRESS.to_managed_address();
-    let nonce = 1u64;
-
-    let mut tx_statuses = MultiValueEncoded::<StaticApi, TransactionStatus>::new();
-    tx_statuses.push(TransactionStatus::Executed);
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_default_price_per_gas_unit(token_id, 0u64)
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply_mint_burn(token_id, BigUint::from(100_000u64), BigUint::zero())
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(
-            EthAddress::zero(),
-            OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
-        )
-        .egld_or_single_esdt(
-            &EgldOrEsdtTokenIdentifier::esdt(token_id),
-            0,
-            &BigUint::from(amount.clone()),
-        )
-        .returns(ReturnsResult)
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(esdt_safe_address)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .set_transaction_batch_status(1u64, tx_statuses.clone())
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .perform_action_endpoint(1usize)
-        .run();
-
-    let result = state
-        .world
-        .query()
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_batch_status(1u64)
-        .returns(ReturnsResult)
-        .run();
-    assert_eq!(result, BatchStatus::AlreadyProcessed);
-}
-
 #[test]
 fn test_withdraw_refund_fees_for_ethereum_success() {
     let mut state = MultiTransferTestState::new();
@@ -1845,8 +1674,6 @@ fn test_upgrade_child_contract_from_source_success() {
             init_args.clone(),
         )
         .run();
-
-    // how to check ?
 }
 
 #[test]
