@@ -1,7 +1,7 @@
 deployFaucet() {
     CHECK_VARIABLES FAUCET_WASM ALICE
 
-    mxpy --verbose contract deploy --bytecode=${FAUCET_WASM} --recall-nonce --pem=${ALICE} \
+    mxpy contract deploy --bytecode=${FAUCET_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=20000000 \
     --send --outfile=deploy-faucet-testnet.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
@@ -19,7 +19,7 @@ deployFaucet() {
 setMintRoleForUniversalToken() {
   CHECK_VARIABLES ALICE ALICE_ADDRESS
 
-  mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+  mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="setSpecialRole" \
     --arguments str:${UNIVERSAL_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -30,14 +30,14 @@ mintAndDeposit() {
 
   read -p "Amount to mint (without decimals): " AMOUNT_TO_MINT
   VALUE_TO_MINT=$(echo "scale=0; $AMOUNT_TO_MINT*10^$NR_DECIMALS_UNIVERSAL/1" | bc)
-  mxpy --verbose contract call ${ALICE_ADDRESS} --recall-nonce --pem=${ALICE} \
+  mxpy contract call ${ALICE_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=300000 --function="ESDTLocalMint" \
     --arguments str:${UNIVERSAL_TOKEN} ${VALUE_TO_MINT} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 
   sleep 6
 
-  mxpy --verbose contract call ${FAUCET} --recall-nonce --pem=${ALICE} \
+  mxpy contract call ${FAUCET} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="ESDTTransfer" \
     --arguments str:${UNIVERSAL_TOKEN} ${VALUE_TO_MINT} str:deposit 100 \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -46,7 +46,7 @@ mintAndDeposit() {
 unSetMintRoleForUniversalToken() {
     CHECK_VARIABLES ALICE ALICE_ADDRESS ESDT_SYSTEM_SC_ADDRESS
 
-    mxpy --verbose contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="unSetSpecialRole" \
     --arguments str:${UNIVERSAL_TOKEN} ${ALICE_ADDRESS} str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -55,7 +55,7 @@ unSetMintRoleForUniversalToken() {
 deployTestCaller() {
     CHECK_VARIABLES TEST_CALLER_WASM ALICE
 
-    mxpy --verbose contract deploy --bytecode=${TEST_CALLER_WASM} --recall-nonce --pem=${ALICE} \
+    mxpy contract deploy --bytecode=${TEST_CALLER_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=20000000 \
     --send --outfile=deploy-test-caller.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
