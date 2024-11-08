@@ -771,8 +771,8 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
         .execute(1u32)
         .run();
 
-    // Refund: Funds are transfered to BridgedTokensWrapper
-    // test.world
-    //     .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-    //     .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+    // Refund: Funds are transfered to EsdtSafe
+    test.world
+        .check_account(ESDT_SAFE_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
 }
