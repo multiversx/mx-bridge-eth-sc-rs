@@ -73,6 +73,10 @@ case "$1" in
   confirmation upgrade-wrapper
   ;;
 
+'unpause-wrapper')
+  confirmation unpause-wrapper
+  ;;
+
 *)
   echo "Usage: Invalid choice: '"$1"'"
   echo -e
@@ -100,6 +104,7 @@ case "$1" in
   echo -e
   echo "PART 3 - Upgrade wrapper:"
   echo " 3.1 upgrade-wrapper"
+  echo " 3.2 unpause-wrapper"
   echo -e
   ;;
 
