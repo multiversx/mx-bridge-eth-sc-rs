@@ -480,7 +480,7 @@ pub trait EsdtSafe:
         accumulated_transaction_fees_mapper.set(BigUint::zero());
     }
 
-    #[view(computeTotalAmmountsFromIndex)]
+    #[view(computeTotalAmountsFromIndex)]
     fn compute_total_amounts_from_index(
         &self,
         start_index: u64,
