@@ -225,9 +225,10 @@ pub trait TxBatchModule {
         block_diff > MIN_BLOCKS_FOR_FINALITY
     }
 
-    fn clear_first_batch(&self, mapper: &mut TxBatchMapper<Self::Api>) {
+    fn clear_first_batch(&self) {
         let first_batch_id = self.first_batch_id().get();
         let new_first_batch_id = first_batch_id + 1;
+        let mut first_batch = self.pending_batches(first_batch_id);
 
         // for the case when the last existing batch was processed
         // otherwise, we'd create a batch with the same ID again
@@ -238,7 +239,7 @@ pub trait TxBatchModule {
         });
         self.first_batch_id().set(new_first_batch_id);
 
-        mapper.clear();
+        first_batch.clear();
     }
 
     fn get_and_save_next_tx_id(&self) -> u64 {

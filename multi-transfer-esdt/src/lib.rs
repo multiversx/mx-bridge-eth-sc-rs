@@ -112,10 +112,7 @@ pub trait MultiTransferEsdt:
         let opt_current_batch = self.get_first_batch_any_status();
         match opt_current_batch {
             OptionalValue::Some(current_batch) => {
-                let first_batch_id = self.first_batch_id().get();
-                let mut first_batch = self.pending_batches(first_batch_id);
-
-                self.clear_first_batch(&mut first_batch);
+                self.clear_first_batch();
                 let (_batch_id, all_tx_fields) = current_batch.into_tuple();
                 let mut refund_batch = ManagedVec::new();
                 let mut refund_payments = ManagedVec::new();
@@ -199,12 +196,6 @@ pub trait MultiTransferEsdt:
             amount: eth_tx.amount,
             is_refund_tx: true,
         }
-    }
-
-    fn is_local_role_set(&self, token_id: &TokenIdentifier, role: &EsdtLocalRole) -> bool {
-        let roles = self.blockchain().get_esdt_local_roles(token_id);
-
-        roles.has_role(role)
     }
 
     fn is_account_same_shard_frozen(

@@ -108,7 +108,7 @@ pub trait EsdtSafe:
             "Batches must be processed in order"
         );
 
-        let mut tx_batch = self.pending_batches(batch_id);
+        let tx_batch = self.pending_batches(batch_id);
         require!(
             tx_batch.len() == tx_statuses.len(),
             "Invalid number of statuses provided"
@@ -143,7 +143,7 @@ pub trait EsdtSafe:
             );
         }
 
-        self.clear_first_batch(&mut tx_batch);
+        self.clear_first_batch();
     }
 
     /// Converts failed Ethereum -> MultiversX transactions to MultiversX -> Ethereum transaction.
