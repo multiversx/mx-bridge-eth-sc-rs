@@ -2,7 +2,7 @@ deployAggregator() {
     CHECK_VARIABLES AGGREGATOR_WASM CHAIN_SPECIFIC_TOKEN ORACLE_ADDR_0 ORACLE_ADDR_1 ORACLE_ADDR_2
 
     STAKE=$(echo "$ORACLE_REQUIRED_STAKE*10^18" | bc)
-    mxpy --verbose contract deploy --bytecode=${AGGREGATOR_WASM} --recall-nonce --pem=${ALICE} \
+    mxpy contract deploy --bytecode=${AGGREGATOR_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=100000000 --arguments str:EGLD ${STAKE} 1 2 3 \
     ${ORACLE_ADDR_0} ${ORACLE_ADDR_1} ${ORACLE_ADDR_2} \
     --send --outfile=deploy-price-agregator-testnet.interaction.json --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -66,7 +66,7 @@ submitAggregatorBatch() {
 setPairDecimals() {
     CHECK_VARIABLES AGGREGATOR
 
-    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${AGGREGATOR} --recall-nonce "${MXPY_SIGN[@]}" \
         --gas-limit=15000000 --function="setPairDecimals" \
         --arguments str:GWEI str:${CHAIN_SPECIFIC_TOKEN_TICKER} 0 \
         --send --proxy=${PROXY} --chain=${CHAIN_ID} || return  
@@ -75,7 +75,7 @@ setPairDecimals() {
 pauseAggregator() {
     CHECK_VARIABLES AGGREGATOR
 
-    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${AGGREGATOR} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
@@ -83,7 +83,7 @@ pauseAggregator() {
 pauseAggregatorV2() {
     CHECK_VARIABLES AGGREGATOR_v2
 
-    mxpy --verbose contract call ${AGGREGATOR_v2} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${AGGREGATOR_v2} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
@@ -91,7 +91,7 @@ pauseAggregatorV2() {
 unpauseAggregator() {
     CHECK_VARIABLES AGGREGATOR
 
-    mxpy --verbose contract call ${AGGREGATOR} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${AGGREGATOR} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="unpause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
@@ -99,7 +99,7 @@ unpauseAggregator() {
 aggregator-upgrade() {
     CHECK_VARIABLES AGGREGATOR AGGREGATOR_WASM
 
-    mxpy --verbose contract upgrade ${AGGREGATOR} --bytecode=${AGGREGATOR_WASM} --recall-nonce --pem=${ALICE} \
+    mxpy contract upgrade ${AGGREGATOR} --bytecode=${AGGREGATOR_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=100000000 --send \
     --outfile="upgrade-aggregator.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
