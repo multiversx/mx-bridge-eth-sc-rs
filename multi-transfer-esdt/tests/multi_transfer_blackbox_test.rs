@@ -1016,6 +1016,7 @@ fn test_unwrap_token_create_transaction_paused() {
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .unwrap_token_create_transaction(
             TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
+            ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
         )
         .egld_or_single_esdt(
@@ -1067,7 +1068,7 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -1126,7 +1127,7 @@ fn test_unwrap_token_create_transaction_should_work() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -1170,7 +1171,7 @@ fn test_unwrap_token_create_transaction_should_fail() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, EthAddress::zero())
+        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(TOKEN_TICKER),
             0u64,
@@ -1196,6 +1197,7 @@ fn test_unwrap_token_create_transaction_amount_zero() {
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .unwrap_token_create_transaction(
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
+            ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
         )
         .egld_or_single_esdt(
