@@ -160,14 +160,14 @@ pub trait SetupModule:
     #[only_owner]
     #[payable("*")]
     #[endpoint(initSupplyEsdtSafe)]
-    fn init_supply_esdt_safe(&self, token_id: TokenIdentifier, amount: BigUint) {
+    fn init_supply_esdt_safe(&self) {
         let esdt_safe_addr = self.esdt_safe_address().get();
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init_supply(token_id, amount)
+            .init_supply()
             .single_esdt(&payment_token, 0, &payment_amount) // enforce only single FT transfer
             .sync_call();
     }

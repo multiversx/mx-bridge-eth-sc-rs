@@ -229,7 +229,7 @@ where
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ManagedVec<Env::Api, EsdtTokenPayment<Env::Api>>> {
         self.wrapped_tx
             .payment(NotPayable)
-            .raw_call("computeTotalAmmountsFromIndex")
+            .raw_call("computeTotalAmountsFromIndex")
             .argument(&start_index)
             .argument(&end_index)
             .original_result()
@@ -447,18 +447,11 @@ where
             .original_result()
     }
 
-    pub fn init_supply<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
+    pub fn init_supply(
         self,
-        token_id: Arg0,
-        amount: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("initSupply")
-            .argument(&token_id)
-            .argument(&amount)
             .original_result()
     }
 

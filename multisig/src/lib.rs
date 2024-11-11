@@ -352,14 +352,14 @@ pub trait Multisig:
     #[only_owner]
     #[payable("*")]
     #[endpoint(initSupplyFromChildContract)]
-    fn init_supply_from_child_contract(&self, token_id: TokenIdentifier, amount: BigUint) {
+    fn init_supply_from_child_contract(&self) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         let esdt_safe_addr = self.esdt_safe_address().get();
 
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init_supply(token_id, amount)
+            .init_supply()
             .payment((payment_token, 0, payment_amount))
             .sync_call();
     }

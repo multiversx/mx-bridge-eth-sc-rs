@@ -27,7 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         claimRefund => claim_refund
         withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
         withdrawTransactionFees => withdraw_transaction_fees
-        computeTotalAmmountsFromIndex => compute_total_amounts_from_index
+        computeTotalAmountsFromIndex => compute_total_amounts_from_index
         getRefundAmounts => get_refund_amounts
         getTotalRefundAmounts => get_total_refund_amounts
         getRefundFeesForEthereum => get_refund_fees_for_ethereum

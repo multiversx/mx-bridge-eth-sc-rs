@@ -112,7 +112,7 @@ pub trait TokenModule:
                     "Stored tokens must have 0 burn balance!"
                 );
                 if total_balance > &BigUint::zero() {
-                    self.init_supply(token_id, total_balance);
+                    self.init_supply();
                 }
             }
         }
@@ -182,22 +182,20 @@ pub trait TokenModule:
     #[only_owner]
     #[payable("*")]
     #[endpoint(initSupply)]
-    fn init_supply(&self, token_id: &TokenIdentifier, amount: &BigUint) {
-        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        require!(token_id == &payment_token, "Invalid token ID");
-        require!(amount == &payment_amount, "Invalid amount");
+    fn init_supply(&self) {
+        let (token_id, amount) = self.call_value().single_fungible_esdt();
 
         require!(
-            self.native_token(token_id).get(),
+            self.native_token(&token_id).get(),
             "Only native tokens can be stored!"
         );
-        self.require_token_in_whitelist(token_id);
+        self.require_token_in_whitelist(&token_id);
         require!(
-            !self.mint_burn_token(token_id).get(),
+            !self.mint_burn_token(&token_id).get(),
             "Cannot init for mintable/burnable tokens"
         );
 
-        self.total_balances(token_id).update(|total| {
+        self.total_balances(&token_id).update(|total| {
             *total += amount;
         });
     }

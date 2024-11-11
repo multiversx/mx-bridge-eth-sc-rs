@@ -282,7 +282,7 @@ impl EsdtSafeTestState {
         expected_error: &str,
     ) {
         self.esdt_raw_transaction()
-            .init_supply(token_id, BigUint::from(amount))
+            .init_supply()
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(tx_token_id),
                 0,
@@ -300,7 +300,7 @@ impl EsdtSafeTestState {
         amount: u64,
     ) {
         self.esdt_raw_transaction()
-            .init_supply(token_id, BigUint::from(amount))
+            .init_supply()
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(tx_token_id),
                 0,
@@ -509,24 +509,6 @@ fn init_supply_test() {
     state.multisig_deploy();
     state.safe_deploy();
     state.config_esdtsafe();
-
-    state.init_supply_should_fail(
-        NON_WHITELISTED_TOKEN,
-        NATIVE_TOKEN_ID,
-        10_000u64,
-        10_000u64,
-        ERROR,
-        "Invalid token ID",
-    );
-
-    state.init_supply_should_fail(
-        NATIVE_TOKEN_ID,
-        NATIVE_TOKEN_ID,
-        10_000u64,
-        1000u64,
-        ERROR,
-        "Invalid amount",
-    );
 
     state.init_supply_should_fail(
         NON_WHITELISTED_TOKEN,
