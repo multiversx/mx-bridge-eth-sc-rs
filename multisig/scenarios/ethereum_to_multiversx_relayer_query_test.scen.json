@@ -423,7 +423,7 @@
             "accounts": {
                 "address:user1": {
                     "esdt": {
-                        "str:WEGLD-123456": "76000000000",
+                        "str:WEGLD-123456": "76000100000",
                         "+": ""
                     },
                     "storage": "*",

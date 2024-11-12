@@ -139,6 +139,10 @@ impl MultiTransferTestState {
             .esdt_balance(ETH_TOKEN_ID, 1001u64)
             .esdt_balance(NATIVE_TOKEN_ID, 100_000u64)
             .account(USER1_ADDRESS)
+            .esdt_balance(WEGLD_TOKEN_ID, 100000u64)
+            .nonce(1)
+            .account(USER2_ADDRESS)
+            .esdt_balance(WEGLD_TOKEN_ID, 1000u64)
             .nonce(1)
             .account(RELAYER1_ADDRESS)
             .nonce(1)
@@ -414,6 +418,105 @@ impl MultiTransferTestState {
         self.bridged_tokens_wrapper_deploy();
         self.config_multisig();
     }
+
+    fn setup_before_distribute_fees(&mut self) {
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .init_supply_mint_burn_esdt_safe(WEGLD_TOKEN_ID, 10000u64, 1000u64)
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .change_multiversx_to_eth_gas_limit(10u64)
+            .run();
+
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .change_default_price_per_gas_unit(WEGLD_TOKEN_ID.clone(), 1u64)
+            .run();
+
+        self.world
+            .tx()
+            .from(USER1_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(
+                EthAddress::zero(),
+                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+            )
+            .single_esdt(
+                &TokenIdentifier::from(WEGLD_TOKEN_ID),
+                0,
+                &BigUint::from(100u64),
+            )
+            .run();
+
+        self.world
+            .tx()
+            .from(USER2_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .create_transaction(
+                EthAddress::zero(),
+                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+            )
+            .single_esdt(
+                &TokenIdentifier::from(WEGLD_TOKEN_ID),
+                0,
+                &BigUint::from(100u64),
+            )
+            .run();
+    }
+
+    fn check_distributed_fees(
+        &mut self,
+        accumulated_fees: u64,
+        user1_amount: u64,
+        user2_amount: u64,
+    ) {
+        self.world
+            .query()
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .accumulated_transaction_fees(WEGLD_TOKEN_ID)
+            .returns(ExpectValue(accumulated_fees))
+            .run();
+
+        self.world
+            .check_account(USER1_ADDRESS)
+            .esdt_balance(WEGLD_TOKEN_ID, user1_amount);
+
+        self.world
+            .check_account(USER2_ADDRESS)
+            .esdt_balance(WEGLD_TOKEN_ID, user2_amount);
+    }
+
+    fn check_amount_staked(&mut self, relayer1_amount: u64, relayer2_amount: u64) {
+        self.world
+            .query()
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .amount_staked(RELAYER1_ADDRESS)
+            .returns(ExpectValue(relayer1_amount))
+            .run();
+
+        self.world
+            .query()
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .amount_staked(RELAYER2_ADDRESS)
+            .returns(ExpectValue(relayer2_amount))
+            .run();
+    }
 }
 
 #[test]
@@ -475,7 +578,7 @@ fn ethereum_to_multiversx_call_data_empty_test() {
     state
         .world
         .check_account(USER1_ADDRESS)
-        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone());
+        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone() + 100000u64);
 }
 
 #[test]
@@ -662,7 +765,7 @@ fn ethereum_to_multiversx_relayer_query_test() {
     state
         .world
         .check_account(USER1_ADDRESS)
-        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone());
+        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone() + 100000u64);
 
     state
         .world
@@ -831,7 +934,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
     state
         .world
         .check_account(USER1_ADDRESS)
-        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone())
+        .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone() + 100000u64)
         .esdt_balance(ETH_TOKEN_ID, token_amount.clone());
 
     state.world.write_scenario_trace(
@@ -1177,6 +1280,10 @@ fn test_distribute_fees_from_child_contracts_success() {
     dest_address_percentage_pairs.push(MultiValue2::from((dest_address1.clone(), percentage1)));
     dest_address_percentage_pairs.push(MultiValue2::from((dest_address2.clone(), percentage2)));
 
+    state.setup_before_distribute_fees();
+
+    state.check_distributed_fees(20u64, 99900, 900);
+
     state
         .world
         .tx()
@@ -1185,6 +1292,8 @@ fn test_distribute_fees_from_child_contracts_success() {
         .typed(multisig_proxy::MultisigProxy)
         .distribute_fees_from_child_contracts(dest_address_percentage_pairs)
         .run();
+
+    state.check_distributed_fees(0u64, 99912, 908);
 }
 
 #[test]
@@ -1206,6 +1315,10 @@ fn test_distribute_fees_from_child_contracts_invalid_percentage_sum() {
     dest_address_percentage_pairs.push(MultiValue2::from((dest_address1.clone(), percentage1)));
     dest_address_percentage_pairs.push(MultiValue2::from((dest_address2.clone(), percentage2)));
 
+    state.setup_before_distribute_fees();
+
+    state.check_distributed_fees(20u64, 99900, 900);
+
     state
         .world
         .tx()
@@ -1215,6 +1328,8 @@ fn test_distribute_fees_from_child_contracts_invalid_percentage_sum() {
         .distribute_fees_from_child_contracts(dest_address_percentage_pairs)
         .returns(ExpectError(4, "Percentages do not add up to 100%"))
         .run();
+
+    state.check_distributed_fees(20u64, 99900, 900);
 }
 
 #[test]
@@ -1236,6 +1351,9 @@ fn test_distribute_fees_from_child_contracts_with_sc_address() {
     dest_address_percentage_pairs.push(MultiValue2::from((dest_address1.clone(), percentage1)));
     dest_address_percentage_pairs.push(MultiValue2::from((dest_address2.clone(), percentage2)));
 
+    state.setup_before_distribute_fees();
+
+    state.check_distributed_fees(20u64, 99900, 900);
     state
         .world
         .tx()
@@ -1248,6 +1366,8 @@ fn test_distribute_fees_from_child_contracts_with_sc_address() {
             "Cannot transfer to smart contract dest_address",
         ))
         .run();
+
+    state.check_distributed_fees(20u64, 99900, 900);
 }
 
 #[test]
@@ -1320,6 +1440,8 @@ fn test_unstake_more_than_staked_amount() {
         .unstake(unstake_amount)
         .returns(ExpectError(4, "can't unstake more than amount staked"))
         .run();
+
+    state.check_amount_staked(1000u64, 1000u64);
 }
 
 #[test]
@@ -1341,6 +1463,8 @@ fn test_unstake_below_required_stake_board_member() {
             "can't unstake, must keep minimum amount as insurance",
         ))
         .run();
+
+    state.check_amount_staked(1000u64, 1000u64);
 }
 
 #[test]
@@ -1381,28 +1505,7 @@ fn test_unstake_updates_amount_staked_correctly() {
         .unstake(unstake_amount_relayer1.clone())
         .run();
 
-    let remaining_stake_relayer1 = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .amount_staked(RELAYER1_ADDRESS.to_managed_address())
-        .returns(ReturnsResult)
-        .run();
-
-    let expected_remaining_stake_relayer1 = &BigUint::from(2_000u64) - &unstake_amount_relayer1;
-    assert_eq!(remaining_stake_relayer1, expected_remaining_stake_relayer1);
-
-    let remaining_stake_relayer2 = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .amount_staked(RELAYER2_ADDRESS.to_managed_address())
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(remaining_stake_relayer2, BigUint::from(2_000u64));
+    state.check_amount_staked(1800u64, 2000u64);
 }
 
 #[test]
@@ -1452,6 +1555,15 @@ fn test_init_supply_from_child_contract_success() {
         .world
         .check_account(ESDT_SAFE_ADDRESS)
         .esdt_balance(token_id, amount.clone());
+
+    state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .total_balances(TokenIdentifier::from(token_id))
+        .returns(ExpectValue(amount.clone()))
+        .run();
 }
 
 #[test]
