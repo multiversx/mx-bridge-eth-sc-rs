@@ -1,35 +1,16 @@
-#![allow(unused)]
-
-use std::ops::Add;
-
-use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
-use esdt_safe::{EsdtSafe, ProxyTrait as _};
-
-use multisig::__endpoints_5__::multi_transfer_esdt_address;
 use multiversx_sc::{
-    api::{HandleConstraints, ManagedTypeApi},
-    codec::{
-        multi_types::{MultiValueVec, OptionalValue},
-        Empty,
-    },
+    codec::multi_types::OptionalValue,
     contract_base::ManagedSerializer,
     hex_literal::hex,
     imports::MultiValue2,
-    storage::mappers::SingleValue,
     types::{
-        Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EgldOrMultiEsdtPayment,
-        EsdtLocalRole, EsdtTokenPayment, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedOption, ManagedType, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress,
-        ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        Address, BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedByteArray,
+        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsResult, TestAddress, TestSCAddress,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
-use multiversx_sc_modules::pause::ProxyTrait;
 use multiversx_sc_scenario::{
-    api::{StaticApi, VMHooksApi, VMHooksApiBackend},
-    imports::MxscPath,
-    scenario_format::interpret_trait::{InterpretableFrom, InterpreterContext},
-    scenario_model::*,
-    ContractInfo, DebugApi, ExpectError, ExpectValue, ScenarioTxRun, ScenarioWorld,
+    api::StaticApi, imports::MxscPath, ExpectError, ExpectValue, ScenarioTxRun, ScenarioWorld,
 };
 
 use eth_address::*;
@@ -37,18 +18,11 @@ use sc_proxies::{
     bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
     multi_transfer_esdt_proxy, multisig_proxy,
 };
-use token_module::ProxyTrait as _;
-use transaction::{
-    transaction_status::TransactionStatus, CallData, EthTransaction, EthTxAsMultiValue,
-    Transaction, TxBatchSplitInFields,
-};
-use tx_batch_module::BatchStatus;
+use transaction::{transaction_status::TransactionStatus, CallData, EthTxAsMultiValue};
 
 const WEGLD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
 const NATIVE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("EGLD-123456");
-
-const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
 
 const GAS_LIMIT: u64 = 100_000_000;
 const ETH_TX_GAS_LIMIT: u64 = 150_000;
@@ -78,7 +52,6 @@ const MOCK_ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("mock-esdt-safe
 const BRIDGED_TOKENS_WRAPPER_ADDRESS: TestSCAddress = TestSCAddress::new("bridged-tokens-wrapper");
 const PRICE_AGGREGATOR_ADDRESS: TestSCAddress = TestSCAddress::new("price-aggregator");
 
-const ORACLE_ADDRESS: TestAddress = TestAddress::new("oracle");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
 const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
@@ -86,11 +59,8 @@ const NON_BOARD_MEMEBER_ADDRESS: TestAddress = TestAddress::new("non-board-membe
 const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
 const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
-const RANDOM_SC_ADDRESS: TestSCAddress = TestSCAddress::new("random-sc");
-
 const ESDT_SAFE_ETH_TX_GAS_LIMIT: u64 = 150_000;
-
-const BALANCE: &str = "2,000,000";
+const INITIAL_STAKE: u64 = 1_000u64;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -118,11 +88,6 @@ fn world() -> ScenarioWorld {
 
     blockchain
 }
-
-type MultiTransferContract = ContractInfo<multi_transfer_esdt::Proxy<StaticApi>>;
-type BridgeProxyContract = ContractInfo<bridge_proxy::Proxy<StaticApi>>;
-type EsdtSafeContract = ContractInfo<esdt_safe::Proxy<StaticApi>>;
-type BridgedTokensWrapperContract = ContractInfo<bridged_tokens_wrapper::Proxy<StaticApi>>;
 
 struct MultiTransferTestState {
     world: ScenarioWorld,
@@ -500,22 +465,75 @@ impl MultiTransferTestState {
             .esdt_balance(WEGLD_TOKEN_ID, user2_amount);
     }
 
-    fn check_amount_staked(&mut self, relayer1_amount: u64, relayer2_amount: u64) {
+    fn stake(&mut self, address: TestAddress, amount: u64) -> &mut Self {
+        self.world
+            .tx()
+            .from(address)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .stake()
+            .egld(amount)
+            .run();
+        self
+    }
+
+    fn unstake(&mut self, address: TestAddress, amount: u64) -> &mut Self {
+        self.world
+            .tx()
+            .from(address)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .unstake(amount)
+            .run();
+        self
+    }
+
+    fn unstake_error(&mut self, address: TestAddress, amount: u64, error: &str) -> &mut Self {
+        self.world
+            .tx()
+            .from(address)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .unstake(amount)
+            .returns(ExpectError(4u64, error))
+            .run();
+        self
+    }
+
+    fn check_stake(&mut self, address: TestAddress, expected_amount: u64) {
+        let amount = self
+            .world
+            .query()
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .amount_staked(address.to_managed_address())
+            .returns(ReturnsResult)
+            .run();
+        assert_eq!(amount, BigUint::from(expected_amount));
+    }
+
+    fn assert_board_member_count(&mut self, expected_count: usize) {
         self.world
             .query()
             .to(MULTISIG_ADDRESS)
             .typed(multisig_proxy::MultisigProxy)
-            .amount_staked(RELAYER1_ADDRESS)
-            .returns(ExpectValue(relayer1_amount))
+            .num_board_members()
+            .returns(ExpectValue(expected_count))
+            .run();
+    }
+
+    fn slash_amount(&mut self) -> u64 {
+        let slash_amount = self
+            .world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .slash_amount()
+            .returns(ReturnsResult)
             .run();
 
-        self.world
-            .query()
-            .to(MULTISIG_ADDRESS)
-            .typed(multisig_proxy::MultisigProxy)
-            .amount_staked(RELAYER2_ADDRESS)
-            .returns(ExpectValue(relayer2_amount))
-            .run();
+        slash_amount.to_u64().unwrap()
     }
 }
 
@@ -779,9 +797,6 @@ fn ethereum_to_multiversx_relayer_query2_test() {
     state.world.start_trace();
 
     state.deploy_contracts_config();
-
-    let addr =
-        Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
 
     const ADDR: [u8; 32] = hex!("691dee92137cddbe76ec34eeacbc3b7d91264148da5a69205133c395aa7662cf");
 
@@ -1267,8 +1282,6 @@ fn test_distribute_fees_from_child_contracts_success() {
     let dest_address1 = USER1_ADDRESS.to_managed_address();
     let dest_address2 = USER2_ADDRESS.to_managed_address();
 
-    const PERCENTAGE_TOTAL: u32 = 10000;
-
     let percentage1 = 6000;
     let percentage2 = 4000;
 
@@ -1375,53 +1388,21 @@ fn test_unstake_successful_board_member() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts_config();
-    let stake_amount = BigUint::from(1_000u64);
+    let stake_amount = 1_000u64;
 
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .stake()
-        .egld(&stake_amount)
-        .run();
+    state.stake(RELAYER1_ADDRESS, stake_amount);
 
-    let remaining_stake = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .amount_staked(RELAYER1_ADDRESS.to_managed_address())
-        .returns(ReturnsResult)
-        .run();
+    state.check_stake(RELAYER1_ADDRESS, stake_amount + INITIAL_STAKE);
 
-    let unstake_amount = BigUint::from(500u64);
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .unstake(unstake_amount.clone())
-        .run();
+    let unstake_amount = 500u64;
+    state.unstake(RELAYER1_ADDRESS, unstake_amount);
 
-    let remaining_stake = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .amount_staked(RELAYER1_ADDRESS.to_managed_address())
-        .returns(ReturnsResult)
-        .run();
-
-    let expected_remaining_stake = BigUint::from(2000u64) - &unstake_amount;
-    assert_eq!(remaining_stake, expected_remaining_stake);
+    state.check_stake(RELAYER1_ADDRESS, stake_amount + INITIAL_STAKE - 500u64);
 
     state
         .world
         .check_account(RELAYER1_ADDRESS)
-        .balance(unstake_amount.to_u64().unwrap());
+        .balance(unstake_amount);
 }
 
 #[test]
@@ -1430,18 +1411,13 @@ fn test_unstake_more_than_staked_amount() {
 
     state.deploy_contracts_config();
 
-    let unstake_amount = BigUint::from(1_500u64);
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .unstake(unstake_amount)
-        .returns(ExpectError(4, "can't unstake more than amount staked"))
-        .run();
+    state.unstake_error(
+        RELAYER1_ADDRESS,
+        1500u64,
+        "can't unstake more than amount staked",
+    );
 
-    state.check_amount_staked(1000u64, 1000u64);
+    state.check_stake(RELAYER1_ADDRESS, INITIAL_STAKE);
 }
 
 #[test]
@@ -1450,21 +1426,13 @@ fn test_unstake_below_required_stake_board_member() {
 
     state.deploy_contracts_config();
 
-    let additional_unstake_amount = BigUint::from(600u64);
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .unstake(additional_unstake_amount)
-        .returns(ExpectError(
-            4,
-            "can't unstake, must keep minimum amount as insurance",
-        ))
-        .run();
+    state.unstake_error(
+        RELAYER1_ADDRESS,
+        600u64,
+        "can't unstake, must keep minimum amount as insurance",
+    );
 
-    state.check_amount_staked(1000u64, 1000u64);
+    state.check_stake(RELAYER1_ADDRESS, 1000u64);
 }
 
 #[test]
@@ -1472,40 +1440,20 @@ fn test_unstake_updates_amount_staked_correctly() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts_config();
+    let stake_amount_relayer1 = 1_000u64;
+    state.stake(RELAYER1_ADDRESS, stake_amount_relayer1);
 
-    let stake_amount_relayer1 = BigUint::from(1_000u64);
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .stake()
-        .egld(&stake_amount_relayer1)
-        .run();
+    let stake_amount_relayer2 = 1_000u64;
+    state.stake(RELAYER2_ADDRESS, stake_amount_relayer2);
 
-    let stake_amount_relayer2 = BigUint::from(1_000u64);
-    state
-        .world
-        .tx()
-        .from(RELAYER2_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .stake()
-        .egld(&stake_amount_relayer2)
-        .run();
+    let unstake_amount_relayer1 = 200u64;
+    state.unstake(RELAYER1_ADDRESS, unstake_amount_relayer1);
 
-    let unstake_amount_relayer1 = BigUint::from(200u64);
-    state
-        .world
-        .tx()
-        .from(RELAYER1_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .unstake(unstake_amount_relayer1.clone())
-        .run();
-
-    state.check_amount_staked(1800u64, 2000u64);
+    state.check_stake(
+        RELAYER1_ADDRESS,
+        INITIAL_STAKE + stake_amount_relayer1 - unstake_amount_relayer1,
+    );
+    state.check_stake(RELAYER2_ADDRESS, INITIAL_STAKE + stake_amount_relayer2);
 }
 
 #[test]
@@ -1513,10 +1461,6 @@ fn test_propose_esdt_safe_set_current_transaction_batch_status_batch_empty() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts_config();
-
-    let esdt_safe_address = ESDT_SAFE_ADDRESS;
-    let token_id = WEGLD_TOKEN_ID;
-    let amount = BigUint::<StaticApi>::from(1_000u64);
 
     let statuses: MultiValueEncoded<StaticApi, TransactionStatus> =
         MultiValueEncoded::from(ManagedVec::from_single_item(TransactionStatus::Pending));
@@ -1614,7 +1558,8 @@ fn test_withdraw_slashed_amount_success() {
 
     state.deploy_contracts_config();
 
-    let slashed_amount = BigUint::from(500u64);
+    let slashed_amount = state.slash_amount();
+
     state.world.set_esdt_balance(
         MULTISIG_ADDRESS,
         WEGLD_TOKEN_ID.as_bytes(),
@@ -1630,16 +1575,7 @@ fn test_withdraw_slashed_amount_success() {
         .slash_board_member(RELAYER1_ADDRESS.to_managed_address())
         .run();
 
-    let remaining_stake = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .amount_staked(RELAYER1_ADDRESS.to_managed_address())
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(remaining_stake, BigUint::from(500u64));
+    state.check_stake(RELAYER1_ADDRESS, INITIAL_STAKE - slashed_amount);
 
     state
         .world
@@ -1650,15 +1586,8 @@ fn test_withdraw_slashed_amount_success() {
         .withdraw_slashed_amount()
         .run();
 
-    let remaining_slashed_amount = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .slash_amount()
-        .returns(ReturnsResult)
-        .run();
-    assert_eq!(remaining_slashed_amount, BigUint::from(500u64));
+    let remaining_slashed_amount = state.slash_amount();
+    assert_eq!(remaining_slashed_amount, 500u64);
 }
 
 #[test]
@@ -1794,17 +1723,7 @@ fn test_add_board_member_success() {
 
     state.deploy_contracts_config();
 
-    let num_board_members = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(num_board_members, 2);
-
+    state.assert_board_member_count(2usize);
     state
         .world
         .tx()
@@ -1814,16 +1733,7 @@ fn test_add_board_member_success() {
         .add_board_member_endpoint(USER1_ADDRESS.to_managed_address())
         .run();
 
-    let num_board_members_after = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(num_board_members_after, 3);
+    state.assert_board_member_count(3usize);
 }
 
 #[test]
@@ -1841,16 +1751,7 @@ fn test_remove_user_success() {
         .add_board_member_endpoint(USER1_ADDRESS.to_managed_address())
         .run();
 
-    let num_board_members = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(num_board_members, 3);
+    state.assert_board_member_count(3usize);
 
     state
         .world
@@ -1861,16 +1762,7 @@ fn test_remove_user_success() {
         .remove_user(USER1_ADDRESS.to_managed_address())
         .run();
 
-    let num_board_members = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(num_board_members, 2);
+    state.assert_board_member_count(2usize);
 }
 
 #[test]
@@ -1932,16 +1824,7 @@ fn test_remove_user_quorum_exceed_board_size() {
 
     state.deploy_contracts_config();
 
-    let num_board_members = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(num_board_members, 2);
+    state.assert_board_member_count(2usize);
 
     state
         .world
@@ -1953,16 +1836,7 @@ fn test_remove_user_quorum_exceed_board_size() {
         .returns(ExpectError(4u64, "quorum cannot exceed board size"))
         .run();
 
-    let num_board_members_after = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert_eq!(num_board_members_after, 2);
+    state.assert_board_member_count(2usize);
 }
 
 #[test]
@@ -1971,16 +1845,7 @@ fn test_change_quorum_success() {
 
     state.deploy_contracts_config();
 
-    let initial_num_board_members: usize = state
-        .world
-        .query()
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .num_board_members()
-        .returns(ReturnsResult)
-        .run();
-
-    assert!(initial_num_board_members >= 1);
+    state.assert_board_member_count(2usize);
 
     let new_quorum = 1usize;
     state
