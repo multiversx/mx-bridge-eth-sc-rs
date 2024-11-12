@@ -406,7 +406,7 @@ impl MultiTransferTestState {
             .from(OWNER_ADDRESS)
             .to(MULTISIG_ADDRESS)
             .typed(multisig_proxy::MultisigProxy)
-            .change_default_price_per_gas_unit(WEGLD_TOKEN_ID.clone(), 1u64)
+            .change_default_price_per_gas_unit(WEGLD_TOKEN_ID, 1u64)
             .run();
 
         self.world
@@ -1560,11 +1560,9 @@ fn test_withdraw_slashed_amount_success() {
 
     let slashed_amount = state.slash_amount();
 
-    state.world.set_esdt_balance(
-        MULTISIG_ADDRESS,
-        WEGLD_TOKEN_ID.as_bytes(),
-        slashed_amount.clone(),
-    );
+    state
+        .world
+        .set_esdt_balance(MULTISIG_ADDRESS, WEGLD_TOKEN_ID.as_bytes(), slashed_amount);
 
     state
         .world
