@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            0
+// Endpoints:                            1
 // Async Callback (empty):               1
-// Total number of exported functions:   3
+// Total number of exported functions:   4
 
 #![no_std]
 
@@ -20,6 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
+        addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
     )
 }
 
