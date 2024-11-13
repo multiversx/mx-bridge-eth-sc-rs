@@ -163,23 +163,6 @@
             "step": "scCall",
             "id": "",
             "tx": {
-                "from": "address:owner",
-                "to": "sc:bridged-tokens-wrapper",
-                "function": "setEsdtSafeContractAddress",
-                "arguments": [
-                    "0x00000000000000000500657364742d736166655f5f5f5f5f5f5f5f5f5f5f5f5f"
-                ],
-                "gasLimit": "5,000,000"
-            },
-            "expect": {
-                "out": [],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "",
-            "tx": {
                 "from": "sc:multi-transfer",
                 "to": "sc:bridge-proxy",
                 "esdtValue": [

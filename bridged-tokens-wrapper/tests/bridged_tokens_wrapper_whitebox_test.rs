@@ -391,6 +391,9 @@ fn test_unwrap_token_create_transaction_should_fail_case_1() {
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
+                ManagedAddress::new_from_bytes(
+                    b"0102030405060708090a0b0c0d0e0f10",
+                ),
                 address,
             );
         },
@@ -428,6 +431,9 @@ fn test_unwrap_token_create_transaction_should_fail_case_2() {
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
+                ManagedAddress::new_from_bytes(
+                    b"0102030405060708090a0b0c0d0e0f10",
+                ),
                 address,
             );
         },
@@ -465,6 +471,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_3() {
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
+                ManagedAddress::zero(),
                 address,
             );
         },
@@ -537,6 +544,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_4() {
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
+                ManagedAddress::zero(),
                 address,
             );
         },
