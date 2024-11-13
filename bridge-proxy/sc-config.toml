@@ -1,10 +1,4 @@
 [settings]
 
 [[proxy]]
-path = "../multi-transfer-esdt/src/bridge_proxy_contract_proxy.rs"
-
-[[proxy]]
-path = "../multisig/src/bridge_proxy_contract_proxy.rs"
-
-[[proxy]]
-path = "./src/bridge_proxy_contract_proxy.rs"
+path = "../common/sc-proxies/src/bridge_proxy_contract_proxy.rs"

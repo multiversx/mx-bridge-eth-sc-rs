@@ -2,14 +2,10 @@
 
 use std::ops::Add;
 
-use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _, ProxyTrait as _};
+use bridge_proxy::{config::ProxyTrait as _, ProxyTrait as _};
 use esdt_safe::{EsdtSafe, ProxyTrait as _};
-use multi_transfer_esdt::{bridged_tokens_wrapper_proxy, multi_transfer_proxy, ProxyTrait as _};
 
-use multisig::{
-    __endpoints_5__::multi_transfer_esdt_address, esdt_safe_proxy, multi_transfer_esdt_proxy,
-    multisig_proxy,
-};
+use multisig::__endpoints_5__::multi_transfer_esdt_address;
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
     codec::{
@@ -20,9 +16,10 @@ use multiversx_sc::{
     hex_literal::hex,
     storage::mappers::SingleValue,
     types::{
-        Address, BigUint, CodeMetadata, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedOption, ManagedType, ManagedVec, MultiValueEncoded, ReturnsNewManagedAddress,
-        ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        Address, BigUint, CodeMetadata, EsdtLocalRole, ManagedAddress, ManagedBuffer,
+        ManagedByteArray, ManagedOption, ManagedType, ManagedVec, MultiValueEncoded,
+        ReturnsNewManagedAddress, ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier,
+        TokenIdentifier,
     },
 };
 use multiversx_sc_modules::pause::ProxyTrait;
@@ -35,8 +32,15 @@ use multiversx_sc_scenario::{
 };
 
 use eth_address::*;
+use sc_proxies::{
+    bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
+    multi_transfer_esdt_proxy, multisig_proxy,
+};
 use token_module::ProxyTrait as _;
-use transaction::{CallData, EthTransaction, EthTxAsMultiValue, TxBatchSplitInFields};
+use transaction::{
+    transaction_status::TransactionStatus, CallData, EthTransaction, EthTxAsMultiValue,
+    TxBatchSplitInFields,
+};
 
 const WEGLD_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WEGLD-123456");
 const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456");
@@ -44,6 +48,7 @@ const ETH_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("ETH-123456")
 const USER_ETHEREUM_ADDRESS: &[u8] = b"0x0102030405060708091011121314151617181920";
 
 const GAS_LIMIT: u64 = 100_000_000;
+const ETH_TX_GAS_LIMIT: u64 = 150_000;
 
 const MULTISIG_CODE_PATH: MxscPath = MxscPath::new("output/multisig.mxsc.json");
 const MULTI_TRANSFER_CODE_PATH: MxscPath =
@@ -67,6 +72,7 @@ const ORACLE_ADDRESS: TestAddress = TestAddress::new("oracle");
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
 const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
+const NON_BOARD_MEMEBER_ADDRESS: TestAddress = TestAddress::new("non-board-member");
 const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
 const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
@@ -89,6 +95,10 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(
         BRIDGED_TOKENS_WRAPPER_CODE_PATH,
         bridged_tokens_wrapper::ContractBuilder,
+    );
+    blockchain.register_contract(
+        PRICE_AGGREGATOR_CODE_PATH,
+        fee_estimator_module::ContractBuilder,
     );
 
     blockchain
@@ -119,18 +129,14 @@ impl MultiTransferTestState {
             .balance(1_000u64)
             .account(RELAYER2_ADDRESS)
             .nonce(1)
-            .balance(1_000u64);
+            .balance(1_000u64)
+            .account(NON_BOARD_MEMEBER_ADDRESS)
+            .nonce(1);
 
         let roles = vec![
             "ESDTRoleLocalMint".to_string(),
             "ESDTRoleLocalBurn".to_string(),
         ];
-        world
-            .account(ESDT_SAFE_ADDRESS)
-            .esdt_roles(WEGLD_TOKEN_ID, roles.clone())
-            .esdt_roles(ETH_TOKEN_ID, roles)
-            .code(ESDT_SAFE_CODE_PATH)
-            .owner(OWNER_ADDRESS);
 
         Self { world }
     }
@@ -148,6 +154,8 @@ impl MultiTransferTestState {
                 ESDT_SAFE_ADDRESS,
                 MULTI_TRANSFER_ADDRESS,
                 BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+                PRICE_AGGREGATOR_ADDRESS,
                 1_000u64,
                 500u64,
                 2usize,
@@ -175,7 +183,7 @@ impl MultiTransferTestState {
     fn bridged_tokens_wrapper_deploy(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .init()
             .code(BRIDGED_TOKENS_WRAPPER_CODE_PATH)
@@ -188,9 +196,9 @@ impl MultiTransferTestState {
     fn bridge_proxy_deploy(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .init(OptionalValue::Some(MULTI_TRANSFER_ADDRESS.to_address()))
+            .init()
             .code(BRIDGE_PROXY_CODE_PATH)
             .new_address(BRIDGE_PROXY_ADDRESS)
             .run();
@@ -198,66 +206,21 @@ impl MultiTransferTestState {
         self
     }
 
-    fn safe_deploy(&mut self, price_aggregator_contract_address: Address) -> &mut Self {
+    fn safe_deploy(&mut self) {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .upgrade(
-                ManagedAddress::zero(),
-                MULTI_TRANSFER_ADDRESS.to_address(),
-                BRIDGE_PROXY_ADDRESS.to_address(),
-                ESDT_SAFE_ETH_TX_GAS_LIMIT,
-            )
+            .init(ETH_TX_GAS_LIMIT)
             .code(ESDT_SAFE_CODE_PATH)
+            .new_address(ESDT_SAFE_ADDRESS)
             .run();
-
-        self
     }
 
     fn config_multisig(&mut self) {
         self.world
             .tx()
             .from(MULTISIG_ADDRESS)
-            .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
-            .set_wrapping_contract_address(OptionalValue::Some(
-                BRIDGED_TOKENS_WRAPPER_ADDRESS.to_address(),
-            ))
-            .run();
-
-        self.world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
-            .set_bridge_proxy_contract_address(OptionalValue::Some(
-                BRIDGE_PROXY_ADDRESS.to_address(),
-            ))
-            .run();
-
-        self.world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(MULTI_TRANSFER_ADDRESS)
-            .typed(multi_transfer_proxy::MultiTransferEsdtProxy)
-            .set_esdt_safe_contract_address(OptionalValue::Some(ESDT_SAFE_ADDRESS.to_address()))
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .set_multi_transfer_contract_address(OptionalValue::Some(
-                MULTI_TRANSFER_ADDRESS.to_address(),
-            ))
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .add_token_to_whitelist(
@@ -274,7 +237,7 @@ impl MultiTransferTestState {
 
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .add_token_to_whitelist(
@@ -299,7 +262,7 @@ impl MultiTransferTestState {
 
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .unpause_endpoint()
@@ -307,7 +270,7 @@ impl MultiTransferTestState {
 
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(multisig_proxy::MultisigProxy)
             .unpause_endpoint()
@@ -315,7 +278,7 @@ impl MultiTransferTestState {
 
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .unpause_endpoint()
@@ -348,6 +311,30 @@ impl MultiTransferTestState {
             .returns(ReturnsResult)
             .run();
 
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"WEGLD-123456",
+            BigUint::from(100_000_000_000u64),
+        );
+
+        self.world.set_esdt_balance(
+            MULTISIG_ADDRESS,
+            b"ETH-123456",
+            BigUint::from(100_000_000_000u64),
+        );
+
+        self.world.set_esdt_local_roles(
+            ESDT_SAFE_ADDRESS,
+            b"WEGLD-123456",
+            &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
+        );
+
+        self.world.set_esdt_local_roles(
+            ESDT_SAFE_ADDRESS,
+            b"ETH-123456",
+            &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
+        );
+
         assert!(staked_relayers
             .to_vec()
             .contains(&RELAYER1_ADDRESS.to_managed_address()));
@@ -362,7 +349,7 @@ fn config_test() {
     let mut state = MultiTransferTestState::new();
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -372,10 +359,10 @@ fn config_test() {
 #[test]
 fn ethereum_to_multiversx_call_data_empty_test() {
     let mut state = MultiTransferTestState::new();
-    let token_amount = BigUint::from(76_000_000_000u64);
+    let token_amount = BigUint::from(76_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -437,7 +424,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
     state.world.start_trace();
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -550,7 +537,7 @@ fn ethereum_to_multiversx_relayer_query_test() {
     state.world.start_trace();
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -637,7 +624,7 @@ fn ethereum_to_multiversx_relayer_query2_test() {
     state.world.start_trace();
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -725,7 +712,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
     state.world.start_trace();
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -816,7 +803,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
     let over_the_limit_token_amount = BigUint::from(101_000_000_000u64);
 
     state.multisig_deploy();
-    state.safe_deploy(Address::zero());
+    state.safe_deploy();
     state.multi_transfer_deploy();
     state.bridge_proxy_deploy();
     state.bridged_tokens_wrapper_deploy();
@@ -906,5 +893,160 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .move_refund_batch_to_safe_from_child_contract()
+        .run();
+}
+
+#[test]
+fn multisig_non_board_member_interaction_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(NON_BOARD_MEMEBER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers.clone())
+        .returns(ExpectError(4, "only board members can propose"))
+        .run();
+
+    let mut tx_batch_status: MultiValueEncoded<StaticApi, TransactionStatus> =
+        MultiValueEncoded::<StaticApi, TransactionStatus>::new();
+    tx_batch_status.push(TransactionStatus::InProgress);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+}
+
+#[test]
+fn multisig_insuficient_signatures_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .returns(ExpectError(4, "quorum has not been reached"))
+        .run();
+}
+
+#[test]
+fn multisig_non_board_member_sign_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(76_000_000_000u64);
+
+    state.multisig_deploy();
+    state.safe_deploy();
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multisig();
+
+    let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        token_amount.clone(),
+        1u64,
+        ManagedOption::none(),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(NON_BOARD_MEMEBER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .returns(ExpectError(4, "only board members can sign"))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .returns(ExpectError(4, "quorum has not been reached"))
         .run();
 }

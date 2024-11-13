@@ -6,13 +6,7 @@ mod price_aggregator_proxy;
 pub const GWEI_STRING: &[u8] = b"GWEI";
 
 #[multiversx_sc::module]
-pub trait FeeEstimatorModule {
-    #[only_owner]
-    #[endpoint(setFeeEstimatorContractAddress)]
-    fn set_fee_estimator_contract_address(&self, new_address: ManagedAddress) {
-        self.fee_estimator_contract_address().set(&new_address);
-    }
-
+pub trait FeeEstimatorModule: storage_module::CommonStorageModule {
     #[only_owner]
     #[endpoint(setEthTxGasLimit)]
     fn set_eth_tx_gas_limit(&self, new_limit: BigUint) {
@@ -59,7 +53,7 @@ pub trait FeeEstimatorModule {
         from: &TokenIdentifier,
         to: &TokenIdentifier,
     ) -> Option<BigUint> {
-        let fee_estimator_sc_address = self.fee_estimator_contract_address().get();
+        let fee_estimator_sc_address = self.get_fee_estimator_address();
         if fee_estimator_sc_address.is_zero() {
             return None;
         }
@@ -81,10 +75,6 @@ pub trait FeeEstimatorModule {
     }
 
     // storage
-
-    #[view(getFeeEstimatorContractAddress)]
-    #[storage_mapper("feeEstimatorContractAddress")]
-    fn fee_estimator_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[view(getDefaultPricePerGasUnit)]
     #[storage_mapper("defaultPricePerGasUnit")]

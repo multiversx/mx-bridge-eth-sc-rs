@@ -102,4 +102,14 @@ pub trait StorageModule {
     #[view(getProxyAddress)]
     #[storage_mapper("proxyAddress")]
     fn proxy_address(&self) -> SingleValueMapper<ManagedAddress>;
+
+    #[view(getBridgedTokensWrapperAddress)]
+    #[storage_mapper("bridgedTokensWrapperAddress")]
+    fn bridged_tokens_wrapper_address(
+        &self,
+    ) -> SingleValueMapper<Self::Api, ManagedAddress<Self::Api>>;
+
+    #[view(getFeeEstimatorAddress)]
+    #[storage_mapper("feeEstimatorAddress")]
+    fn fee_estimator_address(&self) -> SingleValueMapper<Self::Api, ManagedAddress<Self::Api>>;
 }
