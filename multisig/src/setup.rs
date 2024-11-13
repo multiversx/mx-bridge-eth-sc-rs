@@ -3,6 +3,8 @@ use multiversx_sc::imports::*;
 use eth_address::EthAddress;
 use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
 
+const MAX_BOARD_MEMBERS: usize = 40;
+
 #[multiversx_sc::module]
 pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
@@ -74,7 +76,28 @@ pub trait SetupModule:
     #[endpoint(changeQuorum)]
     fn change_quorum(&self, new_quorum: usize) {
         require!(
-            new_quorum <= self.num_board_members().get(),
+            new_quorum <= MAX_BOARD_MEMBERS && new_quorum > 1,
+            "Quorum size not appropriate"
+        );
+        let total_users = self.user_mapper().get_user_count();
+        let mut board_member_with_valid_stake: usize = 0;
+
+        for user_id in 0..total_users {
+            let user_role = self.user_id_to_role(user_id).get();
+
+            if user_role.is_board_member() {
+                if let Some(board_member_addr) = self.user_mapper().get_user_address(user_id) {
+                    let amount_staked = self.amount_staked(&board_member_addr).get();
+                    let required_stake_amount = self.required_stake_amount().get();
+                    if amount_staked >= required_stake_amount {
+                        board_member_with_valid_stake += 1;
+                    }
+                }
+            }
+        }
+
+        require!(
+            new_quorum <= board_member_with_valid_stake,
             "quorum cannot exceed board size"
         );
         self.quorum().set(new_quorum);
