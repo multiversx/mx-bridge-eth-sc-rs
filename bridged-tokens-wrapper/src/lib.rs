@@ -327,6 +327,6 @@ pub trait BridgedTokensWrapper:
         universal_token_id: &TokenIdentifier,
     ) -> UnorderedSetMapper<TokenIdentifier>;
 
-    #[storage_mapper("token_decimals_num")]
+    #[storage_mapper("tokenDecimalsNum")]
     fn token_decimals_num(&self, token: &TokenIdentifier) -> SingleValueMapper<u32>;
 }

@@ -66,7 +66,7 @@ pub trait SetupModule:
     fn slash_board_member(&self, board_member: ManagedAddress) {
         let slash_amount = self.slash_amount().get();
 
-        // remove slashed amount from user stake amountself
+        // remove slashed amount from user stake amount self
         self.amount_staked(&board_member)
             .update(|stake| *stake -= &slash_amount);
 
