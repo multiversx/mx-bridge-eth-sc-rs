@@ -269,7 +269,7 @@ pub trait Multisig:
             "Action already proposed"
         );
 
-        let current_batch_len = current_batch_transactions.raw_len() / TX_MULTIRESULT_NR_FIELDS;
+        let current_batch_len = current_batch_transactions.len();
         let status_batch_len = statuses_vec.len();
         require!(
             current_batch_len == status_batch_len,
@@ -416,7 +416,7 @@ pub trait Multisig:
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) {
         require!(
-            !self.action_mapper().item_is_empty(action_id),
+            !self.executed_actions().contains(&action_id),
             "Action was already executed"
         );
 
@@ -433,6 +433,7 @@ pub trait Multisig:
         require!(self.not_paused(), "No actions may be executed while paused");
 
         self.perform_action(action_id);
+        self.executed_actions().insert(action_id);
     }
 
     // private

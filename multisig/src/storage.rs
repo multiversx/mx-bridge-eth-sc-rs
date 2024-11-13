@@ -73,6 +73,9 @@ pub trait StorageModule {
         esdt_safe_batch_id: u64,
     ) -> MapMapper<ManagedVec<TransactionStatus>, usize>;
 
+    #[storage_mapper("executedActions")]
+    fn executed_actions(&self) -> UnorderedSetMapper<usize>;
+
     /// Mapping between ERC20 Ethereum address and MultiversX ESDT Token Identifiers
 
     #[view(getErc20AddressForTokenId)]

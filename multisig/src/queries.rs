@@ -56,15 +56,9 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .sync_call()
     }
 
-    /// Actions are cleared after execution, so an empty entry means the action was executed already
-    /// Returns "false" if the action ID is invalid
     #[view(wasActionExecuted)]
     fn was_action_executed(&self, action_id: usize) -> bool {
-        if self.is_valid_action_id(action_id) {
-            self.action_mapper().item_is_empty(action_id)
-        } else {
-            false
-        }
+        self.executed_actions().contains(&action_id)
     }
 
     /// Used for Ethereum -> MultiversX batches.

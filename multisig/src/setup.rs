@@ -17,14 +17,9 @@ pub trait SetupModule:
         &self,
         child_sc_address: ManagedAddress,
         source_address: ManagedAddress,
-        is_payable: bool,
         init_args: MultiValueEncoded<ManagedBuffer>,
     ) {
-        let mut metadata = CodeMetadata::UPGRADEABLE;
-        if is_payable {
-            // TODO: Replace with PayableBySc when it's available
-            metadata |= CodeMetadata::PAYABLE;
-        }
+        let metadata = CodeMetadata::UPGRADEABLE;
 
         let gas = self.blockchain().get_gas_left();
         self.send_raw().upgrade_from_source_contract(
