@@ -205,15 +205,18 @@ where
 
     pub fn unwrap_token_create_transaction<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg2: ProxyArg<eth_address::EthAddress<Env::Api>>,
     >(
         self,
         requested_token: Arg0,
-        to: Arg1,
+        safe_address: Arg1,
+        to: Arg2,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("unwrapTokenCreateTransaction")
             .argument(&requested_token)
+            .argument(&safe_address)
             .argument(&to)
             .original_result()
     }

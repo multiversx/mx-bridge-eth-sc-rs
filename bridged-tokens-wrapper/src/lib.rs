@@ -248,13 +248,14 @@ pub trait BridgedTokensWrapper:
     fn unwrap_token_create_transaction(
         &self,
         requested_token: TokenIdentifier,
+        safe_address: ManagedAddress<Self::Api>,
         to: EthAddress<Self::Api>,
     ) {
         let converted_amount = self.unwrap_token_common(&requested_token);
 
         let caller = self.blockchain().get_caller();
         self.tx()
-            .to(self.get_esdt_safe_address())
+            .to(safe_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
                 to,
