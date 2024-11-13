@@ -129,8 +129,8 @@ impl MultiTransferTestState {
     fn multisig_deploy(&mut self) -> &mut Self {
         let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
             MultiValueEncoded::new();
-        board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-        board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+        board.push(RELAYER1_ADDRESS.to_managed_address());
+        board.push(RELAYER2_ADDRESS.to_managed_address());
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -555,7 +555,7 @@ fn ethereum_to_multiversx_call_data_empty_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -720,7 +720,7 @@ fn ethereum_to_multiversx_relayer_query_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -896,7 +896,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -907,7 +907,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(ETH_TOKEN_ID),
         token_amount.clone(),
         2u64,
@@ -980,7 +980,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        BRIDGE_PROXY_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         over_the_limit_token_amount.clone(),
         1u64,
@@ -991,7 +991,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        BRIDGE_PROXY_ADDRESS.to_managed_address(),
         TokenIdentifier::from(ETH_TOKEN_ID),
         over_the_limit_token_amount.clone(),
         2u64,
@@ -1057,8 +1057,8 @@ fn init_test() {
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
-    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    board.push(RELAYER1_ADDRESS.to_managed_address());
+    board.push(RELAYER2_ADDRESS.to_managed_address());
     state
         .world
         .tx()
@@ -1085,8 +1085,8 @@ fn init_test() {
 
     let mut board2: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
-    board2.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-    board2.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+    board2.push(RELAYER1_ADDRESS.to_managed_address());
+    board2.push(RELAYER1_ADDRESS.to_managed_address());
     let multisig2 = TestSCAddress::new("multisig2");
     state
         .world
@@ -1144,7 +1144,7 @@ fn multisig_non_board_member_interaction_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -1190,7 +1190,7 @@ fn multisig_insuficient_signatures_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -1232,7 +1232,7 @@ fn multisig_non_board_member_sign_test() {
         EthAddress {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
-        ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        USER1_ADDRESS.to_managed_address(),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -1516,8 +1516,8 @@ fn test_add_unprocessed_refund_tx_to_batch_success() {
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
-    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    board.push(RELAYER1_ADDRESS.to_managed_address());
+    board.push(RELAYER2_ADDRESS.to_managed_address());
     state
         .world
         .tx()
@@ -1594,8 +1594,8 @@ fn test_withdraw_refund_fees_for_ethereum_success() {
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
-    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    board.push(RELAYER1_ADDRESS.to_managed_address());
+    board.push(RELAYER2_ADDRESS.to_managed_address());
     state
         .world
         .tx()
@@ -1633,8 +1633,8 @@ fn test_withdraw_transaction_fees_success() {
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
-    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    board.push(RELAYER1_ADDRESS.to_managed_address());
+    board.push(RELAYER2_ADDRESS.to_managed_address());
     state
         .world
         .tx()
@@ -1769,8 +1769,8 @@ fn test_remove_user_cannot_remove_all() {
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
-    board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
-    board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
+    board.push(RELAYER1_ADDRESS.to_managed_address());
+    board.push(RELAYER2_ADDRESS.to_managed_address());
     state
         .world
         .tx()
