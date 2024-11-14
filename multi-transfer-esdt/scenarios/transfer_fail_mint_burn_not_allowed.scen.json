@@ -1,0 +1,30 @@
+{
+    "name": "transfer ok",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "setup_accounts.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "remove-token",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:esdt-safe",
+                "value": "0",
+                "function": "removeTokenFromWhitelist",
+                "arguments": [
+                    "str:BRIDGE-123456"
+                ],
+                "gasLimit": "50,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

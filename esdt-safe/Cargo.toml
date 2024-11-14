@@ -26,11 +26,14 @@ path = "../common/tx-batch-module"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
+[dependencies.multiversx-price-aggregator-sc]
+version = "=0.52.0"
+
 [dependencies.multiversx-sc]
-version = "0.45.2"
+version = "=0.52.3"
 
 [dependencies.multiversx-sc-modules]
-version = "0.45.2"
+version = "=0.52.3"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.45.2"
+version = "=0.52.3"

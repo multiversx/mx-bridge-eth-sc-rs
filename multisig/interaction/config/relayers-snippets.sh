@@ -2,7 +2,7 @@ addBoardMember() {
     CHECK_VARIABLES MULTISIG
 
     read -p "Relayer address: " RELAYER_ADDR
-    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=35000000 --function="addBoardMember" --arguments ${RELAYER_ADDR} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
@@ -11,7 +11,7 @@ removeBoardMember() {
     CHECK_VARIABLES MULTISIG
 
     read -p "Relayer address: " RELAYER_ADDR
-    mxpy --verbose contract call ${MULTISIG} --recall-nonce --pem=${ALICE} \
+    mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=35000000 --function="removeUser" --arguments ${RELAYER_ADDR} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
@@ -27,7 +27,7 @@ unstake() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-stake() {
+stakeRelayers() {
     CHECK_VARIABLES MULTISIG RELAYER_REQUIRED_STAKE \
     RELAYER_WALLET0 RELAYER_WALLET1 RELAYER_WALLET2 RELAYER_WALLET3 RELAYER_WALLET4 \
     RELAYER_WALLET5 RELAYER_WALLET6 RELAYER_WALLET7 RELAYER_WALLET8 RELAYER_WALLET9

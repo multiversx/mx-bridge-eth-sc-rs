@@ -1,0 +1,59 @@
+{
+    "name": "oracle submit mapping for (GWEI, ETH) and (GWEI, EGLD)",
+    "steps": [
+        {
+            "step": "externalSteps",
+            "path": "oracle_submit.scen.json"
+        },
+        {
+            "step": "scCall",
+            "txId": "oracle-submit",
+            "tx": {
+                "from": "address:oracle",
+                "to": "sc:price_aggregator",
+                "value": "0",
+                "function": "submit",
+                "arguments": [
+                    "str:GWEI",
+                    "str:BRIDGE",
+                    "u64:0",
+                    "1",
+                    "6"
+                ],
+                "gasLimit": "40,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "oracle-submit",
+            "tx": {
+                "from": "address:oracle",
+                "to": "sc:price_aggregator",
+                "value": "0",
+                "function": "submit",
+                "arguments": [
+                    "str:GWEI",
+                    "str:WEGLD",
+                    "u64:0",
+                    "10",
+                    "9"
+                ],
+                "gasLimit": "40,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "gas": "*",
+                "refund": "*"
+            }
+        }
+    ]
+}

@@ -5,15 +5,12 @@
 ////////////////////////////////////////////////////
 
 // Init:                                 1
+// Upgrade:                              1
 // Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  19
+// Total number of exported functions:  20
 
 #![no_std]
-
-// Configuration that works with rustc < 1.73.0.
-// TODO: Recommended rustc version: 1.73.0 or newer.
-#![feature(lang_items)]
 
 multiversx_sc_wasm_adapter::allocator!();
 multiversx_sc_wasm_adapter::panic_handler!();
@@ -32,6 +29,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         depositLiquidity => deposit_liquidity
         wrapTokens => wrap_tokens
         unwrapToken => unwrap_token
+        unwrapTokenCreateTransaction => unwrap_token_create_transaction
         getUniversalBridgedTokenIds => universal_bridged_token_ids
         getTokenLiquidity => token_liquidity
         getChainSpecificToUniversalMapping => chain_specific_to_universal_mapping

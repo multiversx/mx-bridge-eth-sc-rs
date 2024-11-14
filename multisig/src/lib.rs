@@ -2,12 +2,18 @@
 #![allow(clippy::too_many_arguments)]
 
 mod action;
+mod events;
 mod multisig_general;
 mod queries;
 mod setup;
 mod storage;
 mod user_role;
 mod util;
+
+pub mod bridge_proxy_contract_proxy;
+pub mod esdt_safe_proxy;
+pub mod multi_transfer_esdt_proxy;
+pub mod multisig_proxy;
 
 use action::Action;
 use token_module::{AddressPercentagePair, INVALID_PERCENTAGE_SUM_OVER_ERR_MSG, PERCENTAGE_TOTAL};
@@ -16,18 +22,14 @@ use transaction::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
-use esdt_safe::ProxyTrait as _;
-use multi_transfer_esdt::ProxyTrait as _;
-use token_module::ProxyTrait as _;
-use tx_batch_module::ProxyTrait as _;
-
-multiversx_sc::imports!();
+use multiversx_sc::imports::*;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
 #[multiversx_sc::contract]
 pub trait Multisig:
     multisig_general::MultisigGeneralModule
+    + events::EventsModule
     + setup::SetupModule
     + storage::StorageModule
     + util::UtilModule
@@ -41,6 +43,7 @@ pub trait Multisig:
         &self,
         esdt_safe_sc_address: ManagedAddress,
         multi_transfer_sc_address: ManagedAddress,
+        proxy_sc_address: ManagedAddress,
         required_stake: BigUint,
         slash_amount: BigUint,
         quorum: usize,
@@ -82,11 +85,44 @@ pub trait Multisig:
         self.multi_transfer_esdt_address()
             .set(&multi_transfer_sc_address);
 
+        require!(
+            self.blockchain().is_smart_contract(&proxy_sc_address),
+            "Proxy address is not a Smart Contract address"
+        );
+        self.proxy_address().set(&proxy_sc_address);
+
         self.set_paused(true);
     }
 
     #[upgrade]
-    fn upgrade(&self) {}
+    fn upgrade(
+        &self,
+        esdt_safe_sc_address: ManagedAddress,
+        multi_transfer_sc_address: ManagedAddress,
+        proxy_sc_address: ManagedAddress,
+    ) {
+        require!(
+            self.blockchain().is_smart_contract(&esdt_safe_sc_address),
+            "Esdt Safe address is not a Smart Contract address"
+        );
+        self.esdt_safe_address().set(&esdt_safe_sc_address);
+
+        require!(
+            self.blockchain()
+                .is_smart_contract(&multi_transfer_sc_address),
+            "Multi Transfer address is not a Smart Contract address"
+        );
+        self.multi_transfer_esdt_address()
+            .set(&multi_transfer_sc_address);
+
+        require!(
+            self.blockchain().is_smart_contract(&proxy_sc_address),
+            "Proxy address is not a Smart Contract address"
+        );
+        self.proxy_address().set(&proxy_sc_address);
+
+        self.set_paused(true);
+    }
 
     /// Distributes the accumulated fees to the given addresses.
     /// Expected arguments are pairs of (address, percentage),
@@ -119,11 +155,12 @@ pub trait Multisig:
             total_percentage == PERCENTAGE_TOTAL as u64,
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
-
-        let _: IgnoreValue = self
-            .get_esdt_safe_proxy_instance()
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .distribute_fees(args)
-            .execute_on_dest_context();
+            .sync_call();
     }
 
     /// Board members have to stake a certain amount of EGLD
@@ -161,7 +198,7 @@ pub trait Multisig:
         }
 
         self.amount_staked(&caller).set(&remaining_stake);
-        self.send().direct_egld(&caller, &amount);
+        self.tx().to(ToCaller).egld(&amount).transfer();
     }
 
     // ESDT Safe SC calls
@@ -177,10 +214,15 @@ pub trait Multisig:
         esdt_safe_batch_id: u64,
         tx_batch_status: MultiValueEncoded<TransactionStatus>,
     ) -> usize {
+        let esdt_safe_addr = self.esdt_safe_address().get();
         let call_result: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
-            .get_esdt_safe_proxy_instance()
+            .tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
             .get_current_tx_batch()
-            .execute_on_dest_context();
+            .returns(ReturnsResult)
+            .sync_call();
+
         let (current_batch_id, current_batch_transactions) = match call_result {
             OptionalValue::Some(batch) => batch.into_tuple(),
             OptionalValue::None => sc_panic!("Current batch is empty"),
@@ -218,7 +260,7 @@ pub trait Multisig:
 
     // Multi-transfer ESDT SC calls
 
-    /// Proposes a batch of Ethereum -> Elrond transfers.
+    /// Proposes a batch of Ethereum -> MultiversX transfers.
     /// Transactions have to be separated by fields, in the following order:
     /// Sender Address, Destination Address, Token ID, Amount, Tx Nonce
     #[endpoint(proposeMultiTransferEsdtBatch)]
@@ -255,33 +297,86 @@ pub trait Multisig:
         action_id
     }
 
-    /// Failed Ethereum -> Elrond transactions are saved in the MultiTransfer SC
+    /// Failed Ethereum -> MultiversX transactions are saved in the MultiTransfer SC
     /// as "refund transactions", and stored in batches, using the same mechanism as EsdtSafe.
     ///
     /// This function moves the first refund batch into the EsdtSafe SC,
-    /// converting the transactions into Elrond -> Ethereum transactions
+    /// converting the transactions into MultiversX -> Ethereum transactions
     /// and adding them into EsdtSafe batches
     #[only_owner]
-    #[endpoint(moveRefundBatchToSafe)]
-    fn move_refund_batch_to_safe(&self) {
-        let opt_refund_batch_fields: OptionalValue<TxBatchSplitInFields<Self::Api>> = self
-            .get_multi_transfer_esdt_proxy_instance()
-            .get_and_clear_first_refund_batch()
-            .execute_on_dest_context();
+    #[endpoint(moveRefundBatchToSafeFromChildContract)]
+    fn move_refund_batch_to_safe_from_child_contract(&self) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .move_refund_batch_to_safe()
+            .sync_call();
 
-        if let OptionalValue::Some(refund_batch_fields) = opt_refund_batch_fields {
-            let (_batch_id, all_tx_fields) = refund_batch_fields.into_tuple();
-            let mut refund_batch = ManagedVec::new();
+        self.move_refund_batch_to_safe_event();
+    }
 
-            for tx_fields in all_tx_fields {
-                refund_batch.push(Transaction::from(tx_fields));
-            }
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(initSupplyFromChildContract)]
+    fn init_supply_from_child_contract(&self, token_id: TokenIdentifier, amount: BigUint) {
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        let esdt_safe_addr = self.esdt_safe_address().get();
 
-            let _: IgnoreValue = self
-                .get_esdt_safe_proxy_instance()
-                .add_refund_batch(refund_batch)
-                .execute_on_dest_context();
-        }
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply(token_id, amount)
+            .payment((payment_token, 0, payment_amount))
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(addUnprocessedRefundTxToBatch)]
+    fn add_unprocessed_refund_tx_to_batch(&self, tx_id: u64) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .add_unprocessed_refund_tx_to_batch(tx_id)
+            .sync_call();
+
+        self.add_unprocessed_refund_tx_to_batch_event(tx_id);
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawRefundFeesForEthereum)]
+    fn withdraw_refund_fees_for_ethereum(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .withdraw_refund_fees_for_ethereum(token_id, multisig_owner)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawTransactionFees)]
+    fn withdraw_transaction_fees(&self, token_id: TokenIdentifier) {
+        let esdt_safe_addr = self.esdt_safe_address().get();
+        let multisig_owner = self.blockchain().get_owner_address();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .withdraw_transaction_fees(token_id, multisig_owner)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[endpoint(withdrawSlashedAmount)]
+    fn withdraw_slashed_amount(&self) {
+        let slashed_tokens_amount_mapper = self.slashed_tokens_amount();
+        let slashed_amount = slashed_tokens_amount_mapper.get();
+        self.tx().to(ToCaller).egld(&slashed_amount).transfer();
+        slashed_tokens_amount_mapper.clear();
     }
 
     /// Proposers and board members use this to launch signed actions.
@@ -331,14 +426,15 @@ pub trait Multisig:
                 }
 
                 action_ids_mapper.clear();
-
-                let _: IgnoreValue = self
-                    .get_esdt_safe_proxy_instance()
+                let esdt_safe_addr = self.esdt_safe_address().get();
+                self.tx()
+                    .to(esdt_safe_addr)
+                    .typed(esdt_safe_proxy::EsdtSafeProxy)
                     .set_transaction_batch_status(
                         esdt_safe_batch_id,
                         MultiValueEncoded::from(tx_batch_status),
                     )
-                    .execute_on_dest_context();
+                    .sync_call();
             }
             Action::BatchTransferEsdtToken {
                 eth_batch_id,
@@ -361,12 +457,15 @@ pub trait Multisig:
                 let last_tx = transfers.get(last_tx_index);
                 self.last_executed_eth_tx_id().set(last_tx.tx_nonce);
 
+                let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.into();
-                let _: IgnoreValue = self
-                    .get_multi_transfer_esdt_proxy_instance()
+
+                self.tx()
+                    .to(multi_transfer_esdt_addr)
+                    .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
-                    .execute_on_dest_context();
+                    .sync_call();
             }
         }
     }
