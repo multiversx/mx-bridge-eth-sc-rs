@@ -145,22 +145,6 @@ where
             .original_result()
     }
 
-    pub fn update_whitelisted_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<u32>,
-    >(
-        self,
-        chain_specific_token_id: Arg0,
-        chain_specific_token_decimals: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateWhitelistedToken")
-            .argument(&chain_specific_token_id)
-            .argument(&chain_specific_token_decimals)
-            .original_result()
-    }
-
     pub fn blacklist_token<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(

@@ -30,6 +30,12 @@ pub trait BridgedTokensWrapper:
     #[only_owner]
     #[endpoint(addWrappedToken)]
     fn add_wrapped_token(&self, universal_bridged_token_ids: TokenIdentifier, num_decimals: u32) {
+        require!(
+            !self
+                .universal_bridged_token_ids()
+                .contains(&universal_bridged_token_ids),
+            "Token already added"
+        );
         self.require_mint_and_burn_roles(&universal_bridged_token_ids);
         self.token_decimals_num(&universal_bridged_token_ids)
             .set(num_decimals);
@@ -62,6 +68,11 @@ pub trait BridgedTokensWrapper:
 
         let mut chain_specific_tokens = self.chain_specific_token_ids(&universal_bridged_token_ids);
         for token in chain_specific_tokens.iter() {
+            let token_liquidity = self.token_liquidity(&token).get();
+            require!(
+                token_liquidity == 0,
+                "Cannot remove wrapped token due to remaining liquidity"
+            );
             self.chain_specific_to_universal_mapping(&token).clear();
             self.token_decimals_num(&token).clear();
         }
@@ -102,26 +113,14 @@ pub trait BridgedTokensWrapper:
     }
 
     #[only_owner]
-    #[endpoint(updateWhitelistedToken)]
-    fn update_whitelisted_token(
-        &self,
-        chain_specific_token_id: TokenIdentifier,
-        chain_specific_token_decimals: u32,
-    ) {
-        let chain_to_universal_mapper =
-            self.chain_specific_to_universal_mapping(&chain_specific_token_id);
-        require!(
-            !chain_to_universal_mapper.is_empty(),
-            "Chain-specific token was not whitelisted yet"
-        );
-
-        self.token_decimals_num(&chain_specific_token_id)
-            .set(chain_specific_token_decimals);
-    }
-
-    #[only_owner]
     #[endpoint(blacklistToken)]
     fn blacklist_token(&self, chain_specific_token_id: TokenIdentifier) {
+        let token_liquidity = self.token_liquidity(&chain_specific_token_id).get();
+        require!(
+            token_liquidity == 0,
+            "Cannot blacklist token due to remaining liquidity"
+        );
+
         let chain_to_universal_mapper =
             self.chain_specific_to_universal_mapping(&chain_specific_token_id);
 
@@ -135,10 +134,18 @@ pub trait BridgedTokensWrapper:
         self.token_decimals_num(&chain_specific_token_id).clear();
     }
 
+    #[only_owner]
     #[payable("*")]
     #[endpoint(depositLiquidity)]
     fn deposit_liquidity(&self) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+        require!(
+            !self
+                .chain_specific_to_universal_mapping(&payment_token)
+                .is_empty(),
+            "Provided token ID is not registered as a chain specific token"
+        );
+
         self.token_liquidity(&payment_token)
             .update(|liq| *liq += payment_amount);
     }
@@ -156,6 +163,10 @@ pub trait BridgedTokensWrapper:
         let mut new_payments = ManagedVec::new();
 
         for payment in &original_payments {
+            require!(
+                payment.token_nonce == 0,
+                "Only fungible tokens accepted for wrapping"
+            );
             let universal_token_id_mapper =
                 self.chain_specific_to_universal_mapping(&payment.token_identifier);
 

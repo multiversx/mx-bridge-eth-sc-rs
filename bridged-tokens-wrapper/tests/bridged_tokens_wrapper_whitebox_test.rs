@@ -203,6 +203,9 @@ fn test_deposit_liquidity_should_work() {
         ),
         |sc| {
             sc.set_paused(false);
+            sc.chain_specific_to_universal_mapping(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
+                .set(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
+
             sc.deposit_liquidity();
             let result = sc
                 .token_liquidity(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
@@ -391,9 +394,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_1() {
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
-                ManagedAddress::new_from_bytes(
-                    b"0102030405060708090a0b0c0d0e0f10",
-                ),
+                ManagedAddress::new_from_bytes(b"0102030405060708090a0b0c0d0e0f10"),
                 address,
             );
         },
@@ -431,9 +432,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_2() {
             let address = convert_to_eth_address(ETH_ADDRESS);
             sc.unwrap_token_create_transaction(
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
-                ManagedAddress::new_from_bytes(
-                    b"0102030405060708090a0b0c0d0e0f10",
-                ),
+                ManagedAddress::new_from_bytes(b"0102030405060708090a0b0c0d0e0f10"),
                 address,
             );
         },
@@ -514,12 +513,13 @@ fn test_unwrap_token_create_transaction_should_fail_case_4() {
         |sc| {
             sc.set_paused(false);
             sc.add_wrapped_token(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER), NUM_DECIMALS);
+            sc.chain_specific_to_universal_mapping(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
+                .set(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
+
             sc.deposit_liquidity();
             let result = sc
                 .token_liquidity(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
                 .get();
-            sc.chain_specific_to_universal_mapping(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
-                .set(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
             assert_ne!(result, 0);
         },
     );
@@ -586,9 +586,10 @@ fn test_unwrap_token_create_transaction_should_work() {
         |sc| {
             sc.set_paused(false);
             sc.add_wrapped_token(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER), NUM_DECIMALS);
-            sc.deposit_liquidity();
             sc.chain_specific_to_universal_mapping(&managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER))
                 .set(managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER));
+
+            sc.deposit_liquidity();
         },
     );
 }
@@ -654,57 +655,6 @@ fn test_whitelist_token_should_work() {
                 NUM_DECIMALS,
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
             );
-        },
-    );
-}
-
-#[test]
-fn test_update_whitelisted_token_should_fail_case_1() {
-    let mut world = setup();
-    let bridged_tokens_wrapper = WhiteboxContract::new(
-        BRIDGE_TOKENS_WRAPPER_ADDRESS_EXPR,
-        bridged_tokens_wrapper::contract_obj,
-    );
-
-    world.whitebox_call_check(
-        &bridged_tokens_wrapper,
-        ScCallStep::new()
-            .from(OWNER_ADDRESS_EXPR)
-            .expect(TxExpect::user_error(
-                "str:Chain-specific token was not whitelisted yet",
-            )),
-        |sc| {
-            sc.update_whitelisted_token(managed_token_id!(CHAIN_TOKEN_IDENTIFIER), 18u32);
-        },
-        |r| r.assert_user_error("Chain-specific token was not whitelisted yet"),
-    );
-}
-
-#[test]
-fn test_update_whitelisted_token_should_work() {
-    let mut world = setup();
-    let bridged_tokens_wrapper = WhiteboxContract::new(
-        BRIDGE_TOKENS_WRAPPER_ADDRESS_EXPR,
-        bridged_tokens_wrapper::contract_obj,
-    );
-    let contract_address = AddressValue::from(BRIDGE_TOKENS_WRAPPER_ADDRESS_EXPR);
-
-    world.set_esdt_local_roles(
-        managed_address!(&contract_address.to_address()),
-        UNIVERSAL_TOKEN_IDENTIFIER,
-        &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
-    );
-
-    world.whitebox_call(
-        &bridged_tokens_wrapper,
-        ScCallStep::new().from(OWNER_ADDRESS_EXPR),
-        |sc| {
-            sc.whitelist_token(
-                managed_token_id!(CHAIN_TOKEN_IDENTIFIER),
-                NUM_DECIMALS,
-                managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
-            );
-            sc.update_whitelisted_token(managed_token_id!(CHAIN_TOKEN_IDENTIFIER), 12);
         },
     );
 }
@@ -1008,9 +958,10 @@ fn test_unwrap_token_should_fail_case_4() {
         |sc| {
             sc.set_paused(false);
             sc.add_wrapped_token(managed_token_id!(CHAIN_TOKEN_IDENTIFIER), NUM_DECIMALS);
-            sc.deposit_liquidity();
             sc.chain_specific_to_universal_mapping(&managed_token_id!(CHAIN_TOKEN_IDENTIFIER))
                 .set(managed_token_id!(CHAIN_TOKEN_IDENTIFIER));
+
+            sc.deposit_liquidity();
         },
     );
 
@@ -1067,9 +1018,10 @@ fn test_unwrap_token_should_work() {
         |sc| {
             sc.set_paused(false);
             sc.add_wrapped_token(managed_token_id!(CHAIN_TOKEN_IDENTIFIER), NUM_DECIMALS);
-            sc.deposit_liquidity();
             sc.chain_specific_to_universal_mapping(&managed_token_id!(CHAIN_TOKEN_IDENTIFIER))
                 .set(managed_token_id!(CHAIN_TOKEN_IDENTIFIER));
+
+            sc.deposit_liquidity();
         },
     );
 
