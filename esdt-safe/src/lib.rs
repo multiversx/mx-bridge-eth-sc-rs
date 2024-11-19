@@ -195,6 +195,7 @@ pub trait EsdtSafe:
             };
 
             if refund_tx.amount <= required_fee {
+                self.failed_refunds().push(&refund_tx);
                 continue;
             }
 
@@ -687,4 +688,7 @@ pub trait EsdtSafe:
         address: &ManagedAddress,
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
+
+    #[storage_mapper("failedRefunds")]
+    fn failed_refunds(&self) -> VecMapper<Transaction<Self::Api>>;
 }
