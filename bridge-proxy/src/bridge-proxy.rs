@@ -118,6 +118,7 @@ pub trait BridgeProxyContract:
         self.tx().to(tx.to).payment(payment).transfer();
         self.cleanup_transaction(tx_id);
     }
+
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
