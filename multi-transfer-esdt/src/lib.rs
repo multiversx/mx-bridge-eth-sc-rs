@@ -87,14 +87,17 @@ pub trait MultiTransferEsdt:
             }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(
-                batch_id,
-                eth_tx.from.clone(),
-                eth_tx.to.clone(),
-                eth_tx.token_id.clone(),
-                eth_tx.amount.clone(),
-                eth_tx.tx_nonce,
-            );
+            // emit events only for non-SC destinations
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
+                self.transfer_performed_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            }
 
             valid_tx_list.push(eth_tx.clone());
             valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
