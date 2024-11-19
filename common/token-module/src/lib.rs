@@ -27,9 +27,8 @@ pub trait TokenModule:
     fn distribute_fees(
         &self,
         address_percentage_pairs: ManagedVec<AddressPercentagePair<Self::Api>>,
+        opt_tokens_to_distribute: OptionalValue<MultiValueEncoded<TokenIdentifier<Self::Api>>>,
     ) {
-        let percentage_total = BigUint::from(PERCENTAGE_TOTAL);
-
         let mut percentage_sum = 0u64;
         for pair in &address_percentage_pairs {
             percentage_sum += pair.percentage as u64;
@@ -39,31 +38,50 @@ pub trait TokenModule:
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
 
-        for token_id in self.token_whitelist().iter() {
-            let accumulated_fees = self.accumulated_transaction_fees(&token_id).get();
-            if accumulated_fees == 0u32 {
-                continue;
-            }
-
-            let mut remaining_fees = accumulated_fees.clone();
-
-            for pair in &address_percentage_pairs {
-                let amount_to_send =
-                    &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
-
-                if amount_to_send > 0 {
-                    remaining_fees -= &amount_to_send;
-
-                    self.tx()
-                        .to(&pair.address)
-                        .single_esdt(&token_id, 0, &amount_to_send)
-                        .transfer();
+        match opt_tokens_to_distribute {
+            OptionalValue::Some(tokens_to_distrbute) => {
+                for token_id in tokens_to_distrbute {
+                    self.distribute_fees_token(&address_percentage_pairs, token_id);
                 }
             }
+            OptionalValue::None => {
+                for token_id in self.token_whitelist().iter() {
+                    self.distribute_fees_token(&address_percentage_pairs, token_id);
+                }
+            }
+        };
+    }
 
-            self.accumulated_transaction_fees(&token_id)
-                .set(&remaining_fees);
+    fn distribute_fees_token(
+        &self,
+        address_percentage_pairs: &ManagedVec<AddressPercentagePair<Self::Api>>,
+        token_id: TokenIdentifier<Self::Api>,
+    ) {
+        let percentage_total = BigUint::from(PERCENTAGE_TOTAL);
+
+        let accumulated_fees = self.accumulated_transaction_fees(&token_id).get();
+        if accumulated_fees == 0u32 {
+            return;
         }
+
+        let mut remaining_fees = accumulated_fees.clone();
+
+        for pair in address_percentage_pairs {
+            let amount_to_send =
+                &(&accumulated_fees * &BigUint::from(pair.percentage)) / &percentage_total;
+
+            if amount_to_send > 0 {
+                remaining_fees -= &amount_to_send;
+
+                self.tx()
+                    .to(&pair.address)
+                    .single_esdt(&token_id, 0, &amount_to_send)
+                    .transfer();
+            }
+        }
+
+        self.accumulated_transaction_fees(&token_id)
+            .set(&remaining_fees);
     }
 
     #[only_owner]
@@ -111,6 +129,8 @@ pub trait TokenModule:
                     burn_balance == &BigUint::zero(),
                     "Stored tokens must have 0 burn balance!"
                 );
+                let tokens_received = self.call_value().single_esdt();
+                require!(tokens_received.amount == *total_balance, "Wrong payment");
                 if total_balance > &BigUint::zero() {
                     self.init_supply(token_id, total_balance);
                 }
