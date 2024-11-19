@@ -86,7 +86,7 @@ pub trait EsdtSafe:
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
         self.token_ticker(&gwei_token_id)
-            .set(gwei_token_id.as_managed_buffer());
+            .set_if_empty(gwei_token_id.as_managed_buffer());
 
         self.set_paused(true);
     }
@@ -522,16 +522,38 @@ pub trait EsdtSafe:
     fn get_refund_amounts(
         &self,
         address: ManagedAddress,
+        opt_tokens: OptionalValue<MultiValueEncoded<TokenIdentifier<Self::Api>>>,
     ) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = MultiValueEncoded::new();
-        for token_id in self.token_whitelist().iter() {
-            let amount = self.refund_amount(&address, &token_id).get();
-            if amount > 0u32 {
-                refund_amounts.push((token_id, amount).into());
+        match opt_tokens {
+            OptionalValue::Some(tokens) => {
+                for token_id in tokens {
+                    self.get_refund_amount_for_token(&address, token_id, &mut refund_amounts);
+                }
+            }
+            OptionalValue::None => {
+                for token_id in self.token_whitelist().iter() {
+                    let amount = self.refund_amount(&address, &token_id).get();
+                    if amount > 0u32 {
+                        refund_amounts.push((token_id, amount).into());
+                    }
+                }
             }
         }
 
         refund_amounts
+    }
+
+    fn get_refund_amount_for_token(
+        &self,
+        address: &ManagedAddress,
+        token_id: TokenIdentifier<Self::Api>,
+        refund_amounts: &mut MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>>,
+    ) {
+        let amount = self.refund_amount(address, &token_id).get();
+        if amount > 0u32 {
+            refund_amounts.push((token_id, amount).into());
+        }
     }
 
     // views

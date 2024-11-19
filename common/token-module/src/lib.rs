@@ -98,6 +98,11 @@ pub trait TokenModule:
         burn_balance: &BigUint,
         opt_default_price_per_gas_unit: OptionalValue<BigUint>,
     ) {
+        require!(
+            !self.token_whitelist().contains(token_id),
+            "Token already whitelisted"
+        );
+
         self.token_ticker(token_id).set(&ticker);
 
         if let OptionalValue::Some(default_price_per_gas_unit) = opt_default_price_per_gas_unit {
@@ -144,8 +149,6 @@ pub trait TokenModule:
         self.token_ticker(&token_id).clear();
         self.default_price_per_gas_unit(&token_id).clear();
 
-        self.mint_burn_token(&token_id).clear();
-        self.native_token(&token_id).clear();
         self.token_whitelist().swap_remove(&token_id);
     }
 
@@ -214,7 +217,7 @@ pub trait TokenModule:
         );
         require!(
             self.native_token(token_id).get(),
-            "Only native tokens can be stored!"
+            "Only native tokens can be stored"
         );
 
         self.total_balances(token_id).update(|total| {
@@ -232,12 +235,22 @@ pub trait TokenModule:
     ) {
         self.require_token_in_whitelist(token_id);
         require!(
+            self.supply_mint_burn_initialized(token_id).is_empty(),
+            "Token already initialized"
+        );
+        require!(
             self.mint_burn_token(token_id).get(),
-            "Cannot init for non mintable/burnable tokens"
+            "Can init only for mintable/burnable tokens"
+        );
+
+        require!(
+            !self.native_token(token_id).get(),
+            "Cannot init native tokens"
         );
 
         self.mint_balances(token_id).set(mint_amount);
         self.burn_balances(token_id).set(burn_amount);
+        self.supply_mint_burn_initialized(token_id).set(true);
     }
 
     // private
@@ -310,4 +323,8 @@ pub trait TokenModule:
     #[view(getBurnBalances)]
     #[storage_mapper("burnBalances")]
     fn burn_balances(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+
+    #[view(getsupplyMintBurnInitialized)]
+    #[storage_mapper("supplyMintBurnInitialized")]
+    fn supply_mint_burn_initialized(&self, token_id: &TokenIdentifier) -> SingleValueMapper<bool>;
 }
