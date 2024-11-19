@@ -134,8 +134,13 @@ pub trait TokenModule:
                     burn_balance == &BigUint::zero(),
                     "Stored tokens must have 0 burn balance!"
                 );
-                let tokens_received = self.call_value().single_esdt();
-                require!(tokens_received.amount == *total_balance, "Wrong payment");
+                let payments = self.call_value().all_esdt_transfers();
+                if !payments.is_empty() {
+                    let (payment_token_id, _, payment_token_amount) = payments.get(0).into_tuple();
+                    require!(payment_token_id == *token_id, "Wrong token id");
+                    require!(payment_token_amount == *total_balance, "Wrong payment");
+                }
+
                 if total_balance > &BigUint::zero() {
                     self.init_supply(token_id, total_balance);
                 }
@@ -235,7 +240,7 @@ pub trait TokenModule:
     ) {
         self.require_token_in_whitelist(token_id);
         require!(
-            self.supply_mint_burn_initialized(token_id).is_empty(),
+            self.supply_mint_burn_initialized(token_id).get() == false,
             "Token already initialized"
         );
         require!(

@@ -239,8 +239,8 @@ impl EsdtSafeTestState {
                 true,
                 false,
                 BigUint::from(0u64),
-                BigUint::from(0u64),
-                BigUint::from(0u64),
+                BigUint::from(10_000u64),
+                BigUint::from(10_000u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
@@ -249,19 +249,6 @@ impl EsdtSafeTestState {
             .add_token_to_whitelist(
                 NATIVE_TOKEN_ID,
                 "NATIVE",
-                false,
-                true,
-                BigUint::from(0u64),
-                BigUint::from(0u64),
-                BigUint::from(0u64),
-                OptionalValue::Some(BigUint::from(0u64)),
-            )
-            .run();
-
-        self.esdt_raw_transaction()
-            .add_token_to_whitelist(
-                TOKEN_ID,
-                "TOKEN_ID",
                 false,
                 true,
                 BigUint::from(0u64),
@@ -600,7 +587,7 @@ fn init_supply_test_mint_burn() {
         .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
         .with_result(ExpectError(
             ERROR,
-            "Cannot init for non mintable/burnable tokens",
+            "Can init only for mintable/burnable tokens",
         ))
         .run();
 
@@ -611,7 +598,7 @@ fn init_supply_test_mint_burn() {
             BigUint::from(10_000u64),
             BigUint::from(10_000u64),
         )
-        .with_result(ReturnsResult)
+        .with_result(ExpectError(ERROR, "Token already initialized"))
         .run();
 
     let total_minted = state
@@ -659,19 +646,6 @@ fn set_transaction_batch_status_test() {
     tx_multiple_statuses.push(TransactionStatus::Pending);
     let mut tx_statuses_invalid = MultiValueEncoded::<StaticApi, TransactionStatus>::new();
     tx_statuses_invalid.push(TransactionStatus::Pending);
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply_mint_burn(
-            TOKEN_WITH_BURN_ROLE,
-            BigUint::from(100_000u64),
-            BigUint::from(10_000u64),
-        )
-        .run();
 
     state
         .world
