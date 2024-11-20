@@ -341,8 +341,8 @@ impl MultiTransferTestState {
                 true,
                 false,
                 BigUint::zero(),
-                BigUint::zero(),
-                BigUint::zero(),
+                BigUint::from(600_000u64),
+                BigUint::from(0u64),
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();
@@ -421,44 +421,44 @@ impl MultiTransferTestState {
             .set_eth_tx_gas_limit(0u64)
             .run();
 
-        self.world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init_supply_mint_burn(
-                UNIVERSAL_TOKEN_IDENTIFIER,
-                BigUint::from(600_000u64),
-                BigUint::from(0u64),
-            )
-            .run();
-        self.world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .add_token_to_whitelist(
-                TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
-                "BRIDGE2",
-                true,
-                false,
-                BigUint::zero(),
-                BigUint::zero(),
-                BigUint::zero(),
-                OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
-            )
-            .run();
-        self.world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .init_supply_mint_burn(
-                WRAPPED_TOKEN_ID,
-                BigUint::from(600_000u64),
-                BigUint::from(0u64),
-            )
-            .run();
+        // self.world
+        //     .tx()
+        //     .from(MULTISIG_ADDRESS)
+        //     .to(ESDT_SAFE_ADDRESS)
+        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+        //     .init_supply_mint_burn(
+        //         UNIVERSAL_TOKEN_IDENTIFIER,
+        //         BigUint::from(600_000u64),
+        //         BigUint::from(0u64),
+        //     )
+        //     .run();
+        // self.world
+        //     .tx()
+        //     .from(MULTISIG_ADDRESS)
+        //     .to(ESDT_SAFE_ADDRESS)
+        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+        //     .add_token_to_whitelist(
+        //         TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
+        //         "BRIDGE2",
+        //         true,
+        //         false,
+        //         BigUint::zero(),
+        //         BigUint::zero(),
+        //         BigUint::zero(),
+        //         OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
+        //     )
+        //     .run();
+        // self.world
+        //     .tx()
+        //     .from(MULTISIG_ADDRESS)
+        //     .to(ESDT_SAFE_ADDRESS)
+        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
+        //     .init_supply_mint_burn(
+        //         WRAPPED_TOKEN_ID,
+        //         BigUint::from(600_000u64),
+        //         BigUint::from(0u64),
+        //     )
+        //     .run();
 
         self.world
             .tx()
@@ -1068,7 +1068,11 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -1090,7 +1094,7 @@ fn test_unwrap_token_create_transaction_should_work() {
     state
         .world
         .tx()
-        .from(OWNER_ADDRESS)
+        .from(MULTISIG_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .deposit_liquidity()
@@ -1108,7 +1112,7 @@ fn test_unwrap_token_create_transaction_should_work() {
     state.check_balances_on_safe(
         WRAPPED_TOKEN_ID,
         BigUint::zero(),
-        BigUint::from(600000u64),
+        BigUint::from(600_000u64),
         BigUint::zero(),
     );
 
@@ -1118,7 +1122,7 @@ fn test_unwrap_token_create_transaction_should_work() {
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .token_liquidity(WRAPPED_TOKEN_ID)
-        .returns(ExpectValue(BigUint::from(1000u64)))
+        .returns(ExpectValue(BigUint::from(1_000u64)))
         .run();
 
     state
@@ -1127,7 +1131,11 @@ fn test_unwrap_token_create_transaction_should_work() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -1171,7 +1179,11 @@ fn test_unwrap_token_create_transaction_should_fail() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(TOKEN_TICKER),
             0u64,
