@@ -82,7 +82,7 @@ pub trait SetupModule:
         let total_users = self.user_mapper().get_user_count();
         let mut board_member_with_valid_stake: usize = 0;
 
-        for user_id in 0..total_users {
+        for user_id in 1..total_users + 1 {
             let user_role = self.user_id_to_role(user_id).get();
 
             if user_role.is_board_member() {
