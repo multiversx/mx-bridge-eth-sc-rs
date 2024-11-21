@@ -67,8 +67,8 @@ pub trait BridgeProxyContract:
         } else {
             CallData::default()
         };
-
-        if call_data.endpoint.is_empty()
+        let non_empty_args = call_data.args.is_some();
+        if (call_data.endpoint.is_empty() && non_empty_args)
             || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
             || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
         {

@@ -776,3 +776,72 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
         .check_account(ESDT_SAFE_ADDRESS)
         .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
 }
+
+#[test]
+fn bridge_proxy_empty_endpoint_with_args_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.world.start_trace();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::new(),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let amount = BigUint::from(500u64);
+    // Destination is not an initialized contract
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    // Refund: Funds are transfered to EsdtSafe
+    test.world
+        .check_account(ESDT_SAFE_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+}
