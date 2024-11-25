@@ -842,11 +842,6 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
         .execute(1u32)
         .run();
 
-    // Refund: Funds are transfered to EsdtSafe
-    // test.world
-    //     .check_account(ESDT_SAFE_ADDRESS)
-    //     .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
-
     test.world
     .check_account(BRIDGE_PROXY_ADDRESS)
     .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
