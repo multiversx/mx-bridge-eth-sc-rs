@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           44
+// Endpoints:                           45
 // Async Callback (empty):               1
-// Total number of exported functions:  47
+// Total number of exported functions:  48
 
 #![no_std]
 
@@ -51,6 +51,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTotalBalances => total_balances
         getMintBalances => mint_balances
         getBurnBalances => burn_balances
+        getsupplyMintBurnInitialized => supply_mint_burn_initialized
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch

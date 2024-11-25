@@ -189,10 +189,12 @@ pub trait Multisig:
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
         let esdt_safe_addr = self.esdt_safe_address().get();
+        let opt_tokens_to_distribute: OptionalValue<MultiValueEncoded<TokenIdentifier<Self::Api>>> =
+            OptionalValue::None;
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .distribute_fees(args)
+            .distribute_fees(args, opt_tokens_to_distribute)
             .sync_call();
     }
 

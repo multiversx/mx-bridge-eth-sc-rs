@@ -1123,12 +1123,14 @@ fn claim_refund_test() {
     state.single_transaction_should_work(MINT_BURN_TOKEN, 1000u64);
     state.set_transaction_batch_status_should_work(1, tx_statuses.clone());
 
+    let opt_tokens: OptionalValue<MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>>> =
+        OptionalValue::None;
     let refund = state
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_refund_amounts(MULTISIG_ADDRESS)
+        .get_refund_amounts(MULTISIG_ADDRESS, opt_tokens.clone())
         .returns(ReturnsResult)
         .run();
 
@@ -1150,7 +1152,7 @@ fn claim_refund_test() {
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_refund_amounts(OWNER_ADDRESS)
+        .get_refund_amounts(OWNER_ADDRESS, opt_tokens)
         .returns(ReturnsResult)
         .run();
     assert!(refund_after.is_empty());

@@ -240,7 +240,7 @@ pub trait TokenModule:
     ) {
         self.require_token_in_whitelist(token_id);
         require!(
-            self.supply_mint_burn_initialized(token_id).get() == false,
+            !self.supply_mint_burn_initialized(token_id).get(),
             "Token already initialized"
         );
         require!(

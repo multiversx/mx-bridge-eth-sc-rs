@@ -133,7 +133,7 @@ impl MultiTransferTestState {
             .account(NON_BOARD_MEMEBER_ADDRESS)
             .nonce(1);
 
-        let roles = vec![
+        let roles = [
             "ESDTRoleLocalMint".to_string(),
             "ESDTRoleLocalBurn".to_string(),
         ];

@@ -239,14 +239,17 @@ where
     /// Useful for knowing which token IDs to pass to the claimRefund endpoint. 
     pub fn get_refund_amounts<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>>,
     >(
         self,
         address: Arg0,
+        opt_tokens: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getRefundAmounts")
             .argument(&address)
+            .argument(&opt_tokens)
             .original_result()
     }
 
@@ -374,14 +377,17 @@ where
     /// where percentages must add up to the PERCENTAGE_TOTAL constant 
     pub fn distribute_fees<
         Arg0: ProxyArg<ManagedVec<Env::Api, token_module::AddressPercentagePair<Env::Api>>>,
+        Arg1: ProxyArg<OptionalValue<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>>,
     >(
         self,
         address_percentage_pairs: Arg0,
+        opt_tokens_to_distribute: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("distributeFees")
             .argument(&address_percentage_pairs)
+            .argument(&opt_tokens_to_distribute)
             .original_result()
     }
 
@@ -564,6 +570,19 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getBurnBalances")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn supply_mint_burn_initialized<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getsupplyMintBurnInitialized")
             .argument(&token_id)
             .original_result()
     }
