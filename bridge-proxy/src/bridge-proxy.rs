@@ -128,8 +128,8 @@ pub trait BridgeProxyContract:
         self.cleanup_transaction(tx_id);
     }
 
-    #[endpoint(refundTransaction)]
-    fn refund_transaction(&self, tx_id: usize) {
+    #[endpoint(refundTransactionToEthereum)]
+    fn refund_transaction_to_ethereum(&self, tx_id: usize) {
         let tx = self.refund_transactions(tx_id).get();
         let esdt_safe_contract_address = self.get_esdt_safe_address();
 
@@ -152,6 +152,27 @@ pub trait BridgeProxyContract:
                 &unwrapped_token.amount,
             )
             .sync_call();
+    }
+
+    #[endpoint(claimBridgedTokensAfterFailedRefund)]
+    fn claim_bridged_tokens_after_failed_refund(&self, tx_id: usize) {
+        let refund_transactions_mapper = self.refund_transactions(tx_id);
+        require!(
+            !refund_transactions_mapper.is_empty(),
+            "No transaction with this ID"
+        );
+        let tx = refund_transactions_mapper.get();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            caller == tx.refund_address,
+            "Caller was not whitelisted as refund address"
+        );
+
+        self.tx()
+            .to(ToCaller)
+            .esdt(EsdtTokenPayment::new(tx.token_id, tx.tx_nonce, tx.amount))
+            .transfer();
     }
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {

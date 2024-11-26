@@ -77,6 +77,7 @@ const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
 const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
 const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
 const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
+const REFUND_ADDRESS: TestAddress = TestAddress::new("refund_addr");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -294,6 +295,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -362,6 +364,7 @@ fn multiple_deposit_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -373,6 +376,7 @@ fn multiple_deposit_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 2u64,
@@ -482,6 +486,7 @@ fn test_highest_tx_id() {
                 raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
             },
             to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+            refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
             token_id: BRIDGE_TOKEN_ID.into(),
             amount: BigUint::from(5u64),
             tx_nonce: i as u64,
@@ -551,6 +556,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(NO_INIT_SC_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -609,6 +615,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: amount.clone(),
         tx_nonce: 2u64,
@@ -667,6 +674,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: amount.clone(),
         tx_nonce: 3u64,
@@ -734,6 +742,7 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -773,7 +782,7 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
 
     test.world
         .check_account(BRIDGE_PROXY_ADDRESS)
-        .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000000f42400100000000")
+        .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f726566756e645f616464725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000000f42400100000000")
         .check_storage("str:batchId|u32:1", "1")
         .check_storage("str:highestTxId", "1")
         .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
@@ -805,6 +814,7 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
         amount: BigUint::from(500u64),
         tx_nonce: 1u64,
@@ -844,7 +854,7 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
 
     test.world
     .check_account(BRIDGE_PROXY_ADDRESS)
-    .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
+    .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f726566756e645f616464725f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
     .check_storage("str:batchId|u32:1", "1")
     .check_storage("str:highestTxId", "1")
     .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");

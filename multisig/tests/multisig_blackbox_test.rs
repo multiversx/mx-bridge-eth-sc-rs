@@ -75,6 +75,7 @@ const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
 const NON_BOARD_MEMEBER_ADDRESS: TestAddress = TestAddress::new("non-board-member");
 const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
 const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
+const REFUND_ADDRESS: TestAddress = TestAddress::new("refund-addr");
 
 const RANDOM_SC_ADDRESS: TestSCAddress = TestSCAddress::new("random-sc");
 
@@ -373,6 +374,7 @@ fn ethereum_to_multiversx_call_data_empty_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -430,6 +432,9 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
     state.bridged_tokens_wrapper_deploy();
     state.config_multisig();
 
+    let refund_addr =
+        Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
+
     let addr =
         Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
     let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
@@ -437,6 +442,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
         ManagedAddress::from(addr.clone()),
+        ManagedAddress::from(refund_addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
         token_amount.clone(),
         1u64,
@@ -448,6 +454,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
         ManagedAddress::from(addr.clone()),
+        ManagedAddress::from(refund_addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
         token_amount.clone(),
         2u64,
@@ -466,6 +473,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
         ManagedAddress::from(addr.clone()),
+        ManagedAddress::from(refund_addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
         token_amount.clone(),
         3u64,
@@ -485,6 +493,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
         ManagedAddress::from(addr.clone()),
+        ManagedAddress::from(refund_addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
         token_amount.clone(),
         4u64,
@@ -548,6 +557,7 @@ fn ethereum_to_multiversx_relayer_query_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -640,6 +650,7 @@ fn ethereum_to_multiversx_relayer_query2_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
         },
         ManagedAddress::from(ADDR),
+        ManagedAddress::from(ADDR), //refund_addr
         TokenIdentifier::from("ETHUSDC-afa689"),
         token_amount.clone(),
         1u64,
@@ -737,6 +748,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -748,6 +760,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(ETH_TOKEN_ID),
         token_amount.clone(),
         2u64,
@@ -826,6 +839,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         over_the_limit_token_amount.clone(),
         1u64,
@@ -837,6 +851,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(ETH_TOKEN_ID),
         over_the_limit_token_amount.clone(),
         2u64,
@@ -913,6 +928,7 @@ fn multisig_non_board_member_interaction_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -964,6 +980,7 @@ fn multisig_insuficient_signatures_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
@@ -1011,6 +1028,7 @@ fn multisig_non_board_member_sign_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
         token_amount.clone(),
         1u64,
