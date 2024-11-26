@@ -103,22 +103,6 @@ pub trait BridgeProxyContract:
         tx_call.register_promise();
     }
 
-    // TODO: will activate endpoint in a future release
-    // #[endpoint(cancel)]
-    fn cancel(&self, tx_id: usize) {
-        let tx_start_round = self.ongoing_execution(tx_id).get();
-        let current_block_round = self.blockchain().get_block_round();
-        require!(
-            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
-            "Transaction can't be cancelled yet"
-        );
-
-        let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
-        self.tx().to(tx.to).payment(payment).transfer();
-        self.cleanup_transaction(tx_id);
-    }
-
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
@@ -172,6 +156,7 @@ pub trait BridgeProxyContract:
         let payments = self.payments(tx_id).get();
 
         self.tx().to(ToCaller).esdt(payments).transfer();
+        self.cleanup_transaction(tx_id);
     }
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
