@@ -169,10 +169,9 @@ pub trait BridgeProxyContract:
             "Caller was not whitelisted as refund address"
         );
 
-        self.tx()
-            .to(ToCaller)
-            .esdt(EsdtTokenPayment::new(tx.token_id, tx.tx_nonce, tx.amount))
-            .transfer();
+        let payments = self.payments(tx_id).get();
+
+        self.tx().to(ToCaller).esdt(payments).transfer();
     }
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
