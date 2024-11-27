@@ -55,6 +55,14 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
+            let token_roles = self.blockchain().get_esdt_local_roles(&eth_tx.token_id);
+            if token_roles.has_role(&EsdtLocalRole::Transfer) {
+                let refund_tx = self.convert_to_refund_tx(eth_tx);
+                refund_tx_list.push(refund_tx);
+
+                continue;
+            }
+
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
