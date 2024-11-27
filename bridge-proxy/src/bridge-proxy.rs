@@ -145,6 +145,14 @@ pub trait BridgeProxyContract:
             !refund_transactions_mapper.is_empty(),
             "No transaction with this ID"
         );
+
+        let tx_start_round = self.ongoing_execution(tx_id).get();
+        let current_block_round = self.blockchain().get_block_round();
+        require!(
+            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
+            "Transaction can't be cancelled yet"
+        );
+
         let tx = refund_transactions_mapper.get();
         let caller = self.blockchain().get_caller();
 
