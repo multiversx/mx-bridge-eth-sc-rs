@@ -139,6 +139,10 @@ pub trait MultiTransferEsdt:
                         refund_batch.push(Transaction::from(tx_fields));
                         refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                     } else {
+                        require!(
+                            self.unprocessed_refund_txs(tx_nonce).is_empty(),
+                            "This transcation is already marked as unprocessed"
+                        );
                         self.unprocessed_refund_txs(tx_nonce)
                             .set(Transaction::from(tx_fields));
 
@@ -175,10 +179,14 @@ pub trait MultiTransferEsdt:
         let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
+            || token_roles.has_role(&EsdtLocalRole::Transfer)
+        {
             return false;
         }
+
         return true;
     }
 
