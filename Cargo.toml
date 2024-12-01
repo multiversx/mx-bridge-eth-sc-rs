@@ -12,4 +12,4 @@ members = [
   "bridged-tokens-wrapper/meta",
   "test-caller",
   "test-caller/meta"
-]
+, "tests/esdt_safe"]
