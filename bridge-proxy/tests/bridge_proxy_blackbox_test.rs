@@ -760,7 +760,7 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .get_pending_transaction_by_id(1u32)
-        .returns(ExpectValue(eth_tx))
+        .returns(ExpectValue(eth_tx.clone()))
         .run();
 
     test.world
@@ -771,10 +771,12 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
         .execute(1u32)
         .run();
 
-    // Refund: Funds are transfered to EsdtSafe
     test.world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000000f42400100000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }
 
 #[test]
@@ -840,8 +842,10 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
         .execute(1u32)
         .run();
 
-    // Refund: Funds are transfered to EsdtSafe
     test.world
-        .check_account(ESDT_SAFE_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+    .check_account(BRIDGE_PROXY_ADDRESS)
+    .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
+    .check_storage("str:batchId|u32:1", "1")
+    .check_storage("str:highestTxId", "1")
+    .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }

@@ -122,13 +122,15 @@ pub trait BridgeProxyContract:
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
-            self.refund_transaction(tx_id);
+            let tx = self.get_pending_transaction_by_id(tx_id);
+            self.refund_transactions(tx_id).set(&tx);
         }
         self.cleanup_transaction(tx_id);
     }
 
+    #[endpoint(refundTransaction)]
     fn refund_transaction(&self, tx_id: usize) {
-        let tx = self.get_pending_transaction_by_id(tx_id);
+        let tx = self.refund_transactions(tx_id).get();
         let esdt_safe_contract_address = self.get_esdt_safe_address();
 
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
@@ -185,7 +187,8 @@ pub trait BridgeProxyContract:
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
-        self.refund_transaction(tx_id);
+        let tx = self.get_pending_transaction_by_id(tx_id);
+        self.refund_transactions(tx_id).set(&tx);
         self.cleanup_transaction(tx_id);
     }
 
