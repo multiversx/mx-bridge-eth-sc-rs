@@ -140,6 +140,28 @@ where
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
     pub fn create_transaction<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+    >(
+        self,
+        to: Arg0,
+        opt_min_bridge_amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("createTransaction")
+            .argument(&to)
+            .argument(&opt_min_bridge_amount)
+            .original_result()
+    }
+
+    /// Create an Ethereum -> MultiversX refund transaction. Only fungible tokens are accepted. 
+    ///  
+    /// Every transfer will have a part of the tokens subtracted as fees. 
+    /// The fee amount depends on the global eth_tx_gas_limit 
+    /// and the current GWEI price, respective to the bridged token 
+    ///  
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
+    pub fn create_refund_transaction<
+        Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
         Arg1: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
     >(
         self,
@@ -147,13 +169,13 @@ where
         opt_refund_info: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .raw_call("createTransaction")
+            .raw_call("createRefundTransaction")
             .argument(&to)
             .argument(&opt_refund_info)
             .original_result()
     }
 
-    pub fn create_transaction_sc_call<
+    pub fn create_refund_transaction_sc_call<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedBuffer<Env::Api>>,
         Arg2: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
@@ -164,7 +186,7 @@ where
         opt_refund_info: Arg2,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .raw_call("createTransactionSCCall")
+            .raw_call("createRefundTransactionSCCall")
             .argument(&to)
             .argument(&data)
             .argument(&opt_refund_info)

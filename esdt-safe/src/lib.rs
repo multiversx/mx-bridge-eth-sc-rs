@@ -253,6 +253,7 @@ pub trait EsdtSafe:
     fn create_transaction_common(
         &self,
         to: EthAddress<Self::Api>,
+        min_bridge_amount: BigUint<Self::Api>,
         opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) -> TransactionDetails<Self::Api> {
         require!(self.not_paused(), "Cannot create transaction while paused");
@@ -265,6 +266,13 @@ pub trait EsdtSafe:
             required_fee < payment_amount,
             "Transaction fees cost more than the entire bridged amount"
         );
+
+        if min_bridge_amount != BigUint::zero() {
+            require!(
+                required_fee < min_bridge_amount,
+                "Minimum bridged amount after fee is not achieved"
+            );
+        }
 
         self.require_below_max_amount(&payment_token, &payment_amount);
 
@@ -352,74 +360,81 @@ pub trait EsdtSafe:
     fn create_transaction(
         &self,
         to: EthAddress<Self::Api>,
+        opt_min_bridge_amount: OptionalValue<BigUint<Self::Api>>,
+    ) {
+        let transaction_details = match opt_min_bridge_amount {
+            OptionalValue::Some(min_bridge_amount) => {
+                self.create_transaction_common(to, min_bridge_amount, OptionalValue::None)
+            }
+            OptionalValue::None => {
+                self.create_transaction_common(to, BigUint::zero(), OptionalValue::None)
+            }
+        };
+        // let transaction_details = self.create_transaction_common(to, opt_refund_info);
+        self.create_transaction_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details
+                .refund_info
+                .address
+                .as_managed_buffer()
+                .clone(),
+            transaction_details.to_address,
+        );
+    }
+
+    /// Create an Ethereum -> MultiversX refund transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
+    #[payable("*")]
+    #[endpoint(createRefundTransaction)]
+    fn create_refund_transaction(
+        &self,
+        to: EthAddress<Self::Api>,
         opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) {
-        let transaction_details = self.create_transaction_common(to, opt_refund_info);
+        let transaction_details =
+            self.create_transaction_common(to, BigUint::zero(), opt_refund_info);
 
-        if !transaction_details.is_refund_tx {
-            self.create_transaction_event(
-                transaction_details.batch_id,
-                transaction_details.tx_nonce,
-                transaction_details.payment_token,
-                transaction_details.actual_bridged_amount,
-                transaction_details.required_fee,
-                transaction_details
-                    .refund_info
-                    .address
-                    .as_managed_buffer()
-                    .clone(),
-                transaction_details.to_address,
-            );
-        } else {
-            self.create_refund_transaction_event(
-                transaction_details.batch_id,
-                transaction_details.tx_nonce,
-                transaction_details.payment_token,
-                transaction_details.actual_bridged_amount,
-                transaction_details.required_fee,
-                transaction_details.refund_info.initial_batch_id,
-                transaction_details.refund_info.initial_nonce,
-            );
-        }
+        self.create_refund_transaction_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.refund_info.initial_batch_id,
+            transaction_details.refund_info.initial_nonce,
+        );
     }
 
     #[payable("*")]
-    #[endpoint(createTransactionSCCall)]
-    fn create_transaction_sc_call(
+    #[endpoint(createRefundTransactionSCCall)]
+    fn create_refund_transaction_sc_call(
         &self,
         to: EthAddress<Self::Api>,
         data: ManagedBuffer<Self::Api>,
         opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) {
-        let transaction_details = self.create_transaction_common(to, opt_refund_info);
+        let transaction_details =
+            self.create_transaction_common(to, BigUint::zero(), opt_refund_info);
 
-        if !transaction_details.is_refund_tx {
-            self.create_transaction_sc_call_event(
-                transaction_details.batch_id,
-                transaction_details.tx_nonce,
-                transaction_details.payment_token,
-                transaction_details.actual_bridged_amount,
-                transaction_details.required_fee,
-                transaction_details
-                    .refund_info
-                    .address
-                    .as_managed_buffer()
-                    .clone(),
-                transaction_details.to_address,
-                data,
-            );
-        } else {
-            self.create_refund_transaction_sc_call_event(
-                transaction_details.batch_id,
-                transaction_details.tx_nonce,
-                transaction_details.payment_token,
-                transaction_details.actual_bridged_amount,
-                transaction_details.required_fee,
-                transaction_details.refund_info.initial_batch_id,
-                transaction_details.refund_info.initial_nonce,
-                data,
-            );
-        }
+        self.create_refund_transaction_sc_call_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            transaction_details.refund_info.initial_batch_id,
+            transaction_details.refund_info.initial_nonce,
+            data,
+        );
     }
 
     /// Claim funds for failed MultiversX -> Ethereum transactions.

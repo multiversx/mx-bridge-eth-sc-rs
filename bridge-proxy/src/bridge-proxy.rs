@@ -136,7 +136,7 @@ pub trait BridgeProxyContract:
         self.tx()
             .to(esdt_safe_contract_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .create_transaction(
+            .create_refund_transaction(
                 tx.from,
                 OptionalValue::Some(esdt_safe_proxy::RefundInfo {
                     address: tx.to,

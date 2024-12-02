@@ -348,7 +348,7 @@ impl EsdtSafeTestState {
         self.esdt_raw_transaction()
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -363,7 +363,7 @@ impl EsdtSafeTestState {
         self.esdt_raw_transaction()
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -736,7 +736,7 @@ fn esdt_safe_create_transaction() {
         .from(BRIDGE_PROXY_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .create_refund_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
         .run();
 
@@ -746,7 +746,7 @@ fn esdt_safe_create_transaction() {
         .from(OWNER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .create_refund_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
         .returns(ExpectError(
             ERROR,
@@ -760,7 +760,7 @@ fn esdt_safe_create_transaction() {
         .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .create_refund_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
         .run();
 
@@ -810,7 +810,7 @@ fn esdt_safe_create_transaction() {
 }
 
 #[test]
-fn esdt_create_transaction_sc_call_test() {
+fn esdt_create_refund_transaction_sc_call_test() {
     let mut state = EsdtSafeTestState::new();
     state.multisig_deploy();
     state.safe_deploy();
@@ -837,7 +837,7 @@ fn esdt_create_transaction_sc_call_test() {
         .from(BRIDGE_PROXY_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction_sc_call(
+        .create_refund_transaction_sc_call(
             EthAddress::zero(),
             data.clone(),
             OptionalValue::Some(refund_info.clone()),
@@ -852,7 +852,7 @@ fn esdt_create_transaction_sc_call_test() {
         .from(MULTISIG_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction_sc_call(
+        .create_refund_transaction_sc_call(
             EthAddress::zero(),
             data.clone(),
             OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
@@ -1316,7 +1316,7 @@ fn withdraw_transaction_fees_test() {
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .create_transaction(
             EthAddress::zero(),
-            OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(1_000_000u64))
         .returns(ReturnsResult)

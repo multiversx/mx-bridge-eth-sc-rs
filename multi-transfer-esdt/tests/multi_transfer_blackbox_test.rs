@@ -606,7 +606,7 @@ impl MultiTransferTestState {
         self.esdt_raw_transaction()
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -621,7 +621,7 @@ impl MultiTransferTestState {
         self.esdt_raw_transaction()
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -1018,6 +1018,7 @@ fn test_unwrap_token_create_transaction_paused() {
             TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1072,6 +1073,7 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
             WRAPPED_TOKEN_ID,
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1135,6 +1137,7 @@ fn test_unwrap_token_create_transaction_should_work() {
             WRAPPED_TOKEN_ID,
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1183,6 +1186,7 @@ fn test_unwrap_token_create_transaction_should_fail() {
             WRAPPED_TOKEN_ID,
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(TOKEN_TICKER),
@@ -1211,6 +1215,7 @@ fn test_unwrap_token_create_transaction_amount_zero() {
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),

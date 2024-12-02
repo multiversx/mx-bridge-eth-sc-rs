@@ -396,6 +396,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_1() {
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 ManagedAddress::new_from_bytes(b"0102030405060708090a0b0c0d0e0f10"),
                 address,
+                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Contract is paused"),
@@ -434,6 +435,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_2() {
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 ManagedAddress::new_from_bytes(b"0102030405060708090a0b0c0d0e0f10"),
                 address,
+                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Must pay more than 0 tokens!"),
@@ -472,6 +474,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_3() {
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 ManagedAddress::zero(),
                 address,
+                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Esdt token unavailable"),
@@ -546,6 +549,7 @@ fn test_unwrap_token_create_transaction_should_fail_case_4() {
                 managed_token_id!(UNIVERSAL_TOKEN_IDENTIFIER),
                 ManagedAddress::zero(),
                 address,
+                OptionalValue::None,
             );
         },
         |r| r.assert_user_error("Contract does not have enough funds"),

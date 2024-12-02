@@ -298,6 +298,19 @@ where
             .original_result()
     }
 
+    pub fn clear_actions_for_batch_id<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        eth_batch_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("clearActionsForBatchId")
+            .argument(&eth_batch_id)
+            .original_result()
+    }
+
     /// Used by board members to sign actions. 
     pub fn sign<
         Arg0: ProxyArg<usize>,
