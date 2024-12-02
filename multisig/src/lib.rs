@@ -19,7 +19,10 @@ use transaction::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
+use core::cmp::max;
 use multiversx_sc::imports::*;
+
+const MAX_ACTIONS_INTER: usize = 10;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
@@ -456,8 +459,11 @@ pub trait Multisig:
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
                 if action_ids_mapper.len() > 1 {
-                    for act_id in action_ids_mapper.values() {
-                        self.clear_action(act_id);
+                    for _ in 0..max(action_ids_mapper.len(), MAX_ACTIONS_INTER) {
+                        match action_ids_mapper.values().next() {
+                            Some(act_id) => self.clear_action(act_id),
+                            None => sc_panic!("Could not retrieve an action id"),
+                        };
                     }
                 }
 
@@ -481,8 +487,11 @@ pub trait Multisig:
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
                 if action_ids_mapper.len() > 1 {
-                    for act_id in action_ids_mapper.values() {
-                        self.clear_action(act_id);
+                    for _ in 0..max(action_ids_mapper.len(), MAX_ACTIONS_INTER) {
+                        match action_ids_mapper.values().next() {
+                            Some(act_id) => self.clear_action(act_id),
+                            None => sc_panic!("Could not retrieve an action id"),
+                        };
                     }
                 }
 
@@ -503,6 +512,21 @@ pub trait Multisig:
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .sync_call();
             }
+        }
+    }
+
+    #[endpoint(clearActionsForBatchId)]
+    fn clear_actions_for_batch_id(&self, eth_batch_id: u64) {
+        let last_executed_eth_batch_id = self.last_executed_eth_batch_id().get();
+        require!(
+            eth_batch_id < last_executed_eth_batch_id,
+            "Batch needs to be already executed"
+        );
+
+        let action_ids_mapper = self.batch_id_to_action_id_mapping(eth_batch_id);
+
+        for act_id in action_ids_mapper.values() {
+            self.clear_action(act_id);
         }
     }
 }
