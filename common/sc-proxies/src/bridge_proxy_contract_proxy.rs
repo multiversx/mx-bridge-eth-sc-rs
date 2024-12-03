@@ -109,6 +109,32 @@ where
             .original_result()
     }
 
+    pub fn refund_transaction_to_ethereum<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("refundTransactionToEthereum")
+            .argument(&tx_id)
+            .original_result()
+    }
+
+    pub fn claim_bridged_tokens_after_failed_refund<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("claimBridgedTokensAfterFailedRefund")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn get_pending_transaction_by_id<
         Arg0: ProxyArg<usize>,
     >(
@@ -128,6 +154,19 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getPendingTransactions")
+            .original_result()
+    }
+
+    pub fn refund_transactions<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, transaction::EthTransaction<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("refundTransactions")
+            .argument(&tx_id)
             .original_result()
     }
 

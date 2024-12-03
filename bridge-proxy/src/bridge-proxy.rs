@@ -103,22 +103,6 @@ pub trait BridgeProxyContract:
         tx_call.register_promise();
     }
 
-    // TODO: will activate endpoint in a future release
-    // #[endpoint(cancel)]
-    fn cancel(&self, tx_id: usize) {
-        let tx_start_round = self.ongoing_execution(tx_id).get();
-        let current_block_round = self.blockchain().get_block_round();
-        require!(
-            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
-            "Transaction can't be cancelled yet"
-        );
-
-        let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
-        self.tx().to(tx.to).payment(payment).transfer();
-        self.cleanup_transaction(tx_id);
-    }
-
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
@@ -128,8 +112,8 @@ pub trait BridgeProxyContract:
         self.cleanup_transaction(tx_id);
     }
 
-    #[endpoint(refundTransaction)]
-    fn refund_transaction(&self, tx_id: usize) {
+    #[endpoint(refundTransactionToEthereum)]
+    fn refund_transaction_to_ethereum(&self, tx_id: usize) {
         let tx = self.refund_transactions(tx_id).get();
         let esdt_safe_contract_address = self.get_esdt_safe_address();
 
@@ -152,6 +136,35 @@ pub trait BridgeProxyContract:
                 &unwrapped_token.amount,
             )
             .sync_call();
+    }
+
+    #[endpoint(claimBridgedTokensAfterFailedRefund)]
+    fn claim_bridged_tokens_after_failed_refund(&self, tx_id: usize) {
+        let refund_transactions_mapper = self.refund_transactions(tx_id);
+        require!(
+            !refund_transactions_mapper.is_empty(),
+            "No transaction with this ID"
+        );
+
+        let tx_start_round = self.ongoing_execution(tx_id).get();
+        let current_block_round = self.blockchain().get_block_round();
+        require!(
+            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
+            "Transaction can't be cancelled yet"
+        );
+
+        let tx = refund_transactions_mapper.get();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            caller == tx.refund_address,
+            "Caller was not whitelisted as refund address"
+        );
+
+        let payments = self.payments(tx_id).get();
+
+        self.tx().to(ToCaller).esdt(payments).transfer();
+        self.cleanup_transaction(tx_id);
     }
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {

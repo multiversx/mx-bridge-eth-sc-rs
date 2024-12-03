@@ -84,6 +84,7 @@ const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
 const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
 const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
 const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
+const REFUND_ADDRESS: TestAddress = TestAddress::new("refund-addr");
 
 const ESDT_SAFE_ETH_TX_GAS_LIMIT: u64 = 150_000;
 const MAX_AMOUNT: u64 = 100_000_000_000_000u64;
@@ -753,6 +754,7 @@ fn basic_transfer_test() {
             raw_addr: ManagedByteArray::default(),
         },
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -803,6 +805,7 @@ fn batch_transfer_both_executed_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -814,6 +817,7 @@ fn batch_transfer_both_executed_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(WRAPPED_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
@@ -870,6 +874,7 @@ fn batch_two_transfers_same_token_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -881,6 +886,7 @@ fn batch_two_transfers_same_token_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
@@ -937,6 +943,7 @@ fn batch_transfer_both_failed_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 1u64,
@@ -948,6 +955,7 @@ fn batch_transfer_both_failed_test() {
             raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
         },
         to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
         amount: token_amount.clone(),
         tx_nonce: 2u64,
@@ -1240,6 +1248,7 @@ fn add_refund_batch_test_should_work() {
     let eth_tx = EthTransaction {
         from: EthAddress::zero(),
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(TOKEN_TICKER),
         amount: BigUint::from(MAX_AMOUNT),
         tx_nonce: 1u64,
@@ -1312,6 +1321,7 @@ fn batch_transfer_esdt_token_to_address_zero() {
     let eth_tx = EthTransaction {
         from: EthAddress::zero(),
         to: ManagedAddress::zero(),
+        refund_address: ManagedAddress::from(REFUND_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(TOKEN_TICKER),
         amount: BigUint::from(MAX_AMOUNT),
         tx_nonce: 1u64,

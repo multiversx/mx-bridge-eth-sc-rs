@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           10
+// Endpoints:                           11
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  14
+// Total number of exported functions:  15
 
 #![no_std]
 
@@ -23,7 +23,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deposit => deposit
         execute => execute
-        refundTransaction => refund_transaction
+        refundTransactionToEthereum => refund_transaction_to_ethereum
+        claimBridgedTokensAfterFailedRefund => claim_bridged_tokens_after_failed_refund
         getPendingTransactionById => get_pending_transaction_by_id
         getPendingTransactions => get_pending_transactions
         refundTransactions => refund_transactions
