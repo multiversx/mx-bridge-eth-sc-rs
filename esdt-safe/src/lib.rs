@@ -414,29 +414,6 @@ pub trait EsdtSafe:
         );
     }
 
-    #[payable("*")]
-    #[endpoint(createRefundTransactionSCCall)]
-    fn create_refund_transaction_sc_call(
-        &self,
-        to: EthAddress<Self::Api>,
-        data: ManagedBuffer<Self::Api>,
-        opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
-    ) {
-        let transaction_details =
-            self.create_transaction_common(to, BigUint::zero(), opt_refund_info);
-
-        self.create_refund_transaction_sc_call_event(
-            transaction_details.batch_id,
-            transaction_details.tx_nonce,
-            transaction_details.payment_token,
-            transaction_details.actual_bridged_amount,
-            transaction_details.required_fee,
-            transaction_details.refund_info.initial_batch_id,
-            transaction_details.refund_info.initial_nonce,
-            data,
-        );
-    }
-
     /// Claim funds for failed MultiversX -> Ethereum transactions.
     /// These are not sent automatically to prevent the contract getting stuck.
     /// For example, if the receiver is a SC, a frozen account, etc.
