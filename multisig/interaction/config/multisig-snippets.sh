@@ -248,6 +248,27 @@ initSupplyMintBurn() {
   --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+syncValueWithEthereumDenom() {
+  CHECK_VARIABLES MULTISIG SAFE
+
+  read -p "Chain specific token (human readable): " TOKEN
+  read -p "Denominated value on Ethereum (should contain all digits): " ETH_VALUE
+
+  EXISTING_BURN=$(mxpy contract query ${SAFE} --proxy=${PROXY} --function getBurnBalances --arguments str:$TOKEN | jq '.[0].number')
+  EXISTING_MINT=$(mxpy contract query ${SAFE} --proxy=${PROXY} --function getMintBalances --arguments str:$TOKEN | jq '.[0].number')
+  NEW_MINT=$(echo "$ETH_VALUE+$EXISTING_BURN" | bc)
+  DIFF=$(echo "$EXISTING_MINT-$EXISTING_BURN" | bc)
+  NEW_DIFF=$(echo "$NEW_MINT-$EXISTING_BURN" | bc)
+
+  echo "For token ${TOKEN} the existing mint is ${EXISTING_MINT} and existing burn is ${EXISTING_BURN}. The minted value will be replaced with ${NEW_MINT}"
+  echo "Existing diff ${DIFF}, new diff will be ${NEW_DIFF}"
+
+  mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
+    --gas-limit=60000000 --function="initSupplyMintBurnEsdtSafe" \
+    --arguments str:${TOKEN} ${NEW_MINT} ${EXISTING_BURN} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 upgradeMultisig() {
     CHECK_VARIABLES SAFE MULTI_TRANSFER BRIDGE_PROXY MULTISIG_WASM
 
