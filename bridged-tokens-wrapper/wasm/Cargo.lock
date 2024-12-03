@@ -25,6 +25,7 @@ name = "bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
+ "mock-esdt-safe",
  "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
@@ -74,6 +75,15 @@ name = "hex-literal"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
+
+[[package]]
+name = "mock-esdt-safe"
+version = "0.0.0"
+dependencies = [
+ "eth-address",
+ "multiversx-sc",
+ "multiversx-sc-modules",
+]
 
 [[package]]
 name = "multiversx-sc"

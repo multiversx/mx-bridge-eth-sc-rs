@@ -836,59 +836,6 @@ fn esdt_safe_create_transaction() {
 }
 
 #[test]
-fn esdt_create_transaction_sc_call_test() {
-    let mut state = EsdtSafeTestState::new();
-    state.multisig_deploy();
-    state.safe_deploy();
-
-    state.world.set_esdt_balance(
-        MULTISIG_ADDRESS,
-        b"TOKEN-WITH",
-        BigUint::from(10_000_000u64),
-    );
-
-    state.config_esdtsafe();
-
-    let refund_info = sc_proxies::esdt_safe_proxy::RefundInfo::<StaticApi> {
-        address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
-        initial_batch_id: 1u64,
-        initial_nonce: 1u64,
-    };
-
-    let data = ManagedBuffer::<StaticApi>::from(b"Some data");
-
-    state
-        .world
-        .tx()
-        .from(BRIDGE_PROXY_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction_sc_call(
-            EthAddress::zero(),
-            data.clone(),
-            OptionalValue::Some(refund_info.clone()),
-        )
-        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
-        .returns(ReturnsResult)
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction_sc_call(
-            EthAddress::zero(),
-            data.clone(),
-            OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
-        )
-        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
-        .returns(ReturnsResult)
-        .run();
-}
-
-#[test]
 fn add_refund_batch_test() {
     let mut state = EsdtSafeTestState::new();
     state.multisig_deploy();
