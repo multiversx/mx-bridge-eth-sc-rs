@@ -9,7 +9,7 @@
             "step": "scCall",
             "txId": "create-transaction-ok",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:esdt_safe",
                 "function": "setMaxBridgedAmount",
                 "arguments": [

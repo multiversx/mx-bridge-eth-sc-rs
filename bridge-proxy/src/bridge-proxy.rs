@@ -1,11 +1,10 @@
 #![no_std]
 use multiversx_sc::imports::*;
 
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper_proxy;
 pub mod config;
-pub mod esdt_safe_proxy;
 
+use sc_proxies::bridged_tokens_wrapper_proxy;
+use sc_proxies::esdt_safe_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
@@ -16,10 +15,10 @@ const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
 pub trait BridgeProxyContract:
     config::ConfigModule
     + multiversx_sc_modules::pause::PauseModule
+    + storage_module::CommonStorageModule
 {
     #[init]
-    fn init(&self, opt_multi_transfer_address: OptionalValue<ManagedAddress>) {
-        self.set_multi_transfer_contract_address(opt_multi_transfer_address);
+    fn init(&self) {
         self.set_paused(true);
     }
 
@@ -35,7 +34,7 @@ pub trait BridgeProxyContract:
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
         require!(
-            caller == self.multi_transfer_address().get(),
+            caller == self.get_multi_transfer_address(),
             "Only MultiTransfer can do deposits"
         );
         let next_tx_id = self.get_next_tx_id();
@@ -129,7 +128,7 @@ pub trait BridgeProxyContract:
 
     fn refund_transaction(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        let esdt_safe_contract_address = self.esdt_safe_contract_address().get();
+        let esdt_safe_contract_address = self.get_esdt_safe_address();
 
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
         let batch_id = self.batch_id(tx_id).get();
@@ -154,7 +153,7 @@ pub trait BridgeProxyContract:
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
         let payment = self.payments(tx_id).get();
-        let bridged_tokens_wrapper_address = self.bridged_tokens_wrapper_address().get();
+        let bridged_tokens_wrapper_address = self.get_bridged_tokens_wrapper_address();
 
         if requested_token == &payment.token_identifier {
             return payment;
