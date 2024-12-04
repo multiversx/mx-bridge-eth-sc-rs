@@ -1,7 +1,10 @@
 use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
+use sc_proxies::{
+    bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy,
+    multi_transfer_esdt_proxy,
+};
 
 const MAX_BOARD_MEMBERS: usize = 40;
 
@@ -407,6 +410,22 @@ pub trait SetupModule:
             .to(multi_transfer_esdt_addr)
             .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
             .set_max_tx_batch_block_duration(new_max_tx_batch_block_duration)
+            .sync_call();
+    }
+
+    #[only_owner]
+    #[payable("*")]
+    #[endpoint(bridgedTokensWrapperDepositLiquidity)]
+    fn bridged_tokens_wrapper_deposit_liquidity(&self) {
+        let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
+
+        let bridged_tokens_wrapper_addr = self.bridged_tokens_wrapper_address().get();
+
+        self.tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .deposit_liquidity()
+            .single_esdt(&payment_token, 0, &payment_amount)
             .sync_call();
     }
 }
