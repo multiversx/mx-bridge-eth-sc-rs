@@ -24,7 +24,6 @@ pub struct TransactionDetails<Api: ManagedTypeApi> {
     pub required_fee: BigUint<Api>,
     pub to_address: ManagedBuffer<Api>,
     pub is_refund_tx: bool,
-    pub refund_info: RefundInfo<Api>,
 }
 
 #[type_abi]
@@ -250,11 +249,20 @@ pub trait EsdtSafe:
         }
     }
 
+    #[endpoint(addRefundBatchForFailedTx)]
+    fn add_refund_batch_for_failed_tx(&self) {
+        let mut refund_transactions: ManagedVec<Transaction<Self::Api>> = ManagedVec::new();
+        for failed_refund in self.failed_refunds().iter() {
+            refund_transactions.push(failed_refund);
+        }
+
+        self.add_refund_batch(refund_transactions);
+    }
+
     fn create_transaction_common(
         &self,
         to: EthAddress<Self::Api>,
-        min_bridge_amount: BigUint<Self::Api>,
-        opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
+        opt_min_bridge_amount: OptionalValue<BigUint<Self::Api>>,
     ) -> TransactionDetails<Self::Api> {
         require!(self.not_paused(), "Cannot create transaction while paused");
 
@@ -267,36 +275,23 @@ pub trait EsdtSafe:
             "Transaction fees cost more than the entire bridged amount"
         );
 
-        if min_bridge_amount != BigUint::zero() {
-            require!(
-                required_fee < min_bridge_amount,
-                "Minimum bridged amount after fee is not achieved"
-            );
-        }
+        match opt_min_bridge_amount {
+            OptionalValue::Some(min_bridge_amount) => {
+                require!(
+                    required_fee < min_bridge_amount,
+                    "Minimum bridged amount after fee is not achieved"
+                );
+            }
+            OptionalValue::None => {}
+        };
 
         self.require_below_max_amount(&payment_token, &payment_amount);
-
-        // This addr is used for the refund, if the transaction fails
-        // This is passed by the BridgeTokenWrapper contract
-        let mut is_refund_tx = false;
         let caller = self.blockchain().get_caller();
-        let refund_info = match opt_refund_info {
-            OptionalValue::Some(refund_info) => {
-                if caller == self.get_bridge_proxy_address() {
-                    is_refund_tx = true;
-                    refund_info
-                } else if caller == self.get_bridged_tokens_wrapper_address() {
-                    refund_info
-                } else {
-                    sc_panic!("Cannot specify a refund address from this caller");
-                }
-            }
-            OptionalValue::None => RefundInfo {
-                address: caller,
-                initial_batch_id: 0,
-                initial_nonce: 0,
-            },
-        };
+
+        let mut is_refund_tx = false;
+        if caller == self.get_bridge_proxy_address() {
+            is_refund_tx = true;
+        }
 
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
@@ -306,7 +301,7 @@ pub trait EsdtSafe:
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: refund_info.address.as_managed_buffer().clone(),
+            from: caller.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),
@@ -342,7 +337,6 @@ pub trait EsdtSafe:
             required_fee,
             to_address: tx.to,
             is_refund_tx,
-            refund_info,
         }
     }
 
@@ -362,26 +356,16 @@ pub trait EsdtSafe:
         to: EthAddress<Self::Api>,
         opt_min_bridge_amount: OptionalValue<BigUint<Self::Api>>,
     ) {
-        let transaction_details = match opt_min_bridge_amount {
-            OptionalValue::Some(min_bridge_amount) => {
-                self.create_transaction_common(to, min_bridge_amount, OptionalValue::None)
-            }
-            OptionalValue::None => {
-                self.create_transaction_common(to, BigUint::zero(), OptionalValue::None)
-            }
-        };
-        // let transaction_details = self.create_transaction_common(to, opt_refund_info);
+        let transaction_details = self.create_transaction_common(to, opt_min_bridge_amount);
+        let caller = self.blockchain().get_caller();
+
         self.create_transaction_event(
             transaction_details.batch_id,
             transaction_details.tx_nonce,
             transaction_details.payment_token,
             transaction_details.actual_bridged_amount,
             transaction_details.required_fee,
-            transaction_details
-                .refund_info
-                .address
-                .as_managed_buffer()
-                .clone(),
+            caller.as_managed_buffer().clone(),
             transaction_details.to_address,
         );
     }
@@ -400,8 +384,17 @@ pub trait EsdtSafe:
         to: EthAddress<Self::Api>,
         opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) {
-        let transaction_details =
-            self.create_transaction_common(to, BigUint::zero(), opt_refund_info);
+        let transaction_details = self.create_transaction_common(to, OptionalValue::None);
+        let caller = self.blockchain().get_caller();
+
+        let refund_info = match opt_refund_info {
+            OptionalValue::Some(refund_info) => refund_info,
+            OptionalValue::None => RefundInfo {
+                address: caller,
+                initial_batch_id: 0u64,
+                initial_nonce: 0,
+            },
+        };
 
         self.create_refund_transaction_event(
             transaction_details.batch_id,
@@ -409,8 +402,8 @@ pub trait EsdtSafe:
             transaction_details.payment_token,
             transaction_details.actual_bridged_amount,
             transaction_details.required_fee,
-            transaction_details.refund_info.initial_batch_id,
-            transaction_details.refund_info.initial_nonce,
+            refund_info.initial_batch_id,
+            refund_info.initial_nonce,
         );
     }
 

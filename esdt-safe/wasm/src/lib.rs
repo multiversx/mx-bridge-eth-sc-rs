@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
+        addRefundBatchForFailedTx => add_refund_batch_for_failed_tx
         createTransaction => create_transaction
         createRefundTransaction => create_refund_transaction
         claimRefund => claim_refund
@@ -51,7 +52,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTotalBalances => total_balances
         getMintBalances => mint_balances
         getBurnBalances => burn_balances
-        getsupplyMintBurnInitialized => supply_mint_burn_initialized
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch

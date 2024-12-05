@@ -558,7 +558,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
     };
 
     let amount = BigUint::from(500u64);
-    // Destination is not an initialized contract
+
     test.world
         .tx()
         .from(MULTI_TRANSFER_ADDRESS)
@@ -741,7 +741,7 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
     };
 
     let amount = BigUint::from(500u64);
-    // Destination is not an initialized contract
+
     test.world
         .tx()
         .from(MULTI_TRANSFER_ADDRESS)
@@ -812,7 +812,7 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
     };
 
     let amount = BigUint::from(500u64);
-    // Destination is not an initialized contract
+
     test.world
         .tx()
         .from(MULTI_TRANSFER_ADDRESS)

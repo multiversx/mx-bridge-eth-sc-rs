@@ -131,6 +131,15 @@ where
             .original_result()
     }
 
+    pub fn add_refund_batch_for_failed_tx(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addRefundBatchForFailedTx")
+            .original_result()
+    }
+
     /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted. 
     ///  
     /// Every transfer will have a part of the tokens subtracted as fees. 
@@ -574,19 +583,6 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getBurnBalances")
-            .argument(&token_id)
-            .original_result()
-    }
-
-    pub fn supply_mint_burn_initialized<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getsupplyMintBurnInitialized")
             .argument(&token_id)
             .original_result()
     }

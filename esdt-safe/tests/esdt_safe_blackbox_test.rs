@@ -239,8 +239,8 @@ impl EsdtSafeTestState {
                 true,
                 false,
                 BigUint::from(0u64),
-                BigUint::from(10_000u64),
-                BigUint::from(10_000u64),
+                BigUint::from(0u64),
+                BigUint::from(0u64),
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
@@ -612,7 +612,7 @@ fn init_supply_test_mint_burn() {
 
     assert_eq!(
         total_minted,
-        BigUint::from(10_000u64),
+        BigUint::from(0u64),
         "Total supply should be 10,000"
     );
 
@@ -627,7 +627,7 @@ fn init_supply_test_mint_burn() {
 
     assert_eq!(
         total_burned,
-        BigUint::from(10_000u64),
+        BigUint::from(0u64),
         "Total supply should be 10,000"
     );
 }

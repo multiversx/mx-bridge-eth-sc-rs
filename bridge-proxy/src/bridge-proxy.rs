@@ -122,8 +122,7 @@ pub trait BridgeProxyContract:
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
-            let tx = self.get_pending_transaction_by_id(tx_id);
-            self.refund_transactions(tx_id).set(&tx);
+            self.add_pending_tx_to_refund(tx_id);
         }
         self.cleanup_transaction(tx_id);
     }
@@ -187,9 +186,13 @@ pub trait BridgeProxyContract:
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
+        self.add_pending_tx_to_refund(tx_id);
+        self.cleanup_transaction(tx_id);
+    }
+
+    fn add_pending_tx_to_refund(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
         self.refund_transactions(tx_id).set(&tx);
-        self.cleanup_transaction(tx_id);
     }
 
     fn cleanup_transaction(&self, tx_id: usize) {
