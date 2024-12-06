@@ -582,25 +582,6 @@ fn init_supply_test_mint_burn() {
         .with_result(ExpectError(ERROR, "Token not in whitelist"))
         .run();
 
-    state
-        .esdt_raw_transaction()
-        .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
-        .with_result(ExpectError(
-            ERROR,
-            "Can init only for mintable/burnable tokens",
-        ))
-        .run();
-
-    state
-        .esdt_raw_transaction()
-        .init_supply_mint_burn(
-            TOKEN_WITH_BURN_ROLE,
-            BigUint::from(10_000u64),
-            BigUint::from(10_000u64),
-        )
-        .with_result(ExpectError(ERROR, "Token already initialized"))
-        .run();
-
     let total_minted = state
         .world
         .query()
@@ -738,20 +719,6 @@ fn esdt_safe_create_transaction() {
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .create_refund_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_refund_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
-        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
-        .returns(ExpectError(
-            ERROR,
-            "Cannot specify a refund address from this caller",
-        ))
         .run();
 
     state

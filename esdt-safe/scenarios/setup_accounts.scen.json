@@ -150,8 +150,11 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:feeEstimatorAddress": "sc:price_aggregator",
-                        "str:multiTransferEsdtAddress": "sc:multi_transfer"
+                        "str:esdtSafeAddress": "sc:esdt_safe",
+                        "str:multiTransferEsdtAddress": "sc:multi_transfer",
+                        "str:proxyAddress": "sc:bridge_proxy",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
+                        "str:feeEstimatorAddress": "sc:price_aggregator"
                     },
                     "code": "file:../../multisig/output/multisig.wasm",
                     "owner": "address:owner"

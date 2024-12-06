@@ -13,7 +13,11 @@
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:feeEstimatorAddress": "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        "str:feeEstimatorAddress": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "str:esdtSafeAddress": "sc:esdt_safe",
+                        "str:multiTransferEsdtAddress": "sc:multi_transfer",
+                        "str:proxyAddress": "sc:bridge_proxy",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper"
                     },
                     "code": "file:../../multisig/output/multisig.wasm",
                     "owner": "address:owner"

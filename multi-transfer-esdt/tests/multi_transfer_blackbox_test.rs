@@ -341,8 +341,8 @@ impl MultiTransferTestState {
                 true,
                 false,
                 BigUint::zero(),
-                BigUint::from(600_000u64),
-                BigUint::from(0u64),
+                BigUint::zero(),
+                BigUint::zero(),
                 OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
             )
             .run();
@@ -419,6 +419,45 @@ impl MultiTransferTestState {
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .set_eth_tx_gas_limit(0u64)
+            .run();
+
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply_mint_burn(
+                UNIVERSAL_TOKEN_IDENTIFIER,
+                BigUint::from(600_000u64),
+                BigUint::from(0u64),
+            )
+            .run();
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_token_to_whitelist(
+                TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
+                "BRIDGE2",
+                true,
+                false,
+                BigUint::zero(),
+                BigUint::zero(),
+                BigUint::zero(),
+                OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
+            )
+            .run();
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init_supply_mint_burn(
+                WRAPPED_TOKEN_ID,
+                BigUint::from(600_000u64),
+                BigUint::from(0u64),
+            )
             .run();
 
         self.world
@@ -1235,6 +1274,7 @@ fn add_refund_batch_test_should_work() {
         .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
+
     state.check_balances_on_safe(
         TOKEN_TICKER,
         BigUint::zero(),
