@@ -773,7 +773,11 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
 
     test.world
         .check_account(BRIDGE_PROXY_ADDRESS)
-        .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000000f42400100000000")
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000000f42400100000000")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
         .check_storage("str:batchId|u32:1", "1")
         .check_storage("str:highestTxId", "1")
         .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
@@ -843,9 +847,16 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
         .run();
 
     test.world
-    .check_account(BRIDGE_PROXY_ADDRESS)
-    .check_storage("str:refundTransactions|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
-    .check_storage("str:batchId|u32:1", "1")
-    .check_storage("str:highestTxId", "1")
-    .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage(
+            "str:payments|u32:1",
+            "nested:str:BRIDGE-123456|u64:0|biguint:500",
+        );
 }
