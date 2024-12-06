@@ -334,19 +334,6 @@ impl MultiTransferTestState {
             .set_max_bridged_amount(TOKEN_TICKER, MAX_AMOUNT - 1)
             .run();
 
-        // self.esdt_raw_transaction_esdt_safe()
-        //     .add_token_to_whitelist(
-        //         TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
-        //         "BRIDGE2",
-        //         true,
-        //         false,
-        //         BigUint::zero(),
-        //         BigUint::zero(),
-        //         BigUint::zero(),
-        //         OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
-        //     )
-        //     .run();
-
         self.esdt_raw_transaction_esdt_safe()
             .unpause_endpoint()
             .run();
@@ -434,23 +421,6 @@ impl MultiTransferTestState {
                 BigUint::from(0u64),
             )
             .run();
-
-        // self.world
-        //     .tx()
-        //     .from(MULTISIG_ADDRESS)
-        //     .to(ESDT_SAFE_ADDRESS)
-        //     .typed(esdt_safe_proxy::EsdtSafeProxy)
-        //     .add_token_to_whitelist(
-        //         TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
-        //         "BRIDGE2",
-        //         true,
-        //         false,
-        //         BigUint::zero(),
-        //         BigUint::zero(),
-        //         BigUint::zero(),
-        //         OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
-        //     )
-        //     .run();
 
         self.world
             .tx()
