@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           10
+// Endpoints:                           12
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  14
+// Total number of exported functions:  16
 
 #![no_std]
 
@@ -23,9 +23,11 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         deposit => deposit
         execute => execute
-        refundTransaction => refund_transaction
+        executeRefundTransaction => execute_refund_transaction
         getPendingTransactionById => get_pending_transaction_by_id
         getPendingTransactions => get_pending_transactions
+        getRefundTransactionById => get_refund_transaction_by_id
+        getRefundTransactions => get_refund_transactions
         refundTransactions => refund_transactions
         highestTxId => highest_tx_id
         pause => pause_endpoint

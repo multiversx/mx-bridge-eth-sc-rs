@@ -127,9 +127,10 @@ pub trait BridgeProxyContract:
         self.cleanup_transaction(tx_id);
     }
 
-    #[endpoint(refundTransaction)]
-    fn refund_transaction(&self, tx_id: usize) {
-        let tx = self.refund_transactions(tx_id).get();
+    #[endpoint(executeRefundTransaction)]
+    fn execute_refund_transaction(&self, tx_id: usize) {
+        let tx = self.get_refund_transaction_by_id(tx_id);
+
         let esdt_safe_contract_address = self.get_esdt_safe_address();
 
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
@@ -192,7 +193,7 @@ pub trait BridgeProxyContract:
 
     fn add_pending_tx_to_refund(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
-        self.refund_transactions(tx_id).set(&tx);
+        self.refund_transactions().insert(tx_id, tx);
     }
 
     fn cleanup_transaction(&self, tx_id: usize) {
@@ -220,6 +221,24 @@ pub trait BridgeProxyContract:
     ) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
         let mut transactions = MultiValueEncoded::new();
         for (tx_id, tx) in self.pending_transactions().iter() {
+            transactions.push(MultiValue2((tx_id, tx)));
+        }
+        transactions
+    }
+
+    #[view(getRefundTransactionById)]
+    fn get_refund_transaction_by_id(&self, tx_id: usize) -> EthTransaction<Self::Api> {
+        let tx = self.refund_transactions().get(&tx_id);
+        require!(tx.is_some(), "Invalid tx id");
+        tx.unwrap()
+    }
+
+    #[view(getRefundTransactions)]
+    fn get_refund_transactions(
+        &self,
+    ) -> MultiValueEncoded<MultiValue2<usize, EthTransaction<Self::Api>>> {
+        let mut transactions = MultiValueEncoded::new();
+        for (tx_id, tx) in self.refund_transactions().iter() {
             transactions.push(MultiValue2((tx_id, tx)));
         }
         transactions

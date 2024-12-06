@@ -9,7 +9,7 @@ pub trait ConfigModule {
 
     #[view(refundTransactions)]
     #[storage_mapper("refundTransactions")]
-    fn refund_transactions(&self, tx_id: usize) -> SingleValueMapper<EthTransaction<Self::Api>>;
+    fn refund_transactions(&self) -> MapMapper<usize, EthTransaction<Self::Api>>;
 
     #[storage_mapper("payments")]
     fn payments(&self, tx_id: usize) -> SingleValueMapper<EsdtTokenPayment<Self::Api>>;
