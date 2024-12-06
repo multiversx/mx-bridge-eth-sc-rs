@@ -43,6 +43,47 @@
                 "gasPrice": "0"
             },
             "expect": {
+                "status": "4",
+                "message": "str:Quorum size not appropriate",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "third-relayer-stake",
+            "tx": {
+                "from": "address:relayer3",
+                "to": "sc:multisig",
+                "value": "1000",
+                "function": "stake",
+                "arguments": [],
+                "gasLimit": "35,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Only board members can stake",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scCall",
+            "txId": "add-board-member",
+            "tx": {
+                "from": "address:owner",
+                "to": "sc:multisig",
+                "function": "addBoardMember",
+                "arguments": [
+                    "address:relayer3"
+                ],
+                "gasLimit": "35,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
                 "status": "0",
                 "message": "",
                 "out": [],
@@ -51,16 +92,71 @@
             }
         },
         {
+            "step": "scCall",
+            "txId": "third-relayer-stake",
+            "tx": {
+                "from": "address:relayer3",
+                "to": "sc:multisig",
+                "value": "1,000",
+                "function": "stake",
+                "arguments": [],
+                "gasLimit": "35,000,000",
+                "gasPrice": "0"
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [],
+                "gas": "*",
+                "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "getAllStakedRelayers - only one staked",
+            "tx": {
+                "to": "sc:multisig",
+                "function": "getAllStakedRelayers",
+                "arguments": []
+            },
+            "expect": {
+                "status": "0",
+                "message": "",
+                "out": [
+                    "address:relayer1",
+                    "address:relayer2",
+                    "address:relayer3"
+                ]
+            }
+        },
+        {
             "step": "checkState",
             "accounts": {
+                "address:relayer1": {
+                    "nonce": "2",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:relayer2": {
+                    "nonce": "1",
+                    "balance": "0",
+                    "storage": {}
+                },
+                "address:relayer3": {
+                    "nonce": "2",
+                    "balance": "0",
+                    "storage": {}
+                },
                 "sc:multisig": {
                     "nonce": "*",
-                    "balance": "*",
+                    "balance": "3000",
                     "storage": {
-                        "str:quorum": "1",
+                        "str:amountStaked|address:relayer1": "1000",
+                        "str:amountStaked|address:relayer2": "1000",
+                        "str:amountStaked|address:relayer3": "1000",
                         "+": ""
                     },
-                    "code": "*"
+                    "code": "file:../output/multisig.wasm"
                 },
                 "+": {}
             }
@@ -92,11 +188,12 @@
             "accounts": {
                 "sc:multisig": {
                     "nonce": "*",
-                    "balance": "2000",
+                    "balance": "3000",
                     "storage": {
-                        "str:quorum": "1",
-                        "str:user_role|u32:1": "1",
+                        "str:quorum": "2",
+                        "str:user_role|u32:1": "0",
                         "str:user_role|u32:2": "0",
+                        "str:user_role|u32:3": "0",
                         "+": ""
                     },
                     "code": "*"
@@ -158,11 +255,12 @@
                 },
                 "sc:multisig": {
                     "nonce": "*",
-                    "balance": "1000",
+                    "balance": "2000",
                     "storage": {
-                        "str:quorum": "1",
-                        "str:user_role|u32:1": "1",
+                        "str:quorum": "2",
+                        "str:user_role|u32:1": "0",
                         "str:user_role|u32:2": "0",
+                        "str:user_role|u32:3": "0",
                         "+": ""
                     },
                     "code": "*"

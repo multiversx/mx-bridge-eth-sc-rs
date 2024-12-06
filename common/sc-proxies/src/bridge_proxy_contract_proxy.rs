@@ -109,6 +109,19 @@ where
             .original_result()
     }
 
+    pub fn execute_refund_transaction<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("executeRefundTransaction")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn get_pending_transaction_by_id<
         Arg0: ProxyArg<usize>,
     >(
@@ -128,6 +141,37 @@ where
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getPendingTransactions")
+            .original_result()
+    }
+
+    pub fn get_refund_transaction_by_id<
+        Arg0: ProxyArg<usize>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, transaction::EthTransaction<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRefundTransactionById")
+            .argument(&tx_id)
+            .original_result()
+    }
+
+    pub fn get_refund_transactions(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<usize, transaction::EthTransaction<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getRefundTransactions")
+            .original_result()
+    }
+
+    pub fn refund_transactions(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<usize, transaction::EthTransaction<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("refundTransactions")
             .original_result()
     }
 

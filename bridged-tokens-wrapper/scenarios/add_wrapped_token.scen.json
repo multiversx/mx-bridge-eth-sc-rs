@@ -120,7 +120,7 @@
                         "str:universalBridgedTokenIds.len": "1",
                         "str:universalBridgedTokenIds.index|nested:str:WUSDC-abcdef": "1",
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
-                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6"
+                        "str:tokenDecimalsNum|nested:str:WUSDC-abcdef": "6"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

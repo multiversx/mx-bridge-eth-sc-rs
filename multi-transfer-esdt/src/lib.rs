@@ -55,6 +55,17 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
+            let token_roles = self
+                .blockchain()
+                .get_esdt_local_roles(&eth_tx.token_id.clone());
+            if token_roles.has_role(&EsdtLocalRole::Transfer) {
+                let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
+                refund_tx_list.push(refund_tx);
+                self.token_with_transfer_role(eth_tx.token_id);
+
+                continue;
+            }
+
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
@@ -87,14 +98,26 @@ pub trait MultiTransferEsdt:
             }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(
-                batch_id,
-                eth_tx.from.clone(),
-                eth_tx.to.clone(),
-                eth_tx.token_id.clone(),
-                eth_tx.amount.clone(),
-                eth_tx.tx_nonce,
-            );
+            // emit events only for non-SC destinations
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
+                self.transfer_performed_sc_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            } else {
+                self.transfer_performed_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            }
 
             valid_tx_list.push(eth_tx.clone());
             valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
@@ -128,6 +151,10 @@ pub trait MultiTransferEsdt:
                         refund_batch.push(Transaction::from(tx_fields));
                         refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                     } else {
+                        require!(
+                            self.unprocessed_refund_txs(tx_nonce).is_empty(),
+                            "This transcation is already marked as unprocessed"
+                        );
                         self.unprocessed_refund_txs(tx_nonce)
                             .set(Transaction::from(tx_fields));
 
@@ -164,10 +191,14 @@ pub trait MultiTransferEsdt:
         let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
+            || token_roles.has_role(&EsdtLocalRole::Transfer)
+        {
             return false;
         }
+
         return true;
     }
 
@@ -281,8 +312,22 @@ pub trait MultiTransferEsdt:
         #[indexed] tx_id: TxNonce,
     );
 
+    #[event("transferPerformedSCEvent")]
+    fn transfer_performed_sc_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] from: EthAddress<Self::Api>,
+        #[indexed] to: ManagedAddress,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] tx_id: TxNonce,
+    );
+
     #[event("transferFailedInvalidDestination")]
     fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+
+    #[event("tokenWithTransferRole")]
+    fn token_with_transfer_role(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
