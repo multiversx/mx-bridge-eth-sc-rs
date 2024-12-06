@@ -66,6 +66,16 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
+            let is_success: bool = self
+                .tx()
+                .to(safe_address.clone())
+                .typed(esdt_safe_proxy::EsdtSafeProxy)
+                .get_tokens(&eth_tx.token_id, &eth_tx.amount)
+                .returns(ReturnsResult)
+                .sync_call();
+
+            require!(is_success, "Invalid token or amount");
+
             let universal_token = self.get_universal_token(eth_tx.clone());
 
             let mut must_refund = false;
@@ -86,16 +96,6 @@ pub trait MultiTransferEsdt:
 
                 continue;
             }
-
-            let is_success: bool = self
-                .tx()
-                .to(safe_address.clone())
-                .typed(esdt_safe_proxy::EsdtSafeProxy)
-                .get_tokens(&eth_tx.token_id, &eth_tx.amount)
-                .returns(ReturnsResult)
-                .sync_call();
-
-            require!(is_success, "Invalid token or amount");
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
             // emit events only for non-SC destinations
