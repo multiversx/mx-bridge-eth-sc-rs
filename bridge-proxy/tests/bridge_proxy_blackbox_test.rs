@@ -33,7 +33,7 @@ use multiversx_sc_scenario::{
     scenario_model::*,
     ContractInfo, ScenarioWorld,
 };
-use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
+use multiversx_sc_scenario::{ExpectError, ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
 use mock_proxies::mock_multisig_proxy;
@@ -43,6 +43,7 @@ use transaction::{CallData, EthTransaction};
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
 const WBRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WBRIDGE-123456");
 
+const DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION: u64 = 300;
 const GAS_LIMIT: u64 = 10_000_000;
 const TOO_SMALL_GAS_LIMIT: u64 = 1_000_000;
 
@@ -237,6 +238,9 @@ impl BridgeProxyTestState {
             .run();
 
         self
+    }
+    fn set_block_round(&mut self, block_round_expr: u64) {
+        self.world.current_block().block_round(block_round_expr);
     }
 }
 
@@ -957,9 +961,24 @@ fn bridge_proxy_refund_tx_test() {
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .execute_refund_transaction(1u32)
+        .returns(ExpectError(4, "Refund executed too early!"))
+        .run();
+
+    test.set_block_round(DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION + 1);
+
+    test.world
+        .tx()
+        .from(USER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute_refund_transaction(1u32)
         .run();
 
     test.world
         .check_account(BRIDGE_PROXY_ADDRESS)
         .esdt_balance(BRIDGE_TOKEN_ID, BigUint::zero());
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:highestTxId", "1");
 }

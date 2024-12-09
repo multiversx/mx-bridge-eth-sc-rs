@@ -9,7 +9,7 @@ use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
-const DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION: u64 = 300;
+const DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -103,38 +103,28 @@ pub trait BridgeProxyContract:
         tx_call.register_promise();
     }
 
-    // TODO: will activate endpoint in a future release
-    // #[endpoint(cancel)]
-    fn cancel(&self, tx_id: usize) {
-        let tx_start_round = self.ongoing_execution(tx_id).get();
-        let current_block_round = self.blockchain().get_block_round();
-        require!(
-            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_CANCEL_TRANSACTION,
-            "Transaction can't be cancelled yet"
-        );
-
-        let tx = self.get_pending_transaction_by_id(tx_id);
-        let payment = self.payments(tx_id).get();
-        self.tx().to(tx.to).payment(payment).transfer();
-        self.cleanup_transaction(tx_id);
-    }
-
     #[promises_callback]
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
             self.add_pending_tx_to_refund(tx_id);
         }
-        self.cleanup_transaction(tx_id);
+        self.pending_transactions().remove(&tx_id);
     }
 
     #[endpoint(executeRefundTransaction)]
     fn execute_refund_transaction(&self, tx_id: usize) {
+        let tx_start_round = self.ongoing_execution(tx_id).get();
+        let current_block_round = self.blockchain().get_block_round();
+        require!(
+            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION,
+            "Refund executed too early!"
+        );
+
         let tx = self.get_refund_transaction_by_id(tx_id);
-
         let esdt_safe_contract_address = self.get_esdt_safe_address();
-
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
         let batch_id = self.batch_id(tx_id).get();
+
         self.tx()
             .to(esdt_safe_contract_address)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
@@ -152,6 +142,8 @@ pub trait BridgeProxyContract:
                 &unwrapped_token.amount,
             )
             .sync_call();
+
+        self.finish_refund(tx_id);
     }
 
     fn unwrap_token(&self, requested_token: &TokenIdentifier, tx_id: usize) -> EsdtTokenPayment {
@@ -188,17 +180,19 @@ pub trait BridgeProxyContract:
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
         self.add_pending_tx_to_refund(tx_id);
-        self.cleanup_transaction(tx_id);
+        self.pending_transactions().remove(&tx_id);
+    }
+
+    fn finish_refund(&self, tx_id: usize) {
+        self.refund_transactions().remove(&tx_id);
+        self.ongoing_execution(tx_id).clear();
+        self.payments(tx_id).clear();
+        self.batch_id(tx_id).clear();
     }
 
     fn add_pending_tx_to_refund(&self, tx_id: usize) {
         let tx = self.get_pending_transaction_by_id(tx_id);
         self.refund_transactions().insert(tx_id, tx);
-    }
-
-    fn cleanup_transaction(&self, tx_id: usize) {
-        self.pending_transactions().remove(&tx_id);
-        self.ongoing_execution(tx_id).clear();
     }
 
     fn get_next_tx_id(&self) -> usize {
