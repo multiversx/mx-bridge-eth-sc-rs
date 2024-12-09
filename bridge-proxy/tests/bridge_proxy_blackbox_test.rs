@@ -47,6 +47,7 @@ const GAS_LIMIT: u64 = 10_000_000;
 const TOO_SMALL_GAS_LIMIT: u64 = 1_000_000;
 
 const CF_DEADLINE: u64 = 7 * 24 * 60 * 60; // 1 week in seconds
+const INITIAL_BALANCE: u64 = 10_000u64;
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
 const USER_ADDRESS: TestAddress = TestAddress::new("user");
@@ -120,13 +121,13 @@ impl BridgeProxyTestState {
         world
             .account(OWNER_ADDRESS)
             .nonce(1)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 10_000u64)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .account(USER_ADDRESS)
             .nonce(1)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 10_000u64)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .account(MULTI_TRANSFER_ADDRESS)
-            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), 10_000u64)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 10_000u64)
+            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), INITIAL_BALANCE)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .code(multi_transfer_code)
             .account(ESDT_SAFE_ADDRESS)
             .code(esdt_safe_code);
@@ -944,11 +945,11 @@ fn bridge_proxy_refund_tx_test() {
 
     test.world
         .check_account(BRIDGE_PROXY_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, BigUint::from(amount.clone()));
+        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
 
     test.world
         .check_account(USER_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, BigUint::from(10_000u64));
+        .esdt_balance(BRIDGE_TOKEN_ID, BigUint::from(INITIAL_BALANCE));
 
     test.world
         .tx()
