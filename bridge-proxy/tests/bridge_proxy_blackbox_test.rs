@@ -961,17 +961,6 @@ fn bridge_proxy_refund_tx_test() {
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .execute_refund_transaction(1u32)
-        .returns(ExpectError(4, "Refund executed too early!"))
-        .run();
-
-    test.set_block_round(DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION + 1);
-
-    test.world
-        .tx()
-        .from(USER_ADDRESS)
-        .to(BRIDGE_PROXY_ADDRESS)
-        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .execute_refund_transaction(1u32)
         .run();
 
     test.world

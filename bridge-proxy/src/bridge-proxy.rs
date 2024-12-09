@@ -9,7 +9,6 @@ use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 20_000_000; // 20 million
-const DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION: u64 = 300;
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
@@ -113,13 +112,6 @@ pub trait BridgeProxyContract:
 
     #[endpoint(executeRefundTransaction)]
     fn execute_refund_transaction(&self, tx_id: usize) {
-        let tx_start_round = self.ongoing_execution(tx_id).get();
-        let current_block_round = self.blockchain().get_block_round();
-        require!(
-            current_block_round - tx_start_round > DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION,
-            "Refund executed too early!"
-        );
-
         let tx = self.get_refund_transaction_by_id(tx_id);
         let esdt_safe_contract_address = self.get_esdt_safe_address();
         let unwrapped_token = self.unwrap_token(&tx.token_id, tx_id);
@@ -184,10 +176,10 @@ pub trait BridgeProxyContract:
     }
 
     fn finish_refund(&self, tx_id: usize) {
-        self.refund_transactions().remove(&tx_id);
         self.ongoing_execution(tx_id).clear();
         self.payments(tx_id).clear();
         self.batch_id(tx_id).clear();
+        self.refund_transactions().remove(&tx_id);
     }
 
     fn add_pending_tx_to_refund(&self, tx_id: usize) {
