@@ -768,6 +768,50 @@ fn basic_transfer_test() {
 }
 
 #[test]
+fn basic_transfer_smart_contract_dest_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+
+    state.deploy_contracts();
+    state.config_multi_transfer();
+
+    let call_data = ManagedBuffer::from(b"add");
+    call_data
+        .clone()
+        .concat(ManagedBuffer::from(GAS_LIMIT.to_string()));
+    call_data.clone().concat(ManagedBuffer::default());
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        to: ManagedAddress::from(MULTISIG_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+}
+
+#[test]
 fn batch_transfer_both_executed_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(500u64);
