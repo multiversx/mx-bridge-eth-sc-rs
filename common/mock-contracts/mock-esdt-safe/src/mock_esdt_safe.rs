@@ -28,8 +28,8 @@ pub trait MockEsdtSafe {
     fn upgrade(&self) {}
 
     #[payable("*")]
-    #[endpoint(createTransaction)]
-    fn create_transaction(
+    #[endpoint(createRefundTransaction)]
+    fn create_refund_transaction(
         &self,
         _to: EthAddress<Self::Api>,
         _opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,

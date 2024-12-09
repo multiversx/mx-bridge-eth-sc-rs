@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           72
+// Endpoints:                           74
 // Async Callback (empty):               1
-// Total number of exported functions:  75
+// Total number of exported functions:  77
 
 #![no_std]
 
@@ -32,6 +32,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         withdrawTransactionFees => withdraw_transaction_fees
         withdrawSlashedAmount => withdraw_slashed_amount
         performAction => perform_action_endpoint
+        clearActionsForBatchId => clear_actions_for_batch_id
         sign => sign
         upgradeChildContractFromSource => upgrade_child_contract_from_source
         addBoardMember => add_board_member_endpoint
@@ -57,6 +58,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         multiTransferEsdtSetMaxBridgedAmountForToken => multi_transfer_esdt_set_max_bridged_amount_for_token
         multiTransferEsdtSetMaxRefundTxBatchSize => multi_transfer_esdt_set_max_refund_tx_batch_size
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration => multi_transfer_esdt_set_max_refund_tx_batch_block_duration
+        bridgedTokensWrapperDepositLiquidity => bridged_tokens_wrapper_deposit_liquidity
         getQuorum => quorum
         getNumBoardMembers => num_board_members
         getRequiredStakeAmount => required_stake_amount

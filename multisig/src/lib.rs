@@ -19,7 +19,10 @@ use transaction::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
+use core::cmp::max;
 use multiversx_sc::imports::*;
+
+const MAX_ACTIONS_INTER: usize = 10;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
@@ -189,10 +192,12 @@ pub trait Multisig:
             INVALID_PERCENTAGE_SUM_OVER_ERR_MSG
         );
         let esdt_safe_addr = self.esdt_safe_address().get();
+        let opt_tokens_to_distribute: OptionalValue<MultiValueEncoded<TokenIdentifier<Self::Api>>> =
+            OptionalValue::None;
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .distribute_fees(args)
+            .distribute_fees(args, opt_tokens_to_distribute)
             .sync_call();
     }
 
@@ -269,7 +274,7 @@ pub trait Multisig:
             "Action already proposed"
         );
 
-        let current_batch_len = current_batch_transactions.raw_len() / TX_MULTIRESULT_NR_FIELDS;
+        let current_batch_len = current_batch_transactions.len();
         let status_batch_len = statuses_vec.len();
         require!(
             current_batch_len == status_batch_len,
@@ -416,7 +421,7 @@ pub trait Multisig:
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) {
         require!(
-            !self.action_mapper().item_is_empty(action_id),
+            !self.executed_actions().contains(&action_id),
             "Action was already executed"
         );
 
@@ -433,6 +438,7 @@ pub trait Multisig:
         require!(self.not_paused(), "No actions may be executed while paused");
 
         self.perform_action(action_id);
+        self.executed_actions().insert(action_id);
     }
 
     // private
@@ -453,8 +459,11 @@ pub trait Multisig:
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
                 if action_ids_mapper.len() > 1 {
-                    for act_id in action_ids_mapper.values() {
-                        self.clear_action(act_id);
+                    for _ in 0..max(action_ids_mapper.len(), MAX_ACTIONS_INTER) {
+                        match action_ids_mapper.values().next() {
+                            Some(act_id) => self.clear_action(act_id),
+                            None => sc_panic!("Could not retrieve an action id"),
+                        };
                     }
                 }
 
@@ -478,8 +487,11 @@ pub trait Multisig:
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
                 if action_ids_mapper.len() > 1 {
-                    for act_id in action_ids_mapper.values() {
-                        self.clear_action(act_id);
+                    for _ in 0..max(action_ids_mapper.len(), MAX_ACTIONS_INTER) {
+                        match action_ids_mapper.values().next() {
+                            Some(act_id) => self.clear_action(act_id),
+                            None => sc_panic!("Could not retrieve an action id"),
+                        };
                     }
                 }
 
@@ -500,6 +512,21 @@ pub trait Multisig:
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .sync_call();
             }
+        }
+    }
+
+    #[endpoint(clearActionsForBatchId)]
+    fn clear_actions_for_batch_id(&self, eth_batch_id: u64) {
+        let last_executed_eth_batch_id = self.last_executed_eth_batch_id().get();
+        require!(
+            eth_batch_id < last_executed_eth_batch_id,
+            "Batch needs to be already executed"
+        );
+
+        let action_ids_mapper = self.batch_id_to_action_id_mapping(eth_batch_id);
+
+        for act_id in action_ids_mapper.values() {
+            self.clear_action(act_id);
         }
     }
 }
