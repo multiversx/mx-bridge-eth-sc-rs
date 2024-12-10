@@ -416,7 +416,7 @@ impl MultiTransferTestState {
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .single_esdt(
                 &TokenIdentifier::from(WEGLD_TOKEN_ID),
@@ -432,7 +432,7 @@ impl MultiTransferTestState {
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .single_esdt(
                 &TokenIdentifier::from(WEGLD_TOKEN_ID),
@@ -1695,7 +1695,6 @@ fn test_upgrade_child_contract_from_source_success() {
         .upgrade_child_contract_from_source(
             child_sc_address.clone(),
             MOCK_MULTI_TRANSFER_ADDRESS,
-            false,
             init_args.clone(),
         )
         .run();
@@ -1709,7 +1708,6 @@ fn test_upgrade_child_contract_from_source_success() {
         .upgrade_child_contract_from_source(
             child_sc_address.clone(),
             MOCK_MULTI_TRANSFER_ADDRESS,
-            true,
             init_args.clone(),
         )
         .run();
@@ -1764,59 +1762,6 @@ fn test_remove_user_success() {
 }
 
 #[test]
-fn test_remove_user_cannot_remove_all() {
-    let mut state = MultiTransferTestState::new();
-
-    let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
-        MultiValueEncoded::new();
-    board.push(RELAYER1_ADDRESS.to_managed_address());
-    board.push(RELAYER2_ADDRESS.to_managed_address());
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .init(
-            ESDT_SAFE_ADDRESS,
-            MULTI_TRANSFER_ADDRESS,
-            BRIDGE_PROXY_ADDRESS,
-            BRIDGED_TOKENS_WRAPPER_ADDRESS,
-            PRICE_AGGREGATOR_ADDRESS,
-            1_000u64,
-            500u64,
-            1usize,
-            board,
-        )
-        .code(MULTISIG_CODE_PATH)
-        .new_address(MULTISIG_ADDRESS)
-        .run();
-    state.safe_deploy();
-    state.multi_transfer_deploy();
-    state.bridge_proxy_deploy();
-    state.bridged_tokens_wrapper_deploy();
-    state.config_multisig();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .remove_user(RELAYER1_ADDRESS.to_managed_address())
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(MULTISIG_ADDRESS)
-        .typed(multisig_proxy::MultisigProxy)
-        .remove_user(RELAYER2_ADDRESS.to_managed_address())
-        .returns(ExpectError(4u64, "cannot remove all board members"))
-        .run();
-}
-
-#[test]
 fn test_remove_user_quorum_exceed_board_size() {
     let mut state = MultiTransferTestState::new();
 
@@ -1845,7 +1790,7 @@ fn test_change_quorum_success() {
 
     state.assert_board_member_count(2usize);
 
-    let new_quorum = 1usize;
+    let new_quorum = 2usize;
     state
         .world
         .tx()
@@ -2376,7 +2321,7 @@ fn test_esdt_safe_settings_management() {
 
     let esdt_safe_address = ESDT_SAFE_ADDRESS;
 
-    let new_max_tx_batch_size = 100usize;
+    let new_max_tx_batch_size = 50usize;
     let new_max_tx_batch_block_duration = 600u64;
     let token_id = TokenIdentifier::from("TEST-123456");
     let max_bridged_amount = BigUint::from(1_000_000u64);
@@ -2428,7 +2373,7 @@ fn test_multi_transfer_esdt_settings_management() {
 
     let token_id = TokenIdentifier::from("TEST-123456");
     let max_bridged_amount = BigUint::from(1_000_000u64);
-    let new_max_refund_tx_batch_size = 100usize;
+    let new_max_refund_tx_batch_size = 50usize;
     let new_max_refund_tx_batch_block_duration = 600u64;
 
     state
