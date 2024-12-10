@@ -10,7 +10,7 @@ pub mod batch_status;
 pub mod tx_batch_mapper;
 
 const MAX_TX_BATCH_BLOCK_DURATION: u64 = 1000;
-const MAX_TX_BATCH_SIZE: usize = 20;
+const MAX_TX_BATCH_SIZE: usize = 100;
 
 #[multiversx_sc::module]
 pub trait TxBatchModule {
