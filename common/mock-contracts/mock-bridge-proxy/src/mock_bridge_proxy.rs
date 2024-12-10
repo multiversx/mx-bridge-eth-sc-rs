@@ -7,7 +7,7 @@ use multiversx_sc::imports::*;
 #[multiversx_sc::contract]
 pub trait MockBridgeProxy {
     #[init]
-    fn init(&self, _opt_multi_transfer_address: OptionalValue<ManagedAddress>) {}
+    fn init(&self) {}
 
     #[upgrade]
     fn upgrade(&self) {}

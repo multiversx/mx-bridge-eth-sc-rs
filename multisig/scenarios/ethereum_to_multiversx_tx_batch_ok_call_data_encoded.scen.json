@@ -185,6 +185,30 @@
             "step": "scCall",
             "id": "",
             "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x45474c442d313233343536",
+                    "0x45474c44",
+                    "0x",
+                    "0x01",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x0249f0"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
                 "from": "address:owner",
                 "to": "sc:multisig",
                 "function": "unpause",
@@ -359,7 +383,7 @@
             "accounts": {
                 "address:user1": {
                     "esdt": {
-                        "str:WEGLD-123456": "76000000000",
+                        "str:WEGLD-123456": "76000100000",
                         "+": ""
                     },
                     "storage": "*",

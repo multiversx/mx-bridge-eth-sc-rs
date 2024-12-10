@@ -11,4 +11,8 @@ pub trait MockMultiTransferEsdt {
 
     #[upgrade]
     fn upgrade(&self) {}
+
+    #[only_owner]
+    #[endpoint(addUnprocessedRefundTxToBatch)]
+    fn add_unprocessed_refund_tx_to_batch(&self, _tx_id: u64) {}
 }
