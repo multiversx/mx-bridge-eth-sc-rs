@@ -3,16 +3,15 @@
 use std::collections::LinkedList;
 use std::ops::Add;
 
-use bridge_proxy::{bridge_proxy_contract_proxy, config::ProxyTrait as _};
-use bridge_proxy::{bridged_tokens_wrapper_proxy, ProxyTrait};
+use bridge_proxy::config::ProxyTrait as _;
 
 use crowdfunding_esdt::crowdfunding_esdt_proxy;
 use multiversx_sc::codec::NestedEncode;
 use multiversx_sc::contract_base::ManagedSerializer;
 use multiversx_sc::sc_print;
 use multiversx_sc::types::{
-    EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedOption, ReturnsNewAddress, TestAddress,
-    TestSCAddress, TestTokenIdentifier,
+    EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedOption, MultiValueEncoded,
+    ReturnsNewAddress, ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier,
 };
 use multiversx_sc::{
     api::{HandleConstraints, ManagedTypeApi},
@@ -37,12 +36,16 @@ use multiversx_sc_scenario::{
 use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
+use mock_proxies::mock_multisig_proxy;
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
 use transaction::{CallData, EthTransaction};
 
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
 const WBRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WBRIDGE-123456");
 
 const GAS_LIMIT: u64 = 10_000_000;
+const TOO_SMALL_GAS_LIMIT: u64 = 1_000_000;
+
 const CF_DEADLINE: u64 = 7 * 24 * 60 * 60; // 1 week in seconds
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
@@ -50,16 +53,30 @@ const BRIDGE_PROXY_ADDRESS: TestSCAddress = TestSCAddress::new("bridge-proxy");
 const CROWDFUNDING_ADDRESS: TestSCAddress = TestSCAddress::new("crowfunding");
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
 const ESDT_SAFE_ADDRESS: TestSCAddress = TestSCAddress::new("esdt-safe");
+const FEE_ESTIMATOR_ADDRESS: TestSCAddress = TestSCAddress::new("fee-estimator");
+const MULTISIG_ADDRESS: TestSCAddress = TestSCAddress::new("multisig");
 const BRIDGED_TOKENS_WRAPPER_ADDRESS: TestSCAddress = TestSCAddress::new("bridged-tokens-wrapper");
+const NO_INIT_SC_ADDRESS: TestSCAddress = TestSCAddress::new("no-init-sc");
 
 const BRIDGE_PROXY_PATH_EXPR: MxscPath = MxscPath::new("output/bridge-proxy.mxsc.json");
 const CROWDFUNDING_PATH_EXPR: MxscPath =
     MxscPath::new("tests/test-contract/crowdfunding-esdt.mxsc.json");
-const MULTI_TRANSFER_PATH_EXPR: &str =
-    "mxsc:../multi-transfer-esdt/output/multi-transfer-esdt.mxsc.json";
-const ESDT_SAFE_PATH_EXPR: &str = "mxsc:../esdt-safe/output/esdt-safe.mxsc.json";
-const BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR: MxscPath =
-    MxscPath::new("../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json");
+const MOCK_MULTI_TRANSFER_PATH_EXPR: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
+const MOCK_ESDT_SAFE_PATH_EXPR: MxscPath =
+    MxscPath::new("../common/mock-contrats/mock-esdt-safe/output/mock-esdt-safe.mxsc.json");
+const MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-bridged-tokens-wrapper/output/mock-bridged-tokens-wrapper.mxsc.json");
+const MOCK_MULTISIG_CODE_PATH: MxscPath =
+    MxscPath::new("../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json");
+const MOCK_PRICE_AGGREGATOR_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-price-aggregator/output/mock-price-aggregator.mxsc.json",
+);
+const USER1_ADDRESS: TestAddress = TestAddress::new("user1");
+const USER2_ADDRESS: TestAddress = TestAddress::new("user2");
+const RELAYER1_ADDRESS: TestAddress = TestAddress::new("relayer1");
+const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -67,17 +84,25 @@ fn world() -> ScenarioWorld {
     blockchain.register_contract(BRIDGE_PROXY_PATH_EXPR, bridge_proxy::ContractBuilder);
     blockchain.register_contract(CROWDFUNDING_PATH_EXPR, crowdfunding_esdt::ContractBuilder);
     blockchain.register_contract(
-        BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR,
-        bridged_tokens_wrapper::ContractBuilder,
+        MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR,
+        mock_bridged_tokens_wrapper::ContractBuilder,
     );
-    blockchain.register_contract(ESDT_SAFE_PATH_EXPR, esdt_safe::ContractBuilder);
+    blockchain.register_contract(
+        MOCK_PRICE_AGGREGATOR_CODE_PATH,
+        mock_price_aggregator::ContractBuilder,
+    );
+    blockchain.register_contract(
+        MOCK_MULTI_TRANSFER_PATH_EXPR,
+        mock_multi_transfer_esdt::ContractBuilder,
+    );
+    blockchain.register_contract(MOCK_ESDT_SAFE_PATH_EXPR, mock_esdt_safe::ContractBuilder);
+    blockchain.register_contract(MOCK_MULTISIG_CODE_PATH, mock_multisig::ContractBuilder);
 
     blockchain
 }
 
 type BridgeProxyContract = ContractInfo<bridge_proxy::Proxy<StaticApi>>;
 type CrowdfundingContract = ContractInfo<crowdfunding_esdt::Proxy<StaticApi>>;
-type BridgedTokensWrapperContract = ContractInfo<bridged_tokens_wrapper::Proxy<StaticApi>>;
 
 struct BridgeProxyTestState {
     world: ScenarioWorld,
@@ -86,8 +111,10 @@ struct BridgeProxyTestState {
 impl BridgeProxyTestState {
     fn new() -> Self {
         let mut world = world();
-        let multi_transfer_code = world.code_expression(MULTI_TRANSFER_PATH_EXPR);
-        let esdt_safe_code = world.code_expression(ESDT_SAFE_PATH_EXPR);
+        let multi_transfer_code =
+            world.code_expression(MOCK_MULTI_TRANSFER_PATH_EXPR.eval_to_expr().as_str());
+        let esdt_safe_code =
+            world.code_expression(MOCK_ESDT_SAFE_PATH_EXPR.eval_to_expr().as_str());
 
         world
             .account(OWNER_ADDRESS)
@@ -108,20 +135,18 @@ impl BridgeProxyTestState {
             .account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
             .esdt_roles(WBRIDGE_TOKEN_ID, roles.clone())
             .esdt_roles(BRIDGE_TOKEN_ID, roles)
-            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), 10_000u64)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 10_000u64)
-            .code(BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR)
+            .code(MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR)
             .owner(OWNER_ADDRESS);
 
         Self { world }
     }
 
-    fn bridge_proxy_deploy(&mut self) -> &mut Self {
+    fn deploy_bridge_proxy(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .init(OptionalValue::Some(MULTI_TRANSFER_ADDRESS))
+            .init()
             .code(BRIDGE_PROXY_PATH_EXPR)
             .new_address(BRIDGE_PROXY_ADDRESS)
             .run();
@@ -129,13 +154,52 @@ impl BridgeProxyTestState {
         self
     }
 
-    fn bridged_tokens_wrapper_deploy(&mut self) -> &mut Self {
+    fn multisig_deploy(&mut self) -> &mut Self {
+        let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+            MultiValueEncoded::new();
+        board.push(ManagedAddress::from(RELAYER1_ADDRESS.eval_to_array()));
+        board.push(ManagedAddress::from(RELAYER2_ADDRESS.eval_to_array()));
         self.world
             .tx()
             .from(OWNER_ADDRESS)
+            .typed(mock_multisig_proxy::MockMultisigProxy)
+            .init(
+                ESDT_SAFE_ADDRESS,
+                MULTI_TRANSFER_ADDRESS,
+                BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+                FEE_ESTIMATOR_ADDRESS,
+                1_000u64,
+                500u64,
+                2usize,
+                board,
+            )
+            .code(MOCK_MULTISIG_CODE_PATH)
+            .new_address(MULTISIG_ADDRESS)
+            .run();
+        self
+    }
+
+    fn deploy_esdt_safe(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .init(BigUint::zero())
+            .code(MOCK_ESDT_SAFE_PATH_EXPR)
+            .new_address(BRIDGE_PROXY_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn deploy_bridged_tokens_wrapper(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
             .init()
-            .code(BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR)
+            .code(MOCK_BRIDGED_TOKENS_WRAPPER_CODE_PATH_EXPR)
             .new_address(BRIDGED_TOKENS_WRAPPER_ADDRESS)
             .run();
 
@@ -145,7 +209,7 @@ impl BridgeProxyTestState {
     fn deploy_crowdfunding(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .typed(crowdfunding_esdt_proxy::CrowdfundingProxy)
             .init(
                 2_000u32,
@@ -161,57 +225,10 @@ impl BridgeProxyTestState {
     fn config_bridge(&mut self) -> &mut Self {
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
             .unpause_endpoint()
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .unpause_endpoint()
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGE_PROXY_ADDRESS)
-            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-            .set_bridged_tokens_wrapper_contract_address(OptionalValue::Some(
-                BRIDGED_TOKENS_WRAPPER_ADDRESS,
-            ))
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .whitelist_token(BRIDGE_TOKEN_ID, 18u32, WBRIDGE_TOKEN_ID)
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .add_wrapped_token(WBRIDGE_TOKEN_ID, 18u32)
-            .run();
-
-        self.world
-            .tx()
-            .from(OWNER_ADDRESS)
-            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-            .deposit_liquidity()
-            .single_esdt(
-                &TokenIdentifier::from(BRIDGE_TOKEN_ID),
-                0u64,
-                &BigUint::from(5_000u64),
-            )
             .run();
 
         self
@@ -221,19 +238,43 @@ impl BridgeProxyTestState {
 #[test]
 fn deploy_test() {
     let mut test = BridgeProxyTestState::new();
-
-    test.bridge_proxy_deploy();
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
+
     test.config_bridge();
+
+    test.world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(mock_multisig_proxy::MockMultisigProxy)
+        .multi_transfer_esdt_address()
+        .returns(ExpectValue(MULTI_TRANSFER_ADDRESS))
+        .run();
+
+    test.world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(mock_multisig_proxy::MockMultisigProxy)
+        .esdt_safe_address()
+        .returns(ExpectValue(ESDT_SAFE_ADDRESS))
+        .run();
+
+    test.world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(mock_multisig_proxy::MockMultisigProxy)
+        .bridged_tokens_wrapper_address()
+        .returns(ExpectValue(BRIDGED_TOKENS_WRAPPER_ADDRESS))
+        .run();
 }
 
 #[test]
 fn bridge_proxy_execute_crowdfunding_test() {
     let mut test = BridgeProxyTestState::new();
+    test.multisig_deploy();
 
-    test.world.start_trace();
-
-    test.bridge_proxy_deploy();
+    test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();
 
@@ -296,16 +337,14 @@ fn bridge_proxy_execute_crowdfunding_test() {
         .get_current_funds()
         .returns(ExpectValue(500u64))
         .run();
-
-    test.world
-        .write_scenario_trace("scenarios/bridge_proxy_execute_crowdfunding.scen.json");
 }
 
 #[test]
 fn multiple_deposit_test() {
     let mut test = BridgeProxyTestState::new();
 
-    test.bridge_proxy_deploy();
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();
 
@@ -421,7 +460,8 @@ fn multiple_deposit_test() {
 fn test_highest_tx_id() {
     let mut test = BridgeProxyTestState::new();
 
-    test.bridge_proxy_deploy();
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
     test.deploy_crowdfunding();
     test.config_bridge();
 
@@ -494,4 +534,245 @@ fn test_highest_tx_id() {
             .execute(i)
             .run();
     }
+}
+
+// Will be moved to integration test
+// #[test]
+fn bridge_proxy_wrong_formatting_sc_call_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(NO_INIT_SC_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let amount = BigUint::from(500u64);
+    // Destination is not an initialized contract
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    // Refund: Funds are transfered to BridgedTokensWrapper
+    test.world
+        .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+
+    // Wrong endpoint for callData
+    let mut args = ManagedVec::new();
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from(b"nofunc"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: amount.clone(),
+        tx_nonce: 2u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(2u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(2u32)
+        .run();
+
+    // Refund: Funds are transfered to BridgedTokensWrapper
+    test.world
+        .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone() * 2u64);
+
+    // Wrong args
+    let mut args = ManagedVec::new();
+    args.push(ManagedBuffer::from(b"wrongargs"));
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from(b"fund"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: amount.clone(),
+        tx_nonce: 3u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(3u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(3u32)
+        .run();
+
+    // Refund: Funds are transfered to BridgedTokensWrapper
+    test.world
+        .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount * 3u64);
+}
+
+#[test]
+fn bridge_proxy_too_small_gas_sc_call_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.world.start_trace();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from(b"fund"),
+        gas_limit: TOO_SMALL_GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let amount = BigUint::from(500u64);
+    // Destination is not an initialized contract
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    // Refund: Funds are transfered to EsdtSafe
+    test.world
+        .check_account(ESDT_SAFE_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
 }

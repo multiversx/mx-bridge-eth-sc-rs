@@ -9,7 +9,7 @@
             "step": "scCall",
             "txId": "set-tx-status-executed",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:esdt_safe",
                 "value": "0",
                 "function": "setTransactionBatchStatus",
@@ -75,9 +75,7 @@
                         "str:pendingBatches|u64:1": "",
                         "str:firstBatchId": "2",
                         "str:lastBatchId": "2",
-
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "1,500,000",
-
                         "+": ""
                     },
                     "code": "file:../output/esdt-safe.wasm"

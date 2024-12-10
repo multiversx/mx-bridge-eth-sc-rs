@@ -92,30 +92,8 @@
                 "from": "address:owner",
                 "contractCode": "file:../../bridge-proxy/output/bridge-proxy.wasm",
                 "value": "0",
-                "arguments": [
-                    "sc:multi_transfer_esdt"
-                ],
+                "arguments": [],
                 "gasLimit": "20,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "add-bridge-proxy-to-multi-transfer",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multi_transfer_esdt",
-                "function": "setBridgeProxyContractAddress",
-                "arguments": [
-                    "sc:bridge-proxy"
-                ],
-                "gasLimit": "5,000,000",
                 "gasPrice": "0"
             },
             "expect": {
@@ -182,51 +160,10 @@
             }
         },
         {
-            "step": "scCall",
-            "txId": "set-multi-transfer-contract-address",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "value": "0",
-                "function": "setMultiTransferContractAddress",
-                "arguments": [
-                    "sc:multi_transfer_esdt"
-                ],
-                "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "scCall",
-            "txId": "add-bridge-proxy-to-multi-transfer",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:multi_transfer_esdt",
-                "function": "setEsdtSafeContractAddress",
-                "arguments": [
-                    "sc:esdt-safe"
-                ],
-                "gasLimit": "5,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
             "step": "checkState",
             "accounts": {
                 "address:owner": {
-                    "nonce": "7",
+                    "nonce": "4",
                     "balance": "0",
                     "esdt": {
                         "str:BRIDGE-123456": {
@@ -252,10 +189,8 @@
                     "storage": {
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
-                        "str:bridgeProxyContractAddress": "sc:bridge-proxy",
                         "str:maxTxBatchSize": "10",
-                        "str:maxTxBatchBlockDuration": "0xffffffffffffffff",
-                        "str:esdtSafeContractAddress": "sc:esdt-safe"
+                        "str:maxTxBatchBlockDuration": "0xffffffffffffffff"
                     }
                 },
                 "sc:bridge-proxy": {

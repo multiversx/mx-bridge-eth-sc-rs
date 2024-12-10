@@ -20,6 +20,8 @@
                     "0x00000000000000000500657364742d736166655f5f5f5f5f5f5f5f5f5f5f5f5f",
                     "0x000000000000000005006d756c74692d7472616e736665725f5f5f5f5f5f5f5f",
                     "0x000000000000000005006272696467652d70726f78795f5f5f5f5f5f5f5f5f5f",
+                    "0x00000000000000000500627269646765642d746f6b656e732d77726170706572",
+                    "0x0000000000000000050070726963652d61676772656761746f725f5f5f5f5f5f",
                     "0x03e8",
                     "0x01f4",
                     "0x02",
@@ -34,16 +36,22 @@
             }
         },
         {
-            "step": "scCall",
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "0",
+                    "newAddress": "sc:esdt-safe"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
             "id": "",
             "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "upgrade",
+                "from": "sc:multisig",
+                "contractCode": "mxsc:../esdt-safe/output/esdt-safe.mxsc.json",
                 "arguments": [
-                    "0x0000000000000000000000000000000000000000000000000000000000000000",
-                    "0x000000000000000005006d756c74692d7472616e736665725f5f5f5f5f5f5f5f",
-                    "0x000000000000000005006272696467652d70726f78795f5f5f5f5f5f5f5f5f5f",
                     "0x0249f0"
                 ],
                 "gasLimit": "5,000,000"
@@ -58,7 +66,7 @@
             "newAddresses": [
                 {
                     "creatorAddress": "sc:multisig",
-                    "creatorNonce": "0",
+                    "creatorNonce": "1",
                     "newAddress": "sc:multi-transfer"
                 }
             ]
@@ -81,8 +89,8 @@
             "step": "setState",
             "newAddresses": [
                 {
-                    "creatorAddress": "address:owner",
-                    "creatorNonce": "3",
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "2",
                     "newAddress": "sc:bridge-proxy"
                 }
             ]
@@ -91,11 +99,9 @@
             "step": "scDeploy",
             "id": "",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "contractCode": "mxsc:../bridge-proxy/output/bridge-proxy.mxsc.json",
-                "arguments": [
-                    "0x000000000000000005006d756c74692d7472616e736665725f5f5f5f5f5f5f5f"
-                ],
+                "arguments": [],
                 "gasLimit": "5,000,000"
             },
             "expect": {
@@ -107,8 +113,8 @@
             "step": "setState",
             "newAddresses": [
                 {
-                    "creatorAddress": "address:owner",
-                    "creatorNonce": "4",
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "3",
                     "newAddress": "sc:bridged-tokens-wrapper"
                 }
             ]
@@ -117,7 +123,7 @@
             "step": "scDeploy",
             "id": "",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "contractCode": "mxsc:../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json",
                 "arguments": [],
                 "gasLimit": "5,000,000"
@@ -132,74 +138,6 @@
             "id": "",
             "tx": {
                 "from": "sc:multisig",
-                "to": "sc:multi-transfer",
-                "function": "setWrappingContractAddress",
-                "arguments": [
-                    "0x00000000000000000500627269646765642d746f6b656e732d77726170706572"
-                ],
-                "gasLimit": "5,000,000"
-            },
-            "expect": {
-                "out": [],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "",
-            "tx": {
-                "from": "sc:multisig",
-                "to": "sc:multi-transfer",
-                "function": "setBridgeProxyContractAddress",
-                "arguments": [
-                    "0x000000000000000005006272696467652d70726f78795f5f5f5f5f5f5f5f5f5f"
-                ],
-                "gasLimit": "5,000,000"
-            },
-            "expect": {
-                "out": [],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "",
-            "tx": {
-                "from": "sc:multisig",
-                "to": "sc:multi-transfer",
-                "function": "setEsdtSafeContractAddress",
-                "arguments": [
-                    "0x00000000000000000500657364742d736166655f5f5f5f5f5f5f5f5f5f5f5f5f"
-                ],
-                "gasLimit": "5,000,000"
-            },
-            "expect": {
-                "out": [],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt-safe",
-                "function": "setMultiTransferContractAddress",
-                "arguments": [
-                    "0x000000000000000005006d756c74692d7472616e736665725f5f5f5f5f5f5f5f"
-                ],
-                "gasLimit": "5,000,000"
-            },
-            "expect": {
-                "out": [],
-                "status": "0"
-            }
-        },
-        {
-            "step": "scCall",
-            "id": "",
-            "tx": {
-                "from": "address:owner",
                 "to": "sc:esdt-safe",
                 "function": "addTokenToWhitelist",
                 "arguments": [
@@ -223,7 +161,7 @@
             "step": "scCall",
             "id": "",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:esdt-safe",
                 "function": "addTokenToWhitelist",
                 "arguments": [
@@ -231,6 +169,30 @@
                     "0x455448",
                     "0x01",
                     "0x",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x0249f0"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x45474c442d313233343536",
+                    "0x45474c44",
+                    "0x",
+                    "0x01",
                     "0x",
                     "0x",
                     "0x",
@@ -262,7 +224,7 @@
             "step": "scCall",
             "id": "",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:bridged-tokens-wrapper",
                 "function": "unpause",
                 "arguments": [],
@@ -277,7 +239,7 @@
             "step": "scCall",
             "id": "",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:bridge-proxy",
                 "function": "unpause",
                 "arguments": [],
@@ -292,7 +254,7 @@
             "step": "scCall",
             "id": "",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:esdt-safe",
                 "function": "unpause",
                 "arguments": [],
@@ -421,7 +383,7 @@
             "accounts": {
                 "address:user1": {
                     "esdt": {
-                        "str:WEGLD-123456": "76000000000",
+                        "str:WEGLD-123456": "76000100000",
                         "+": ""
                     },
                     "storage": "*",

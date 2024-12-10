@@ -9,7 +9,7 @@
             "step": "scCall",
             "txId": "set-tx-status-both-rejected",
             "tx": {
-                "from": "address:owner",
+                "from": "sc:multisig",
                 "to": "sc:esdt_safe",
                 "value": "0",
                 "function": "setTransactionBatchStatus",
