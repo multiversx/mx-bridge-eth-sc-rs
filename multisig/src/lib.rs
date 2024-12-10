@@ -19,7 +19,6 @@ use transaction::TxBatchSplitInFields;
 use transaction::*;
 use user_role::UserRole;
 
-use core::cmp::max;
 use multiversx_sc::imports::*;
 
 const MAX_ACTIONS_INTER: usize = 10;
@@ -459,11 +458,8 @@ pub trait Multisig:
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
                 if action_ids_mapper.len() > 1 {
-                    for _ in 0..max(action_ids_mapper.len(), MAX_ACTIONS_INTER) {
-                        match action_ids_mapper.values().next() {
-                            Some(act_id) => self.clear_action(act_id),
-                            None => sc_panic!("Could not retrieve an action id"),
-                        };
+                    for act_id in action_ids_mapper.values().take(MAX_ACTIONS_INTER) {
+                        self.clear_action(act_id);
                     }
                 }
 
@@ -487,11 +483,8 @@ pub trait Multisig:
                 // if there's only one proposed action,
                 // the action was already cleared at the beginning of this function
                 if action_ids_mapper.len() > 1 {
-                    for _ in 0..max(action_ids_mapper.len(), MAX_ACTIONS_INTER) {
-                        match action_ids_mapper.values().next() {
-                            Some(act_id) => self.clear_action(act_id),
-                            None => sc_panic!("Could not retrieve an action id"),
-                        };
+                    for act_id in action_ids_mapper.values().take(MAX_ACTIONS_INTER) {
+                        self.clear_action(act_id);
                     }
                 }
 
