@@ -415,7 +415,9 @@ impl MultiTransferTestState {
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
-                EthAddress::zero(),
+                EthAddress {
+                    raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+                },
                 OptionalValue::<BigUint<StaticApi>>::None,
             )
             .single_esdt(
@@ -431,7 +433,9 @@ impl MultiTransferTestState {
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .create_transaction(
-                EthAddress::zero(),
+                EthAddress {
+                    raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+                },
                 OptionalValue::<BigUint<StaticApi>>::None,
             )
             .single_esdt(
@@ -1820,7 +1824,9 @@ fn test_add_mapping_success() {
 
     let token_id = TokenIdentifier::from(WEGLD_TOKEN_ID);
 
-    let erc20_address = EthAddress::zero();
+    let erc20_address = EthAddress {
+        raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+    };
 
     state
         .world
@@ -1858,7 +1864,9 @@ fn test_add_mapping_token_id_already_mapped() {
 
     let token_id = TokenIdentifier::from(WEGLD_TOKEN_ID);
 
-    let erc20_address = EthAddress::zero();
+    let erc20_address = EthAddress {
+        raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+    };
 
     state
         .world
@@ -1888,7 +1896,9 @@ fn test_add_mapping_erc20_address_already_mapped() {
 
     let token_id = TokenIdentifier::from(WEGLD_TOKEN_ID);
 
-    let erc20_address = EthAddress::zero();
+    let erc20_address = EthAddress {
+        raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+    };
 
     state
         .world
@@ -1918,7 +1928,9 @@ fn test_clear_mapping_success() {
 
     let token_id = TokenIdentifier::from(WEGLD_TOKEN_ID);
 
-    let erc20_address = EthAddress::zero();
+    let erc20_address = EthAddress {
+        raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+    };
 
     state
         .world

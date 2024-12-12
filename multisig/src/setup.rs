@@ -1,10 +1,7 @@
 use multiversx_sc::imports::*;
 
 use eth_address::EthAddress;
-use sc_proxies::{
-    bridge_proxy_contract_proxy, esdt_safe_proxy,
-    multi_transfer_esdt_proxy,
-};
+use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
 
 const MAX_BOARD_MEMBERS: usize = 40;
 

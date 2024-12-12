@@ -697,14 +697,6 @@ where
             .original_result()
     }
 
-    pub fn bridged_tokens_wrapper_deposit_liquidity(
-        self,
-    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
-        self.wrapped_tx
-            .raw_call("bridgedTokensWrapperDepositLiquidity")
-            .original_result()
-    }
-
     /// Minimum number of signatures needed to perform any action. 
     pub fn quorum(
         self,

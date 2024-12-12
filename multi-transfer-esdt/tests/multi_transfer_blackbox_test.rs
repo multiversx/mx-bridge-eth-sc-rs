@@ -1173,7 +1173,9 @@ fn test_unwrap_token_create_transaction_should_work() {
         .unwrap_token_create_transaction(
             WRAPPED_TOKEN_ID,
             ESDT_SAFE_ADDRESS.to_address(),
-            EthAddress::zero(),
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
             OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
