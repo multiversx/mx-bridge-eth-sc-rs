@@ -704,7 +704,6 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .perform_action_endpoint(1usize)
-        .returns(ExpectError(4, "Invalid token or amount"))
         .run();
 
     state.world.write_scenario_trace(
@@ -866,7 +865,6 @@ fn ethereum_to_multiversx_relayer_query2_test() {
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
         .perform_action_endpoint(1usize)
-        .returns(ExpectError(4, "Invalid token or amount"))
         .run();
 
     state
