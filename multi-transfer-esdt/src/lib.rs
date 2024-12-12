@@ -59,14 +59,14 @@ pub trait MultiTransferEsdt:
                 .blockchain()
                 .get_esdt_local_roles(&eth_tx.token_id.clone());
             if token_roles.has_role(&EsdtLocalRole::Transfer) {
-                let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
-                refund_tx_list.push(refund_tx);
-                self.token_with_transfer_role(eth_tx.token_id);
+                // let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
+                // refund_tx_list.push(refund_tx);
+                // self.token_with_transfer_role_event(eth_tx.token_id);
 
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.token_with_transfer_role_event(eth_tx.token_id);
                 continue;
             }
-
-            //TODO simplify this
 
             let is_success: bool = self
                 .tx()
@@ -76,27 +76,26 @@ pub trait MultiTransferEsdt:
                 .returns(ReturnsResult)
                 .sync_call();
 
-            //TODO: transform require to if
-            require!(is_success, "Invalid token or amount");
+            if !is_success {
+                self.add_eth_tx_to_refund_tx_list(eth_tx, &mut refund_tx_list);
+                continue;
+            }
 
             let universal_token = self.get_universal_token(eth_tx.clone());
 
-            let mut must_refund = false;
             if eth_tx.to.is_zero() {
-                self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
-                self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
-                self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_failed_invalid_destination_event(batch_id, eth_tx.tx_nonce);
+                continue;
             }
-
-            if must_refund {
-                let refund_tx = self.convert_to_refund_tx(eth_tx);
-                refund_tx_list.push(refund_tx);
-
+            if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_over_max_amount_event(batch_id, eth_tx.tx_nonce);
+                continue;
+            }
+            if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_failed_frozen_destination_account_event(batch_id, eth_tx.tx_nonce);
                 continue;
             }
 
@@ -189,6 +188,15 @@ pub trait MultiTransferEsdt:
     }
 
     // private
+
+    fn add_eth_tx_to_refund_tx_list(
+        &self,
+        eth_tx: EthTransaction<Self::Api>,
+        refund_tx_list: &mut ManagedVec<Transaction<Self::Api>>,
+    ) {
+        let refund_tx = self.convert_to_refund_tx(eth_tx);
+        refund_tx_list.push(refund_tx);
+    }
 
     fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
         let esdt_safe_addr = self.get_esdt_safe_address();
@@ -327,23 +335,27 @@ pub trait MultiTransferEsdt:
     );
 
     #[event("transferFailedInvalidDestination")]
-    fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_destination_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+    );
 
     #[event("tokenWithTransferRole")]
-    fn token_with_transfer_role(&self, #[indexed] token_id: TokenIdentifier);
+    fn token_with_transfer_role_event(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
-    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_token_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("transferFailedFrozenDestinationAccount")]
-    fn transfer_failed_frozen_destination_account(
+    fn transfer_failed_frozen_destination_account_event(
         &self,
         #[indexed] batch_id: u64,
         #[indexed] tx_id: u64,
     );
 
     #[event("transferOverMaxAmount")]
-    fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_over_max_amount_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("unprocessedRefundTxs")]
     fn unprocessed_refund_txs_event(&self, #[indexed] tx_id: u64);
