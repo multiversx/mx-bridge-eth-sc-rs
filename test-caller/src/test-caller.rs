@@ -10,6 +10,7 @@ pub struct CalledData<M: ManagedTypeApi> {
     pub size:             u64,
     pub address:          ManagedAddress<M>,
     pub token_identifier: TokenIdentifier<M>,
+    pub buff:             ManagedBuffer<M>,
 }
 
 #[multiversx_sc::contract]
@@ -41,6 +42,26 @@ pub trait TestCallerContract {
             size,
             address,
             token_identifier,
+            buff: ManagedBuffer::new(),
+        };
+
+        _ = self.called_data_params().push(&data);
+    }
+
+    #[payable("*")]
+    #[view(callPayableWithBuff)]
+    fn call_payable_with_buff(
+        &self,
+        buff: ManagedBuffer,
+    ) {
+        let payment = self.call_value().single_esdt();
+        let token_identifier = payment.token_identifier;
+
+        let data = CalledData{
+            size: 0,
+            address: ManagedAddress::zero(),
+            token_identifier,
+            buff,
         };
 
         _ = self.called_data_params().push(&data);
