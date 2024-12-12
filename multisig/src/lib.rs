@@ -518,7 +518,7 @@ pub trait Multisig:
 
         let action_ids_mapper = self.batch_id_to_action_id_mapping(eth_batch_id);
 
-        for act_id in action_ids_mapper.values() {
+        for act_id in action_ids_mapper.values().take(MAX_ACTIONS_INTER) {
             self.clear_action(act_id);
         }
     }

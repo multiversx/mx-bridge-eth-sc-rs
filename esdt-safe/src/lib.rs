@@ -265,6 +265,7 @@ pub trait EsdtSafe:
         opt_min_bridge_amount: OptionalValue<BigUint<Self::Api>>,
     ) -> TransactionDetails<Self::Api> {
         require!(self.not_paused(), "Cannot create transaction while paused");
+        require!(to != EthAddress::zero(), "Cannot send to an empty address");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_in_whitelist(&payment_token);
@@ -384,6 +385,14 @@ pub trait EsdtSafe:
         to: EthAddress<Self::Api>,
         opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
     ) {
+        let bridge_proxy_address = self.get_bridge_proxy_address();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            bridge_proxy_address == caller,
+            "Only BridgeProxy SC can call this endpoint"
+        );
+
         let transaction_details = self.create_transaction_common(to, OptionalValue::None);
         let caller = self.blockchain().get_caller();
 

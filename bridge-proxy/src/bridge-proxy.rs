@@ -66,8 +66,8 @@ pub trait BridgeProxyContract:
         } else {
             CallData::default()
         };
-        let non_empty_args = call_data.args.is_some();
-        if (call_data.endpoint.is_empty() && non_empty_args)
+
+        if call_data.endpoint.is_empty()
             || call_data.gas_limit < MIN_GAS_LIMIT_FOR_SC_CALL
             || call_data.gas_limit > MAX_GAS_LIMIT_FOR_SC_CALL
         {
@@ -106,8 +106,10 @@ pub trait BridgeProxyContract:
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
             self.add_pending_tx_to_refund(tx_id);
+            // TODO: add event
         }
         self.pending_transactions().remove(&tx_id);
+        // TODO: add event
     }
 
     #[endpoint(executeRefundTransaction)]

@@ -66,6 +66,8 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
+            //TODO simplify this
+
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
@@ -74,6 +76,7 @@ pub trait MultiTransferEsdt:
                 .returns(ReturnsResult)
                 .sync_call();
 
+            //TODO: transform require to if
             require!(is_success, "Invalid token or amount");
 
             let universal_token = self.get_universal_token(eth_tx.clone());

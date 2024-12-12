@@ -248,11 +248,6 @@ pub trait TokenModule:
             "Can init only for mintable/burnable tokens"
         );
 
-        // require!(
-        //     !self.native_token(token_id).get(),
-        //     "Cannot init native tokens"
-        // );
-
         self.mint_balances(token_id).set(mint_amount);
         self.burn_balances(token_id).set(burn_amount);
     }
