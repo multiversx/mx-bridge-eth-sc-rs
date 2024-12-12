@@ -2,6 +2,7 @@
 use multiversx_sc::imports::*;
 
 pub mod config;
+mod events;
 
 use sc_proxies::bridged_tokens_wrapper_proxy;
 use sc_proxies::esdt_safe_proxy;
@@ -13,6 +14,7 @@ const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 1_000_000; // 1 million
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
     config::ConfigModule
+    + events::EventsModule
     + multiversx_sc_modules::pause::PauseModule
     + storage_module::CommonStorageModule
 {
@@ -106,10 +108,11 @@ pub trait BridgeProxyContract:
     fn execution_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>, tx_id: usize) {
         if result.is_err() {
             self.add_pending_tx_to_refund(tx_id);
-            // TODO: add event
+            self.execute_generated_refund(tx_id);
+        } else {
+            self.execute_succesfully_finished(tx_id);
         }
         self.pending_transactions().remove(&tx_id);
-        // TODO: add event
     }
 
     #[endpoint(executeRefundTransaction)]
