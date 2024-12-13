@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                            1
+// Endpoints:                            3
 // Async Callback (empty):               1
-// Total number of exported functions:   4
+// Total number of exported functions:   6
 
 #![no_std]
 
@@ -21,6 +21,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         createTransaction => create_transaction
+        withdrawTransactionFees => withdraw_transaction_fees
+        withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
     )
 }
 
