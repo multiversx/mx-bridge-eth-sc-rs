@@ -3,6 +3,8 @@ use multiversx_sc::imports::*;
 use eth_address::EthAddress;
 use sc_proxies::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
 
+const MAX_BOARD_MEMBERS: usize = 40;
+
 #[multiversx_sc::module]
 pub trait SetupModule:
     crate::multisig_general::MultisigGeneralModule
@@ -17,14 +19,9 @@ pub trait SetupModule:
         &self,
         child_sc_address: ManagedAddress,
         source_address: ManagedAddress,
-        is_payable: bool,
         init_args: MultiValueEncoded<ManagedBuffer>,
     ) {
-        let mut metadata = CodeMetadata::UPGRADEABLE;
-        if is_payable {
-            // TODO: Replace with PayableBySc when it's available
-            metadata |= CodeMetadata::PAYABLE;
-        }
+        let metadata = CodeMetadata::UPGRADEABLE;
 
         let gas = self.blockchain().get_gas_left();
         self.send_raw().upgrade_from_source_contract(
@@ -66,7 +63,7 @@ pub trait SetupModule:
     fn slash_board_member(&self, board_member: ManagedAddress) {
         let slash_amount = self.slash_amount().get();
 
-        // remove slashed amount from user stake amountself
+        // remove slashed amount from user stake amount self
         self.amount_staked(&board_member)
             .update(|stake| *stake -= &slash_amount);
 
@@ -79,7 +76,28 @@ pub trait SetupModule:
     #[endpoint(changeQuorum)]
     fn change_quorum(&self, new_quorum: usize) {
         require!(
-            new_quorum <= self.num_board_members().get(),
+            new_quorum <= MAX_BOARD_MEMBERS && new_quorum > 1,
+            "Quorum size not appropriate"
+        );
+        let total_users = self.user_mapper().get_user_count();
+        let mut board_member_with_valid_stake: usize = 0;
+
+        for user_id in 1..total_users + 1 {
+            let user_role = self.user_id_to_role(user_id).get();
+
+            if user_role.is_board_member() {
+                if let Some(board_member_addr) = self.user_mapper().get_user_address(user_id) {
+                    let amount_staked = self.amount_staked(&board_member_addr).get();
+                    let required_stake_amount = self.required_stake_amount().get();
+                    if amount_staked >= required_stake_amount {
+                        board_member_with_valid_stake += 1;
+                    }
+                }
+            }
+        }
+
+        require!(
+            new_quorum <= board_member_with_valid_stake,
             "quorum cannot exceed board size"
         );
         self.quorum().set(new_quorum);

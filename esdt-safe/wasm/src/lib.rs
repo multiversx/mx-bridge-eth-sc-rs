@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           43
+// Endpoints:                           45
 // Async Callback (empty):               1
-// Total number of exported functions:  46
+// Total number of exported functions:  48
 
 #![no_std]
 
@@ -22,7 +22,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
+        addRefundBatchForFailedTx => add_refund_batch_for_failed_tx
         createTransaction => create_transaction
+        createRefundTransaction => create_refund_transaction
         claimRefund => claim_refund
         withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
         withdrawTransactionFees => withdraw_transaction_fees

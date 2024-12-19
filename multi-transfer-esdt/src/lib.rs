@@ -55,6 +55,15 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
+            let token_roles = self
+                .blockchain()
+                .get_esdt_local_roles(&eth_tx.token_id.clone());
+            if token_roles.has_role(&EsdtLocalRole::Transfer) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.token_with_transfer_role_event(eth_tx.token_id);
+                continue;
+            }
+
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
@@ -63,38 +72,50 @@ pub trait MultiTransferEsdt:
                 .returns(ReturnsResult)
                 .sync_call();
 
-            require!(is_success, "Invalid token or amount");
+            if !is_success {
+                self.add_eth_tx_to_refund_tx_list(eth_tx, &mut refund_tx_list);
+                continue;
+            }
 
             let universal_token = self.get_universal_token(eth_tx.clone());
 
-            let mut must_refund = false;
             if eth_tx.to.is_zero() {
-                self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
-                self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
-                self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_failed_invalid_destination_event(batch_id, eth_tx.tx_nonce);
+                continue;
             }
-
-            if must_refund {
-                let refund_tx = self.convert_to_refund_tx(eth_tx);
-                refund_tx_list.push(refund_tx);
-
+            if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_over_max_amount_event(batch_id, eth_tx.tx_nonce);
+                continue;
+            }
+            if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_failed_frozen_destination_account_event(batch_id, eth_tx.tx_nonce);
                 continue;
             }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(
-                batch_id,
-                eth_tx.from.clone(),
-                eth_tx.to.clone(),
-                eth_tx.token_id.clone(),
-                eth_tx.amount.clone(),
-                eth_tx.tx_nonce,
-            );
+            // emit events only for non-SC destinations
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
+                self.transfer_performed_sc_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            } else {
+                self.transfer_performed_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            }
 
             valid_tx_list.push(eth_tx.clone());
             valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
@@ -128,6 +149,10 @@ pub trait MultiTransferEsdt:
                         refund_batch.push(Transaction::from(tx_fields));
                         refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                     } else {
+                        require!(
+                            self.unprocessed_refund_txs(tx_nonce).is_empty(),
+                            "This transcation is already marked as unprocessed"
+                        );
                         self.unprocessed_refund_txs(tx_nonce)
                             .set(Transaction::from(tx_fields));
 
@@ -160,14 +185,27 @@ pub trait MultiTransferEsdt:
 
     // private
 
+    fn add_eth_tx_to_refund_tx_list(
+        &self,
+        eth_tx: EthTransaction<Self::Api>,
+        refund_tx_list: &mut ManagedVec<Transaction<Self::Api>>,
+    ) {
+        let refund_tx = self.convert_to_refund_tx(eth_tx);
+        refund_tx_list.push(refund_tx);
+    }
+
     fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
         let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
+            || token_roles.has_role(&EsdtLocalRole::Transfer)
+        {
             return false;
         }
+
         return true;
     }
 
@@ -281,21 +319,39 @@ pub trait MultiTransferEsdt:
         #[indexed] tx_id: TxNonce,
     );
 
+    #[event("transferPerformedSCEvent")]
+    fn transfer_performed_sc_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] from: EthAddress<Self::Api>,
+        #[indexed] to: ManagedAddress,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] tx_id: TxNonce,
+    );
+
     #[event("transferFailedInvalidDestination")]
-    fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_destination_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+    );
+
+    #[event("tokenWithTransferRole")]
+    fn token_with_transfer_role_event(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
-    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_token_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("transferFailedFrozenDestinationAccount")]
-    fn transfer_failed_frozen_destination_account(
+    fn transfer_failed_frozen_destination_account_event(
         &self,
         #[indexed] batch_id: u64,
         #[indexed] tx_id: u64,
     );
 
     #[event("transferOverMaxAmount")]
-    fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_over_max_amount_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("unprocessedRefundTxs")]
     fn unprocessed_refund_txs_event(&self, #[indexed] tx_id: u64);

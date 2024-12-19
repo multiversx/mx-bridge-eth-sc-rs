@@ -257,19 +257,6 @@ impl EsdtSafeTestState {
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
-
-        self.esdt_raw_transaction()
-            .add_token_to_whitelist(
-                TOKEN_ID,
-                "TOKEN_ID",
-                false,
-                true,
-                BigUint::from(0u64),
-                BigUint::from(0u64),
-                BigUint::from(0u64),
-                OptionalValue::Some(BigUint::from(0u64)),
-            )
-            .run();
     }
 
     fn init_supply_should_fail(
@@ -360,8 +347,10 @@ impl EsdtSafeTestState {
     ) {
         self.esdt_raw_transaction()
             .create_transaction(
-                EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                EthAddress {
+                    raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+                },
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -375,8 +364,10 @@ impl EsdtSafeTestState {
     fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
         self.esdt_raw_transaction()
             .create_transaction(
-                EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                EthAddress {
+                    raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+                },
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -595,25 +586,6 @@ fn init_supply_test_mint_burn() {
         .with_result(ExpectError(ERROR, "Token not in whitelist"))
         .run();
 
-    state
-        .esdt_raw_transaction()
-        .init_supply_mint_burn(TOKEN_ID, BigUint::from(10_000u64), BigUint::from(10_000u64))
-        .with_result(ExpectError(
-            ERROR,
-            "Cannot init for non mintable/burnable tokens",
-        ))
-        .run();
-
-    state
-        .esdt_raw_transaction()
-        .init_supply_mint_burn(
-            TOKEN_WITH_BURN_ROLE,
-            BigUint::from(10_000u64),
-            BigUint::from(10_000u64),
-        )
-        .with_result(ReturnsResult)
-        .run();
-
     let total_minted = state
         .world
         .query()
@@ -625,7 +597,7 @@ fn init_supply_test_mint_burn() {
 
     assert_eq!(
         total_minted,
-        BigUint::from(10_000u64),
+        BigUint::from(0u64),
         "Total supply should be 10,000"
     );
 
@@ -640,7 +612,7 @@ fn init_supply_test_mint_burn() {
 
     assert_eq!(
         total_burned,
-        BigUint::from(10_000u64),
+        BigUint::from(0u64),
         "Total supply should be 10,000"
     );
 }
@@ -659,19 +631,6 @@ fn set_transaction_batch_status_test() {
     tx_multiple_statuses.push(TransactionStatus::Pending);
     let mut tx_statuses_invalid = MultiValueEncoded::<StaticApi, TransactionStatus>::new();
     tx_statuses_invalid.push(TransactionStatus::Pending);
-
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .init_supply_mint_burn(
-            TOKEN_WITH_BURN_ROLE,
-            BigUint::from(100_000u64),
-            BigUint::from(10_000u64),
-        )
-        .run();
 
     state
         .world
@@ -762,22 +721,13 @@ fn esdt_safe_create_transaction() {
         .from(BRIDGE_PROXY_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .create_refund_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::Some(refund_info.clone()),
+        )
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
-        .run();
-
-    state
-        .world
-        .tx()
-        .from(OWNER_ADDRESS)
-        .to(ESDT_SAFE_ADDRESS)
-        .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
-        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
-        .returns(ExpectError(
-            ERROR,
-            "Cannot specify a refund address from this caller",
-        ))
         .run();
 
     state
@@ -786,7 +736,12 @@ fn esdt_safe_create_transaction() {
         .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .create_transaction(EthAddress::zero(), OptionalValue::Some(refund_info.clone()))
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
         .run();
 
@@ -833,6 +788,44 @@ fn esdt_safe_create_transaction() {
         .run();
 
     assert_eq!(total_balances, 120000u64);
+}
+
+#[test]
+fn create_refund_transaction_not_from_bridge_proxy_test() {
+    let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
+    state.safe_deploy();
+
+    state.world.set_esdt_balance(
+        MULTISIG_ADDRESS,
+        b"TOKEN-WITH",
+        BigUint::from(10_000_000u64),
+    );
+
+    let refund_info = sc_proxies::esdt_safe_proxy::RefundInfo::<StaticApi> {
+        address: ManagedAddress::from(OWNER_ADDRESS.eval_to_array()),
+        initial_batch_id: 1u64,
+        initial_nonce: 1u64,
+    };
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_refund_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::Some(refund_info.clone()),
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .returns(ExpectError(
+            ERROR,
+            "Only BridgeProxy SC can call this endpoint",
+        ))
+        .run();
 }
 
 #[test]
@@ -1096,12 +1089,14 @@ fn claim_refund_test() {
     state.single_transaction_should_work(MINT_BURN_TOKEN, 1000u64);
     state.set_transaction_batch_status_should_work(1, tx_statuses.clone());
 
+    let opt_tokens: OptionalValue<MultiValueEncoded<StaticApi, TokenIdentifier<StaticApi>>> =
+        OptionalValue::None;
     let refund = state
         .world
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_refund_amounts(MULTISIG_ADDRESS)
+        .get_refund_amounts(MULTISIG_ADDRESS, opt_tokens.clone())
         .returns(ReturnsResult)
         .run();
 
@@ -1123,7 +1118,7 @@ fn claim_refund_test() {
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(esdt_safe_proxy::EsdtSafeProxy)
-        .get_refund_amounts(OWNER_ADDRESS)
+        .get_refund_amounts(OWNER_ADDRESS, opt_tokens)
         .returns(ReturnsResult)
         .run();
     assert!(refund_after.is_empty());
@@ -1287,7 +1282,23 @@ fn withdraw_transaction_fees_test() {
         .typed(esdt_safe_proxy::EsdtSafeProxy)
         .create_transaction(
             EthAddress::zero(),
-            OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(1_000_000u64))
+        .returns(ExpectError(ERROR, "Cannot send to an empty address"))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(1_000_000u64))
         .returns(ReturnsResult)

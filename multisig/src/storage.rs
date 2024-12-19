@@ -18,19 +18,19 @@ pub trait StorageModule {
     #[storage_mapper("user")]
     fn user_mapper(&self) -> UserMapper;
 
-    #[storage_mapper("user_role")]
+    #[storage_mapper("userRole")]
     fn user_id_to_role(&self, user_id: usize) -> SingleValueMapper<UserRole>;
 
     /// Denormalized board member count.
     /// It is kept in sync with the user list by the contract.
     #[view(getNumBoardMembers)]
-    #[storage_mapper("num_board_members")]
+    #[storage_mapper("numBoardMembers")]
     fn num_board_members(&self) -> SingleValueMapper<usize>;
 
-    #[storage_mapper("action_data")]
+    #[storage_mapper("actionData")]
     fn action_mapper(&self) -> VecMapper<Action<Self::Api>>;
 
-    #[storage_mapper("action_signer_ids")]
+    #[storage_mapper("actionSignerIds")]
     fn action_signer_ids(&self, action_id: usize) -> UnorderedSetMapper<usize>;
 
     /// The required amount to stake for accepting relayer position
@@ -72,6 +72,9 @@ pub trait StorageModule {
         &self,
         esdt_safe_batch_id: u64,
     ) -> MapMapper<ManagedVec<TransactionStatus>, usize>;
+
+    #[storage_mapper("executedActions")]
+    fn executed_actions(&self) -> UnorderedSetMapper<usize>;
 
     /// Mapping between ERC20 Ethereum address and MultiversX ESDT Token Identifiers
 

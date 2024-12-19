@@ -145,22 +145,6 @@ where
             .original_result()
     }
 
-    pub fn update_whitelisted_token<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<u32>,
-    >(
-        self,
-        chain_specific_token_id: Arg0,
-        chain_specific_token_decimals: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("updateWhitelistedToken")
-            .argument(&chain_specific_token_id)
-            .argument(&chain_specific_token_decimals)
-            .original_result()
-    }
-
     pub fn blacklist_token<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
@@ -207,17 +191,20 @@ where
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
         Arg2: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg3: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
     >(
         self,
         requested_token: Arg0,
         safe_address: Arg1,
         to: Arg2,
+        opt_min_bridge_amount: Arg3,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
             .raw_call("unwrapTokenCreateTransaction")
             .argument(&requested_token)
             .argument(&safe_address)
             .argument(&to)
+            .argument(&opt_min_bridge_amount)
             .original_result()
     }
 

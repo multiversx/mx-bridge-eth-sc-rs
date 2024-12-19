@@ -298,6 +298,19 @@ where
             .original_result()
     }
 
+    pub fn clear_actions_for_batch_id<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        eth_batch_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("clearActionsForBatchId")
+            .argument(&eth_batch_id)
+            .original_result()
+    }
+
     /// Used by board members to sign actions. 
     pub fn sign<
         Arg0: ProxyArg<usize>,
@@ -315,21 +328,18 @@ where
     pub fn upgrade_child_contract_from_source<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
-        Arg2: ProxyArg<bool>,
-        Arg3: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
+        Arg2: ProxyArg<MultiValueEncoded<Env::Api, ManagedBuffer<Env::Api>>>,
     >(
         self,
         child_sc_address: Arg0,
         source_address: Arg1,
-        is_payable: Arg2,
-        init_args: Arg3,
+        init_args: Arg2,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("upgradeChildContractFromSource")
             .argument(&child_sc_address)
             .argument(&source_address)
-            .argument(&is_payable)
             .argument(&init_args)
             .original_result()
     }
@@ -887,8 +897,6 @@ where
             .original_result()
     }
 
-    /// Actions are cleared after execution, so an empty entry means the action was executed already 
-    /// Returns "false" if the action ID is invalid 
     pub fn was_action_executed<
         Arg0: ProxyArg<usize>,
     >(

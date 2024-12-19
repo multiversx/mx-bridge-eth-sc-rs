@@ -414,8 +414,8 @@
                 "gasLimit": "5,000,000"
             },
             "expect": {
-                "status": "4",
-                "message": "str:Invalid token or amount"
+                "out": [],
+                "status": "0"
             }
         }
     ]

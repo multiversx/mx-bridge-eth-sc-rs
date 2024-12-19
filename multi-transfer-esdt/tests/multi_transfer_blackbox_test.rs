@@ -151,7 +151,7 @@ impl MultiTransferTestState {
             .account(USER2_ADDRESS)
             .nonce(1);
 
-        let roles = vec![
+        let roles = [
             "ESDTRoleLocalMint".to_string(),
             "ESDTRoleLocalBurn".to_string(),
         ];
@@ -295,7 +295,7 @@ impl MultiTransferTestState {
             b"TOKEN-123456",
             &[EsdtLocalRole::Mint, EsdtLocalRole::Burn],
         );
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .add_token_to_whitelist(
                 TokenIdentifier::from_esdt_bytes("BRIDGE-123456"),
                 "BRIDGE",
@@ -308,7 +308,7 @@ impl MultiTransferTestState {
             )
             .run();
 
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .add_token_to_whitelist(
                 TokenIdentifier::from_esdt_bytes("TOKEN"),
                 "TOKEN",
@@ -334,20 +334,9 @@ impl MultiTransferTestState {
             .set_max_bridged_amount(TOKEN_TICKER, MAX_AMOUNT - 1)
             .run();
 
-        self.esdt_raw_transaction()
-            .add_token_to_whitelist(
-                TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
-                "BRIDGE2",
-                true,
-                false,
-                BigUint::zero(),
-                BigUint::zero(),
-                BigUint::zero(),
-                OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
-            )
+        self.esdt_raw_transaction_esdt_safe()
+            .unpause_endpoint()
             .run();
-
-        self.esdt_raw_transaction().unpause_endpoint().run();
 
         self.world
             .tx()
@@ -432,22 +421,7 @@ impl MultiTransferTestState {
                 BigUint::from(0u64),
             )
             .run();
-        self.world
-            .tx()
-            .from(MULTISIG_ADDRESS)
-            .to(ESDT_SAFE_ADDRESS)
-            .typed(esdt_safe_proxy::EsdtSafeProxy)
-            .add_token_to_whitelist(
-                TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
-                "BRIDGE2",
-                true,
-                false,
-                BigUint::zero(),
-                BigUint::zero(),
-                BigUint::zero(),
-                OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
-            )
-            .run();
+
         self.world
             .tx()
             .from(MULTISIG_ADDRESS)
@@ -538,7 +512,7 @@ impl MultiTransferTestState {
         self.bridged_tokens_wrapper_deploy();
     }
 
-    fn config_esdtsafe(&mut self) {
+    fn config_esdt_safe(&mut self) {
         self.world.set_esdt_local_roles(
             ESDT_SAFE_ADDRESS,
             b"TOKEN-123456",
@@ -549,7 +523,7 @@ impl MultiTransferTestState {
             b"TOKEN-123456",
             BigUint::from(10_000_000u64),
         );
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .add_token_to_whitelist(
                 TOKEN_ID,
                 "TOKEN",
@@ -561,7 +535,7 @@ impl MultiTransferTestState {
                 OptionalValue::Some(BigUint::from(10u64)),
             )
             .run();
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .add_token_to_whitelist(
                 TOKEN_WITH_BURN_ROLE,
                 "TKN",
@@ -573,7 +547,7 @@ impl MultiTransferTestState {
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .add_token_to_whitelist(
                 TOKEN_WITHOUT_BURN_ROLE,
                 "TKNW",
@@ -585,9 +559,22 @@ impl MultiTransferTestState {
                 OptionalValue::Some(BigUint::from(0u64)),
             )
             .run();
+        self.esdt_raw_transaction_esdt_safe()
+            .add_token_to_whitelist(
+                TokenIdentifier::from_esdt_bytes("WRAPPED-123456"),
+                "BRIDGE2",
+                true,
+                false,
+                BigUint::zero(),
+                BigUint::zero(),
+                BigUint::zero(),
+                OptionalValue::Some(BigUint::from(ESDT_SAFE_ETH_TX_GAS_LIMIT)),
+            )
+            .run();
+
         self.world
             .tx()
-            .from(OWNER_ADDRESS)
+            .from(MULTISIG_ADDRESS)
             .to(ESDT_SAFE_ADDRESS)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init_supply_mint_burn(
@@ -597,16 +584,17 @@ impl MultiTransferTestState {
             )
             .run();
     }
+
     fn single_transaction_should_fail(
         &mut self,
         token_id: TestTokenIdentifier,
         amount: u64,
         expected_error: &str,
     ) {
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -618,10 +606,10 @@ impl MultiTransferTestState {
     }
 
     fn single_transaction_should_work(&mut self, token_id: TestTokenIdentifier, amount: u64) {
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .create_transaction(
                 EthAddress::zero(),
-                OptionalValue::None::<sc_proxies::esdt_safe_proxy::RefundInfo<StaticApi>>,
+                OptionalValue::<BigUint<StaticApi>>::None,
             )
             .egld_or_single_esdt(
                 &EgldOrEsdtTokenIdentifier::esdt(token_id),
@@ -639,7 +627,7 @@ impl MultiTransferTestState {
         expected_status: u64,
         expected_error: &str,
     ) {
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .set_transaction_batch_status(batch_id, statuses)
             .returns(ExpectError(expected_status, expected_error))
             .run();
@@ -650,7 +638,7 @@ impl MultiTransferTestState {
         batch_id: u32,
         statuses: MultiValueEncoded<StaticApi, TransactionStatus>,
     ) {
-        self.esdt_raw_transaction()
+        self.esdt_raw_transaction_esdt_safe()
             .set_transaction_batch_status(batch_id, statuses)
             .returns(ReturnsResult)
             .run();
@@ -699,7 +687,7 @@ impl MultiTransferTestState {
             .run();
     }
 
-    fn esdt_raw_transaction(
+    fn esdt_raw_transaction_esdt_safe(
         &mut self,
     ) -> EsdtSafeProxyMethods<ScenarioEnvExec<'_>, TestSCAddress, TestSCAddress, ()> {
         self.world
@@ -715,6 +703,7 @@ fn test_config() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts();
+    state.config_esdt_safe();
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
 }
@@ -779,11 +768,57 @@ fn basic_transfer_test() {
 }
 
 #[test]
+fn basic_transfer_smart_contract_dest_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+
+    state.deploy_contracts();
+    state.config_multi_transfer();
+
+    let call_data = ManagedBuffer::from(b"add");
+    call_data
+        .clone()
+        .concat(ManagedBuffer::from(GAS_LIMIT.to_string()));
+    call_data.clone().concat(ManagedBuffer::default());
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        to: ManagedAddress::from(MULTISIG_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+}
+
+#[test]
 fn batch_transfer_both_executed_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(500u64);
 
     state.deploy_contracts();
+    state.config_esdt_safe();
+
     state.config_multi_transfer();
 
     let mut args = ManagedVec::new();
@@ -1005,7 +1040,7 @@ fn test_unwrap_token_create_transaction_paused() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts();
-
+    state.config_esdt_safe();
     state.config_bridged_tokens_wrapper();
 
     state
@@ -1018,6 +1053,7 @@ fn test_unwrap_token_create_transaction_paused() {
             TokenIdentifier::from(UNIVERSAL_TOKEN_IDENTIFIER),
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1032,6 +1068,7 @@ fn test_unwrap_token_create_transaction_paused() {
 fn test_unwrap_token_create_transaction_insufficient_liquidity() {
     let mut state = MultiTransferTestState::new();
     state.deploy_contracts();
+    state.config_esdt_safe();
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
 
@@ -1068,7 +1105,12 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -1084,13 +1126,14 @@ fn test_unwrap_token_create_transaction_should_work() {
 
     state.deploy_contracts();
 
+    state.config_esdt_safe();
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
 
     state
         .world
         .tx()
-        .from(OWNER_ADDRESS)
+        .from(MULTISIG_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .deposit_liquidity()
@@ -1108,7 +1151,7 @@ fn test_unwrap_token_create_transaction_should_work() {
     state.check_balances_on_safe(
         WRAPPED_TOKEN_ID,
         BigUint::zero(),
-        BigUint::from(600000u64),
+        BigUint::from(600_000u64),
         BigUint::zero(),
     );
 
@@ -1118,7 +1161,7 @@ fn test_unwrap_token_create_transaction_should_work() {
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
         .token_liquidity(WRAPPED_TOKEN_ID)
-        .returns(ExpectValue(BigUint::from(1000u64)))
+        .returns(ExpectValue(BigUint::from(1_000u64)))
         .run();
 
     state
@@ -1127,7 +1170,14 @@ fn test_unwrap_token_create_transaction_should_work() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -1157,7 +1207,7 @@ fn test_unwrap_token_create_transaction_should_fail() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts();
-
+    state.config_esdt_safe();
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
 
@@ -1171,7 +1221,12 @@ fn test_unwrap_token_create_transaction_should_fail() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(TOKEN_TICKER),
             0u64,
@@ -1186,7 +1241,7 @@ fn test_unwrap_token_create_transaction_amount_zero() {
     let mut state = MultiTransferTestState::new();
 
     state.deploy_contracts();
-
+    state.config_esdt_safe();
     state.config_multi_transfer();
     state.config_bridged_tokens_wrapper();
     state
@@ -1199,6 +1254,7 @@ fn test_unwrap_token_create_transaction_amount_zero() {
             TokenIdentifier::from(WRAPPED_TOKEN_ID),
             ESDT_SAFE_ADDRESS.to_address(),
             EthAddress::zero(),
+            OptionalValue::<BigUint<StaticApi>>::None,
         )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
@@ -1257,6 +1313,7 @@ fn add_refund_batch_test_should_work() {
         .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
+
     state.check_balances_on_safe(
         TOKEN_TICKER,
         BigUint::zero(),

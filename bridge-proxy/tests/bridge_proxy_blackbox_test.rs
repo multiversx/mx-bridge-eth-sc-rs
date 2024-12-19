@@ -33,7 +33,7 @@ use multiversx_sc_scenario::{
     scenario_model::*,
     ContractInfo, ScenarioWorld,
 };
-use multiversx_sc_scenario::{ExpectValue, ScenarioTxRun};
+use multiversx_sc_scenario::{ExpectError, ExpectValue, ScenarioTxRun};
 
 use eth_address::*;
 use mock_proxies::mock_multisig_proxy;
@@ -43,12 +43,15 @@ use transaction::{CallData, EthTransaction};
 const BRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("BRIDGE-123456");
 const WBRIDGE_TOKEN_ID: TestTokenIdentifier = TestTokenIdentifier::new("WBRIDGE-123456");
 
+const DELAY_BEFORE_OWNER_CAN_REFUND_TRANSACTION: u64 = 300;
 const GAS_LIMIT: u64 = 10_000_000;
 const TOO_SMALL_GAS_LIMIT: u64 = 1_000_000;
 
 const CF_DEADLINE: u64 = 7 * 24 * 60 * 60; // 1 week in seconds
+const INITIAL_BALANCE: u64 = 10_000u64;
 
 const OWNER_ADDRESS: TestAddress = TestAddress::new("owner");
+const USER_ADDRESS: TestAddress = TestAddress::new("user");
 const BRIDGE_PROXY_ADDRESS: TestSCAddress = TestSCAddress::new("bridge-proxy");
 const CROWDFUNDING_ADDRESS: TestSCAddress = TestSCAddress::new("crowfunding");
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
@@ -119,10 +122,13 @@ impl BridgeProxyTestState {
         world
             .account(OWNER_ADDRESS)
             .nonce(1)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 10_000u64)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
+            .account(USER_ADDRESS)
+            .nonce(1)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .account(MULTI_TRANSFER_ADDRESS)
-            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), 10_000u64)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), 10_000u64)
+            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), INITIAL_BALANCE)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .code(multi_transfer_code)
             .account(ESDT_SAFE_ADDRESS)
             .code(esdt_safe_code);
@@ -232,6 +238,9 @@ impl BridgeProxyTestState {
             .run();
 
         self
+    }
+    fn set_block_round(&mut self, block_round_expr: u64) {
+        self.world.current_block().block_round(block_round_expr);
     }
 }
 
@@ -536,8 +545,7 @@ fn test_highest_tx_id() {
     }
 }
 
-// Will be moved to integration test
-// #[test]
+#[test]
 fn bridge_proxy_wrong_formatting_sc_call_test() {
     let mut test = BridgeProxyTestState::new();
 
@@ -558,7 +566,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
     };
 
     let amount = BigUint::from(500u64);
-    // Destination is not an initialized contract
+
     test.world
         .tx()
         .from(MULTI_TRANSFER_ADDRESS)
@@ -590,8 +598,31 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
 
     // Refund: Funds are transfered to BridgedTokensWrapper
     test.world
-        .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount);
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x3031303230333034303530363037303830393130000000000000000005006e6f2d696e69742d73635f5f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000100")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
+}
+
+#[test]
+fn bridge_proxy_wrong_endpoint_sc_call_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let amount = BigUint::from(500u64);
 
     // Wrong endpoint for callData
     let mut args = ManagedVec::new();
@@ -632,7 +663,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         .query()
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .get_pending_transaction_by_id(2u32)
+        .get_pending_transaction_by_id(1u32)
         .returns(ExpectValue(eth_tx))
         .run();
 
@@ -641,13 +672,36 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         .from(OWNER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .execute(2u32)
+        .execute(1u32)
+        .with_gas_limit(GAS_LIMIT * 2)
         .run();
 
-    // Refund: Funds are transfered to BridgedTokensWrapper
     test.world
-        .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, amount.clone() * 2u64);
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount);
+
+    test.world
+    .check_account(BRIDGE_PROXY_ADDRESS)
+    .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f400000000000000020100000017000000066e6f66756e6300000000009896800100000000")
+    .check_storage("str:refundTransactions.value|u32:1", "0x01")
+    .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+    .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+    .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+    .check_storage("str:batchId|u32:1", "1")
+    .check_storage("str:highestTxId", "1")
+    .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
+}
+
+#[test]
+fn bridge_proxy_wrong_args_sc_call_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let amount = BigUint::from(500u64);
 
     // Wrong args
     let mut args = ManagedVec::new();
@@ -690,7 +744,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         .query()
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .get_pending_transaction_by_id(3u32)
+        .get_pending_transaction_by_id(1u32)
         .returns(ExpectValue(eth_tx))
         .run();
 
@@ -699,13 +753,25 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         .from(OWNER_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-        .execute(3u32)
+        .execute(1u32)
+        .with_gas_limit(GAS_LIMIT * 2)
         .run();
 
     // Refund: Funds are transfered to BridgedTokensWrapper
     test.world
-        .check_account(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        .esdt_balance(BRIDGE_TOKEN_ID, amount * 3u64);
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, amount);
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000301000000220000000466756e64000000000098968001000000010000000977726f6e6761726773")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }
 
 #[test]
@@ -741,7 +807,82 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
     };
 
     let amount = BigUint::from(500u64);
-    // Destination is not an initialized contract
+
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx.clone()))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000150000000466756e6400000000000f42400100000000")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
+}
+
+#[test]
+fn bridge_proxy_empty_endpoint_with_args_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.world.start_trace();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::new(),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let amount = BigUint::from(500u64);
+
     test.world
         .tx()
         .from(MULTI_TRANSFER_ADDRESS)
@@ -771,8 +912,196 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
         .execute(1u32)
         .run();
 
-    // Refund: Funds are transfered to EsdtSafe
     test.world
-        .check_account(ESDT_SAFE_ADDRESS)
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage(
+            "str:payments|u32:1",
+            "nested:str:BRIDGE-123456|u64:0|biguint:500",
+        );
+}
+
+#[test]
+fn bridge_proxy_empty_endpoint_with_gas_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.world.start_trace();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::new(),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::none(),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let amount = BigUint::from(500u64);
+
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f40000000000000001010000000d00000000000000000098968000")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage(
+            "str:payments|u32:1",
+            "nested:str:BRIDGE-123456|u64:0|biguint:500",
+        );
+}
+
+#[test]
+fn bridge_proxy_refund_tx_test() {
+    let mut test = BridgeProxyTestState::new();
+
+    test.world.start_trace();
+
+    test.multisig_deploy();
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::new(),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let amount = BigUint::from(500u64);
+
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &amount,
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(USER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:refundTransactions.mapped|u32:1", "0x30313032303330343035303630373038303931300000000000000000050063726f7766756e64696e675f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f4000000000000000101000000110000000000000000009896800100000000")
+        .check_storage("str:refundTransactions.value|u32:1", "0x01")
+        .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
+        .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
+        .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
+        .check_storage("str:batchId|u32:1", "1")
+        .check_storage("str:highestTxId", "1")
+        .check_storage(
+            "str:payments|u32:1",
+            "nested:str:BRIDGE-123456|u64:0|biguint:500",
+        );
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
         .esdt_balance(BRIDGE_TOKEN_ID, amount.clone());
+
+    test.world
+        .check_account(USER_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, BigUint::from(INITIAL_BALANCE));
+
+    test.world
+        .tx()
+        .from(USER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute_refund_transaction(1u32)
+        .run();
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, BigUint::zero());
+
+    test.world
+        .check_account(BRIDGE_PROXY_ADDRESS)
+        .check_storage("str:highestTxId", "1");
 }

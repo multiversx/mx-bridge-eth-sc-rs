@@ -20,7 +20,7 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        createTransaction => create_transaction
+        createRefundTransaction => create_refund_transaction
         withdrawTransactionFees => withdraw_transaction_fees
         withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
     )

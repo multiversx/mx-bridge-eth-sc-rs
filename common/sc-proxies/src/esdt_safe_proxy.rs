@@ -131,6 +131,15 @@ where
             .original_result()
     }
 
+    pub fn add_refund_batch_for_failed_tx(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("addRefundBatchForFailedTx")
+            .original_result()
+    }
+
     /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted. 
     ///  
     /// Every transfer will have a part of the tokens subtracted as fees. 
@@ -140,6 +149,28 @@ where
     /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
     pub fn create_transaction<
         Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<BigUint<Env::Api>>>,
+    >(
+        self,
+        to: Arg0,
+        opt_min_bridge_amount: Arg1,
+    ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
+        self.wrapped_tx
+            .raw_call("createTransaction")
+            .argument(&to)
+            .argument(&opt_min_bridge_amount)
+            .original_result()
+    }
+
+    /// Create an Ethereum -> MultiversX refund transaction. Only fungible tokens are accepted. 
+    ///  
+    /// Every transfer will have a part of the tokens subtracted as fees. 
+    /// The fee amount depends on the global eth_tx_gas_limit 
+    /// and the current GWEI price, respective to the bridged token 
+    ///  
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit 
+    pub fn create_refund_transaction<
+        Arg0: ProxyArg<eth_address::EthAddress<Env::Api>>,
         Arg1: ProxyArg<OptionalValue<RefundInfo<Env::Api>>>,
     >(
         self,
@@ -147,7 +178,7 @@ where
         opt_refund_info: Arg1,
     ) -> TxTypedCall<Env, From, To, (), Gas, ()> {
         self.wrapped_tx
-            .raw_call("createTransaction")
+            .raw_call("createRefundTransaction")
             .argument(&to)
             .argument(&opt_refund_info)
             .original_result()
@@ -221,14 +252,17 @@ where
     /// Useful for knowing which token IDs to pass to the claimRefund endpoint. 
     pub fn get_refund_amounts<
         Arg0: ProxyArg<ManagedAddress<Env::Api>>,
+        Arg1: ProxyArg<OptionalValue<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>>,
     >(
         self,
         address: Arg0,
+        opt_tokens: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<TokenIdentifier<Env::Api>, BigUint<Env::Api>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getRefundAmounts")
             .argument(&address)
+            .argument(&opt_tokens)
             .original_result()
     }
 
@@ -356,14 +390,17 @@ where
     /// where percentages must add up to the PERCENTAGE_TOTAL constant 
     pub fn distribute_fees<
         Arg0: ProxyArg<ManagedVec<Env::Api, token_module::AddressPercentagePair<Env::Api>>>,
+        Arg1: ProxyArg<OptionalValue<MultiValueEncoded<Env::Api, TokenIdentifier<Env::Api>>>>,
     >(
         self,
         address_percentage_pairs: Arg0,
+        opt_tokens_to_distribute: Arg1,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("distributeFees")
             .argument(&address_percentage_pairs)
+            .argument(&opt_tokens_to_distribute)
             .original_result()
     }
 

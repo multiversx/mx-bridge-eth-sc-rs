@@ -75,11 +75,6 @@
                         "str:tokenTicker|nested:str:GWEI": "str:GWEI",
                         "str:tokenTicker|nested:str:WEGLD-123456": "str:WEGLD",
                         "str:tokenTicker|nested:str:ETH-123456": "str:ETH",
-                        "str:tokenWhitelist.index|nested:str:WEGLD-123456": "1",
-                        "str:tokenWhitelist.item|u32:1": "str:WEGLD-123456",
-                        "str:tokenWhitelist.index|nested:str:ETH-123456": "2",
-                        "str:tokenWhitelist.item|u32:2": "str:ETH-123456",
-                        "str:tokenWhitelist.len": "2",
                         "str:mintBalances|nested:str:WEGLD-123456": "500,000,000,000",
                         "str:mintBalances|nested:str:ETH-123456": "500,000,000,000"
                     },
@@ -102,6 +97,11 @@
                     "storage": {}
                 },
                 "address:relayer2": {
+                    "nonce": "0",
+                    "balance": "1000",
+                    "storage": {}
+                },
+                "address:relayer3": {
                     "nonce": "0",
                     "balance": "1000",
                     "storage": {}
@@ -170,12 +170,12 @@
                         "str:proxyAddress": "sc:bridge_proxy",
                         "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:feeEstimatorAddress": "sc:price_aggregator",
-                        "str:num_board_members": "2",
+                        "str:numBoardMembers": "2",
                         "str:quorum": "2",
                         "str:requiredStakeAmount": "1000",
                         "str:slashAmount": "500",
-                        "str:user_role|u32:1": "1",
-                        "str:user_role|u32:2": "1",
+                        "str:userRole|u32:1": "1",
+                        "str:userRole|u32:2": "1",
                         "str:user_address_to_id|address:relayer1": "1",
                         "str:user_address_to_id|address:relayer2": "2",
                         "str:user_count": "2",
@@ -288,20 +288,6 @@
             }
         },
         {
-            "step": "scQuery",
-            "txId": "get-all-known-tokens",
-            "tx": {
-                "to": "sc:esdt_safe",
-                "function": "getAllKnownTokens"
-            },
-            "expect": {
-                "out": [
-                    "str:WEGLD-123456",
-                    "str:ETH-123456"
-                ]
-            }
-        },
-        {
             "step": "scCall",
             "txId": "unpause multisig",
             "tx": {
@@ -374,6 +360,20 @@
                 "message": "",
                 "gas": "*",
                 "refund": "*"
+            }
+        },
+        {
+            "step": "scQuery",
+            "txId": "get-all-known-tokens",
+            "tx": {
+                "to": "sc:esdt_safe",
+                "function": "getAllKnownTokens"
+            },
+            "expect": {
+                "out": [
+                    "str:WEGLD-123456",
+                    "str:ETH-123456"
+                ]
             }
         }
     ]
