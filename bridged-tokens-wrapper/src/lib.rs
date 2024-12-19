@@ -134,7 +134,6 @@ pub trait BridgedTokensWrapper:
         self.token_decimals_num(&chain_specific_token_id).clear();
     }
 
-    #[only_owner]
     #[payable("*")]
     #[endpoint(depositLiquidity)]
     fn deposit_liquidity(&self) {

@@ -59,10 +59,6 @@ pub trait MultiTransferEsdt:
                 .blockchain()
                 .get_esdt_local_roles(&eth_tx.token_id.clone());
             if token_roles.has_role(&EsdtLocalRole::Transfer) {
-                // let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
-                // refund_tx_list.push(refund_tx);
-                // self.token_with_transfer_role_event(eth_tx.token_id);
-
                 self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
                 self.token_with_transfer_role_event(eth_tx.token_id);
                 continue;
