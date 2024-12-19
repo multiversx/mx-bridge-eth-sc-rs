@@ -1,13 +1,4 @@
 [settings]
 
 [[proxy]]
-path = "../bridge-proxy/src/esdt_safe_proxy.rs"
-
-[[proxy]]
-path = "../bridged-tokens-wrapper/src/esdt_safe_proxy.rs"
-
-[[proxy]]
-path = "../multi-transfer-esdt/src/esdt_safe_proxy.rs"
-
-[[proxy]]
-path = "../multisig/src/esdt_safe_proxy.rs"
+path = "../common/sc-proxies/src/esdt_safe_proxy.rs"

@@ -48,6 +48,9 @@ where
 {
     fn clear(&mut self) {
         self.vec_mapper.clear();
+        self.vec_len = 0;
+        self.first_tx = None;
+        self.last_tx = None;
     }
 }
 

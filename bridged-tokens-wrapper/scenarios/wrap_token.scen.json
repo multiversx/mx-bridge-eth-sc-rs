@@ -65,7 +65,7 @@
                 "function": "wrapTokens",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-cccccc",
-                    "value": "100000000000000"
+                    "value": "100,000,000,000,000"
                 },
                 "arguments": [],
                 "gasLimit": "5,000,000",
@@ -144,9 +144,9 @@
                         "str:universalBridgedTokenIds.item|u32:1": "str:WUSDC-abcdef",
                         "str:tokenLiquidity|nested:str:USDC-aaaaaa": "300000000000000",
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
-                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
-                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
-                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                        "str:tokenDecimalsNum|nested:str:WUSDC-abcdef": "6",
+                        "str:tokenDecimalsNum|nested:str:USDC-aaaaaa": "18",
+                        "str:tokenDecimalsNum|nested:str:USDC-cccccc": "18"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
