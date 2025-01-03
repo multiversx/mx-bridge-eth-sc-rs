@@ -99,15 +99,6 @@ pub trait MultiTransferEsdt:
                     eth_tx.amount.clone(),
                     eth_tx.tx_nonce,
                 );
-            } else {
-                self.transfer_performed_event(
-                    batch_id,
-                    eth_tx.from.clone(),
-                    eth_tx.to.clone(),
-                    eth_tx.token_id.clone(),
-                    eth_tx.amount.clone(),
-                    eth_tx.tx_nonce,
-                );
             }
 
             valid_tx_list.push(eth_tx.clone());
