@@ -10,6 +10,10 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 
+static ESDT_TRANSFER_FUNC_NAME: &[u8] = b"ESDTTransfer";
+const GAS_LIMIT_ESDT_TRANSFER: u64 = 50_0000;
+const CALLBACK_ESDT_TRANSFER_GAS_LIMIT: u64 = 100_000; // TODO: Change if needed
+
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
     tx_batch_module::TxBatchModule
@@ -49,11 +53,7 @@ pub trait MultiTransferEsdt:
         let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
-        let own_sc_address = self.blockchain().get_sc_address();
-        let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
-
         let safe_address = self.get_esdt_safe_address();
-
         for eth_tx in transfers {
             let token_roles = self
                 .blockchain()
@@ -77,8 +77,6 @@ pub trait MultiTransferEsdt:
                 continue;
             }
 
-            let universal_token = self.get_universal_token(eth_tx.clone());
-
             if eth_tx.to.is_zero() {
                 self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
                 self.transfer_failed_invalid_destination_event(batch_id, eth_tx.tx_nonce);
@@ -87,11 +85,6 @@ pub trait MultiTransferEsdt:
             if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
                 self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
                 self.transfer_over_max_amount_event(batch_id, eth_tx.tx_nonce);
-                continue;
-            }
-            if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
-                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-                self.transfer_failed_frozen_destination_account_event(batch_id, eth_tx.tx_nonce);
                 continue;
             }
 
@@ -294,9 +287,42 @@ pub trait MultiTransferEsdt:
                     .sync_call();
             } else {
                 self.tx()
-                    .to(&eth_tx.to)
-                    .single_esdt(&p.token_identifier, 0, &p.amount)
-                    .transfer();
+                    .to(&eth_tx.to.clone())
+                    .raw_call(ESDT_TRANSFER_FUNC_NAME)
+                    .argument(&p.token_identifier)
+                    .argument(&p.amount)
+                    .callback(self.callbacks().transfer_callback(eth_tx, batch_id))
+                    .gas(GAS_LIMIT_ESDT_TRANSFER)
+                    .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
+                    .register_promise();
+            }
+        }
+    }
+
+    #[promises_callback]
+    fn transfer_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.transfer_performed_event(
+                    batch_id,
+                    tx.from,
+                    tx.to,
+                    tx.token_id,
+                    tx.amount,
+                    tx.tx_nonce,
+                );
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                // TODO: Maybe fire a better event, but this is the most likely cause anyway
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
+
+                let refund_tx = self.convert_to_refund_tx(tx);
+                self.add_to_batch(refund_tx);
             }
         }
     }
