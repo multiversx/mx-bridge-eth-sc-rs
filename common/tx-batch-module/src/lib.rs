@@ -150,9 +150,9 @@ pub trait TxBatchModule {
 
         for tx in transactions {
             if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
-                (last_batch_id, last_batch) = self.create_new_batch(tx);
+                (last_batch_id, last_batch) = self.create_new_batch(tx.clone());
             } else {
-                last_batch.push(tx);
+                last_batch.push(tx.clone());
             }
 
             batch_ids.push(last_batch_id);

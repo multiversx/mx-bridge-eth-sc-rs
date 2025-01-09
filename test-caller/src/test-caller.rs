@@ -7,10 +7,10 @@ use multiversx_sc::imports::*;
 #[type_abi]
 #[derive(NestedEncode, NestedDecode, TopEncode, TopDecode, Clone, ManagedVecItem)]
 pub struct CalledData<M: ManagedTypeApi> {
-    pub size:             u64,
-    pub address:          ManagedAddress<M>,
+    pub size: u64,
+    pub address: ManagedAddress<M>,
     pub token_identifier: TokenIdentifier<M>,
-    pub buff:             ManagedBuffer<M>,
+    pub buff: ManagedBuffer<M>,
 }
 
 #[multiversx_sc::contract]
@@ -30,15 +30,11 @@ pub trait TestCallerContract {
 
     #[payable("*")]
     #[view(callPayableWithParams)]
-    fn call_payable_with_params(
-        &self,
-        size: u64,
-        address: ManagedAddress,
-    ) {
+    fn call_payable_with_params(&self, size: u64, address: ManagedAddress) {
         let payment = self.call_value().single_esdt();
-        let token_identifier = payment.token_identifier;
+        let token_identifier = payment.token_identifier.clone();
 
-        let data = CalledData{
+        let data = CalledData {
             size,
             address,
             token_identifier,
@@ -50,14 +46,11 @@ pub trait TestCallerContract {
 
     #[payable("*")]
     #[view(callPayableWithBuff)]
-    fn call_payable_with_buff(
-        &self,
-        buff: ManagedBuffer,
-    ) {
+    fn call_payable_with_buff(&self, buff: ManagedBuffer) {
         let payment = self.call_value().single_esdt();
-        let token_identifier = payment.token_identifier;
+        let token_identifier = payment.token_identifier.clone();
 
-        let data = CalledData{
+        let data = CalledData {
             size: 0,
             address: ManagedAddress::zero(),
             token_identifier,
@@ -68,9 +61,7 @@ pub trait TestCallerContract {
     }
 
     #[view(getCalledDataParams)]
-    fn get_called_data_params(
-        &self,
-    ) -> MultiValueEncoded<CalledData<Self::Api>> {
+    fn get_called_data_params(&self) -> MultiValueEncoded<CalledData<Self::Api>> {
         let mut values = MultiValueEncoded::new();
         let len = self.called_data_params().len();
 

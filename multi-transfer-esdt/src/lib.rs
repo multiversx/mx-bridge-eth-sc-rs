@@ -289,7 +289,7 @@ pub trait MultiTransferEsdt:
                 self.tx()
                     .to(bridge_proxy_addr.clone())
                     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-                    .deposit(&eth_tx, batch_id)
+                    .deposit(&eth_tx.clone(), batch_id)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .sync_call();
             } else {

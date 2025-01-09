@@ -3,18 +3,6 @@
 version = 3
 
 [[package]]
-name = "ahash"
-version = "0.8.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e89da841a80418a9b391ebaea17f5c112ffaaa96f621d2c285b5174da76b9011"
-dependencies = [
- "cfg-if",
- "once_cell",
- "version_check",
- "zerocopy",
-]
-
-[[package]]
 name = "anstream"
 version = "0.6.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -128,7 +116,7 @@ dependencies = [
  "mock-multisig",
  "mock-price-aggregator",
  "mock-proxies",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -153,7 +141,7 @@ version = "0.0.0"
 dependencies = [
  "eth-address",
  "mock-esdt-safe",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
@@ -237,12 +225,12 @@ checksum = "d3fd119d74b830634cea2a0f58bbd0d54540518a14397557951e79340abc28c0"
 
 [[package]]
 name = "colored"
-version = "2.1.0"
+version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbf2150cce219b664a8a70df7a1f933836724b503f8a413af9365b4dcc4d90b8"
+checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -272,9 +260,9 @@ dependencies = [
 [[package]]
 name = "crowdfunding-esdt"
 version = "0.0.0"
-source = "git+https://github.com/multiversx/mx-contracts-rs?rev=e72c201#e72c2017bdc2bffef50d8e9d76fc3a24a81ad00d"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27#1771a274687bf4448ace6b9fe85e1b550005ddd3"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27)",
 ]
 
 [[package]]
@@ -390,7 +378,7 @@ dependencies = [
  "mock-price-aggregator",
  "mock-proxies",
  "multiversx-price-aggregator-sc",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
@@ -412,14 +400,14 @@ dependencies = [
 name = "eth-address"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "fee-estimator-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "storage-module",
 ]
@@ -429,6 +417,12 @@ name = "fiat-crypto"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28dea519a9695b9977216879a3ebfddf92f1c08c05d984f8996aecd6ecdc811d"
+
+[[package]]
+name = "foldhash"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0d2fde1f7b3d48b8395d5f2de76c18a528bd6a9cdde438df747bfcba3e05d6f"
 
 [[package]]
 name = "generic-array"
@@ -455,19 +449,13 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.14.5"
+version = "0.15.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
+checksum = "bf151400ff0baff5465007dd2f3e717f3fe502074ca563069ce3a6629d07b289"
 dependencies = [
- "ahash",
+ "foldhash",
  "serde",
 ]
-
-[[package]]
-name = "hashbrown"
-version = "0.15.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e087f84d4f86bf4b218b927129862374b72199ae7d8657835f1e89000eea4fb"
 
 [[package]]
 name = "heck"
@@ -489,12 +477,12 @@ checksum = "6fe2267d4ed49bc07b63801559be28c718ea06c4738b7a03c94df7386d2cde46"
 
 [[package]]
 name = "indexmap"
-version = "2.6.0"
+version = "2.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "707907fe3c25f5424cce2cb7e1cbcafee6bdbe735ca90ef77c29e84591e5b9da"
+checksum = "62f822373a4fe84d4bb149bf54e584a7f4abec90e072ed49cda0edea5b95471f"
 dependencies = [
  "equivalent",
- "hashbrown 0.15.0",
+ "hashbrown",
  "serde",
 ]
 
@@ -506,9 +494,9 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 
 [[package]]
 name = "itertools"
-version = "0.13.0"
+version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
 dependencies = [
  "either",
 ]
@@ -544,6 +532,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
+name = "leb128"
+version = "0.2.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "884e2677b40cc8c339eaefcb701c32ef1fd2493d71118dc0ca4b6a736c93bd67"
+
+[[package]]
 name = "libc"
 version = "0.2.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -559,7 +553,7 @@ checksum = "a7a70ba024b9dc04c27ea2f0c0548feb474ec5c54bba33a7f72f873a39d07b24"
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
 ]
 
@@ -573,7 +567,7 @@ checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 name = "mock-bridge-proxy"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -591,7 +585,7 @@ name = "mock-bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -609,7 +603,7 @@ name = "mock-esdt-safe"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
 ]
@@ -626,7 +620,7 @@ dependencies = [
 name = "mock-multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -643,7 +637,7 @@ dependencies = [
 name = "mock-multisig"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -660,7 +654,7 @@ dependencies = [
 name = "mock-price-aggregator"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "num-bigint",
 ]
@@ -677,7 +671,7 @@ dependencies = [
 name = "mock-proxies"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -693,7 +687,7 @@ dependencies = [
  "mock-multisig",
  "mock-price-aggregator",
  "mock-proxies",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
@@ -726,7 +720,7 @@ dependencies = [
  "mock-price-aggregator",
  "multi-transfer-esdt",
  "multiversx-price-aggregator-sc",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "sc-proxies",
@@ -741,6 +735,25 @@ version = "0.0.0"
 dependencies = [
  "multisig",
  "multiversx-sc-meta-lib",
+]
+
+[[package]]
+name = "multiversx-chain-core"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "deeae1474599e5f1145942db88df8397116fba3e0a4480111e77b2d0907d7329"
+dependencies = [
+ "bitflags",
+ "multiversx-sc-codec 0.21.2 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "multiversx-chain-core"
+version = "0.12.0"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27#1771a274687bf4448ace6b9fe85e1b550005ddd3"
+dependencies = [
+ "bitflags",
+ "multiversx-sc-codec 0.21.2 (git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27)",
 ]
 
 [[package]]
@@ -760,9 +773,9 @@ dependencies = [
 
 [[package]]
 name = "multiversx-chain-vm"
-version = "0.10.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13c537d27dfc7a8e295d4f7c5f67a967ce66b6c3fc8e31a160e8cf28e14ecb2d"
+checksum = "fe375a1d18089d8ff2dca2db84167163e7f9d55de4827a0e1dc6b383d414e69d"
 dependencies = [
  "bitflags",
  "colored",
@@ -770,6 +783,7 @@ dependencies = [
  "hex",
  "hex-literal",
  "itertools",
+ "multiversx-chain-core 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-chain-vm-executor",
  "num-bigint",
  "num-traits",
@@ -781,54 +795,90 @@ dependencies = [
 
 [[package]]
 name = "multiversx-chain-vm-executor"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b59072fa0624b55ae5ae3fa6bfa91515bbeb4ac440214bc4a509e2c8806d6e9f"
+checksum = "51cce7ae386960fbf5e85afe40ca16d63f926f0620ed1a36b019212b28e17219"
 
 [[package]]
 name = "multiversx-price-aggregator-sc"
-version = "0.53.2"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7317294898d2f57b5181f3310014dec755359925b26d7b992a5f8fc968c7ee0a"
+checksum = "240194e6c9f2961d1c81764ebad1444cd112554cd5ef0b3e221829f44abfaed8"
 dependencies = [
  "arrayvec",
  "getrandom",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "rand",
 ]
 
 [[package]]
 name = "multiversx-sc"
-version = "0.53.2"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75ea89a26f0aacda21437a8ae5ccfbefab99d8191942b3d2eddbcbf84f9866d7"
+checksum = "960795ffd67b78b976735f679112d17dfda278504fae4f2d468ff62046658463"
 dependencies = [
  "bitflags",
  "hex-literal",
- "multiversx-sc-codec",
- "multiversx-sc-derive",
+ "multiversx-chain-core 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc-codec 0.21.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc-derive 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits",
+ "unwrap-infallible",
+]
+
+[[package]]
+name = "multiversx-sc"
+version = "0.55.0"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27#1771a274687bf4448ace6b9fe85e1b550005ddd3"
+dependencies = [
+ "bitflags",
+ "hex-literal",
+ "multiversx-chain-core 0.12.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27)",
+ "multiversx-sc-codec 0.21.2 (git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27)",
+ "multiversx-sc-derive 0.55.0 (git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27)",
  "num-traits",
  "unwrap-infallible",
 ]
 
 [[package]]
 name = "multiversx-sc-codec"
-version = "0.21.0"
+version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "007d7a5a8534e5dc9128cb8f15a65a21dd378e135c6016c7cd1491cd012bc8cb"
+checksum = "f0df6c337692e14e5b9ea2448216cc5a75d3e891ebfe327eccaaee31dfd119e3"
 dependencies = [
  "arrayvec",
- "multiversx-sc-codec-derive",
+ "multiversx-sc-codec-derive 0.21.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-bigint",
  "unwrap-infallible",
 ]
 
 [[package]]
+name = "multiversx-sc-codec"
+version = "0.21.2"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27#1771a274687bf4448ace6b9fe85e1b550005ddd3"
+dependencies = [
+ "arrayvec",
+ "multiversx-sc-codec-derive 0.21.2 (git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27)",
+ "unwrap-infallible",
+]
+
+[[package]]
 name = "multiversx-sc-codec-derive"
-version = "0.21.0"
+version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dffba1dce273ed5b61ee1b90aeea5c8c744617d0f12624f620768c144d83e753"
+checksum = "2571c0afb65e504fe80a431f3b6a288c50dd3e7cd38d6cef18f8b47e5c8e8796"
+dependencies = [
+ "hex",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "multiversx-sc-codec-derive"
+version = "0.21.2"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27#1771a274687bf4448ace6b9fe85e1b550005ddd3"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -838,9 +888,21 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-derive"
-version = "0.53.2"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4c17fdf90fafca2f19085ae67b0502d9f71bf8ab1be3c83808eb88e02a8c18b9"
+checksum = "bb090fe537f483ac26e4a7f125f2ed4c18ab8a9315dfc80d0d74655604bd4132"
+dependencies = [
+ "hex",
+ "proc-macro2",
+ "quote",
+ "radix_trie",
+ "syn",
+]
+
+[[package]]
+name = "multiversx-sc-derive"
+version = "0.55.0"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=1771a27#1771a274687bf4448ace6b9fe85e1b550005ddd3"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -851,16 +913,16 @@ dependencies = [
 
 [[package]]
 name = "multiversx-sc-meta-lib"
-version = "0.53.2"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ef023806e14a8a6245408c4a7dfdf17d4a1eb39425cedfe50cd2c48f96708ab6"
+checksum = "d5dbc80b398ead0c43b735b7a4422dc9af5c9eed96620a417a2a58f6ee109146"
 dependencies = [
  "clap",
  "colored",
  "convert_case",
  "hex",
  "lazy_static",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc_version",
  "semver",
  "serde",
@@ -868,22 +930,23 @@ dependencies = [
  "toml",
  "wasmparser",
  "wasmprinter",
+ "wat",
 ]
 
 [[package]]
 name = "multiversx-sc-modules"
-version = "0.53.2"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "daeb48acbd39255868a3241798df2f85050f0ae8d82d6417bd2cd0e30a241855"
+checksum = "efa55a68bd4eb79f38bb8d526fb0fb6e9146b0a7195a92efd030fefa4341dad7"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "multiversx-sc-scenario"
-version = "0.53.2"
+version = "0.55.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd16e3bf1f6696d0add36b7b905b1ffdd13b836e584da000f5e265c11e2bfc8d"
+checksum = "c1d2dcd3fb2836b067d7e16c7b384cf1c0b069e3b2696eebbb73ee32d1c5f318"
 dependencies = [
  "base64",
  "bech32",
@@ -894,7 +957,7 @@ dependencies = [
  "multiversx-chain-scenario-format",
  "multiversx-chain-vm",
  "multiversx-chain-vm-executor",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-meta-lib",
  "num-bigint",
  "num-traits",
@@ -975,18 +1038,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.86"
+version = "1.0.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
+checksum = "37d3544b3f2748c54e147655edb5025752e2303145b5aefb3c3ea2c78b973bb0"
 dependencies = [
  "unicode-ident",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.37"
+version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5b9d34b8991d19d98081b46eacdd8eb58c6f2b201139f7c5f643cc155a633af"
+checksum = "0e4dccaaaf89514f546c693ddc140f729f958c247918a13380cccc6078391acc"
 dependencies = [
  "proc-macro2",
 ]
@@ -1060,7 +1123,7 @@ name = "sc-proxies"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "token-module",
  "transaction",
@@ -1164,7 +1227,7 @@ dependencies = [
 name = "storage-module"
 version = "0.1.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
 ]
 
@@ -1182,9 +1245,9 @@ checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
 name = "syn"
-version = "2.0.77"
+version = "2.0.95"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9f35bcdf61fd8e7be6caf75f429fdca8beb3ed76584befb503b1569faee373ed"
+checksum = "46f71c0377baf4ef1cc3e3402ded576dccc315800fbc62dfc7fe04b009773b4a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1204,7 +1267,7 @@ dependencies = [
 name = "test-caller"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-modules",
  "multiversx-sc-scenario",
  "num-bigint",
@@ -1223,7 +1286,7 @@ name = "token-module"
 version = "0.0.0"
 dependencies = [
  "fee-estimator-module",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "storage-module",
 ]
@@ -1268,14 +1331,14 @@ name = "transaction"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "tx-batch-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc",
+ "multiversx-sc 0.55.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "multiversx-sc-scenario",
  "transaction",
 ]
@@ -1297,6 +1360,12 @@ name = "unicode-segmentation"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6ccf251212114b54433ec949fd6a7841275f9ada20dddd2f29e9ceea4501493"
+
+[[package]]
+name = "unicode-width"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fc81956842c57dac11422a97c3b8195a1ff727f06e85c84ed2e8aa277c9a0fd"
 
 [[package]]
 name = "unwrap-infallible"
@@ -1378,14 +1447,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65fc09f10666a9f147042251e0dda9c18f166ff7de300607007e96bdebc1068d"
 
 [[package]]
-name = "wasmparser"
-version = "0.216.0"
+name = "wasm-encoder"
+version = "0.223.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bcdee6bea3619d311fb4b299721e89a986c3470f804b6d534340e412589028e3"
+checksum = "7e636076193fa68103e937ac951b5f2f587624097017d764b8984d9c0f149464"
 dependencies = [
- "ahash",
+ "leb128",
+ "wasmparser",
+]
+
+[[package]]
+name = "wasmparser"
+version = "0.223.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d5a99faceb1a5a84dd6084ec4bfa4b2ab153b5793b43fd8f58b89232634afc35"
+dependencies = [
  "bitflags",
- "hashbrown 0.14.5",
+ "hashbrown",
  "indexmap",
  "semver",
  "serde",
@@ -1393,13 +1471,35 @@ dependencies = [
 
 [[package]]
 name = "wasmprinter"
-version = "0.216.0"
+version = "0.223.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f82916f3892e53620639217d6ec78fe15c678352a3fbf3f3745b6417d0bd70f"
+checksum = "9235722b8cdb6c1c6daa537d4be4e230e76ce3ce0e4ba991956a1c6aed50305a"
 dependencies = [
  "anyhow",
  "termcolor",
  "wasmparser",
+]
+
+[[package]]
+name = "wast"
+version = "223.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d59b2ba8a2ff9f06194b7be9524f92e45e70149f4dacc0d0c7ad92b59ac875e4"
+dependencies = [
+ "bumpalo",
+ "leb128",
+ "memchr",
+ "unicode-width",
+ "wasm-encoder",
+]
+
+[[package]]
+name = "wat"
+version = "1.223.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "662786915c427e4918ff01eabb3c4756d4d947cd8f635761526b4cc9da2eaaad"
+dependencies = [
+ "wast",
 ]
 
 [[package]]
@@ -1413,20 +1513,11 @@ dependencies = [
 
 [[package]]
 name = "windows-sys"
-version = "0.48.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "677d2418bec65e3338edb076e806bc1ec15693c5d0104683f2efe857f61056a9"
-dependencies = [
- "windows-targets 0.48.5",
-]
-
-[[package]]
-name = "windows-sys"
 version = "0.52.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282be5f36a8ce781fad8c8ae18fa3f9beff57ec1b52cb3de0789201425d9a33d"
 dependencies = [
- "windows-targets 0.52.6",
+ "windows-targets",
 ]
 
 [[package]]
@@ -1435,22 +1526,7 @@ version = "0.59.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e38bc4d79ed67fd075bcc251a1c39b32a1776bbe92e5bef1f0bf1f8c531853b"
 dependencies = [
- "windows-targets 0.52.6",
-]
-
-[[package]]
-name = "windows-targets"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a2fa6e2155d7247be68c096456083145c183cbbbc2764150dda45a87197940c"
-dependencies = [
- "windows_aarch64_gnullvm 0.48.5",
- "windows_aarch64_msvc 0.48.5",
- "windows_i686_gnu 0.48.5",
- "windows_i686_msvc 0.48.5",
- "windows_x86_64_gnu 0.48.5",
- "windows_x86_64_gnullvm 0.48.5",
- "windows_x86_64_msvc 0.48.5",
+ "windows-targets",
 ]
 
 [[package]]
@@ -1459,21 +1535,15 @@ version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9b724f72796e036ab90c1021d4780d4d3d648aca59e491e6b98e725b84e99973"
 dependencies = [
- "windows_aarch64_gnullvm 0.52.6",
- "windows_aarch64_msvc 0.52.6",
- "windows_i686_gnu 0.52.6",
+ "windows_aarch64_gnullvm",
+ "windows_aarch64_msvc",
+ "windows_i686_gnu",
  "windows_i686_gnullvm",
- "windows_i686_msvc 0.52.6",
- "windows_x86_64_gnu 0.52.6",
- "windows_x86_64_gnullvm 0.52.6",
- "windows_x86_64_msvc 0.52.6",
+ "windows_i686_msvc",
+ "windows_x86_64_gnu",
+ "windows_x86_64_gnullvm",
+ "windows_x86_64_msvc",
 ]
-
-[[package]]
-name = "windows_aarch64_gnullvm"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2b38e32f0abccf9987a4e3079dfb67dcd799fb61361e53e2882c3cbaf0d905d8"
 
 [[package]]
 name = "windows_aarch64_gnullvm"
@@ -1483,21 +1553,9 @@ checksum = "32a4622180e7a0ec044bb555404c800bc9fd9ec262ec147edd5989ccd0c02cd3"
 
 [[package]]
 name = "windows_aarch64_msvc"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc35310971f3b2dbbf3f0690a219f40e2d9afcf64f9ab7cc1be722937c26b4bc"
-
-[[package]]
-name = "windows_aarch64_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "09ec2a7bb152e2252b53fa7803150007879548bc709c039df7627cabbd05d469"
-
-[[package]]
-name = "windows_i686_gnu"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a75915e7def60c94dcef72200b9a8e58e5091744960da64ec734a6c6e9b3743e"
 
 [[package]]
 name = "windows_i686_gnu"
@@ -1513,21 +1571,9 @@ checksum = "0eee52d38c090b3caa76c563b86c3a4bd71ef1a819287c19d586d7334ae8ed66"
 
 [[package]]
 name = "windows_i686_msvc"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8f55c233f70c4b27f66c523580f78f1004e8b5a8b659e05a4eb49d4166cca406"
-
-[[package]]
-name = "windows_i686_msvc"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "240948bc05c5e7c6dabba28bf89d89ffce3e303022809e73deaefe4f6ec56c66"
-
-[[package]]
-name = "windows_x86_64_gnu"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53d40abd2583d23e4718fddf1ebec84dbff8381c07cae67ff7768bbf19c6718e"
 
 [[package]]
 name = "windows_x86_64_gnu"
@@ -1537,21 +1583,9 @@ checksum = "147a5c80aabfbf0c7d901cb5895d1de30ef2907eb21fbbab29ca94c5b08b1a78"
 
 [[package]]
 name = "windows_x86_64_gnullvm"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b7b52767868a23d5bab768e390dc5f5c55825b6d30b86c844ff2dc7414044cc"
-
-[[package]]
-name = "windows_x86_64_gnullvm"
 version = "0.52.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "24d5b23dc417412679681396f2b49f3de8c1473deb516bd34410872eff51ed0d"
-
-[[package]]
-name = "windows_x86_64_msvc"
-version = "0.48.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538"
 
 [[package]]
 name = "windows_x86_64_msvc"

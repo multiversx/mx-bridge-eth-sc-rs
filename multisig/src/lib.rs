@@ -364,7 +364,7 @@ pub trait Multisig:
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
             .init_supply(token_id, amount)
-            .payment((payment_token, 0, payment_amount))
+            .payment((payment_token.clone(), 0, payment_amount.clone()))
             .sync_call();
     }
 
@@ -497,7 +497,7 @@ pub trait Multisig:
 
                 let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
-                    transfers.into();
+                    transfers.clone().into();
 
                 self.tx()
                     .to(multi_transfer_esdt_addr)
