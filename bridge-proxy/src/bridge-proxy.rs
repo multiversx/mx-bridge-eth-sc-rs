@@ -40,7 +40,7 @@ pub trait BridgeProxyContract:
         );
         let next_tx_id = self.get_next_tx_id();
         self.pending_transactions().insert(next_tx_id, eth_tx);
-        self.payments(next_tx_id).set(&payment.clone());
+        self.payments(next_tx_id).set(payment.clone());
         self.batch_id(next_tx_id).set(batch_id);
     }
 
