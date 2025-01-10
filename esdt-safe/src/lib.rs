@@ -198,7 +198,7 @@ pub trait EsdtSafe:
                 continue;
             }
 
-            let actual_bridged_amount = refund_tx.amount - &required_fee;
+            let actual_bridged_amount = refund_tx.amount.clone() - &required_fee;
             self.refund_fees_for_ethereum(&refund_tx.token_identifier)
                 .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
@@ -207,8 +207,8 @@ pub trait EsdtSafe:
             let new_tx = Transaction {
                 block_nonce,
                 nonce: tx_nonce,
-                from: refund_tx.to,
-                to: refund_tx.from,
+                from: refund_tx.to.clone(),
+                to: refund_tx.from.clone(),
                 token_identifier: refund_tx.token_identifier.clone(),
                 amount: actual_bridged_amount.clone(),
                 is_refund_tx: true,
@@ -216,7 +216,7 @@ pub trait EsdtSafe:
             new_transactions.push(new_tx);
             original_tx_nonces.push(refund_tx.nonce);
 
-            let refund_token_id = refund_tx.token_identifier;
+            let refund_token_id = refund_tx.token_identifier.clone();
 
             if self.mint_burn_token(&refund_token_id).get() {
                 let burn_balances_mapper = self.burn_balances(&refund_token_id);
@@ -272,7 +272,7 @@ pub trait EsdtSafe:
 
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
-            required_fee < payment_amount,
+            required_fee < payment_amount.clone(),
             "Transaction fees cost more than the entire bridged amount"
         );
 
@@ -297,7 +297,7 @@ pub trait EsdtSafe:
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
-        let actual_bridged_amount = payment_amount - required_fee.clone();
+        let actual_bridged_amount = payment_amount.clone() - required_fee.clone();
         let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
@@ -333,7 +333,7 @@ pub trait EsdtSafe:
         TransactionDetails {
             batch_id,
             tx_nonce,
-            payment_token,
+            payment_token: payment_token.clone(),
             actual_bridged_amount,
             required_fee,
             to_address: tx.to,
@@ -490,13 +490,13 @@ pub trait EsdtSafe:
 
                 let mut updated = false;
                 for i in 0..len {
-                    let mut current_payment = all_payments.get(i);
+                    let mut current_payment = all_payments.get(i).clone();
                     if current_payment.token_identifier != new_payment.token_identifier {
                         continue;
                     }
 
                     current_payment.amount += &new_payment.amount;
-                    let _ = all_payments.set(i, &current_payment);
+                    let _ = all_payments.set(i, current_payment);
 
                     updated = true;
                     break;

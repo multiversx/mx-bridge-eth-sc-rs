@@ -156,7 +156,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
 
         for relayer in &relayers {
             if self.has_enough_stake(&relayer) {
-                staked_relayers.push(relayer);
+                staked_relayers.push(relayer.clone());
             }
         }
 
