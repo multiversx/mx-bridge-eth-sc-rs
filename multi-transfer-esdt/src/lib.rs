@@ -296,11 +296,41 @@ pub trait MultiTransferEsdt:
                 self.tx()
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
-                    .transfer();
+                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                    .gas(self.blockchain().get_gas_left())
+                    // .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
+                    .register_promise();
             }
         }
     }
 
+    #[promises_callback]
+    fn transfer_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.transfer_performed_event(
+                    batch_id,
+                    tx.from,
+                    tx.to,
+                    tx.token_id,
+                    tx.amount,
+                    tx.tx_nonce,
+                );
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                // TODO: Maybe fire a better event, but this is the most likely cause anyway
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
+
+                let refund_tx = self.convert_to_refund_tx(tx);
+                self.add_to_batch(refund_tx);
+            }
+        }
+    }
     // storage
 
     #[storage_mapper("unprocessedRefundTxs")]
