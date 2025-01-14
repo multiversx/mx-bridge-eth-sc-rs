@@ -118,14 +118,37 @@ pub trait MultiTransferEsdt:
             }
 
             valid_tx_list.push(eth_tx.clone());
-            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            valid_payments_list.push(EsdtTokenPayment::new(
+                eth_tx.token_id.clone(),
+                0,
+                eth_tx.amount.clone(),
+            ));
+            self.my_storage().set(EsdtTokenPayment::new(
+                eth_tx.token_id.clone(),
+                0,
+                eth_tx.amount,
+            ));
+
+            sc_print!("payment {}\n", eth_tx.token_id);
+            let a = valid_payments_list.get(0).clone();
+            sc_print!("payment {}\n", a.token_identifier);
+            sc_print!("payment {}\n", a.clone().token_identifier);
+            let b = self.my_storage().get();
+            sc_print!("payment {}\n", b.token_identifier);
         }
 
+        for p in valid_payments_list.clone() {
+            sc_print!("payment {}\n", p.token_identifier);
+        }
         let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
         self.distribute_payments(valid_tx_list, payments_after_wrapping, batch_id);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
+
+    #[view(myStorage)]
+    #[storage_mapper("unprocessedRefundTxs")]
+    fn my_storage(&self) -> SingleValueMapper<EsdtTokenPayment<Self::Api>>;
 
     #[only_owner]
     #[endpoint(moveRefundBatchToSafe)]
@@ -293,9 +316,11 @@ pub trait MultiTransferEsdt:
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .sync_call();
             } else {
+                let payment = p.clone();
                 self.tx()
                     .to(&eth_tx.to)
-                    .single_esdt(&p.token_identifier, 0, &p.amount)
+                    .raw_call("")
+                    .single_esdt(&payment.token_identifier, 0, &payment.amount)
                     .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
                     .gas(self.blockchain().get_gas_left())
                     // .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)

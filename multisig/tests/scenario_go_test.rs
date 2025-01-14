@@ -20,6 +20,11 @@ fn ethereum_to_multiversx_tx_batch_ok_go() {
 }
 
 #[test]
+fn ethereum_to_multiversx_call_data_empty_test_go() {
+    world().run("scenarios/ethereum_to_multiversx_call_data_empty_test.scen.json");
+}
+
+#[test]
 #[ignore] //Ignore for now
 fn ethereum_to_multiversx_tx_batch_rejected_go() {
     world().run("scenarios/ethereum_to_multiversx_tx_batch_rejected.scen.json");

@@ -553,6 +553,8 @@ fn ethereum_to_multiversx_call_data_empty_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(76_000_000u64);
 
+    state.world.start_trace();
+
     state.deploy_contracts_config();
 
     let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
@@ -597,10 +599,25 @@ fn ethereum_to_multiversx_call_data_empty_test() {
         .perform_action_endpoint(1usize)
         .run();
 
+    let a = state
+        .world
+        .query()
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .my_storage()
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(a.token_identifier == TokenIdentifier::from(WEGLD_TOKEN_ID));
+
     state
         .world
         .check_account(USER1_ADDRESS)
         .esdt_balance(WEGLD_TOKEN_ID, token_amount.clone() + 100000u64);
+
+    state
+        .world
+        .write_scenario_trace("scenarios/ethereum_to_multiversx_call_data_empty_test.scen.json");
 }
 
 #[test]

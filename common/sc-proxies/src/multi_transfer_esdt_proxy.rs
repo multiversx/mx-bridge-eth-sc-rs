@@ -97,6 +97,15 @@ where
             .original_result()
     }
 
+    pub fn my_storage(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, EsdtTokenPayment<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("myStorage")
+            .original_result()
+    }
+
     pub fn move_refund_batch_to_safe(
         self,
     ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {

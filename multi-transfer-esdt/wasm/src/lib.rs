@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           13
+// Endpoints:                           14
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  17
+// Total number of exported functions:  18
 
 #![no_std]
 
@@ -22,6 +22,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         init => init
         upgrade => upgrade
         batchTransferEsdtToken => batch_transfer_esdt_token
+        myStorage => my_storage
         moveRefundBatchToSafe => move_refund_batch_to_safe
         addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
         setMaxTxBatchSize => set_max_tx_batch_size
