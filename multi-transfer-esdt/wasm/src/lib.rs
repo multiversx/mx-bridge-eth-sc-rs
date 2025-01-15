@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           14
+// Endpoints:                           15
 // Async Callback (empty):               1
-// Promise callbacks:                    1
-// Total number of exported functions:  18
+// Promise callbacks:                    2
+// Total number of exported functions:  20
 
 #![no_std]
 
@@ -25,6 +25,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         myStorage => my_storage
         moveRefundBatchToSafe => move_refund_batch_to_safe
         addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
+        myDistributePayments => my_distribute_payments
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
@@ -35,6 +36,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLastBatchId => last_batch_id
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
+        my_transfer_callback => my_transfer_callback
         transfer_callback => transfer_callback
     )
 }

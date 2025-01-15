@@ -35,7 +35,12 @@
                 "sc:multisig": {
                     "nonce": "0",
                     "balance": "0",
-                    "code": "*"
+                    "code": "sc:multisig"
+                },
+                "sc:esdt-safe": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "code": "sc:esdt-safe"
                 }
             },
             "newAddresses": [
@@ -43,6 +48,26 @@
                     "creatorAddress": "address:owner",
                     "creatorNonce": "1",
                     "newAddress": "sc:multisig"
+                },
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "2",
+                    "newAddress": "sc:esdt-safe"
+                },
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "3",
+                    "newAddress": "sc:multi-transfer"
+                },
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "4",
+                    "newAddress": "sc:bridge-proxy"
+                },
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "5",
+                    "newAddress": "sc:bridged-tokens-wrapper"
                 }
             ]
         },
@@ -72,16 +97,6 @@
             }
         },
         {
-            "step": "setState",
-            "newAddresses": [
-                {
-                    "creatorAddress": "sc:multisig",
-                    "creatorNonce": "0",
-                    "newAddress": "sc:esdt-safe"
-                }
-            ]
-        },
-        {
             "step": "scDeploy",
             "id": "",
             "tx": {
@@ -90,22 +105,12 @@
                 "arguments": [
                     "0x0249f0"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
                 "status": "0"
             }
-        },
-        {
-            "step": "setState",
-            "newAddresses": [
-                {
-                    "creatorAddress": "sc:multisig",
-                    "creatorNonce": "1",
-                    "newAddress": "sc:multi-transfer"
-                }
-            ]
         },
         {
             "step": "scDeploy",
@@ -114,22 +119,12 @@
                 "from": "sc:multisig",
                 "contractCode": "mxsc:../../multi-transfer-esdt/output/multi-transfer-esdt.mxsc.json",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
                 "status": "0"
             }
-        },
-        {
-            "step": "setState",
-            "newAddresses": [
-                {
-                    "creatorAddress": "sc:multisig",
-                    "creatorNonce": "2",
-                    "newAddress": "sc:bridge-proxy"
-                }
-            ]
         },
         {
             "step": "scDeploy",
@@ -138,22 +133,12 @@
                 "from": "sc:multisig",
                 "contractCode": "mxsc:../../bridge-proxy/output/bridge-proxy.mxsc.json",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
                 "status": "0"
             }
-        },
-        {
-            "step": "setState",
-            "newAddresses": [
-                {
-                    "creatorAddress": "sc:multisig",
-                    "creatorNonce": "3",
-                    "newAddress": "sc:bridged-tokens-wrapper"
-                }
-            ]
         },
         {
             "step": "scDeploy",
@@ -162,7 +147,7 @@
                 "from": "sc:multisig",
                 "contractCode": "mxsc:../../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -186,7 +171,7 @@
                     "0x",
                     "0x0249f0"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -210,7 +195,7 @@
                     "0x",
                     "0x0249f0"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -234,7 +219,7 @@
                     "0x",
                     "0x0249f0"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -249,7 +234,7 @@
                 "to": "sc:multisig",
                 "function": "unpause",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -264,7 +249,7 @@
                 "to": "sc:bridged-tokens-wrapper",
                 "function": "unpause",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -279,7 +264,7 @@
                 "to": "sc:bridge-proxy",
                 "function": "unpause",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -294,7 +279,7 @@
                 "to": "sc:esdt-safe",
                 "function": "unpause",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -310,7 +295,7 @@
                 "egldValue": "1000",
                 "function": "stake",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -326,7 +311,7 @@
                 "egldValue": "1000",
                 "function": "stake",
                 "arguments": [],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -365,7 +350,7 @@
                     "0x01",
                     "0x"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [
@@ -384,7 +369,7 @@
                 "arguments": [
                     "0x01"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],
@@ -401,7 +386,7 @@
                 "arguments": [
                     "0x01"
                 ],
-                "gasLimit": "5,000,000"
+                "gasLimit": "50,000,000"
             },
             "expect": {
                 "out": [],

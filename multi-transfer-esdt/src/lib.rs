@@ -319,15 +319,45 @@ pub trait MultiTransferEsdt:
                 let payment = p.clone();
                 self.tx()
                     .to(&eth_tx.to)
-                    .raw_call("")
                     .single_esdt(&payment.token_identifier, 0, &payment.amount)
                     .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
                     .gas(self.blockchain().get_gas_left())
-                    // .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
                     .register_promise();
             }
         }
     }
+
+    #[endpoint(myDistributePayments)]
+    fn my_distribute_payments(&self, to: ManagedAddress, payments: PaymentsVec<Self::Api>) {
+        for p in payments {
+            // let payment = p.clone();
+            self.tx()
+                .to(&to)
+                .single_esdt(&p.token_identifier, 0, &p.amount)
+                // .callback(self.callbacks().my_transfer_callback())
+                // .gas(self.blockchain().get_gas_left())
+                .transfer_execute();
+        }
+    }
+
+    #[promises_callback]
+    fn my_transfer_callback(&self, #[call_result] result: ManagedAsyncCallResult<()>) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.my_event_result_ok();
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                // TODO: Maybe fire a better event, but this is the most likely cause anyway
+                self.my_event_result_failed();
+            }
+        }
+    }
+
+    #[event("myEventResultOk")]
+    fn my_event_result_ok(&self);
+
+    #[event("myEventResultFailed")]
+    fn my_event_result_failed(&self);
 
     #[promises_callback]
     fn transfer_callback(

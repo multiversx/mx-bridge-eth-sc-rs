@@ -154,7 +154,7 @@ pub trait BridgedTokensWrapper:
     #[endpoint(wrapTokens)]
     fn wrap_tokens(&self) -> PaymentsVec<Self::Api> {
         require!(self.not_paused(), "Contract is paused");
-        let original_payments = self.call_value().all_esdt_transfers().deref().clone();
+        let original_payments = self.call_value().all_esdt_transfers().clone();
         if original_payments.is_empty() {
             return original_payments;
         }
@@ -162,8 +162,9 @@ pub trait BridgedTokensWrapper:
         let mut new_payments = ManagedVec::new();
 
         for payment in &original_payments {
+            let _p = payment.clone();
             require!(
-                payment.token_nonce == 0,
+                payment.deref().token_nonce == 0,
                 "Only fungible tokens accepted for wrapping"
             );
             let universal_token_id_mapper =

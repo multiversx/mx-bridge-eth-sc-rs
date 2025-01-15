@@ -2,3 +2,7 @@
 
 [[proxy]]
 path = "../common/sc-proxies/src/multi_transfer_esdt_proxy.rs"
+
+[[proxy]]
+path = "interactor/src/proxy.rs"
+ 
