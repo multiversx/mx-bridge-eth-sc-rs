@@ -40,7 +40,7 @@ pub trait BridgeProxyContract:
         );
         let next_tx_id = self.get_next_tx_id();
         self.pending_transactions().insert(next_tx_id, eth_tx);
-        self.payments(next_tx_id).set(&payment);
+        self.payments(next_tx_id).set(payment.clone());
         self.batch_id(next_tx_id).set(batch_id);
     }
 
@@ -172,7 +172,8 @@ pub trait BridgeProxyContract:
             transfers.esdt_payments.len() == 1,
             "Expected only one esdt payment"
         );
-        transfers.esdt_payments.get(0)
+        let return_payment = transfers.esdt_payments.get(0);
+        return_payment.clone()
     }
 
     fn finish_execute_gracefully(&self, tx_id: usize) {
