@@ -146,7 +146,7 @@ pub trait BridgedTokensWrapper:
         );
 
         self.token_liquidity(&payment_token)
-            .update(|liq| *liq += payment_amount);
+            .update(|liq| *liq += payment_amount.clone());
     }
 
     /// Will wrap what it can, and send back the rest unchanged
@@ -171,7 +171,7 @@ pub trait BridgedTokensWrapper:
 
             // if there is chain specific -> universal mapping, then the token is whitelisted
             if universal_token_id_mapper.is_empty() {
-                new_payments.push(payment);
+                new_payments.push(payment.clone());
                 continue;
             }
             let universal_token_id = universal_token_id_mapper.get();
@@ -184,7 +184,7 @@ pub trait BridgedTokensWrapper:
             let converted_amount = self.get_converted_amount(
                 &payment.token_identifier,
                 &universal_token_id,
-                payment.amount,
+                payment.amount.clone(),
             );
 
             self.send()
@@ -218,14 +218,17 @@ pub trait BridgedTokensWrapper:
     fn unwrap_token_common(&self, requested_token: &TokenIdentifier) -> BigUint {
         require!(self.not_paused(), "Contract is paused");
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        require!(payment_amount > 0u32, "Must pay more than 0 tokens!");
+        require!(
+            payment_amount.clone() > 0u32,
+            "Must pay more than 0 tokens!"
+        );
 
         let universal_bridged_token_ids = self
             .chain_specific_to_universal_mapping(requested_token)
             .get();
 
         require!(
-            payment_token == universal_bridged_token_ids,
+            payment_token.clone() == universal_bridged_token_ids,
             "Esdt token unavailable"
         );
         self.require_tokens_have_set_decimals_num(&payment_token, requested_token);

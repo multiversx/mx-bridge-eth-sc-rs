@@ -140,7 +140,8 @@ pub trait TokenModule:
                 );
                 let payments = self.call_value().all_esdt_transfers();
                 if !payments.is_empty() {
-                    let (payment_token_id, _, payment_token_amount) = payments.get(0).into_tuple();
+                    let (payment_token_id, _, payment_token_amount) =
+                        payments.get(0).clone().into_tuple();
                     require!(payment_token_id == *token_id, "Wrong token id");
                     require!(payment_token_amount == *total_balance, "Wrong payment");
                 }
@@ -216,8 +217,8 @@ pub trait TokenModule:
     #[endpoint(initSupply)]
     fn init_supply(&self, token_id: &TokenIdentifier, amount: &BigUint) {
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
-        require!(token_id == &payment_token, "Invalid token ID");
-        require!(amount == &payment_amount, "Invalid amount");
+        require!(token_id == &payment_token.clone(), "Invalid token ID");
+        require!(amount == &payment_amount.clone(), "Invalid amount");
 
         self.require_token_in_whitelist(token_id);
         require!(
