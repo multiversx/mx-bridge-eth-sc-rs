@@ -91,6 +91,7 @@ const MAX_AMOUNT: u64 = 100_000_000_000_000u64;
 const BALANCE: &str = "2,000,000";
 const ERROR: u64 = 4;
 const MINTED_AMOUNT: u64 = 100_000_000_000;
+const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -1370,4 +1371,167 @@ fn batch_transfer_esdt_token_to_address_zero() {
         .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .batch_transfer_esdt_token(1u32, transfers)
         .run();
+}
+
+#[test]
+fn multi_transfer_reduce_max_tx_batch_size_test() {
+    let mut state: MultiTransferTestState = MultiTransferTestState::new();
+
+    state.multisig_deploy();
+    state.multi_transfer_deploy();
+    state.bridge_proxy_deploy();
+    state.safe_deploy_real_contract();
+    state.bridged_tokens_wrapper_deploy();
+    state.config_multi_transfer();
+
+    state.world.set_esdt_balance(
+        MULTISIG_ADDRESS,
+        b"TOKEN-WITH",
+        BigUint::from(10_000_000u64),
+    );
+
+    let eth_tx = EthTransaction {
+        from: EthAddress::zero(),
+        to: ManagedAddress::zero(),
+        token_id: TokenIdentifier::from(TOKEN_TICKER),
+        amount: BigUint::from(MAX_AMOUNT),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::none(),
+    };
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx.clone());
+
+    // Batch size is default 10
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers.clone())
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers.clone())
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers.clone())
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers.clone())
+        .run();
+
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_batch_status(1u64)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::PartiallyFull {
+            end_block_nonce: DEFAULT_MAX_TX_BATCH_BLOCK_DURATION,
+            tx_ids: ManagedVec::from(vec![1u64, 1u64, 1u64, 1u64])
+        },
+        "Incorrect batch status"
+    );
+
+    let new_max_batch_status = 2usize;
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .set_max_tx_batch_size(new_max_batch_status)
+        .run();
+
+    //get_batch_status
+    let batch_id = 1u64;
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_batch_status(batch_id)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::WaitingForSignatures,
+        "Incorrect batch status"
+    );
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(batch_id, transfers)
+        .run();
+
+    //First batch should be full
+    let batch_id = 1u64;
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_batch_status(batch_id)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::WaitingForSignatures,
+        "Incorrect batch status"
+    );
+
+    //A new batch should be created
+    let batch_id = 2u64;
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_batch_status(batch_id)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::PartiallyFull {
+            end_block_nonce: DEFAULT_MAX_TX_BATCH_BLOCK_DURATION,
+            tx_ids: ManagedVec::from(vec![1u64])
+        },
+        "Incorrect batch status"
+    );
 }

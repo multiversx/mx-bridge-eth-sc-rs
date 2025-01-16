@@ -7,7 +7,7 @@ use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
+const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 
 #[multiversx_sc::contract]
