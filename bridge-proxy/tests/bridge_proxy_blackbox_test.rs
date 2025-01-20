@@ -8,7 +8,7 @@ use bridge_proxy::config::ProxyTrait as _;
 use crowdfunding_esdt::crowdfunding_esdt_proxy;
 use multiversx_sc::codec::NestedEncode;
 use multiversx_sc::contract_base::ManagedSerializer;
-use multiversx_sc::sc_print;
+use multiversx_sc::imports::MultiValue2;
 use multiversx_sc::types::{
     EgldOrEsdtTokenIdentifier, EsdtTokenPayment, ManagedOption, MultiValueEncoded,
     ReturnsNewAddress, ReturnsResult, TestAddress, TestSCAddress, TestTokenIdentifier,
@@ -25,6 +25,7 @@ use multiversx_sc::{
         ManagedByteArray, ManagedVec, TokenIdentifier,
     },
 };
+use multiversx_sc::{require, sc_print};
 use multiversx_sc_scenario::imports::MxscPath;
 use multiversx_sc_scenario::{
     api::StaticApi,
@@ -1104,4 +1105,176 @@ fn bridge_proxy_refund_tx_test() {
     test.world
         .check_account(BRIDGE_PROXY_ADDRESS)
         .check_storage("str:highestTxId", "1");
+}
+
+#[test]
+fn bridge_proxy_double_execute_same_tx_test() {
+    let mut test = BridgeProxyTestState::new();
+    test.multisig_deploy();
+
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("fund"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(500u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    test.world
+        .tx()
+        .from(MULTI_TRANSFER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .deposit(&eth_tx, 1u64)
+        .egld_or_single_esdt(
+            &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+            0,
+            &BigUint::from(500u64),
+        )
+        .run();
+
+    test.world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transaction_by_id(1u32)
+        .returns(ExpectValue(eth_tx))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .gas(200_000_000)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .run();
+
+    test.world
+        .query()
+        .to(CROWDFUNDING_ADDRESS)
+        .typed(crowdfunding_esdt_proxy::CrowdfundingProxy)
+        .get_current_funds()
+        .returns(ExpectValue(500u64))
+        .run();
+
+    test.world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(BRIDGE_PROXY_ADDRESS)
+        .gas(200_000_000)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .execute(1u32)
+        .returns(ExpectError(4, "Invalid tx id"))
+        .run();
+}
+
+#[test]
+fn bridge_proxy_execute_1000_even_tx_test() {
+    let mut test = BridgeProxyTestState::new();
+    test.multisig_deploy();
+
+    test.deploy_bridge_proxy();
+    test.deploy_crowdfunding();
+    test.config_bridge();
+
+    let mut args = ManagedVec::new();
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("fund"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
+        token_id: BRIDGE_TOKEN_ID.into(),
+        amount: BigUint::from(5u64),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    for _ in 1..101 {
+        test.world
+            .tx()
+            .from(MULTI_TRANSFER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .deposit(&eth_tx, 1u64)
+            .egld_or_single_esdt(
+                &EgldOrEsdtTokenIdentifier::esdt(BRIDGE_TOKEN_ID),
+                0,
+                &BigUint::from(5u64),
+            )
+            .run();
+    }
+
+    for i in 1..101u32 {
+        test.world
+            .query()
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .get_pending_transaction_by_id(i)
+            .returns(ExpectValue(eth_tx.clone()))
+            .run();
+    }
+
+    for i in 1..101u32 {
+        if i % 2 == 1 {
+            continue;
+        }
+        test.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .gas(200_000_000)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .execute(i)
+            .run();
+    }
+    test.world
+        .query()
+        .to(CROWDFUNDING_ADDRESS)
+        .typed(crowdfunding_esdt_proxy::CrowdfundingProxy)
+        .get_current_funds()
+        .returns(ExpectValue(250u64))
+        .run();
+
+    let pending_txs = test
+        .world
+        .query()
+        .to(BRIDGE_PROXY_ADDRESS)
+        .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+        .get_pending_transactions()
+        .returns(ReturnsResult)
+        .run();
+
+    for tx in pending_txs {
+        let (tx_id, actual_tx) = tx.into_tuple();
+        assert!(tx_id % 2 == 1);
+    }
 }
