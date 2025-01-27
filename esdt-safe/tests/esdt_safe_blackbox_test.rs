@@ -1343,3 +1343,164 @@ fn withdraw_transaction_fees_test() {
         "accumulated_transaction_fees should be zero after withdrawal"
     );
 }
+
+#[test]
+fn esdt_safe_reduce_max_tx_batch_size_test() {
+    let mut state = EsdtSafeTestState::new();
+    state.multisig_deploy();
+    state.safe_deploy();
+
+    state.world.set_esdt_balance(
+        MULTISIG_ADDRESS,
+        b"TOKEN-WITH",
+        BigUint::from(10_000_000u64),
+    );
+
+    state.config_esdtsafe();
+
+    // Batch size is default 10
+    state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .run();
+
+    //get_batch_status
+    let batch_id = 1u64;
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_batch_status(batch_id)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::PartiallyFull {
+            end_block_nonce: 100,
+            tx_ids: ManagedVec::from(vec![1u64, 2u64, 3u64, 4u64])
+        },
+        "Incorrect batch status"
+    );
+
+    let new_max_batch_status = 2usize;
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .set_max_tx_batch_size(new_max_batch_status)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .create_transaction(
+            EthAddress {
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            },
+            OptionalValue::<BigUint<StaticApi>>::None,
+        )
+        .single_esdt(&TOKEN_ID.into(), 0, &BigUint::from(10u64))
+        .run();
+
+    //First batch should be full
+    let batch_id = 1u64;
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_batch_status(batch_id)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::WaitingForSignatures,
+        "Incorrect batch status"
+    );
+
+    //A new batch should be created
+    let batch_id = 2u64;
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_batch_status(batch_id)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::PartiallyFull {
+            end_block_nonce: 100,
+            tx_ids: ManagedVec::from(vec![5u64])
+        },
+        "Incorrect batch status"
+    );
+}

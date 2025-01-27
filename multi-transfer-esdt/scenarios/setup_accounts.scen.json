@@ -190,7 +190,7 @@
                         "str:firstBatchId": "1",
                         "str:lastBatchId": "1",
                         "str:maxTxBatchSize": "10",
-                        "str:maxTxBatchBlockDuration": "0xffffffffffffffff"
+                        "str:maxTxBatchBlockDuration": "100_000_000"
                     }
                 },
                 "sc:bridge-proxy": {
