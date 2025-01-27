@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           51
+// Endpoints:                           45
 // Async Callback (empty):               1
-// Total number of exported functions:  54
+// Total number of exported functions:  48
 
 #![no_std]
 
@@ -22,10 +22,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         setTransactionBatchStatus => set_transaction_batch_status
         addRefundBatch => add_refund_batch
+        addRefundBatchForFailedTx => add_refund_batch_for_failed_tx
         createTransaction => create_transaction
+        createRefundTransaction => create_refund_transaction
         claimRefund => claim_refund
-        setBridgedTokensWrapperAddress => set_bridged_tokens_wrapper_contract_address
-        setBridgeProxyContractAddress => set_bridge_proxy_contract_address
         withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
         withdrawTransactionFees => withdraw_transaction_fees
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
@@ -33,14 +33,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTotalRefundAmounts => get_total_refund_amounts
         getRefundFeesForEthereum => get_refund_fees_for_ethereum
         getTransactionFees => get_transaction_fees
-        getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
-        getBridgeProxyContractAddress => bridge_proxy_contract_address
-        setFeeEstimatorContractAddress => set_fee_estimator_contract_address
         setEthTxGasLimit => set_eth_tx_gas_limit
         setDefaultPricePerGasUnit => set_default_price_per_gas_unit
         setTokenTicker => set_token_ticker
         calculateRequiredFee => calculate_required_fee
-        getFeeEstimatorContractAddress => fee_estimator_contract_address
         getDefaultPricePerGasUnit => default_price_per_gas_unit
         getEthTxGasLimit => eth_tx_gas_limit
         distributeFees => distribute_fees
@@ -49,11 +45,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getTokens => get_tokens
         initSupply => init_supply
         initSupplyMintBurn => init_supply_mint_burn
-        setMultiTransferContractAddress => set_multi_transfer_contract_address
         getAllKnownTokens => token_whitelist
         isNativeToken => native_token
         isMintBurnToken => mint_burn_token
-        getMultiTransferContractAddress => multi_transfer_contract_address
         getAccumulatedTransactionFees => accumulated_transaction_fees
         getTotalBalances => total_balances
         getMintBalances => mint_balances

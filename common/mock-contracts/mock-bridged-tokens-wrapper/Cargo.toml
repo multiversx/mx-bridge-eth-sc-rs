@@ -1,0 +1,21 @@
+[package]
+name = "mock-bridged-tokens-wrapper"
+version = "0.0.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/mock_bridged_tokens_wrapper.rs"
+
+[dependencies.eth-address]
+path = "../../eth-address"
+
+[dependencies.multiversx-sc]
+version = "0.55.0"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.55.0"

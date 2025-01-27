@@ -1,0 +1,12 @@
+[package]
+name = "mock-multisig-meta"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies.mock-multisig]
+path = ".."
+
+[dependencies.multiversx-sc-meta-lib]
+version = "0.55.0"
+default-features = false

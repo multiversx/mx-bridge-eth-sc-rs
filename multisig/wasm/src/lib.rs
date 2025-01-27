@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           74
+// Endpoints:                           73
 // Async Callback (empty):               1
-// Total number of exported functions:  77
+// Total number of exported functions:  76
 
 #![no_std]
 
@@ -32,6 +32,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         withdrawTransactionFees => withdraw_transaction_fees
         withdrawSlashedAmount => withdraw_slashed_amount
         performAction => perform_action_endpoint
+        clearActionsForBatchId => clear_actions_for_batch_id
         sign => sign
         upgradeChildContractFromSource => upgrade_child_contract_from_source
         addBoardMember => add_board_member_endpoint
@@ -46,13 +47,10 @@ multiversx_sc_wasm_adapter::endpoints! {
         initSupplyMintBurnEsdtSafe => init_supply_mint_burn_esdt_safe
         pauseProxy => pause_proxy
         unpauseProxy => unpause_proxy
-        changeFeeEstimatorContractAddress => change_fee_estimator_contract_address
         changeMultiversXToEthGasLimit => change_multiversx_to_eth_gas_limit
         changeDefaultPricePerGasUnit => change_default_price_per_gas_unit
         changeTokenTicker => change_token_ticker
         esdtSafeAddTokenToWhitelist => esdt_safe_add_token_to_whitelist
-        setMultiTransferOnEsdtSafe => set_multi_transfer_on_esdt_safe
-        setEsdtSafeOnMultiTransfer => set_esdt_safe_on_multi_transfer
         esdtSafeRemoveTokenFromWhitelist => esdt_safe_remove_token_from_whitelist
         esdtSafeSetMaxTxBatchSize => esdt_safe_set_max_tx_batch_size
         esdtSafeSetMaxTxBatchBlockDuration => esdt_safe_set_max_tx_batch_block_duration
@@ -60,7 +58,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         multiTransferEsdtSetMaxBridgedAmountForToken => multi_transfer_esdt_set_max_bridged_amount_for_token
         multiTransferEsdtSetMaxRefundTxBatchSize => multi_transfer_esdt_set_max_refund_tx_batch_size
         multiTransferEsdtSetMaxRefundTxBatchBlockDuration => multi_transfer_esdt_set_max_refund_tx_batch_block_duration
-        multiTransferEsdtSetWrappingContractAddress => multi_transfer_esdt_set_wrapping_contract_address
         getQuorum => quorum
         getNumBoardMembers => num_board_members
         getRequiredStakeAmount => required_stake_amount
@@ -74,6 +71,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getEsdtSafeAddress => esdt_safe_address
         getMultiTransferEsdtAddress => multi_transfer_esdt_address
         getProxyAddress => proxy_address
+        getBridgedTokensWrapperAddress => bridged_tokens_wrapper_address
+        getFeeEstimatorAddress => fee_estimator_address
         getCurrentTxBatch => get_current_tx_batch
         getBatch => get_batch
         getCurrentRefundBatch => get_current_refund_batch

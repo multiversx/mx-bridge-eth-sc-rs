@@ -20,11 +20,20 @@ path = "../common/token-module"
 [dependencies.tx-batch-module]
 path = "../common/tx-batch-module"
 
+[dependencies.storage-module]
+path = "../common/storage-module"
+
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
+[dependencies.mock-esdt-safe]
+path = "../common/mock-contracts/mock-esdt-safe"
+
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.52.3"
+version = "=0.55.0"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.55.0"

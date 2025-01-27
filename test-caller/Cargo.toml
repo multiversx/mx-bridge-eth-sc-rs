@@ -9,13 +9,13 @@ publish = false
 path = "src/test-caller.rs"
 
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc-modules]
-version = "0.52.3"
+version = "0.55.0"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.55.0"

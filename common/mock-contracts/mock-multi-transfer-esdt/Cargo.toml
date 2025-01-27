@@ -1,0 +1,18 @@
+[package]
+name = "mock-multi-transfer-esdt"
+version = "0.0.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/mock_multi_transfer_esdt.rs"
+
+[dependencies.multiversx-sc]
+version = "0.55.0"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.55.0"

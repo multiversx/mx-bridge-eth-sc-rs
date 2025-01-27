@@ -1,4 +1,4 @@
 [settings]
 
 [[proxy]]
-path = "../multisig/src/multisig_proxy.rs"
+path = "../common/sc-proxies/src/multisig_proxy.rs"

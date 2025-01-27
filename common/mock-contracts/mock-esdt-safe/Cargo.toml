@@ -1,0 +1,21 @@
+[package]
+name = "mock-esdt-safe"
+version = "0.0.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/mock_esdt_safe.rs"
+
+[dependencies.multiversx-sc]
+version = "=0.55.0"
+
+[dependencies.multiversx-sc-modules]
+version = "=0.55.0"
+
+[dependencies.eth-address]
+path = "../../eth-address"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "=0.55.0"

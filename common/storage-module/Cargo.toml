@@ -1,0 +1,10 @@
+[package]
+name = "storage-module"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies.multiversx-sc]
+version = "=0.55.0"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "=0.55.0"

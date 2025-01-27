@@ -11,4 +11,4 @@ path = "src/lib.rs"
 path = "../eth-address"
 
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.55.0"

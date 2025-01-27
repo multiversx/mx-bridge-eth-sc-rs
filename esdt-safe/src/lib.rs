@@ -16,6 +16,16 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
+pub struct TransactionDetails<Api: ManagedTypeApi> {
+    pub batch_id: u64,
+    pub tx_nonce: u64,
+    pub payment_token: TokenIdentifier<Api>,
+    pub actual_bridged_amount: BigUint<Api>,
+    pub required_fee: BigUint<Api>,
+    pub to_address: ManagedBuffer<Api>,
+    pub is_refund_tx: bool,
+}
+
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub struct RefundInfo<M: ManagedTypeApi> {
@@ -31,6 +41,7 @@ pub trait EsdtSafe:
     + tx_batch_module::TxBatchModule
     + max_bridged_amount_module::MaxBridgedAmountModule
     + multiversx_sc_modules::pause::PauseModule
+    + storage_module::CommonStorageModule
 {
     /// fee_estimator_contract_address - The address of a Price Aggregator contract,
     /// which will get the price of token A in token B
@@ -38,17 +49,7 @@ pub trait EsdtSafe:
     /// eth_tx_gas_limit - The gas limit that will be used for transactions on the ETH side.
     /// Will be used to compute the fees for the transfer
     #[init]
-    fn init(
-        &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
-        eth_tx_gas_limit: BigUint,
-    ) {
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.multi_transfer_contract_address()
-            .set(&multi_transfer_contract_address);
-
+    fn init(&self, eth_tx_gas_limit: BigUint) {
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -69,20 +70,7 @@ pub trait EsdtSafe:
     }
 
     #[upgrade]
-    fn upgrade(
-        &self,
-        fee_estimator_contract_address: ManagedAddress,
-        multi_transfer_contract_address: ManagedAddress,
-        bridge_proxy_contract_address: ManagedAddress,
-        eth_tx_gas_limit: BigUint,
-    ) {
-        self.fee_estimator_contract_address()
-            .set(&fee_estimator_contract_address);
-        self.multi_transfer_contract_address()
-            .set(&multi_transfer_contract_address);
-        self.bridge_proxy_contract_address()
-            .set(&bridge_proxy_contract_address);
-
+    fn upgrade(&self, eth_tx_gas_limit: BigUint) {
         self.eth_tx_gas_limit().set(&eth_tx_gas_limit);
 
         self.max_tx_batch_size()
@@ -97,7 +85,7 @@ pub trait EsdtSafe:
         // set ticker for "GWEI"
         let gwei_token_id = TokenIdentifier::from(GWEI_STRING);
         self.token_ticker(&gwei_token_id)
-            .set(gwei_token_id.as_managed_buffer());
+            .set_if_empty(gwei_token_id.as_managed_buffer());
 
         self.set_paused(true);
     }
@@ -166,7 +154,7 @@ pub trait EsdtSafe:
     #[endpoint(addRefundBatch)]
     fn add_refund_batch(&self, refund_transactions: ManagedVec<Transaction<Self::Api>>) {
         let caller = self.blockchain().get_caller();
-        let multi_transfer_address = self.multi_transfer_contract_address().get();
+        let multi_transfer_address = self.get_multi_transfer_address();
         require!(caller == multi_transfer_address, "Invalid caller");
 
         let refund_payments = self.call_value().all_esdt_transfers().deref().clone();
@@ -206,10 +194,11 @@ pub trait EsdtSafe:
             };
 
             if refund_tx.amount <= required_fee {
+                self.failed_refunds().push(&refund_tx);
                 continue;
             }
 
-            let actual_bridged_amount = refund_tx.amount - &required_fee;
+            let actual_bridged_amount = refund_tx.amount.clone() - &required_fee;
             self.refund_fees_for_ethereum(&refund_tx.token_identifier)
                 .update(|fees| *fees += required_fee);
             let tx_nonce = self.get_and_save_next_tx_id();
@@ -218,8 +207,8 @@ pub trait EsdtSafe:
             let new_tx = Transaction {
                 block_nonce,
                 nonce: tx_nonce,
-                from: refund_tx.to,
-                to: refund_tx.from,
+                from: refund_tx.to.clone(),
+                to: refund_tx.from.clone(),
                 token_identifier: refund_tx.token_identifier.clone(),
                 amount: actual_bridged_amount.clone(),
                 is_refund_tx: true,
@@ -227,7 +216,7 @@ pub trait EsdtSafe:
             new_transactions.push(new_tx);
             original_tx_nonces.push(refund_tx.nonce);
 
-            let refund_token_id = refund_tx.token_identifier;
+            let refund_token_id = refund_tx.token_identifier.clone();
 
             if self.mint_burn_token(&refund_token_id).get() {
                 let burn_balances_mapper = self.burn_balances(&refund_token_id);
@@ -260,66 +249,60 @@ pub trait EsdtSafe:
         }
     }
 
-    // endpoints
+    #[endpoint(addRefundBatchForFailedTx)]
+    fn add_refund_batch_for_failed_tx(&self) {
+        let mut refund_transactions: ManagedVec<Transaction<Self::Api>> = ManagedVec::new();
+        for failed_refund in self.failed_refunds().iter() {
+            refund_transactions.push(failed_refund);
+        }
 
-    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
-    ///
-    /// Every transfer will have a part of the tokens subtracted as fees.
-    /// The fee amount depends on the global eth_tx_gas_limit
-    /// and the current GWEI price, respective to the bridged token
-    ///
-    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
-    #[payable("*")]
-    #[endpoint(createTransaction)]
-    fn create_transaction(
+        self.add_refund_batch(refund_transactions);
+    }
+
+    fn create_transaction_common(
         &self,
         to: EthAddress<Self::Api>,
-        opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
-    ) {
+        opt_min_bridge_amount: OptionalValue<BigUint<Self::Api>>,
+    ) -> TransactionDetails<Self::Api> {
         require!(self.not_paused(), "Cannot create transaction while paused");
+        require!(to != EthAddress::zero(), "Cannot send to an empty address");
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_in_whitelist(&payment_token);
 
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(
-            required_fee < payment_amount,
+            required_fee < payment_amount.clone(),
             "Transaction fees cost more than the entire bridged amount"
         );
 
-        self.require_below_max_amount(&payment_token, &payment_amount);
-
-        // This addr is used for the refund, if the transaction fails
-        // This is passed by the BridgeTokenWrapper contract
-        let mut is_refund_tx = false;
-        let caller = self.blockchain().get_caller();
-        let refund_info = match opt_refund_info {
-            OptionalValue::Some(refund_info) => {
-                if caller == self.bridge_proxy_contract_address().get() {
-                    is_refund_tx = true;
-                    refund_info
-                } else if caller == self.bridged_tokens_wrapper_address().get() {
-                    refund_info
-                } else {
-                    sc_panic!("Cannot specify a refund address from this caller");
-                }
+        match opt_min_bridge_amount {
+            OptionalValue::Some(min_bridge_amount) => {
+                require!(
+                    required_fee < min_bridge_amount,
+                    "Minimum bridged amount after fee is not achieved"
+                );
             }
-            OptionalValue::None => RefundInfo {
-                address: caller,
-                initial_batch_id: 0,
-                initial_nonce: 0,
-            },
+            OptionalValue::None => {}
         };
+
+        self.require_below_max_amount(&payment_token, &payment_amount);
+        let caller = self.blockchain().get_caller();
+
+        let mut is_refund_tx = false;
+        if caller == self.get_bridge_proxy_address() {
+            is_refund_tx = true;
+        }
 
         self.accumulated_transaction_fees(&payment_token)
             .update(|fees| *fees += &required_fee);
 
-        let actual_bridged_amount = payment_amount - required_fee.clone();
+        let actual_bridged_amount = payment_amount.clone() - required_fee.clone();
         let tx_nonce = self.get_and_save_next_tx_id();
         let tx = Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: tx_nonce,
-            from: refund_info.address.as_managed_buffer().clone(),
+            from: caller.as_managed_buffer().clone(),
             to: to.as_managed_buffer().clone(),
             token_identifier: payment_token.clone(),
             amount: actual_bridged_amount.clone(),
@@ -347,27 +330,90 @@ pub trait EsdtSafe:
                 *total += &actual_bridged_amount;
             });
         }
-        if !is_refund_tx {
-            self.create_transaction_event(
-                batch_id,
-                tx_nonce,
-                payment_token,
-                actual_bridged_amount,
-                required_fee,
-                refund_info.address.as_managed_buffer().clone(),
-                tx.to,
-            );
-        } else {
-            self.create_refund_transaction_event(
-                batch_id,
-                tx_nonce,
-                payment_token,
-                actual_bridged_amount,
-                required_fee,
-                refund_info.initial_batch_id,
-                refund_info.initial_nonce,
-            );
+        TransactionDetails {
+            batch_id,
+            tx_nonce,
+            payment_token: payment_token.clone(),
+            actual_bridged_amount,
+            required_fee,
+            to_address: tx.to,
+            is_refund_tx,
         }
+    }
+
+    // endpoints
+
+    /// Create an MultiversX -> Ethereum transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
+    #[payable("*")]
+    #[endpoint(createTransaction)]
+    fn create_transaction(
+        &self,
+        to: EthAddress<Self::Api>,
+        opt_min_bridge_amount: OptionalValue<BigUint<Self::Api>>,
+    ) {
+        let transaction_details = self.create_transaction_common(to, opt_min_bridge_amount);
+        let caller = self.blockchain().get_caller();
+
+        self.create_transaction_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            caller.as_managed_buffer().clone(),
+            transaction_details.to_address,
+        );
+    }
+
+    /// Create an Ethereum -> MultiversX refund transaction. Only fungible tokens are accepted.
+    ///
+    /// Every transfer will have a part of the tokens subtracted as fees.
+    /// The fee amount depends on the global eth_tx_gas_limit
+    /// and the current GWEI price, respective to the bridged token
+    ///
+    /// fee_amount = price_per_gas_unit * eth_tx_gas_limit
+    #[payable("*")]
+    #[endpoint(createRefundTransaction)]
+    fn create_refund_transaction(
+        &self,
+        to: EthAddress<Self::Api>,
+        opt_refund_info: OptionalValue<RefundInfo<Self::Api>>,
+    ) {
+        let bridge_proxy_address = self.get_bridge_proxy_address();
+        let caller = self.blockchain().get_caller();
+
+        require!(
+            bridge_proxy_address == caller,
+            "Only BridgeProxy SC can call this endpoint"
+        );
+
+        let transaction_details = self.create_transaction_common(to, OptionalValue::None);
+        let caller = self.blockchain().get_caller();
+
+        let refund_info = match opt_refund_info {
+            OptionalValue::Some(refund_info) => refund_info,
+            OptionalValue::None => RefundInfo {
+                address: caller,
+                initial_batch_id: 0u64,
+                initial_nonce: 0,
+            },
+        };
+
+        self.create_refund_transaction_event(
+            transaction_details.batch_id,
+            transaction_details.tx_nonce,
+            transaction_details.payment_token,
+            transaction_details.actual_bridged_amount,
+            transaction_details.required_fee,
+            refund_info.initial_batch_id,
+            refund_info.initial_nonce,
+        );
     }
 
     /// Claim funds for failed MultiversX -> Ethereum transactions.
@@ -391,40 +437,6 @@ pub trait EsdtSafe:
 
         self.claim_refund_transaction_event(&token_id, caller);
         EsdtTokenPayment::new(token_id, 0, refund_amount)
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgedTokensWrapperAddress)]
-    fn set_bridged_tokens_wrapper_contract_address(
-        &self,
-        opt_address: OptionalValue<ManagedAddress>,
-    ) {
-        match opt_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridged tokens wrapper address"
-                );
-                self.bridged_tokens_wrapper_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridged_tokens_wrapper_address().clear(),
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgeProxyContractAddress)]
-    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridge proxy contract address"
-                );
-
-                self.bridge_proxy_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
-        }
     }
 
     #[only_owner]
@@ -478,13 +490,13 @@ pub trait EsdtSafe:
 
                 let mut updated = false;
                 for i in 0..len {
-                    let mut current_payment = all_payments.get(i);
+                    let mut current_payment = all_payments.get(i).clone();
                     if current_payment.token_identifier != new_payment.token_identifier {
                         continue;
                     }
 
                     current_payment.amount += &new_payment.amount;
-                    let _ = all_payments.set(i, &current_payment);
+                    let _ = all_payments.set(i, current_payment);
 
                     updated = true;
                     break;
@@ -504,17 +516,41 @@ pub trait EsdtSafe:
     fn get_refund_amounts(
         &self,
         address: ManagedAddress,
+        opt_tokens: OptionalValue<MultiValueEncoded<TokenIdentifier<Self::Api>>>,
     ) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
         let mut refund_amounts = MultiValueEncoded::new();
-        for token_id in self.token_whitelist().iter() {
-            let amount = self.refund_amount(&address, &token_id).get();
-            if amount > 0u32 {
-                refund_amounts.push((token_id, amount).into());
+        match opt_tokens {
+            OptionalValue::Some(tokens) => {
+                for token_id in tokens {
+                    self.get_refund_amount_for_token(&address, token_id, &mut refund_amounts);
+                }
+            }
+            OptionalValue::None => {
+                for token_id in self.token_whitelist().iter() {
+                    let amount = self.refund_amount(&address, &token_id).get();
+                    if amount > 0u32 {
+                        refund_amounts.push((token_id, amount).into());
+                    }
+                }
             }
         }
 
         refund_amounts
     }
+
+    fn get_refund_amount_for_token(
+        &self,
+        address: &ManagedAddress,
+        token_id: TokenIdentifier<Self::Api>,
+        refund_amounts: &mut MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>>,
+    ) {
+        let amount = self.refund_amount(address, &token_id).get();
+        if amount > 0u32 {
+            refund_amounts.push((token_id, amount).into());
+        }
+    }
+
+    // views
 
     #[view(getTotalRefundAmounts)]
     fn get_total_refund_amounts(&self) -> MultiValueEncoded<MultiValue2<TokenIdentifier, BigUint>> {
@@ -601,6 +637,32 @@ pub trait EsdtSafe:
         #[indexed] initial_tx_id: u64,
     );
 
+    #[event("createRefundTransactionEvent")]
+    fn create_refund_transaction_sc_call_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] initial_batch_id: u64,
+        #[indexed] initial_tx_id: u64,
+        #[indexed] data: ManagedBuffer,
+    );
+
+    #[event("createTransactionScCallEvent")]
+    fn create_transaction_sc_call_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_nonce: u64,
+        #[indexed] payment_token: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] fee: BigUint,
+        #[indexed] to: ManagedBuffer,
+        #[indexed] from: ManagedBuffer,
+        #[indexed] data: ManagedBuffer,
+    );
+
     #[event("addRefundTransactionEvent")]
     fn add_refund_transaction_event(
         &self,
@@ -643,11 +705,6 @@ pub trait EsdtSafe:
         token_id: &TokenIdentifier,
     ) -> SingleValueMapper<BigUint>;
 
-    #[view(getBridgedTokensWrapperAddress)]
-    #[storage_mapper("bridgedTokensWrapperAddress")]
-    fn bridged_tokens_wrapper_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getBridgeProxyContractAddress)]
-    #[storage_mapper("bridgeProxyContractAddress")]
-    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
+    #[storage_mapper("failedRefunds")]
+    fn failed_refunds(&self) -> VecMapper<Transaction<Self::Api>>;
 }

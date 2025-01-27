@@ -6,49 +6,22 @@
             "path": "setup_accounts.scen.json"
         },
         {
-            "step": "scCall",
-            "txId": "set-fee-estimator-address-to-address-zero",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt_safe",
-                "value": "0",
-                "function": "setFeeEstimatorContractAddress",
-                "arguments": [
-                    "0x0000000000000000000000000000000000000000000000000000000000000000"
-                ],
-                "gasLimit": "30,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "out": [],
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
-            "step": "checkState",
+            "step": "setState",
+            "comment": "setting local burn role",
             "accounts": {
-                "sc:esdt_safe": {
+                "sc:multisig": {
                     "nonce": "0",
                     "balance": "0",
-                    "esdt": {
-                        "str:BRIDGE-123456": {
-                            "balance": "0",
-                            "roles": [
-                                "ESDTRoleLocalBurn",
-                                "ESDTRoleLocalMint"
-                            ]
-                        }
-                    },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                        "+": ""
+                        "str:feeEstimatorAddress": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                        "str:esdtSafeAddress": "sc:esdt_safe",
+                        "str:multiTransferEsdtAddress": "sc:multi_transfer",
+                        "str:proxyAddress": "sc:bridge_proxy",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper"
                     },
-                    "code": "file:../output/esdt-safe.wasm"
-                },
-                "+": {}
+                    "code": "file:../../multisig/output/multisig.wasm",
+                    "owner": "address:owner"
+                }
             }
         },
         {

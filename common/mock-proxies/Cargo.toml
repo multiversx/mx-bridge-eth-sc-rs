@@ -1,0 +1,8 @@
+[package]
+name = "mock-proxies"
+version = "0.0.0"
+authors = ["MultiversX <contact@multiversx.com>"]
+edition = "2018"
+
+[dependencies.multiversx-sc]
+version = "=0.55.0"

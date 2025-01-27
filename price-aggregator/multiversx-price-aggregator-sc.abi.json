@@ -9,11 +9,12 @@
         },
         "contractCrate": {
             "name": "multiversx-price-aggregator-sc",
-            "version": "0.52.0"
+            "version": "0.55.0",
+            "gitVersion": "v0.55.0-2-gb931cead8"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.52.0"
+            "version": "0.55.0"
         }
     },
     "name": "PriceAggregator",
@@ -45,6 +46,10 @@
                 "multi_arg": true
             }
         ],
+        "outputs": []
+    },
+    "upgradeConstructor": {
+        "inputs": [],
         "outputs": []
     },
     "endpoints": [
@@ -216,6 +221,7 @@
         },
         {
             "name": "getOracles",
+            "title": "oracles",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
@@ -354,6 +360,14 @@
     ],
     "events": [
         {
+            "identifier": "pauseContract",
+            "inputs": []
+        },
+        {
+            "identifier": "unpauseContract",
+            "inputs": []
+        },
+        {
             "identifier": "new_round",
             "inputs": [
                 {
@@ -367,8 +381,8 @@
                     "indexed": true
                 },
                 {
-                    "name": "epoch",
-                    "type": "u64",
+                    "name": "round",
+                    "type": "u32",
                     "indexed": true
                 },
                 {
@@ -376,11 +390,96 @@
                     "type": "NewRoundEvent"
                 }
             ]
+        },
+        {
+            "identifier": "discard_submission",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "to",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "round",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "discard_submission_event",
+                    "type": "DiscardSubmissionEvent"
+                }
+            ]
+        },
+        {
+            "identifier": "discard_round",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "to",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "round",
+                    "type": "u32",
+                    "indexed": true
+                }
+            ]
+        },
+        {
+            "identifier": "add_submission",
+            "inputs": [
+                {
+                    "name": "from",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "to",
+                    "type": "bytes",
+                    "indexed": true
+                },
+                {
+                    "name": "round",
+                    "type": "u32",
+                    "indexed": true
+                },
+                {
+                    "name": "price",
+                    "type": "BigUint"
+                }
+            ]
         }
     ],
     "esdtAttributes": [],
     "hasCallback": false,
     "types": {
+        "DiscardSubmissionEvent": {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "submission_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "first_submission_timestamp",
+                    "type": "u64"
+                },
+                {
+                    "name": "has_caller_already_submitted",
+                    "type": "bool"
+                }
+            ]
+        },
         "NewRoundEvent": {
             "type": "struct",
             "fields": [

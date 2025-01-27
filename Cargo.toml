@@ -11,5 +11,12 @@ members = [
   "bridged-tokens-wrapper",
   "bridged-tokens-wrapper/meta",
   "test-caller",
-  "test-caller/meta"
+  "test-caller/meta",
+  "common/storage-module",
+  "common/mock-contracts/mock-price-aggregator/meta",
+  "common/mock-contracts/mock-multi-transfer-esdt/meta",
+  "common/mock-contracts/mock-bridge-proxy/meta",
+  "common/mock-contracts/mock-bridged-tokens-wrapper/meta",
+  "common/mock-contracts/mock-multisig/meta",
+  "common/mock-contracts/mock-esdt-safe/meta",
 ]

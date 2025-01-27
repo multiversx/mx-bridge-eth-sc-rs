@@ -26,6 +26,18 @@ path = "../common/tx-batch-module"
 [dependencies.max-bridged-amount-module]
 path = "../common/max-bridged-amount-module"
 
+[dependencies.mock-multi-transfer-esdt]
+path = "../common/mock-contracts/mock-multi-transfer-esdt"
+
+[dependencies.mock-esdt-safe]
+path = "../common/mock-contracts/mock-esdt-safe"
+
+[dependencies.mock-price-aggregator]
+path = "../common/mock-contracts/mock-price-aggregator"
+
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
 [dependencies.esdt-safe]
 path = "../esdt-safe"
 
@@ -39,13 +51,13 @@ path = "../bridged-tokens-wrapper"
 path = "../bridge-proxy"
 
 [dependencies.multiversx-sc]
-version = "=0.52.3"
+version = "=0.55.0"
 
 [dependencies.multiversx-price-aggregator-sc]
-version = "=0.52.0"
+version = "=0.55.0"
 
 [dependencies.multiversx-sc-modules]
-version = "=0.52.3"
+version = "=0.55.0"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.52.3"
+version = "=0.55.0"

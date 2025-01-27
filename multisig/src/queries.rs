@@ -1,6 +1,7 @@
 use multiversx_sc::imports::*;
+use sc_proxies::{esdt_safe_proxy, multi_transfer_esdt_proxy};
 
-use crate::{action::Action, esdt_safe_proxy, multi_transfer_esdt_proxy, user_role::UserRole};
+use crate::{action::Action, user_role::UserRole};
 use transaction::{transaction_status::TransactionStatus, EthTxAsMultiValue, TxBatchSplitInFields};
 
 /// Note: Additional queries can be found in the Storage module
@@ -55,15 +56,9 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
             .sync_call()
     }
 
-    /// Actions are cleared after execution, so an empty entry means the action was executed already
-    /// Returns "false" if the action ID is invalid
     #[view(wasActionExecuted)]
     fn was_action_executed(&self, action_id: usize) -> bool {
-        if self.is_valid_action_id(action_id) {
-            self.action_mapper().item_is_empty(action_id)
-        } else {
-            false
-        }
+        self.executed_actions().contains(&action_id)
     }
 
     /// Used for Ethereum -> MultiversX batches.
@@ -161,7 +156,7 @@ pub trait QueriesModule: crate::storage::StorageModule + crate::util::UtilModule
 
         for relayer in &relayers {
             if self.has_enough_stake(&relayer) {
-                staked_relayers.push(relayer);
+                staked_relayers.push(relayer.clone());
             }
         }
 

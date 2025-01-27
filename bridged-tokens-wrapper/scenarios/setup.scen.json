@@ -105,10 +105,10 @@
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
                         "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
                         "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
-                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
-                        "str:token_decimals_num|nested:str:WUSDC-ghijkl": "6",
-                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
-                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                        "str:tokenDecimalsNum|nested:str:WUSDC-abcdef": "6",
+                        "str:tokenDecimalsNum|nested:str:WUSDC-ghijkl": "6",
+                        "str:tokenDecimalsNum|nested:str:USDC-aaaaaa": "18",
+                        "str:tokenDecimalsNum|nested:str:USDC-cccccc": "18"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"
@@ -218,10 +218,10 @@
                         "str:tokenLiquidity|nested:str:USDC-cccccc": "100000000000000",
                         "str:tokenLiquidity|nested:str:USDC-eeeeee": "400000000000000",
                         "str:tokenLiquidity|nested:str:USDC-ffffff": "400000000000000",
-                        "str:token_decimals_num|nested:str:WUSDC-abcdef": "6",
-                        "str:token_decimals_num|nested:str:WUSDC-ghijkl": "6",
-                        "str:token_decimals_num|nested:str:USDC-aaaaaa": "18",
-                        "str:token_decimals_num|nested:str:USDC-cccccc": "18"
+                        "str:tokenDecimalsNum|nested:str:WUSDC-abcdef": "6",
+                        "str:tokenDecimalsNum|nested:str:WUSDC-ghijkl": "6",
+                        "str:tokenDecimalsNum|nested:str:USDC-aaaaaa": "18",
+                        "str:tokenDecimalsNum|nested:str:USDC-cccccc": "18"
                     },
                     "code": "file:../output/bridged-tokens-wrapper.wasm",
                     "owner": "address:owner"

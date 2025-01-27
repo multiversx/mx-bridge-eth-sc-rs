@@ -45,6 +45,11 @@
                     "creatorAddress": "address:owner",
                     "creatorNonce": "2",
                     "newAddress": "sc:bridged_tokens_wrapper"
+                },
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "3",
+                    "newAddress": "sc:multisig"
                 }
             ]
         },
@@ -56,8 +61,6 @@
                 "contractCode": "file:../output/esdt-safe.wasm",
                 "value": "0",
                 "arguments": [
-                    "sc:price_aggregator",
-                    "sc:multi_transfer",
                     "150,000"
                 ],
                 "gasLimit": "20,000,000",
@@ -98,36 +101,12 @@
             }
         },
         {
-            "step": "scCall",
-            "txId": "add-bridged-tokens-wrapper-addr",
-            "tx": {
-                "from": "address:owner",
-                "to": "sc:esdt_safe",
-                "value": "0",
-                "function": "setBridgedTokensWrapperAddress",
-                "arguments": [
-                    "sc:bridged_tokens_wrapper"
-                ],
-                "gasLimit": "50,000,000",
-                "gasPrice": "0"
-            },
-            "expect": {
-                "status": "0",
-                "message": "",
-                "gas": "*",
-                "refund": "*"
-            }
-        },
-        {
             "step": "checkState",
             "accounts": {
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
-                        "str:multiTransferContractAddress": "sc:multi_transfer",
-                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:firstBatchId": "1",
@@ -167,6 +146,19 @@
             "step": "setState",
             "comment": "setting local burn role",
             "accounts": {
+                "sc:multisig": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "storage": {
+                        "str:esdtSafeAddress": "sc:esdt_safe",
+                        "str:multiTransferEsdtAddress": "sc:multi_transfer",
+                        "str:proxyAddress": "sc:bridge_proxy",
+                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
+                        "str:feeEstimatorAddress": "sc:price_aggregator"
+                    },
+                    "code": "file:../../multisig/output/multisig.wasm",
+                    "owner": "address:owner"
+                },
                 "sc:esdt_safe": {
                     "nonce": "0",
                     "balance": "0",
@@ -180,9 +172,6 @@
                         }
                     },
                     "storage": {
-                        "str:feeEstimatorContractAddress": "sc:price_aggregator",
-                        "str:multiTransferContractAddress": "sc:multi_transfer",
-                        "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:maxTxBatchSize": "10",
                         "str:maxTxBatchBlockDuration": "100",
                         "str:firstBatchId": "1",
@@ -195,7 +184,7 @@
                         "str:tokenWhitelist.len": "1"
                     },
                     "code": "file:../output/esdt-safe.wasm",
-                    "owner": "address:owner"
+                    "owner": "sc:multisig"
                 }
             }
         },
