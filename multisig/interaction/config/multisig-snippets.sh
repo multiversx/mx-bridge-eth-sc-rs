@@ -70,9 +70,11 @@ addMapping() {
 addTokenToWhitelist() {
     CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG MINTBURN_WHITELIST NATIVE_TOKEN
 
-    BALANCE=$(echo "$TOTAL_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
-    MINT=$(echo "$MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
-    BURN=$(echo "$BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    # bc will apply the scale value if a division operation is present in the expression
+    #  we need scaling as to avoid passing to mxpy values as 4624157209902.000000 (which will error) but instead 4624157209902
+    BALANCE=$(echo "scale=0; $TOTAL_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
+    MINT=$(echo "scale=0; $MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
+    BURN=$(echo "scale=0; $BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
 
     mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
@@ -246,6 +248,27 @@ initSupplyMintBurn() {
   --gas-limit=60000000 --function="initSupplyMintBurnEsdtSafe" \
   --arguments str:${CHAIN_SPECIFIC_TOKEN} ${MINT} ${BURN} \
   --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
+syncValueWithEthereumDenom() {
+  CHECK_VARIABLES MULTISIG SAFE
+
+  read -p "Chain specific token (human readable): " TOKEN
+  read -p "Denominated value on Ethereum (should contain all digits): " ETH_VALUE
+
+  EXISTING_BURN=$(mxpy contract query ${SAFE} --proxy=${PROXY} --function getBurnBalances --arguments str:$TOKEN | jq '.[0].number')
+  EXISTING_MINT=$(mxpy contract query ${SAFE} --proxy=${PROXY} --function getMintBalances --arguments str:$TOKEN | jq '.[0].number')
+  NEW_MINT=$(echo "$ETH_VALUE+$EXISTING_BURN" | bc)
+  DIFF=$(echo "$EXISTING_MINT-$EXISTING_BURN" | bc)
+  NEW_DIFF=$(echo "$NEW_MINT-$EXISTING_BURN" | bc)
+
+  echo "For token ${TOKEN} the existing mint is ${EXISTING_MINT} and existing burn is ${EXISTING_BURN}. The minted value will be replaced with ${NEW_MINT}"
+  echo "Existing diff ${DIFF}, new diff will be ${NEW_DIFF}"
+
+  mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
+    --gas-limit=60000000 --function="initSupplyMintBurnEsdtSafe" \
+    --arguments str:${TOKEN} ${NEW_MINT} ${EXISTING_BURN} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 upgradeMultisig() {
