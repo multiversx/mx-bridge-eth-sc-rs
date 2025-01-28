@@ -22,7 +22,7 @@ use user_role::UserRole;
 use multiversx_sc::imports::*;
 
 const MAX_ACTIONS_INTER: usize = 10;
-const CALLBACK_ESDT_TRANSFER_GAS_LIMIT: u64 = 100_000;
+const CALLBACK_ESDT_TRANSFER_GAS_LIMIT: u64 = 500_000;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
@@ -505,7 +505,7 @@ pub trait Multisig:
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
                     .callback(self.callbacks().perform_action_callback(action_id))
                     .gas(self.blockchain().get_gas_left())
-                    .with_extra_gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
+                    .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
                     .register_promise();
             }
         }
