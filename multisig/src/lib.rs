@@ -437,7 +437,6 @@ pub trait Multisig:
         require!(self.not_paused(), "No actions may be executed while paused");
 
         self.perform_action(action_id);
-        self.executed_actions().insert(action_id);
     }
 
     // private
@@ -503,7 +502,25 @@ pub trait Multisig:
                     .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
-                    .async_call_and_exit();
+                    .callback(self.callbacks().perform_action_callback(action_id))
+                    .gas(self.blockchain().get_gas_left())
+                    .register_promise();
+            }
+        }
+    }
+
+    #[promises_callback]
+    fn perform_action_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        action_id: usize,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.executed_actions().insert(action_id);
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                sc_panic!("Could not perform action {}", action_id)
             }
         }
     }
