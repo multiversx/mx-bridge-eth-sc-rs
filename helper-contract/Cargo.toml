@@ -22,9 +22,3 @@ num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
 version = "0.55.0"
-
-[workspace]
-members = [
-    ".",
-    "meta", "utils/sc-proxy", "interactor"
-]
