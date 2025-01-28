@@ -298,7 +298,6 @@ pub trait MultiTransferEsdt:
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
                     .gas(self.blockchain().get_gas_left())
-                    // .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
                     .register_promise();
             }
         }
