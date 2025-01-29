@@ -8,6 +8,7 @@ use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
+const GAS_LIMIT_ESDT_TRANSFER: u64 = 500_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 
 #[multiversx_sc::contract]
@@ -297,7 +298,7 @@ pub trait MultiTransferEsdt:
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
-                    .gas(self.blockchain().get_gas_left())
+                    .gas(GAS_LIMIT_ESDT_TRANSFER)
                     .register_promise();
             }
         }
