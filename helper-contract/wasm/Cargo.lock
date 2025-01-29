@@ -34,11 +34,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "fee-estimator-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "storage-module",
+]
+
+[[package]]
 name = "helper-contract"
 version = "0.0.0"
 dependencies = [
  "multiversx-sc",
- "sc-proxy",
+ "sc-proxies",
  "transaction",
 ]
 
@@ -179,12 +187,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "sc-proxy"
-version = "0.1.0"
+name = "sc-proxies"
+version = "0.0.0"
 dependencies = [
  "eth-address",
  "multiversx-sc",
+ "token-module",
  "transaction",
+ "tx-batch-module",
 ]
 
 [[package]]
@@ -192,6 +202,13 @@ name = "smallvec"
 version = "1.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
+
+[[package]]
+name = "storage-module"
+version = "0.1.0"
+dependencies = [
+ "multiversx-sc",
+]
 
 [[package]]
 name = "syn"
@@ -205,11 +222,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "token-module"
+version = "0.0.0"
+dependencies = [
+ "fee-estimator-module",
+ "multiversx-sc",
+ "storage-module",
+]
+
+[[package]]
 name = "transaction"
 version = "0.0.0"
 dependencies = [
  "eth-address",
  "multiversx-sc",
+]
+
+[[package]]
+name = "tx-batch-module"
+version = "0.0.0"
+dependencies = [
+ "multiversx-sc",
+ "transaction",
 ]
 
 [[package]]

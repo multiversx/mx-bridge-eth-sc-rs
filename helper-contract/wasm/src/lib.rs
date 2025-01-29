@@ -20,9 +20,9 @@ multiversx_sc_wasm_adapter::endpoints! {
     (
         init => init
         upgrade => upgrade
-        getCalleeAddress => callee_address
-        setCallee => set_callee
+        setBridgeProxyAddress => set_bridge_proxy_address
         callDeposit => call_deposit
+        getBridgeProxyAddress => bridge_proxy_address
     )
 }
 
