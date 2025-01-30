@@ -500,12 +500,14 @@ pub trait Multisig:
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.clone().into();
 
+                let half_gas = self.blockchain().get_gas_left() / 2;
+
                 self.tx()
                     .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
+                    .gas(half_gas)
                     .callback(self.callbacks().perform_action_callback(action_id))
-                    .gas(self.blockchain().get_gas_left() - PROMISE_EXTRA_GAS_LEFT)
                     .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
                     .register_promise();
             }
