@@ -23,7 +23,7 @@ use multiversx_sc::imports::*;
 
 const MAX_ACTIONS_INTER: usize = 10;
 const CALLBACK_ESDT_TRANSFER_GAS_LIMIT: u64 = 100_000;
-const PROMISE_EXTRA_GAS_LEFT: u64 = 10_000;
+const PROMISE_EXTRA_GAS_LEFT: u64 = 100_000;
 
 /// Multi-signature smart contract implementation.
 /// Acts like a wallet that needs multiple signers for any action performed.
@@ -500,13 +500,11 @@ pub trait Multisig:
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.clone().into();
 
-                let half_gas = self.blockchain().get_gas_left() / 2;
-
                 self.tx()
                     .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
-                    .gas(half_gas)
+                    .gas(self.blockchain().get_gas_left() - PROMISE_EXTRA_GAS_LEFT)
                     .callback(self.callbacks().perform_action_callback(action_id))
                     .gas_for_callback(CALLBACK_ESDT_TRANSFER_GAS_LIMIT)
                     .register_promise();
