@@ -504,8 +504,7 @@ pub trait Multisig:
                     .to(multi_transfer_esdt_addr)
                     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
                     .batch_transfer_esdt_token(eth_batch_id, transfers_multi)
-                    .gas(self.blockchain().get_gas_left())
-                    .register_promise();
+                    .sync_call();
             }
         }
     }
