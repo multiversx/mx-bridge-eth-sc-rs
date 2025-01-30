@@ -437,6 +437,7 @@ pub trait Multisig:
         require!(self.not_paused(), "No actions may be executed while paused");
 
         self.perform_action(action_id);
+        self.executed_actions().insert(action_id);
     }
 
     // private
@@ -497,8 +498,6 @@ pub trait Multisig:
                 let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
                 let transfers_multi: MultiValueEncoded<Self::Api, EthTransaction<Self::Api>> =
                     transfers.clone().into();
-
-                self.executed_actions().insert(action_id);
 
                 self.tx()
                     .to(multi_transfer_esdt_addr)
