@@ -8,6 +8,7 @@ use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
+const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 
 #[multiversx_sc::contract]
@@ -296,11 +297,39 @@ pub trait MultiTransferEsdt:
                 self.tx()
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
-                    .transfer();
+                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                    .gas(GAS_LIMIT_ESDT_TRANSFER)
+                    .register_promise();
             }
         }
     }
 
+    #[promises_callback]
+    fn transfer_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.transfer_performed_event(
+                    batch_id,
+                    tx.from,
+                    tx.to,
+                    tx.token_id,
+                    tx.amount,
+                    tx.tx_nonce,
+                );
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
+
+                let refund_tx = self.convert_to_refund_tx(tx);
+                self.add_to_batch(refund_tx);
+            }
+        }
+    }
     // storage
 
     #[storage_mapper("unprocessedRefundTxs")]
