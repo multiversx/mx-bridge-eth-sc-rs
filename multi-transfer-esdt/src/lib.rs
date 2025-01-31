@@ -323,7 +323,6 @@ pub trait MultiTransferEsdt:
                 );
             }
             ManagedAsyncCallResult::Err(_) => {
-                // TODO: Maybe fire a better event, but this is the most likely cause anyway
                 self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
 
                 let refund_tx = self.convert_to_refund_tx(tx);
