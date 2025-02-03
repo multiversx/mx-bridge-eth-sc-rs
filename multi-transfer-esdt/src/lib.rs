@@ -278,6 +278,24 @@ pub trait MultiTransferEsdt:
             .sync_call()
     }
 
+    fn unwrap_tokens(
+        &self,
+        requested_token: &TokenIdentifier,
+        payment: EsdtTokenPayment<Self::Api>,
+    ) {
+        if self.get_bridged_tokens_wrapper_address().is_zero() {
+            return;
+        }
+
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
+        self.tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unwrap_token(requested_token)
+            .payment(payment)
+            .sync_call()
+    }
+
     fn distribute_payments(
         &self,
         transfers: ManagedVec<EthTransaction<Self::Api>>,
@@ -311,6 +329,8 @@ pub trait MultiTransferEsdt:
         tx: EthTransaction<Self::Api>,
         batch_id: u64,
     ) {
+        let refund_payment = self.call_value().single_esdt();
+
         match result {
             ManagedAsyncCallResult::Ok(()) => {
                 self.transfer_performed_event(
@@ -323,13 +343,52 @@ pub trait MultiTransferEsdt:
                 );
             }
             ManagedAsyncCallResult::Err(_) => {
-                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
-
-                let refund_tx = self.convert_to_refund_tx(tx);
+                self.unwrap_tokens(&tx.token_id, refund_payment.clone());
+                let refund_tx = self.convert_to_refund_tx(tx.clone());
                 self.add_to_batch(refund_tx);
+
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
             }
         }
     }
+
+    // fn unwrap_token(
+    //     &self,
+    //     requested_token: &TokenIdentifier,
+    //     eth_tx: EthTransaction<Self::Api>,
+    // ) -> EsdtTokenPayment {
+    //     let bridged_tokens_wrapper_address = self.get_bridged_tokens_wrapper_address();
+    //     let universal_token = self.get_universal_token(eth_tx.clone());
+
+    //     if !requested_token.eq(&universal_token) {
+    //         return payment;
+    //     }
+
+    //     let transfers = self
+    //         .tx()
+    //         .to(&bridged_tokens_wrapper_address)
+    //         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+    //         .unwrap_token(requested_token)
+    //         .single_esdt(
+    //             &payment.token_identifier,
+    //             payment.token_nonce,
+    //             &payment.amount,
+    //         )
+    //         .returns(ReturnsBackTransfers)
+    //         .sync_call();
+
+    //     require!(
+    //         transfers.total_egld_amount == 0,
+    //         "Expected only one esdt payment"
+    //     );
+    //     require!(
+    //         transfers.esdt_payments.len() == 1,
+    //         "Expected only one esdt payment"
+    //     );
+    //     let return_payment = transfers.esdt_payments.get(0);
+    //     return_payment.clone()
+    // }
+
     // storage
 
     #[storage_mapper("unprocessedRefundTxs")]
