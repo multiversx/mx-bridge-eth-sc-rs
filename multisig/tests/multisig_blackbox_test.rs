@@ -1057,6 +1057,100 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
 }
 
 #[test]
+fn ethereum_to_multiversx_universal_token_tx_batch_rejected_test() {
+    let mut state = MultiTransferTestState::new();
+    let over_the_limit_token_amount = BigUint::from(101_000_000_000u64);
+
+    state.deploy_contracts_config();
+
+    let mut args = ManagedVec::new();
+    args.push(ManagedBuffer::from(&[5u8]));
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("add"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx1 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        BRIDGE_PROXY_ADDRESS.to_managed_address(),
+        TokenIdentifier::from(WEGLD_TOKEN_ID),
+        over_the_limit_token_amount.clone(),
+        1u64,
+        ManagedOption::some(call_data.clone()),
+    ));
+
+    let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
+        EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        BRIDGE_PROXY_ADDRESS.to_managed_address(),
+        TokenIdentifier::from(ETH_TOKEN_ID),
+        over_the_limit_token_amount.clone(),
+        2u64,
+        ManagedOption::some(call_data.clone()),
+    ));
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTxAsMultiValue<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx1);
+    transfers.push(eth_tx2);
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .propose_multi_transfer_esdt_batch(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER2_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .sign(1usize)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(RELAYER1_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .perform_action_endpoint(1usize)
+        .run();
+
+    let refund_tx = state
+        .world
+        .query()
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .get_current_refund_batch()
+        .returns(ReturnsResult)
+        .run();
+
+    assert!(refund_tx.is_none());
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(MULTISIG_ADDRESS)
+        .typed(multisig_proxy::MultisigProxy)
+        .move_refund_batch_to_safe_from_child_contract()
+        .run();
+}
+
+#[test]
 fn init_test() {
     let mut state = MultiTransferTestState::new();
 

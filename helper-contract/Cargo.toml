@@ -9,7 +9,9 @@ authors = ["you"]
 path = "src/helper_contract.rs"
 
 [dependencies.multiversx-sc]
-version = "0.55.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "215503a"
+
 
 [dependencies.transaction]
 path = "../common/transaction"
@@ -21,4 +23,6 @@ path = "../common/sc-proxies"
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.55.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "215503a"
+

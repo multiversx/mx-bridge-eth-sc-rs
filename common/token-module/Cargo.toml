@@ -11,7 +11,9 @@ path = "../fee-estimator-module"
 path = "../storage-module"
 
 [dependencies.multiversx-sc]
-version = "=0.55.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "215503a"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.55.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "215503a"

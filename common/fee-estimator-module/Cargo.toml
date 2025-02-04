@@ -5,10 +5,12 @@ authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
 edition = "2018"
 
 [dependencies.multiversx-sc]
-version = "=0.55.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "215503a"
 
 [dependencies.storage-module]
 path = "../storage-module"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "=0.55.0"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "215503a"

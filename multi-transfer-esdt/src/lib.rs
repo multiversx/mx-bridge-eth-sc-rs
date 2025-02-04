@@ -56,14 +56,14 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
-            let token_roles = self
-                .blockchain()
-                .get_esdt_local_roles(&eth_tx.token_id.clone());
-            if token_roles.has_role(&EsdtLocalRole::Transfer) {
-                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-                self.token_with_transfer_role_event(eth_tx.token_id);
-                continue;
-            }
+            // let token_roles = self
+            //     .blockchain()
+            //     .get_esdt_local_roles(&eth_tx.token_id.clone());
+            // if token_roles.has_role(&EsdtLocalRole::Transfer) {
+            //     self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+            //     self.token_with_transfer_role_event(eth_tx.token_id);
+            //     continue;
+            // }
 
             let is_success: bool = self
                 .tx()
@@ -201,11 +201,11 @@ pub trait MultiTransferEsdt:
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
         let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
-            || token_roles.has_role(&EsdtLocalRole::Transfer)
-        {
-            return false;
-        }
+        // if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
+        //     || token_roles.has_role(&EsdtLocalRole::Transfer)
+        // {
+        //     return false;
+        // }
 
         return true;
     }
