@@ -287,6 +287,10 @@ pub trait MultiTransferEsdt:
             return;
         }
 
+        if requested_token == &payment.token_identifier {
+            return;
+        }
+
         let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
         self.tx()
             .to(bridged_tokens_wrapper_addr)
