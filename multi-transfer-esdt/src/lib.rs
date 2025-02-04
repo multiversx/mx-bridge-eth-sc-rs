@@ -315,8 +315,9 @@ pub trait MultiTransferEsdt:
                 self.tx()
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
-                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
                     .gas(GAS_LIMIT_ESDT_TRANSFER)
+                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                    .with_extra_gas_for_callback(10_000_000)
                     .register_promise();
             }
         }
@@ -351,43 +352,6 @@ pub trait MultiTransferEsdt:
             }
         }
     }
-
-    // fn unwrap_token(
-    //     &self,
-    //     requested_token: &TokenIdentifier,
-    //     eth_tx: EthTransaction<Self::Api>,
-    // ) -> EsdtTokenPayment {
-    //     let bridged_tokens_wrapper_address = self.get_bridged_tokens_wrapper_address();
-    //     let universal_token = self.get_universal_token(eth_tx.clone());
-
-    //     if !requested_token.eq(&universal_token) {
-    //         return payment;
-    //     }
-
-    //     let transfers = self
-    //         .tx()
-    //         .to(&bridged_tokens_wrapper_address)
-    //         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-    //         .unwrap_token(requested_token)
-    //         .single_esdt(
-    //             &payment.token_identifier,
-    //             payment.token_nonce,
-    //             &payment.amount,
-    //         )
-    //         .returns(ReturnsBackTransfers)
-    //         .sync_call();
-
-    //     require!(
-    //         transfers.total_egld_amount == 0,
-    //         "Expected only one esdt payment"
-    //     );
-    //     require!(
-    //         transfers.esdt_payments.len() == 1,
-    //         "Expected only one esdt payment"
-    //     );
-    //     let return_payment = transfers.esdt_payments.get(0);
-    //     return_payment.clone()
-    // }
 
     // storage
 
