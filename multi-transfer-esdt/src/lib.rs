@@ -10,6 +10,7 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 1 million
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -321,7 +322,7 @@ pub trait MultiTransferEsdt:
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .gas(GAS_LIMIT_ESDT_TRANSFER)
                     .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
-                    .with_extra_gas_for_callback(10_000_000)
+                    .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
                     .register_promise();
             }
         }

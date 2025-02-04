@@ -9,7 +9,7 @@ use sc_proxies::esdt_safe_proxy;
 use transaction::{CallData, EthTransaction};
 const MIN_GAS_LIMIT_FOR_SC_CALL: u64 = 10_000_000;
 const MAX_GAS_LIMIT_FOR_SC_CALL: u64 = 249999999;
-const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 1_000_000; // 1 million
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 1 million
 
 #[multiversx_sc::contract]
 pub trait BridgeProxyContract:
