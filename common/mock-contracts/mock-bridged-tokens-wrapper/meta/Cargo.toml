@@ -8,7 +8,5 @@ publish = false
 path = ".."
 
 [dependencies.multiversx-sc-meta-lib]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
-
+version = "0.56.1"
 default-features = false

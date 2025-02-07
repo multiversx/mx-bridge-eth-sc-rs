@@ -11,5 +11,4 @@ path = "src/lib.rs"
 path = "../eth-address"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"

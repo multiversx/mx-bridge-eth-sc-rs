@@ -9,16 +9,13 @@ authors = ["you"]
 path = "src/mock_esdt_safe.rs"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"
 
 [dependencies.multiversx-sc-modules]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"
 
 [dependencies.eth-address]
 path = "../../eth-address"
 
 [dev-dependencies.multiversx-sc-scenario]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"

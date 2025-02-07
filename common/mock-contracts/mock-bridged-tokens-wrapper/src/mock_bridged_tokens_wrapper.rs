@@ -18,7 +18,7 @@ pub trait MockBridgedTokensWrapper {
     fn unwrap_token_create_transaction(
         &self,
         _requested_token: TokenIdentifier,
-        _to: EthAddress<Self::Api>,
+        _to: &EthAddress<Self::Api>,
         _opt_refunding_address: OptionalValue<ManagedAddress>,
     ) {
     }

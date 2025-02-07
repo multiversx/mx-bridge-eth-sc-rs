@@ -9,12 +9,12 @@
         },
         "contractCrate": {
             "name": "multiversx-price-aggregator-sc",
-            "version": "0.55.0",
-            "gitVersion": "v0.55.0-2-gb931cead8"
+            "version": "0.56.1",
+            "gitVersion": "v0.56.1-2-gb931cead8"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.55.0"
+            "version": "0.56.1"
         }
     },
     "name": "PriceAggregator",
