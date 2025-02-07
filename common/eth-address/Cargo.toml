@@ -8,5 +8,4 @@ edition = "2018"
 path = "src/lib.rs"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"

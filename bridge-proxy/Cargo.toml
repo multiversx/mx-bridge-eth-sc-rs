@@ -58,7 +58,7 @@ version = "0.56.1"
 
 [dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "606f07f"
+rev = "6e7a567"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

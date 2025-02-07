@@ -9,8 +9,7 @@ publish = false
 path = "src/test-caller.rs"
 
 [dependencies.multiversx-sc]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"
 
 [dependencies.multiversx-sc-modules]
 version = "0.56.1"
@@ -19,5 +18,4 @@ version = "0.56.1"
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
+version = "0.56.1"
