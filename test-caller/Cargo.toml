@@ -13,9 +13,7 @@ git = "https://github.com/multiversx/mx-sdk-rs"
 rev = "215503a"
 
 [dependencies.multiversx-sc-modules]
-git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "215503a"
-
+version = "0.56.1"
 
 [dev-dependencies]
 num-bigint = "0.4.2"

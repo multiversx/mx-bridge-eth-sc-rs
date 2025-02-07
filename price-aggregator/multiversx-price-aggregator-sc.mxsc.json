@@ -9,11 +9,11 @@
         },
         "contractCrate": {
             "name": "multiversx-price-aggregator-sc",
-            "version": "0.55.0"
+            "version": "0.56.1"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.55.0"
+            "version": "0.56.1"
         }
     },
     "abi": {
