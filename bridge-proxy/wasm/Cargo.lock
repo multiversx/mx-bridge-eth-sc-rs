@@ -34,7 +34,7 @@ dependencies = [
  "mock-multisig",
  "mock-price-aggregator",
  "mock-proxies",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
  "storage-module",
@@ -57,7 +57,7 @@ version = "0.0.0"
 dependencies = [
  "eth-address",
  "mock-esdt-safe",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
  "storage-module",
@@ -87,9 +87,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "crowdfunding-esdt"
 version = "0.0.0"
-source = "git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567#6e7a567f0bc1b1f0af9933613c5f8cf1cfb357c1"
+source = "git+https://github.com/multiversx/mx-sdk-rs?rev=bafea45#bafea451f2dcb6f2f4df0b50b125588cf7952002"
 dependencies = [
- "multiversx-sc 0.56.1 (git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -112,7 +112,7 @@ dependencies = [
  "mock-price-aggregator",
  "mock-proxies",
  "multiversx-price-aggregator-sc",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "multiversx-sc-modules",
  "sc-proxies",
  "storage-module",
@@ -125,14 +125,14 @@ dependencies = [
 name = "eth-address"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
 name = "fee-estimator-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "storage-module",
 ]
 
@@ -187,14 +187,14 @@ checksum = "04cbf5b083de1c7e0222a7a51dbfdba1cbe1c6ab0b15e29fff3f6c077fd9cd9f"
 name = "max-bridged-amount-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
 name = "mock-bridge-proxy"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -202,7 +202,7 @@ name = "mock-bridged-tokens-wrapper"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -210,7 +210,7 @@ name = "mock-esdt-safe"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "multiversx-sc-modules",
 ]
 
@@ -218,28 +218,28 @@ dependencies = [
 name = "mock-multi-transfer-esdt"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
 name = "mock-multisig"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
 name = "mock-price-aggregator"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
 name = "mock-proxies"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -249,16 +249,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8ab9d45ed03ac64de2ba5136cff2af8131e4b01e18769f498a92e5079444b28"
 dependencies = [
  "bitflags",
- "multiversx-sc-codec 0.21.2 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "multiversx-chain-core"
-version = "0.13.1"
-source = "git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567#6e7a567f0bc1b1f0af9933613c5f8cf1cfb357c1"
-dependencies = [
- "bitflags",
- "multiversx-sc-codec 0.21.2 (git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567)",
+ "multiversx-sc-codec",
 ]
 
 [[package]]
@@ -269,7 +260,7 @@ checksum = "5ceb261b8204d23b3fac24e23af05c55a6b357e7f9841317808f279c605dab4a"
 dependencies = [
  "arrayvec",
  "getrandom",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "multiversx-sc-modules",
  "rand",
 ]
@@ -282,23 +273,9 @@ checksum = "0c6b6a8b6f7d041c4f5fd2723c524e30a97c5994396d5c6fc0e9978421459cb6"
 dependencies = [
  "bitflags",
  "hex-literal",
- "multiversx-chain-core 0.13.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-sc-codec 0.21.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "multiversx-sc-derive 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits",
- "unwrap-infallible",
-]
-
-[[package]]
-name = "multiversx-sc"
-version = "0.56.1"
-source = "git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567#6e7a567f0bc1b1f0af9933613c5f8cf1cfb357c1"
-dependencies = [
- "bitflags",
- "hex-literal",
- "multiversx-chain-core 0.13.1 (git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567)",
- "multiversx-sc-codec 0.21.2 (git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567)",
- "multiversx-sc-derive 0.56.1 (git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567)",
+ "multiversx-chain-core",
+ "multiversx-sc-codec",
+ "multiversx-sc-derive",
  "num-traits",
  "unwrap-infallible",
 ]
@@ -310,17 +287,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0df6c337692e14e5b9ea2448216cc5a75d3e891ebfe327eccaaee31dfd119e3"
 dependencies = [
  "arrayvec",
- "multiversx-sc-codec-derive 0.21.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "unwrap-infallible",
-]
-
-[[package]]
-name = "multiversx-sc-codec"
-version = "0.21.2"
-source = "git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567#6e7a567f0bc1b1f0af9933613c5f8cf1cfb357c1"
-dependencies = [
- "arrayvec",
- "multiversx-sc-codec-derive 0.21.2 (git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567)",
+ "multiversx-sc-codec-derive",
  "unwrap-infallible",
 ]
 
@@ -329,17 +296,6 @@ name = "multiversx-sc-codec-derive"
 version = "0.21.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2571c0afb65e504fe80a431f3b6a288c50dd3e7cd38d6cef18f8b47e5c8e8796"
-dependencies = [
- "hex",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "multiversx-sc-codec-derive"
-version = "0.21.2"
-source = "git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567#6e7a567f0bc1b1f0af9933613c5f8cf1cfb357c1"
 dependencies = [
  "hex",
  "proc-macro2",
@@ -361,24 +317,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "multiversx-sc-derive"
-version = "0.56.1"
-source = "git+https://github.com/multiversx/mx-sdk-rs?rev=6e7a567#6e7a567f0bc1b1f0af9933613c5f8cf1cfb357c1"
-dependencies = [
- "hex",
- "proc-macro2",
- "quote",
- "radix_trie",
- "syn",
-]
-
-[[package]]
 name = "multiversx-sc-modules"
 version = "0.56.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b908ffd35d77f97bfabb16fe86541b1cefead3363f656986605e7c8048104ca"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -387,7 +331,7 @@ version = "0.56.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6759212b5f6bc78b692bcc0b6627207d60eeaed75e28d9b4228fe8d3a119840b"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -486,7 +430,7 @@ name = "sc-proxies"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "token-module",
  "transaction",
  "tx-batch-module",
@@ -502,7 +446,7 @@ checksum = "3c5e1a9a646d36c3599cd173a41282daf47c44583ad367b8e6837255952e5c67"
 name = "storage-module"
 version = "0.1.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
@@ -521,7 +465,7 @@ name = "token-module"
 version = "0.0.0"
 dependencies = [
  "fee-estimator-module",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "storage-module",
 ]
 
@@ -530,14 +474,14 @@ name = "transaction"
 version = "0.0.0"
 dependencies = [
  "eth-address",
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
 ]
 
 [[package]]
 name = "tx-batch-module"
 version = "0.0.0"
 dependencies = [
- "multiversx-sc 0.56.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "multiversx-sc",
  "transaction",
 ]
 
