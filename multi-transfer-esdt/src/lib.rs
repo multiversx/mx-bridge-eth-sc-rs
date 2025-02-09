@@ -9,8 +9,9 @@ use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
+const GAS_LIMIT_GET_TOKENS: u64 = 10_000_000; //TODO: adjust value
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
-const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 1 million
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -66,18 +67,17 @@ pub trait MultiTransferEsdt:
             //     continue;
             // }
 
-            let is_success: bool = self
-                .tx()
+            self.tx()
                 .to(safe_address.clone())
                 .typed(esdt_safe_proxy::EsdtSafeProxy)
                 .get_tokens(&eth_tx.token_id, &eth_tx.amount)
-                .returns(ReturnsResult)
-                .sync_call();
-
-            if !is_success {
-                self.add_eth_tx_to_refund_tx_list(eth_tx, &mut refund_tx_list);
-                continue;
-            }
+                .gas(GAS_LIMIT_GET_TOKENS)
+                .callback(
+                    self.callbacks()
+                        .distribute_payments_callback(eth_tx.clone(), batch_id),
+                )
+                .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
+                .register_promise();
 
             let universal_token = self.get_universal_token(eth_tx.clone());
 
@@ -129,6 +129,24 @@ pub trait MultiTransferEsdt:
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
 
+    #[promises_callback]
+    fn get_tokens_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        eth_tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => self.get_tokens_esdt_safe_success_event(batch_id),
+            ManagedAsyncCallResult::Err(_) => {
+                let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
+                self.add_to_batch(refund_tx);
+
+                self.transfer_failed_frozen_destination_account_event(batch_id, eth_tx.tx_nonce);
+            }
+        }
+    }
+
     #[only_owner]
     #[endpoint(moveRefundBatchToSafe)]
     fn move_refund_batch_to_safe(&self) {
@@ -144,33 +162,41 @@ pub trait MultiTransferEsdt:
                 let mut refund_payments = ManagedVec::new();
 
                 for tx_fields in all_tx_fields {
-                    let (_, tx_nonce, _, _, token_identifier, amount) =
-                        tx_fields.clone().into_tuple();
+                    let (_, _, _, _, token_identifier, amount) = tx_fields.clone().into_tuple();
 
-                    if self.is_refund_valid(&token_identifier) {
-                        refund_batch.push(Transaction::from(tx_fields));
-                        refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
-                    } else {
-                        require!(
-                            self.unprocessed_refund_txs(tx_nonce).is_empty(),
-                            "This transcation is already marked as unprocessed"
-                        );
-                        self.unprocessed_refund_txs(tx_nonce)
-                            .set(Transaction::from(tx_fields));
-
-                        self.unprocessed_refund_txs_event(tx_nonce);
-                    }
+                    refund_batch.push(Transaction::from(tx_fields));
+                    refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                 }
 
                 let esdt_safe_addr = self.get_esdt_safe_address();
                 self.tx()
                     .to(esdt_safe_addr)
                     .typed(esdt_safe_proxy::EsdtSafeProxy)
-                    .add_refund_batch(refund_batch)
+                    .add_refund_batch(refund_batch.clone())
                     .payment(refund_payments)
-                    .sync_call();
+                    .gas(GAS_LIMIT_GET_TOKENS)
+                    .callback(
+                        self.callbacks()
+                            .move_refund_batch_to_safe_callback(refund_batch),
+                    )
+                    .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
+                    .register_promise();
             }
             OptionalValue::None => {}
+        }
+    }
+
+    #[promises_callback]
+    fn move_refund_batch_to_safe_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        refund_batch: ManagedVec<Transaction<Self::Api>>,
+    ) {
+        match result {
+            ManagedAsyncCallResult::Ok(()) => self.move_refund_batch_to_safe_success_event(),
+            ManagedAsyncCallResult::Err(_) => {
+                self.add_multiple_tx_to_batch(&refund_batch);
+            }
         }
     }
 
@@ -194,21 +220,6 @@ pub trait MultiTransferEsdt:
     ) {
         let refund_tx = self.convert_to_refund_tx(eth_tx);
         refund_tx_list.push(refund_tx);
-    }
-
-    fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
-        let esdt_safe_addr = self.get_esdt_safe_address();
-        let own_sc_address = self.blockchain().get_sc_address();
-        let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
-        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
-
-        // if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
-        //     || token_roles.has_role(&EsdtLocalRole::Transfer)
-        // {
-        //     return false;
-        // }
-
-        return true;
     }
 
     fn get_universal_token(&self, eth_tx: EthTransaction<Self::Api>) -> TokenIdentifier {
@@ -321,15 +332,20 @@ pub trait MultiTransferEsdt:
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .gas(GAS_LIMIT_ESDT_TRANSFER)
-                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                    .callback(
+                        self.callbacks()
+                            .distribute_payments_callback(eth_tx.clone(), batch_id),
+                    )
                     .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
                     .register_promise();
             }
         }
     }
 
+    // callbacks
+
     #[promises_callback]
-    fn transfer_callback(
+    fn distribute_payments_callback(
         &self,
         #[call_result] result: ManagedAsyncCallResult<()>,
         tx: EthTransaction<Self::Api>,
@@ -393,6 +409,12 @@ pub trait MultiTransferEsdt:
         #[indexed] batch_id: u64,
         #[indexed] tx_id: u64,
     );
+
+    #[event("getTokensEsdtEsdtSuccess")]
+    fn get_tokens_esdt_safe_success_event(&self, #[indexed] batch_id: u64);
+
+    #[event("moveRefundBatchToSafeSuccess")]
+    fn move_refund_batch_to_safe_success_event(&self);
 
     #[event("tokenWithTransferRole")]
     fn token_with_transfer_role_event(&self, #[indexed] token_id: TokenIdentifier);
