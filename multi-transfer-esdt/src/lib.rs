@@ -10,7 +10,7 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
-const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 1 million
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -200,13 +200,10 @@ pub trait MultiTransferEsdt:
         let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
-        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
-        // if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
-        //     || token_roles.has_role(&EsdtLocalRole::Transfer)
-        // {
-        //     return false;
-        // }
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+            return false;
+        }
 
         return true;
     }
