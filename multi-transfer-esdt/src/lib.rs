@@ -11,6 +11,7 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
+const FUNGIBLE_NONCE: u64 = 0;
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -57,10 +58,14 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
+            let is_token_frozen =
+                self.blockchain()
+                    .is_esdt_frozen(&safe_address, &eth_tx.token_id, FUNGIBLE_NONCE);
             let token_roles = self
                 .blockchain()
                 .get_esdt_local_roles(&eth_tx.token_id.clone());
-            if token_roles.has_role(&EsdtLocalRole::Transfer) {
+
+            if token_roles.has_role(&EsdtLocalRole::Transfer) || is_token_frozen {
                 self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
                 self.token_with_transfer_role_event(eth_tx.token_id);
                 continue;
@@ -201,7 +206,16 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+        let token_roles = self.blockchain().get_esdt_local_roles(&token_id);
+
+        let is_token_frozen =
+            self.blockchain()
+                .is_esdt_frozen(&esdt_safe_addr, &token_id, FUNGIBLE_NONCE);
+
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
+            || token_roles.has_role(&EsdtLocalRole::Transfer)
+            || is_token_frozen
+        {
             return false;
         }
 
