@@ -281,7 +281,9 @@ pub trait MultiTransferEsdt:
         requested_token: &TokenIdentifier,
         payment: EsdtTokenPayment<Self::Api>,
     ) {
-        if self.get_bridged_tokens_wrapper_address().is_zero() {
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
+
+        if bridged_tokens_wrapper_addr.is_zero() {
             return;
         }
 
@@ -289,7 +291,6 @@ pub trait MultiTransferEsdt:
             return;
         }
 
-        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
         self.tx()
             .to(bridged_tokens_wrapper_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
