@@ -60,7 +60,7 @@ rev = "3050fab"
 
 [dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "bafea45"
+rev = "bbfecf2"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
