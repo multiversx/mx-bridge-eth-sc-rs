@@ -5,7 +5,8 @@ authors = ["MultiversX <contact@multiversx.com>"]
 edition = "2018"
 
 [dependencies.multiversx-sc]
-version = "0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "3050fab"
 
 [dependencies.transaction]
 path = "../transaction"
@@ -20,4 +21,5 @@ path = "../token-module"
 path = "../tx-batch-module"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "3050fab"

@@ -51,17 +51,20 @@ path = "../common/mock-contracts/mock-price-aggregator"
 path = "../common/mock-contracts/mock-multi-transfer-esdt"
 
 [dependencies.multiversx-sc]
-version = "0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "3050fab"
 
 [dependencies.multiversx-sc-modules]
-version = "0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "3050fab"
 
 [dependencies.crowdfunding-esdt]
 git = "https://github.com/multiversx/mx-sdk-rs"
-rev = "bafea45"
+rev = "bbfecf2"
 
 [dev-dependencies]
 num-bigint = "0.4.2"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.56.1"
+git = "https://github.com/multiversx/mx-sdk-rs"
+rev = "3050fab"
