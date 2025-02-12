@@ -1535,3 +1535,69 @@ fn multi_transfer_reduce_max_tx_batch_size_test() {
         "Incorrect batch status"
     );
 }
+
+#[test]
+fn transfer_role_token_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+    let bridge_token_id = TokenIdentifier::from(BRIDGE_TOKEN_ID);
+
+    state.world.start_trace();
+
+    state.deploy_contracts();
+    state.config_multi_transfer();
+
+    state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDTSystemSCAddress)
+        .gas(100_000_000u64)
+        .typed(ESDTSystemSCProxy)
+        .set_special_roles(
+            ESDT_SAFE_ADDRESS,
+            bridge_token_id.clone(),
+            [EsdtLocalRole::Transfer][..].iter().cloned(),
+        )
+        .run();
+
+    let call_data = ManagedBuffer::from(b"add");
+    call_data
+        .clone()
+        .concat(ManagedBuffer::from(GAS_LIMIT.to_string()));
+    call_data.clone().concat(ManagedBuffer::default());
+
+    let eth_tx = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::default(),
+        },
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        token_id: bridge_token_id,
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx);
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    // no tokens for user
+    state
+        .world
+        .check_account(USER1_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, 0);
+
+    state
+        .world
+        .write_scenario_trace("scenarios/transfer_role_token_test.scen.json");
+}

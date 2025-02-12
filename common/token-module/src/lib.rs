@@ -170,6 +170,14 @@ pub trait TokenModule:
             "Only MultiTransfer can get tokens"
         );
 
+        let token_roles = self.blockchain().get_esdt_local_roles(&token_id.clone());
+
+        if token_roles.has_role(&EsdtLocalRole::Transfer) {
+            self.token_with_transfer_role_event(token_id.clone());
+
+            return false;
+        }
+
         if !self.mint_burn_token(token_id).get() {
             let total_balances_mapper = self.total_balances(token_id);
             if &total_balances_mapper.get() >= amount {
@@ -323,4 +331,7 @@ pub trait TokenModule:
     #[view(getBurnBalances)]
     #[storage_mapper("burnBalances")]
     fn burn_balances(&self, token_id: &TokenIdentifier) -> SingleValueMapper<BigUint>;
+
+    #[event("tokenWithTransferRole")]
+    fn token_with_transfer_role_event(&self, #[indexed] token_id: TokenIdentifier);
 }
