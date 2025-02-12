@@ -9,10 +9,10 @@ authors = ["you"]
 path = "src/mock_multisig.rs"
 
 [dependencies.multiversx-sc]
-version = "0.55.0"
+version = "0.56.1"
 
 [dev-dependencies]
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.55.0"
+version = "0.56.1"

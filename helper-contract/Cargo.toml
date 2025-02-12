@@ -9,7 +9,7 @@ authors = ["you"]
 path = "src/helper_contract.rs"
 
 [dependencies.multiversx-sc]
-version = "0.55.0"
+version = "0.56.1"
 
 [dependencies.transaction]
 path = "../common/transaction"
@@ -21,4 +21,4 @@ path = "../common/sc-proxies"
 num-bigint = "0.4"
 
 [dev-dependencies.multiversx-sc-scenario]
-version = "0.55.0"
+version = "0.56.1"

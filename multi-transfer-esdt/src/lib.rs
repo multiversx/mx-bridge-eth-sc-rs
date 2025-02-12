@@ -10,6 +10,7 @@ const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -56,14 +57,14 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
-            let token_roles = self
-                .blockchain()
-                .get_esdt_local_roles(&eth_tx.token_id.clone());
-            if token_roles.has_role(&EsdtLocalRole::Transfer) {
-                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-                self.token_with_transfer_role_event(eth_tx.token_id);
-                continue;
-            }
+            // let token_roles = self
+            //     .blockchain()
+            //     .get_esdt_local_roles(&eth_tx.token_id.clone());
+            // if token_roles.has_role(&EsdtLocalRole::Transfer) {
+            //     self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+            //     self.token_with_transfer_role_event(eth_tx.token_id);
+            //     continue;
+            // }
 
             let is_success: bool = self
                 .tx()
@@ -199,11 +200,8 @@ pub trait MultiTransferEsdt:
         let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
-        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
-            || token_roles.has_role(&EsdtLocalRole::Transfer)
-        {
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
             return false;
         }
 
@@ -278,6 +276,29 @@ pub trait MultiTransferEsdt:
             .sync_call()
     }
 
+    fn unwrap_tokens(
+        &self,
+        requested_token: &TokenIdentifier,
+        payment: EsdtTokenPayment<Self::Api>,
+    ) {
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
+
+        if bridged_tokens_wrapper_addr.is_zero() {
+            return;
+        }
+
+        if requested_token == &payment.token_identifier {
+            return;
+        }
+
+        self.tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unwrap_token(requested_token)
+            .payment(payment)
+            .sync_call()
+    }
+
     fn distribute_payments(
         &self,
         transfers: ManagedVec<EthTransaction<Self::Api>>,
@@ -297,8 +318,9 @@ pub trait MultiTransferEsdt:
                 self.tx()
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
-                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
                     .gas(GAS_LIMIT_ESDT_TRANSFER)
+                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                    .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
                     .register_promise();
             }
         }
@@ -311,6 +333,8 @@ pub trait MultiTransferEsdt:
         tx: EthTransaction<Self::Api>,
         batch_id: u64,
     ) {
+        let refund_payment = self.call_value().single_esdt();
+
         match result {
             ManagedAsyncCallResult::Ok(()) => {
                 self.transfer_performed_event(
@@ -323,13 +347,15 @@ pub trait MultiTransferEsdt:
                 );
             }
             ManagedAsyncCallResult::Err(_) => {
-                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
-
-                let refund_tx = self.convert_to_refund_tx(tx);
+                self.unwrap_tokens(&tx.token_id, refund_payment.clone());
+                let refund_tx = self.convert_to_refund_tx(tx.clone());
                 self.add_to_batch(refund_tx);
+
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
             }
         }
     }
+
     // storage
 
     #[storage_mapper("unprocessedRefundTxs")]
