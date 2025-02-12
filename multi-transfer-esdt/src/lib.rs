@@ -206,11 +206,11 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        let token_roles = self.blockchain().get_esdt_local_roles(&token_id);
+        let token_roles = self.blockchain().get_esdt_local_roles(token_id);
 
         let is_token_frozen =
             self.blockchain()
-                .is_esdt_frozen(&esdt_safe_addr, &token_id, FUNGIBLE_NONCE);
+                .is_esdt_frozen(&esdt_safe_addr, token_id, FUNGIBLE_NONCE);
 
         if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
             || token_roles.has_role(&EsdtLocalRole::Transfer)
