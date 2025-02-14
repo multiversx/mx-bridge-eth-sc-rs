@@ -8,8 +8,8 @@
 // Upgrade:                              1
 // Endpoints:                           13
 // Async Callback (empty):               1
-// Promise callbacks:                    1
-// Total number of exported functions:  17
+// Promise callbacks:                    3
+// Total number of exported functions:  19
 
 #![no_std]
 
@@ -34,7 +34,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLastBatchId => last_batch_id
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
-        transfer_callback => transfer_callback
+        get_tokens_callback => get_tokens_callback
+        move_refund_batch_to_safe_callback => move_refund_batch_to_safe_callback
+        distribute_payments_callback => distribute_payments_callback
     )
 }
 
