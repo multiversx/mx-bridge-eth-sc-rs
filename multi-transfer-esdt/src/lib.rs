@@ -57,14 +57,12 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
-            // let token_roles = self
-            //     .blockchain()
-            //     .get_esdt_local_roles(&eth_tx.token_id.clone());
-            // if token_roles.has_role(&EsdtLocalRole::Transfer) {
-            //     self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-            //     self.token_with_transfer_role_event(eth_tx.token_id);
-            //     continue;
-            // }
+            let has_trasfer_role = self.has_token_transfer_role(&eth_tx.token_id.clone());
+            if has_trasfer_role {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.token_with_transfer_role_event(eth_tx.token_id);
+                continue;
+            }
 
             let is_success: bool = self
                 .tx()
@@ -200,8 +198,11 @@ pub trait MultiTransferEsdt:
         let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
+        let has_trasfer_role = self.has_token_transfer_role(token_id);
 
-        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
+        if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id)
+            || has_trasfer_role
+        {
             return false;
         }
 
@@ -297,6 +298,18 @@ pub trait MultiTransferEsdt:
             .unwrap_token(requested_token)
             .payment(payment)
             .sync_call()
+    }
+
+    fn has_token_transfer_role(&self, token_id: &TokenIdentifier) -> bool {
+        let key = ManagedBuffer::new_from_bytes(b"ELRONDtransferesdt");
+        let base_key = key.concat(token_id.clone().into_managed_buffer());
+        let remote = SingleValueMapper::<Self::Api, ManagedBuffer, _>::new_from_address(
+            ESDTSystemSCAddress.to_managed_address(),
+            StorageKey::from(base_key),
+        )
+        .get();
+
+        !remote.is_empty()
     }
 
     fn distribute_payments(
