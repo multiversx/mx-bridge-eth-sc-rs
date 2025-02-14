@@ -4,9 +4,9 @@ use multiversx_sc::{
     hex_literal::hex,
     imports::MultiValue2,
     types::{
-        Address, BigUint, ESDTSystemSCAddress, EsdtLocalRole, ManagedAddress, ManagedBuffer,
-        ManagedByteArray, ManagedOption, ManagedVec, MultiValueEncoded, ReturnsResult, TestAddress,
-        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
+        Address, BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedByteArray,
+        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsResult, TestAddress, TestSCAddress,
+        TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -64,6 +64,8 @@ const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
 const ESDT_SAFE_ETH_TX_GAS_LIMIT: u64 = 150_000;
 const INITIAL_STAKE: u64 = 1_000u64;
+const SYSTEM_SC_ADDRESS_BYTES: [u8; 32] =
+    hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -101,7 +103,7 @@ impl MultiTransferTestState {
         let mut world = world();
 
         world
-            .account(ESDTSystemSCAddress)
+            .account(ManagedAddress::from(SYSTEM_SC_ADDRESS_BYTES))
             .code(BOGUS_CODE_PATH)
             .account(OWNER_ADDRESS)
             .nonce(1)

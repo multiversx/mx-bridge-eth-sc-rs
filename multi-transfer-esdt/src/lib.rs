@@ -1,6 +1,6 @@
 #![no_std]
 
-use multiversx_sc::{imports::*, storage::StorageKey};
+use multiversx_sc::{hex_literal::hex, imports::*, storage::StorageKey};
 
 use eth_address::EthAddress;
 use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
@@ -11,6 +11,8 @@ const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
 const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
 const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
+const SYSTEM_SC_ADDRESS_BYTES: [u8; 32] =
+    hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
@@ -301,10 +303,11 @@ pub trait MultiTransferEsdt:
     }
 
     fn has_token_transfer_role(&self, token_id: &TokenIdentifier) -> bool {
+        let system_sc_addr = ManagedAddress::from(SYSTEM_SC_ADDRESS_BYTES);
         let key = ManagedBuffer::new_from_bytes(b"ELRONDtransferesdt");
         let base_key = key.concat(token_id.clone().into_managed_buffer());
         let remote = SingleValueMapper::<Self::Api, ManagedBuffer, _>::new_from_address(
-            ESDTSystemSCAddress.to_managed_address(),
+            system_sc_addr,
             StorageKey::from(base_key),
         )
         .get();
