@@ -4,9 +4,9 @@ use multiversx_sc::{
     hex_literal::hex,
     imports::MultiValue2,
     types::{
-        Address, BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsResult, TestAddress, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier,
+        Address, BigUint, ESDTSystemSCAddress, EsdtLocalRole, ManagedAddress, ManagedBuffer,
+        ManagedByteArray, ManagedOption, ManagedVec, MultiValueEncoded, ReturnsResult, TestAddress,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -42,6 +42,9 @@ const BRIDGED_TOKENS_WRAPPER_CODE_PATH: MxscPath =
     MxscPath::new("../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json");
 const PRICE_AGGREGATOR_CODE_PATH: MxscPath =
     MxscPath::new("../price-aggregator/multiversx-price-aggregator.mxsc.json");
+const BOGUS_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
 
 const MULTISIG_ADDRESS: TestSCAddress = TestSCAddress::new("multisig");
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
@@ -98,6 +101,8 @@ impl MultiTransferTestState {
         let mut world = world();
 
         world
+            .account(ESDTSystemSCAddress)
+            .code(BOGUS_CODE_PATH)
             .account(OWNER_ADDRESS)
             .nonce(1)
             .esdt_balance(WEGLD_TOKEN_ID, 1001u64)
