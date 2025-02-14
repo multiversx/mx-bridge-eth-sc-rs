@@ -9,6 +9,7 @@ use multiversx_sc::{
         Empty, TopEncode,
     },
     contract_base::ManagedSerializer,
+    hex_literal::hex,
     storage::mappers::SingleValue,
     types::{
         Address, BigUint, CodeMetadata, EgldOrEsdtTokenIdentifier, EgldOrMultiEsdtPayment,
@@ -70,6 +71,11 @@ const MOCK_MULTI_TRANSFER_CODE_PATH: MxscPath = MxscPath::new(
 const MOCK_PRICE_AGGREGATOR_CODE_PATH: MxscPath = MxscPath::new(
     "../common/mock-contracts/mock-price-aggregator/output/mock-price-aggregator.mxsc.json",
 );
+const BOGUS_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
+const SYSTEM_SC_ADDRESS_BYTES: [u8; 32] =
+    hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
 const BRIDGE_PROXY_ADDRESS: TestSCAddress = TestSCAddress::new("bridge-proxy");
@@ -137,6 +143,8 @@ impl MultiTransferTestState {
         let mut world = world();
 
         world
+            .account(ManagedAddress::from(SYSTEM_SC_ADDRESS_BYTES))
+            .code(BOGUS_CODE_PATH)
             .account(OWNER_ADDRESS)
             .nonce(1)
             .esdt_balance(BRIDGE_TOKEN_ID, 1001u64)

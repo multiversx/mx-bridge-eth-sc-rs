@@ -42,6 +42,9 @@ const BRIDGED_TOKENS_WRAPPER_CODE_PATH: MxscPath =
     MxscPath::new("../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json");
 const PRICE_AGGREGATOR_CODE_PATH: MxscPath =
     MxscPath::new("../price-aggregator/multiversx-price-aggregator.mxsc.json");
+const BOGUS_CODE_PATH: MxscPath = MxscPath::new(
+    "../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+);
 
 const MULTISIG_ADDRESS: TestSCAddress = TestSCAddress::new("multisig");
 const MULTI_TRANSFER_ADDRESS: TestSCAddress = TestSCAddress::new("multi-transfer");
@@ -61,6 +64,8 @@ const RELAYER2_ADDRESS: TestAddress = TestAddress::new("relayer2");
 
 const ESDT_SAFE_ETH_TX_GAS_LIMIT: u64 = 150_000;
 const INITIAL_STAKE: u64 = 1_000u64;
+const SYSTEM_SC_ADDRESS_BYTES: [u8; 32] =
+    hex!("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
@@ -98,6 +103,8 @@ impl MultiTransferTestState {
         let mut world = world();
 
         world
+            .account(ManagedAddress::from(SYSTEM_SC_ADDRESS_BYTES))
+            .code(BOGUS_CODE_PATH)
             .account(OWNER_ADDRESS)
             .nonce(1)
             .esdt_balance(WEGLD_TOKEN_ID, 1001u64)
