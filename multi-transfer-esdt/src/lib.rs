@@ -48,8 +48,8 @@ pub trait MultiTransferEsdt:
         batch_id: u64,
         transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
-        let mut valid_payments_list = ManagedVec::new();
-        let mut valid_tx_list = ManagedVec::new();
+        // let mut valid_payments_list = ManagedVec::new();
+        // let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
@@ -58,15 +58,6 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
-            // let token_roles = self
-            //     .blockchain()
-            //     .get_esdt_local_roles(&eth_tx.token_id.clone());
-            // if token_roles.has_role(&EsdtLocalRole::Transfer) {
-            //     self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-            //     self.token_with_transfer_role_event(eth_tx.token_id);
-            //     continue;
-            // }
-
             self.tx()
                 .to(safe_address.clone())
                 .typed(esdt_safe_proxy::EsdtSafeProxy)
@@ -74,7 +65,7 @@ pub trait MultiTransferEsdt:
                 .gas(GAS_LIMIT_GET_TOKENS)
                 .callback(
                     self.callbacks()
-                        .distribute_payments_callback(eth_tx.clone(), batch_id),
+                        .get_tokens_callback(eth_tx.clone(), batch_id),
                 )
                 .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
                 .register_promise();
@@ -119,12 +110,9 @@ pub trait MultiTransferEsdt:
                 );
             }
 
-            valid_tx_list.push(eth_tx.clone());
-            valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
+            // valid_tx_list.push(eth_tx.clone());
+            // valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
         }
-
-        let payments_after_wrapping = self.wrap_tokens(valid_payments_list);
-        self.distribute_payments(valid_tx_list, payments_after_wrapping, batch_id);
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
     }
@@ -137,7 +125,19 @@ pub trait MultiTransferEsdt:
         batch_id: u64,
     ) {
         match result {
-            ManagedAsyncCallResult::Ok(()) => self.get_tokens_esdt_safe_success_event(batch_id),
+            ManagedAsyncCallResult::Ok(()) => {
+                let payment =
+                    EsdtTokenPayment::new(eth_tx.token_id.clone(), 0, eth_tx.amount.clone());
+                let payments_after_wrapping =
+                    self.wrap_tokens(PaymentsVec::from_single_item(payment));
+                self.distribute_payments(
+                    ManagedVec::from_single_item(eth_tx),
+                    payments_after_wrapping,
+                    batch_id,
+                );
+
+                self.get_tokens_esdt_safe_success_event(batch_id);
+            }
             ManagedAsyncCallResult::Err(_) => {
                 let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
                 self.add_to_batch(refund_tx);
