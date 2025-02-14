@@ -48,8 +48,6 @@ pub trait MultiTransferEsdt:
         batch_id: u64,
         transfers: MultiValueEncoded<EthTransaction<Self::Api>>,
     ) {
-        // let mut valid_payments_list = ManagedVec::new();
-        // let mut valid_tx_list = ManagedVec::new();
         let mut refund_tx_list = ManagedVec::new();
 
         let own_sc_address = self.blockchain().get_sc_address();
@@ -109,9 +107,6 @@ pub trait MultiTransferEsdt:
                     eth_tx.tx_nonce,
                 );
             }
-
-            // valid_tx_list.push(eth_tx.clone());
-            // valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
         }
 
         self.add_multiple_tx_to_batch(&refund_tx_list);
