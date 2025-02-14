@@ -200,6 +200,22 @@ where
             .original_result()
     }
 
+    pub fn get_tokens<
+        Arg0: ProxyArg<transaction::EthTransaction<Env::Api>>,
+        Arg1: ProxyArg<u64>,
+    >(
+        self,
+        eth_tx: Arg0,
+        batch_id: Arg1,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTokens")
+            .argument(&eth_tx)
+            .argument(&batch_id)
+            .original_result()
+    }
+
     pub fn withdraw_refund_fees_for_ethereum<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
         Arg1: ProxyArg<ManagedAddress<Env::Api>>,
@@ -447,22 +463,6 @@ where
             .payment(NotPayable)
             .raw_call("removeTokenFromWhitelist")
             .argument(&token_id)
-            .original_result()
-    }
-
-    pub fn get_tokens<
-        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
-        Arg1: ProxyArg<BigUint<Env::Api>>,
-    >(
-        self,
-        token_id: Arg0,
-        amount: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
-        self.wrapped_tx
-            .payment(NotPayable)
-            .raw_call("getTokens")
-            .argument(&token_id)
-            .argument(&amount)
             .original_result()
     }
 

@@ -9,10 +9,13 @@ use core::convert::TryFrom;
 use core::ops::Deref;
 use eth_address::*;
 use fee_estimator_module::GWEI_STRING;
-use transaction::{transaction_status::TransactionStatus, Transaction};
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy};
+use transaction::{transaction_status::TransactionStatus, EthTransaction, Transaction, TxNonce};
 
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
 const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100; // ~10 minutes
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
+const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 
 pub type PaymentsVec<M> = ManagedVec<M, EsdtTokenPayment<M>>;
 
@@ -439,6 +442,168 @@ pub trait EsdtSafe:
         EsdtTokenPayment::new(token_id, 0, refund_amount)
     }
 
+    #[endpoint(getTokens)]
+    fn get_tokens(
+        &self,
+        // token_id: &TokenIdentifier,
+        // amount: &BigUint,
+        // eth_tx_to: ManagedAddress<Self::Api>,
+        eth_tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) -> bool {
+        let caller = self.blockchain().get_caller();
+        require!(
+            caller == self.get_multi_transfer_address(),
+            "Only MultiTransfer can get tokens"
+        );
+
+        if !self.mint_burn_token(&eth_tx.token_id).get() {
+            let total_balances_mapper = self.total_balances(&eth_tx.token_id);
+            if &total_balances_mapper.get() >= &eth_tx.amount {
+                total_balances_mapper.update(|total| {
+                    *total -= &eth_tx.amount;
+                });
+                self.tx()
+                    .to(ToCaller)
+                    .single_esdt(&eth_tx.token_id, 0, &eth_tx.amount)
+                    .transfer();
+
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        let burn_balances_mapper = self.burn_balances(&eth_tx.token_id);
+        let mint_balances_mapper = self.mint_balances(&eth_tx.token_id);
+        if self.native_token(&eth_tx.token_id).get() {
+            require!(
+                burn_balances_mapper.get() >= &mint_balances_mapper.get() + &eth_tx.amount,
+                "Not enough burned tokens!"
+            );
+        }
+
+        let mint_executed = self.internal_mint(&eth_tx.token_id, &eth_tx.amount);
+        if !mint_executed {
+            return false;
+        }
+        self.tx()
+            .to(ToCaller)
+            .single_esdt(&eth_tx.token_id, 0, &eth_tx.amount)
+            .transfer();
+
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
+        let wrapped_payment = self
+            .tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .wrap_token()
+            .payment(EsdtTokenPayment::new(
+                eth_tx.token_id.clone(),
+                0,
+                eth_tx.amount.clone(),
+            ))
+            .returns(ReturnsResult)
+            .sync_call();
+
+        let bridge_proxy_addr = self.get_bridge_proxy_address();
+        if self.blockchain().is_smart_contract(&eth_tx.to.clone()) {
+            self.tx()
+                .to(bridge_proxy_addr.clone())
+                .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+                .deposit(&eth_tx.clone(), batch_id)
+                .single_esdt(
+                    &wrapped_payment.token_identifier,
+                    0,
+                    &wrapped_payment.amount,
+                )
+                .sync_call();
+        } else {
+            self.tx()
+                .to(&eth_tx.to.clone())
+                .single_esdt(
+                    &wrapped_payment.token_identifier,
+                    0,
+                    &wrapped_payment.amount,
+                )
+                .gas(GAS_LIMIT_ESDT_TRANSFER)
+                .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
+                .register_promise();
+        }
+
+        mint_balances_mapper.update(|minted| {
+            *minted += eth_tx.amount;
+        });
+
+        true
+    }
+
+    #[promises_callback]
+    fn transfer_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) {
+        let refund_payment = self.call_value().single_esdt();
+
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.transfer_performed_event(
+                    batch_id,
+                    tx.from,
+                    tx.to,
+                    tx.token_id,
+                    tx.amount,
+                    tx.tx_nonce,
+                );
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                self.unwrap_tokens(&tx.token_id, refund_payment.clone());
+                let refund_tx = self.convert_to_refund_tx(tx.clone());
+                self.add_to_batch(refund_tx);
+
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
+            }
+        }
+    }
+
+    fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
+        Transaction {
+            block_nonce: self.blockchain().get_block_nonce(),
+            nonce: eth_tx.tx_nonce,
+            from: eth_tx.from.as_managed_buffer().clone(),
+            to: eth_tx.to.as_managed_buffer().clone(),
+            token_identifier: eth_tx.token_id,
+            amount: eth_tx.amount,
+            is_refund_tx: true,
+        }
+    }
+
+    fn unwrap_tokens(
+        &self,
+        requested_token: &TokenIdentifier,
+        payment: EsdtTokenPayment<Self::Api>,
+    ) {
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
+
+        if bridged_tokens_wrapper_addr.is_zero() {
+            return;
+        }
+
+        if requested_token == &payment.token_identifier {
+            return;
+        }
+
+        self.tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unwrap_token(requested_token)
+            .payment(payment)
+            .sync_call()
+    }
+
     #[only_owner]
     #[endpoint(withdrawRefundFeesForEthereum)]
     fn withdraw_refund_fees_for_ethereum(
@@ -688,6 +853,24 @@ pub trait EsdtSafe:
         #[indexed] amount: BigUint,
         #[indexed] tx_id: u64,
         #[indexed] tx_status: TransactionStatus,
+    );
+
+    #[event("transferPerformedEvent")]
+    fn transfer_performed_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] from: EthAddress<Self::Api>,
+        #[indexed] to: ManagedAddress,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] tx_id: TxNonce,
+    );
+
+    #[event("transferFailedFrozenDestinationAccount")]
+    fn transfer_failed_frozen_destination_account_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
     );
 
     // storage
