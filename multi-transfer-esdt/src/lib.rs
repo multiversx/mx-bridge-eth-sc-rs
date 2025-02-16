@@ -57,14 +57,13 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
-            // let token_roles = self
-            //     .blockchain()
-            //     .get_esdt_local_roles(&eth_tx.token_id.clone());
-            // if token_roles.has_role(&EsdtLocalRole::Transfer) {
-            //     self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-            //     self.token_with_transfer_role_event(eth_tx.token_id);
-            //     continue;
-            // }
+            let blacklist_tokens_mapper = self.blacklist_tokens();
+
+            if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.blacklist_token_event(eth_tx.token_id);
+                continue;
+            }
 
             let is_success: bool = self
                 .tx()
@@ -183,6 +182,17 @@ pub trait MultiTransferEsdt:
         self.add_multiple_tx_to_batch(&refund_tx_list);
 
         self.unprocessed_refund_txs(tx_id).clear();
+    }
+
+    #[only_owner]
+    #[endpoint(blacklistToken)]
+    fn blacklist_token(&self, token_id: TokenIdentifier) {
+        require!(
+            token_id.is_valid_esdt_identifier(),
+            "Provided token not valid"
+        );
+
+        self.blacklist_tokens().insert(token_id);
     }
 
     // private
@@ -361,6 +371,9 @@ pub trait MultiTransferEsdt:
     #[storage_mapper("unprocessedRefundTxs")]
     fn unprocessed_refund_txs(&self, tx_id: u64) -> SingleValueMapper<Transaction<Self::Api>>;
 
+    #[storage_mapper("blacklistTokens")]
+    fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
+
     // events
 
     #[event("transferPerformedEvent")]
@@ -392,8 +405,8 @@ pub trait MultiTransferEsdt:
         #[indexed] tx_id: u64,
     );
 
-    #[event("tokenWithTransferRole")]
-    fn token_with_transfer_role_event(&self, #[indexed] token_id: TokenIdentifier);
+    #[event("blacklistToken")]
+    fn blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
