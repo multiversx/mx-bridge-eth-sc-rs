@@ -1636,4 +1636,4 @@ fn batch_transfer_blacklist_token_test() {
         },
         "Incorrect batch status"
     );
-b}
+}
