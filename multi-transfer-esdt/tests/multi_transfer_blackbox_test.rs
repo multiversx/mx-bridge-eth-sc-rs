@@ -1535,3 +1535,105 @@ fn multi_transfer_reduce_max_tx_batch_size_test() {
         "Incorrect batch status"
     );
 }
+
+#[test]
+fn batch_transfer_blacklist_token_test() {
+    let mut state = MultiTransferTestState::new();
+    let token_amount = BigUint::from(500u64);
+
+    state.deploy_contracts();
+    state.config_esdt_safe();
+
+    state.config_multi_transfer();
+
+    let mut args = ManagedVec::new();
+    args.push(ManagedBuffer::from(&[5u8]));
+
+    let call_data: CallData<StaticApi> = CallData {
+        endpoint: ManagedBuffer::from("add"),
+        gas_limit: GAS_LIMIT,
+        args: ManagedOption::some(args),
+    };
+
+    let call_data: ManagedBuffer<StaticApi> =
+        ManagedSerializer::new().top_encode_to_managed_buffer(&call_data);
+
+    let eth_tx1 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 1u64,
+        call_data: ManagedOption::some(call_data.clone()),
+    };
+
+    let eth_tx2 = EthTransaction {
+        from: EthAddress {
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+        },
+        to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
+        token_id: TokenIdentifier::from(WRAPPED_TOKEN_ID),
+        amount: token_amount.clone(),
+        tx_nonce: 2u64,
+        call_data: ManagedOption::some(call_data),
+    };
+
+    let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
+        MultiValueEncoded::new();
+    transfers.push(eth_tx1);
+    transfers.push(eth_tx2);
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .blacklist_token(WRAPPED_TOKEN_ID)
+        .run();
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .batch_transfer_esdt_token(1u32, transfers)
+        .run();
+
+    state
+        .world
+        .check_account(USER1_ADDRESS)
+        .esdt_balance(WRAPPED_TOKEN_ID, 0);
+
+    state
+        .world
+        .check_account(USER2_ADDRESS)
+        .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+
+    state
+        .world
+        .check_account(MULTI_TRANSFER_ADDRESS)
+        .esdt_balance(WRAPPED_TOKEN_ID, 0);
+
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_batch_status(1u64)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::PartiallyFull {
+            end_block_nonce: DEFAULT_MAX_TX_BATCH_BLOCK_DURATION,
+            tx_ids: ManagedVec::from(vec![2u64])
+        },
+        "Incorrect batch status"
+    );
+b}
