@@ -35,8 +35,8 @@ pub trait BridgeProxyContract:
         let caller = self.blockchain().get_caller();
         let payment = self.call_value().single_esdt();
         require!(
-            caller == self.get_multi_transfer_address(),
-            "Only MultiTransfer can do deposits"
+            caller == self.get_esdt_safe_address(),
+            "Only EsdtSafe can do deposits"
         );
         let next_tx_id = self.get_next_tx_id();
         self.pending_transactions().insert(next_tx_id, eth_tx);

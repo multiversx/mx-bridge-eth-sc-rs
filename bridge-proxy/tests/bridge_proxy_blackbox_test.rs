@@ -128,10 +128,10 @@ impl BridgeProxyTestState {
             .nonce(1)
             .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .account(MULTI_TRANSFER_ADDRESS)
-            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), INITIAL_BALANCE)
-            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .code(multi_transfer_code)
             .account(ESDT_SAFE_ADDRESS)
+            .esdt_balance(TokenIdentifier::from(WBRIDGE_TOKEN_ID), INITIAL_BALANCE)
+            .esdt_balance(TokenIdentifier::from(BRIDGE_TOKEN_ID), INITIAL_BALANCE)
             .code(esdt_safe_code);
 
         let roles = vec![
@@ -312,7 +312,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -391,7 +391,7 @@ fn multiple_deposit_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx1, 1u64)
@@ -404,7 +404,7 @@ fn multiple_deposit_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx2, 1u64)
@@ -512,7 +512,7 @@ fn test_highest_tx_id() {
     for tx in &transactions {
         test.world
             .tx()
-            .from(MULTI_TRANSFER_ADDRESS)
+            .from(ESDT_SAFE_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
             .deposit(tx, 1u64)
@@ -570,7 +570,7 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -649,7 +649,7 @@ fn bridge_proxy_wrong_endpoint_sc_call_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -730,7 +730,7 @@ fn bridge_proxy_wrong_args_sc_call_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -811,7 +811,7 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -886,7 +886,7 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -963,7 +963,7 @@ fn bridge_proxy_empty_endpoint_with_gas_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -1041,7 +1041,7 @@ fn bridge_proxy_refund_tx_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -1140,7 +1140,7 @@ fn bridge_proxy_double_execute_same_tx_test() {
 
     test.world
         .tx()
-        .from(MULTI_TRANSFER_ADDRESS)
+        .from(ESDT_SAFE_ADDRESS)
         .to(BRIDGE_PROXY_ADDRESS)
         .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
         .deposit(&eth_tx, 1u64)
@@ -1221,7 +1221,7 @@ fn bridge_proxy_execute_1000_even_tx_test() {
     for _ in 1..101 {
         test.world
             .tx()
-            .from(MULTI_TRANSFER_ADDRESS)
+            .from(ESDT_SAFE_ADDRESS)
             .to(BRIDGE_PROXY_ADDRESS)
             .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
             .deposit(&eth_tx, 1u64)

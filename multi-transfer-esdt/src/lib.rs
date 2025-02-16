@@ -55,18 +55,13 @@ pub trait MultiTransferEsdt:
         let safe_address = self.get_esdt_safe_address();
 
         for eth_tx in transfers {
-            let is_success: bool = self
+            self
                 .tx()
                 .to(safe_address.clone())
                 .typed(esdt_safe_proxy::EsdtSafeProxy)
                 .get_tokens(&eth_tx, batch_id)
                 .returns(ReturnsResult)
                 .sync_call();
-
-            if !is_success {
-                self.add_eth_tx_to_refund_tx_list(eth_tx, &mut refund_tx_list);
-                continue;
-            }
 
             let universal_token = self.get_universal_token(eth_tx.clone());
 

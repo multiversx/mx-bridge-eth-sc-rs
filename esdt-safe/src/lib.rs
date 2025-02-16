@@ -443,14 +443,7 @@ pub trait EsdtSafe:
     }
 
     #[endpoint(getTokens)]
-    fn get_tokens(
-        &self,
-        // token_id: &TokenIdentifier,
-        // amount: &BigUint,
-        // eth_tx_to: ManagedAddress<Self::Api>,
-        eth_tx: EthTransaction<Self::Api>,
-        batch_id: u64,
-    ) -> bool {
+    fn get_tokens(&self, eth_tx: EthTransaction<Self::Api>, batch_id: u64) {
         let caller = self.blockchain().get_caller();
         require!(
             caller == self.get_multi_transfer_address(),
@@ -463,15 +456,13 @@ pub trait EsdtSafe:
                 total_balances_mapper.update(|total| {
                     *total -= &eth_tx.amount;
                 });
-                self.tx()
-                    .to(ToCaller)
-                    .single_esdt(&eth_tx.token_id, 0, &eth_tx.amount)
-                    .transfer();
-
-                return true;
-            } else {
-                return false;
+                self.distribute_payments(
+                    eth_tx.clone(),
+                    EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount),
+                    batch_id,
+                );
             }
+            return;
         }
 
         let burn_balances_mapper = self.burn_balances(&eth_tx.token_id);
@@ -485,12 +476,8 @@ pub trait EsdtSafe:
 
         let mint_executed = self.internal_mint(&eth_tx.token_id, &eth_tx.amount);
         if !mint_executed {
-            return false;
+            return;
         }
-        self.tx()
-            .to(ToCaller)
-            .single_esdt(&eth_tx.token_id, 0, &eth_tx.amount)
-            .transfer();
 
         let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
         let wrapped_payment = self
@@ -506,37 +493,43 @@ pub trait EsdtSafe:
             .returns(ReturnsResult)
             .sync_call();
 
+        self.distribute_payments(
+            eth_tx.clone(),
+            EsdtTokenPayment::new(wrapped_payment.token_identifier, 0, wrapped_payment.amount),
+            batch_id,
+        );
+
+        mint_balances_mapper.update(|minted| {
+            *minted += eth_tx.amount;
+        });
+    }
+
+    fn distribute_payments(
+        &self,
+        eth_tx: EthTransaction<Self::Api>,
+        payment: EsdtTokenPayment<Self::Api>,
+        batch_id: u64,
+    ) {
         let bridge_proxy_addr = self.get_bridge_proxy_address();
-        if self.blockchain().is_smart_contract(&eth_tx.to.clone()) {
+        if self.blockchain().is_smart_contract(&eth_tx.to) {
             self.tx()
                 .to(bridge_proxy_addr.clone())
                 .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
                 .deposit(&eth_tx.clone(), batch_id)
-                .single_esdt(
-                    &wrapped_payment.token_identifier,
-                    0,
-                    &wrapped_payment.amount,
-                )
-                .sync_call();
+                .single_esdt(&payment.token_identifier, 0, &payment.amount)
+                .gas(GAS_LIMIT_ESDT_TRANSFER)
+                .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
+                .register_promise();
         } else {
             self.tx()
-                .to(&eth_tx.to.clone())
-                .single_esdt(
-                    &wrapped_payment.token_identifier,
-                    0,
-                    &wrapped_payment.amount,
-                )
+                .to(&eth_tx.to)
+                .single_esdt(&payment.token_identifier, 0, &payment.amount)
                 .gas(GAS_LIMIT_ESDT_TRANSFER)
                 .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
                 .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
                 .register_promise();
         }
-
-        mint_balances_mapper.update(|minted| {
-            *minted += eth_tx.amount;
-        });
-
-        true
     }
 
     #[promises_callback]

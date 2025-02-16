@@ -1,0 +1,272 @@
+{
+    "steps": [
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "1",
+                    "newAddress": "sc:multisig"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "mxsc:../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json",
+                "arguments": [
+                    "0x00000000000000000500657364742d736166655f5f5f5f5f5f5f5f5f5f5f5f5f",
+                    "0x000000000000000005006d756c74692d7472616e736665725f5f5f5f5f5f5f5f",
+                    "0x000000000000000005006272696467652d70726f78795f5f5f5f5f5f5f5f5f5f",
+                    "0x00000000000000000500627269646765642d746f6b656e732d77726170706572",
+                    "0x0000000000000000050070726963652d61676772656761746f725f5f5f5f5f5f",
+                    "0x03e8",
+                    "0x01f4",
+                    "0x02",
+                    "0x72656c61796572315f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+                    "0x72656c61796572325f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "0",
+                    "newAddress": "sc:multi-transfer"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "contractCode": "mxsc:output/multi-transfer-esdt.mxsc.json",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "1",
+                    "newAddress": "sc:bridge-proxy"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "contractCode": "mxsc:../bridge-proxy/output/bridge-proxy.mxsc.json",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "2",
+                    "newAddress": "sc:esdt-safe"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "contractCode": "mxsc:../common/mock-contracts/mock-esdt-safe/output/mock-esdt-safe.mxsc.json",
+                "arguments": [
+                    "0x0249f0"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "3",
+                    "newAddress": "sc:bridged-tokens-wrapper"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "contractCode": "mxsc:../bridged-tokens-wrapper/output/bridged-tokens-wrapper.mxsc.json",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x4252494447452d313233343536",
+                    "0x425249444745",
+                    "0x01",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x0249f0"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x544f4b454e",
+                        "value": "100000000000000"
+                    }
+                ],
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x544f4b454e",
+                    "0x544f4b454e",
+                    "0x",
+                    "0x01",
+                    "0x5af3107a4000",
+                    "0x",
+                    "0x",
+                    "0x0249f0"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:multi-transfer",
+                "function": "setMaxBridgedAmount",
+                "arguments": [
+                    "0x544f4b454e",
+                    "0x5af3107a3fff"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:bridged-tokens-wrapper",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:bridge-proxy",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:multi-transfer",
+                "function": "batchTransferEsdtToken",
+                "arguments": [
+                    "0x01",
+                    "0x000000000000000000000000000000000000000075736572315f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f0000000d4252494447452d3132333435360000000201f400000000000000010100000003616464"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        }
+    ]
+}

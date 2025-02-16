@@ -207,7 +207,7 @@ where
         self,
         eth_tx: Arg0,
         batch_id: Arg1,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, bool> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTokens")
