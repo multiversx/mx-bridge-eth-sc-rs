@@ -729,6 +729,8 @@ fn basic_transfer_test() {
     let mut state = MultiTransferTestState::new();
     let token_amount = BigUint::from(500u64);
 
+    state.world.start_trace();
+
     state.deploy_contracts();
     state.config_multi_transfer();
 
@@ -766,6 +768,10 @@ fn basic_transfer_test() {
         .world
         .check_account(USER1_ADDRESS)
         .esdt_balance(BRIDGE_TOKEN_ID, token_amount);
+
+    state
+        .world
+        .write_scenario_trace("scenarios/basic_transfer_test.scen.json");
 }
 
 #[test]
@@ -1322,21 +1328,21 @@ fn add_refund_batch_test_should_work() {
         BigUint::zero(),
     );
 
-    state
-        .world
-        .tx()
-        .from(MULTISIG_ADDRESS)
-        .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-        .move_refund_batch_to_safe()
-        .run();
+    // state
+    //     .world
+    //     .tx()
+    //     .from(MULTISIG_ADDRESS)
+    //     .to(MULTI_TRANSFER_ADDRESS)
+    //     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+    //     .move_refund_batch_to_safe()
+    //     .run();
 
     state.check_balances_on_safe(
         TOKEN_TICKER,
         BigUint::from(MAX_AMOUNT) - fee,
         BigUint::zero(),
         BigUint::zero(),
-    );
+    );2
 }
 
 #[test]

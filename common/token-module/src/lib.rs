@@ -162,56 +162,6 @@ pub trait TokenModule:
         self.token_whitelist().swap_remove(&token_id);
     }
 
-    #[endpoint(getTokens)]
-    fn get_tokens(&self, token_id: &TokenIdentifier, amount: &BigUint) -> bool {
-        let caller = self.blockchain().get_caller();
-        require!(
-            caller == self.get_multi_transfer_address(),
-            "Only MultiTransfer can get tokens"
-        );
-
-        if !self.mint_burn_token(token_id).get() {
-            let total_balances_mapper = self.total_balances(token_id);
-            if &total_balances_mapper.get() >= amount {
-                total_balances_mapper.update(|total| {
-                    *total -= amount;
-                });
-                self.tx()
-                    .to(ToCaller)
-                    .single_esdt(token_id, 0, amount)
-                    .transfer();
-
-                return true;
-            } else {
-                return false;
-            }
-        }
-
-        let burn_balances_mapper = self.burn_balances(token_id);
-        let mint_balances_mapper = self.mint_balances(token_id);
-        if self.native_token(token_id).get() {
-            require!(
-                burn_balances_mapper.get() >= &mint_balances_mapper.get() + amount,
-                "Not enough burned tokens!"
-            );
-        }
-
-        let mint_executed = self.internal_mint(token_id, amount);
-        if !mint_executed {
-            return false;
-        }
-        self.tx()
-            .to(ToCaller)
-            .single_esdt(token_id, 0, amount)
-            .transfer();
-
-        mint_balances_mapper.update(|minted| {
-            *minted += amount;
-        });
-
-        true
-    }
-
     #[only_owner]
     #[payable("*")]
     #[endpoint(initSupply)]

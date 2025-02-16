@@ -5,6 +5,11 @@ fn world() -> ScenarioWorld {
 }
 
 #[test]
+fn basic_transfer_test_go() {
+    world().run("scenarios/basic_transfer_test.scen.json");
+}
+
+#[test]
 #[ignore] //Ignore for now
 fn batch_transfer_both_executed_go() {
     world().run("scenarios/batch_transfer_both_executed.scen.json");

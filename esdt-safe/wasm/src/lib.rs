@@ -8,7 +8,8 @@
 // Upgrade:                              1
 // Endpoints:                           45
 // Async Callback (empty):               1
-// Total number of exported functions:  48
+// Promise callbacks:                    1
+// Total number of exported functions:  49
 
 #![no_std]
 
@@ -26,6 +27,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         createTransaction => create_transaction
         createRefundTransaction => create_refund_transaction
         claimRefund => claim_refund
+        getTokens => get_tokens
         withdrawRefundFeesForEthereum => withdraw_refund_fees_for_ethereum
         withdrawTransactionFees => withdraw_transaction_fees
         computeTotalAmmountsFromIndex => compute_total_amounts_from_index
@@ -42,7 +44,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         distributeFees => distribute_fees
         addTokenToWhitelist => add_token_to_whitelist
         removeTokenFromWhitelist => remove_token_from_whitelist
-        getTokens => get_tokens
         initSupply => init_supply
         initSupplyMintBurn => init_supply_mint_burn
         getAllKnownTokens => token_whitelist
@@ -65,6 +66,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         pause => pause_endpoint
         unpause => unpause_endpoint
         isPaused => paused_status
+        transfer_callback => transfer_callback
     )
 }
 

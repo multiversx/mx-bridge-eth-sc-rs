@@ -205,6 +205,58 @@ pub trait BridgedTokensWrapper:
         new_payments
     }
 
+    /// Will wrap what it can, and send back the rest unchanged
+    #[payable("*")]
+    #[endpoint(wrapToken)]
+    fn wrap_token(&self) -> EsdtTokenPayment<Self::Api> {
+        require!(self.not_paused(), "Contract is paused");
+        let payment = self.call_value().single_esdt().clone();
+        if payment.amount == 0 {
+            return payment.clone();
+        }
+
+        let payment_to_return = payment.clone();
+        require!(
+            payment.token_nonce == 0,
+            "Only fungible tokens accepted for wrapping"
+        );
+        let universal_token_id_mapper =
+            self.chain_specific_to_universal_mapping(&payment.token_identifier);
+
+        // if there is chain specific -> universal mapping, then the token is whitelisted
+        if universal_token_id_mapper.is_empty() {
+            self.tx()
+                .to(ToCaller)
+                .esdt(payment_to_return.clone())
+                .transfer();
+            return payment_to_return.clone();
+        }
+
+        let universal_token_id = universal_token_id_mapper.get();
+        self.require_tokens_have_set_decimals_num(&universal_token_id, &payment.token_identifier);
+        self.token_liquidity(&payment.token_identifier)
+            .update(|value| *value += &payment.amount.clone());
+        let converted_amount = self.get_converted_amount(
+            &payment.token_identifier,
+            &universal_token_id,
+            payment.amount.clone(),
+        );
+
+        self.send()
+            .esdt_local_mint(&universal_token_id, 0, &converted_amount);
+
+        let payment_to_return =
+            EsdtTokenPayment::new(universal_token_id.clone(), 0, converted_amount.clone());
+        self.tx()
+            .to(ToCaller)
+            .esdt(payment_to_return.clone())
+            .transfer();
+
+        self.wrap_tokens_event(universal_token_id, converted_amount);
+
+        payment_to_return
+    }
+
     #[payable("*")]
     #[endpoint(unwrapToken)]
     fn unwrap_token(&self, requested_token: TokenIdentifier) {

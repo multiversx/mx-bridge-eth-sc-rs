@@ -175,6 +175,15 @@ where
             .original_result()
     }
 
+    /// Will wrap what it can, and send back the rest unchanged 
+    pub fn wrap_token(
+        self,
+    ) -> TxTypedCall<Env, From, To, (), Gas, EsdtTokenPayment<Env::Api>> {
+        self.wrapped_tx
+            .raw_call("wrapToken")
+            .original_result()
+    }
+
     pub fn unwrap_token<
         Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
     >(
