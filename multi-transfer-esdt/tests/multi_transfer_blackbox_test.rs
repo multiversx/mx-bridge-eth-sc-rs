@@ -1583,7 +1583,7 @@ fn batch_transfer_blacklist_token_test() {
     let mut transfers: MultiValueEncoded<StaticApi, EthTransaction<StaticApi>> =
         MultiValueEncoded::new();
     transfers.push(eth_tx1);
-    transfers.push(eth_tx2);
+    transfers.push(eth_tx2.clone());
 
     state
         .world
@@ -1628,12 +1628,20 @@ fn batch_transfer_blacklist_token_test() {
         .returns(ReturnsResult)
         .run();
 
-    assert_eq!(
-        batch_status,
-        BatchStatus::PartiallyFull {
-            end_block_nonce: DEFAULT_MAX_TX_BATCH_BLOCK_DURATION,
-            tx_ids: ManagedVec::from(vec![2u64])
-        },
-        "Incorrect batch status"
-    );
+    assert_eq!(batch_status, BatchStatus::Empty, "Incorrect batch status");
+
+    // let eth_tx = state
+    //     .world
+    //     .query()
+    //     .to(ESDT_SAFE_ADDRESS)
+    //     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+    //     .transactions_for_blacklist_tokens(2u64)
+    //     .returns(ReturnsResult)
+    //     .run();
+
+    // assert_eq!(eth_tx.to, USER2_ADDRESS, "Transactions are not the same");
+    // assert_eq!(
+    //     eth_tx.call_data, eth_tx2.call_data,
+    //     "Transactions are not the same"
+    // );
 }

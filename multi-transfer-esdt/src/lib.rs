@@ -62,7 +62,7 @@ pub trait MultiTransferEsdt:
             if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
                 // self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
                 // self.blacklist_token_event(eth_tx.token_id);
-                self.transactions_for_blacklist_tokens(eth_tx.tx_nonce.clone())
+                self.transactions_for_blacklist_tokens(eth_tx.tx_nonce)
                     .set(eth_tx.clone());
                 self.transactions_for_blacklist_tokens_event(eth_tx.tx_nonce);
 
@@ -200,18 +200,19 @@ pub trait MultiTransferEsdt:
         self.blacklist_token_event(token_id);
     }
 
-    #[endpoint(blacklistToken)]
-    fn refund_blacklisted_transaction(&self, tx_id: u64) {
-        let transaction_for_blacklist_token_mapper = self.transactions_for_blacklist_tokens(tx_id);
+    #[endpoint(refundTransactionForBlacklistTokens)]
+    fn refund_transaction_for_blacklist_tokens(&self, tx_id: u64) {
+        let transaction_for_blacklist_tokens_mapper = self.transactions_for_blacklist_tokens(tx_id);
         require!(
-            !transaction_for_blacklist_token_mapper.is_empty(),
+            !transaction_for_blacklist_tokens_mapper.is_empty(),
             "Transaction with this ID doesn't exist"
         );
 
-        let eth_tx = transaction_for_blacklist_token_mapper.get();
+        let eth_tx = transaction_for_blacklist_tokens_mapper.get();
         let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
         self.add_to_batch(refund_tx);
 
+        transaction_for_blacklist_tokens_mapper.clear();
         self.transactions_for_blacklist_tokens_event(tx_id);
     }
 
