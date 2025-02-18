@@ -132,6 +132,19 @@ where
             .original_result()
     }
 
+    pub fn transactions_for_blacklist_tokens<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, transaction::EthTransaction<Env::Api>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTransactionForBlacklistTokens")
+            .argument(&tx_id)
+            .original_result()
+    }
+
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
