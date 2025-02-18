@@ -60,8 +60,12 @@ pub trait MultiTransferEsdt:
             let blacklist_tokens_mapper = self.blacklist_tokens();
 
             if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
-                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-                self.blacklist_token_event(eth_tx.token_id);
+                // self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                // self.blacklist_token_event(eth_tx.token_id);
+                self.transactions_for_blacklist_tokens(eth_tx.tx_nonce.clone())
+                    .set(eth_tx.clone());
+                self.transactions_for_blacklist_tokens_event(eth_tx.tx_nonce);
+
                 continue;
             }
 
@@ -192,7 +196,23 @@ pub trait MultiTransferEsdt:
             "Provided token not valid"
         );
 
-        self.blacklist_tokens().insert(token_id);
+        self.blacklist_tokens().insert(token_id.clone());
+        self.blacklist_token_event(token_id);
+    }
+
+    #[endpoint(blacklistToken)]
+    fn refund_blacklisted_transaction(&self, tx_id: u64) {
+        let transaction_for_blacklist_token_mapper = self.transactions_for_blacklist_tokens(tx_id);
+        require!(
+            !transaction_for_blacklist_token_mapper.is_empty(),
+            "Transaction with this ID doesn't exist"
+        );
+
+        let eth_tx = transaction_for_blacklist_token_mapper.get();
+        let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
+        self.add_to_batch(refund_tx);
+
+        self.transactions_for_blacklist_tokens_event(tx_id);
     }
 
     // private
@@ -374,6 +394,13 @@ pub trait MultiTransferEsdt:
     #[storage_mapper("blacklistTokens")]
     fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 
+    #[view(getTransactionForBlacklistTokens)]
+    #[storage_mapper("transactionsForBlacklistTokens")]
+    fn transactions_for_blacklist_tokens(
+        &self,
+        tx_id: u64,
+    ) -> SingleValueMapper<EthTransaction<Self::Api>>;
+
     // events
 
     #[event("transferPerformedEvent")]
@@ -423,4 +450,7 @@ pub trait MultiTransferEsdt:
 
     #[event("unprocessedRefundTxs")]
     fn unprocessed_refund_txs_event(&self, #[indexed] tx_id: u64);
+
+    #[event("transactionsForBlacklistTokens")]
+    fn transactions_for_blacklist_tokens_event(&self, #[indexed] tx_id: u64);
 }
