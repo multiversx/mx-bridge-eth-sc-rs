@@ -387,6 +387,20 @@ pub trait MultiTransferEsdt:
         }
     }
 
+    //views
+
+    #[view(getTransactionForBlacklistTokens)]
+    fn get_transaction_for_blacklist_tokens(&self, tx_id: u64) -> EthTransaction<Self::Api> {
+        let transactions_for_blacklist_tokens_mapper =
+            self.transactions_for_blacklist_tokens(tx_id);
+        require!(
+            !transactions_for_blacklist_tokens_mapper.is_empty(),
+            "Transaction with provided ID doesn't exist"
+        );
+
+        self.transactions_for_blacklist_tokens(tx_id).get()
+    }
+
     // storage
 
     #[storage_mapper("unprocessedRefundTxs")]
@@ -395,7 +409,6 @@ pub trait MultiTransferEsdt:
     #[storage_mapper("blacklistTokens")]
     fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 
-    #[view(getTransactionForBlacklistTokens)]
     #[storage_mapper("transactionsForBlacklistTokens")]
     fn transactions_for_blacklist_tokens(
         &self,
