@@ -200,6 +200,19 @@ pub trait MultiTransferEsdt:
         self.blacklist_token_event(token_id);
     }
 
+    #[only_owner]
+    #[endpoint(removeBlacklistToken)]
+    fn remove_blacklist_token(&self, token_id: TokenIdentifier) {
+        let blacklist_tokens_mapper = self.blacklist_tokens();
+        require!(
+            blacklist_tokens_mapper.contains(&token_id),
+            "Token is not blacklisted"
+        );
+
+        self.blacklist_tokens().swap_remove(&token_id);
+        self.remove_blacklist_token_event(token_id);
+    }
+
     #[endpoint(refundTransactionForBlacklistTokens)]
     fn refund_transaction_for_blacklist_tokens(&self, tx_id: u64) {
         let transaction_for_blacklist_tokens_mapper = self.transactions_for_blacklist_tokens(tx_id);
@@ -448,6 +461,9 @@ pub trait MultiTransferEsdt:
 
     #[event("blacklistToken")]
     fn blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
+
+    #[event("removeBlacklistToken")]
+    fn remove_blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);

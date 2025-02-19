@@ -1630,14 +1630,14 @@ fn batch_transfer_blacklist_token_test() {
 
     assert_eq!(batch_status, BatchStatus::Empty, "Incorrect batch status");
 
-    // let eth_tx = state
-    //     .world
-    //     .query()
-    //     .to(ESDT_SAFE_ADDRESS)
-    //     .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-    //     .get_transaction_for_blacklist_tokens(2u64)
-    //     .returns(ReturnsResult)
-    //     .run();
+    let eth_tx = state
+        .world
+        .query()
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_transaction_for_blacklist_tokens(2u64)
+        .returns(ReturnsResult)
+        .run();
 
     // assert_eq!(eth_tx.to, USER2_ADDRESS, "Transactions are not the same");
     // assert_eq!(

@@ -6,10 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           16
+// Endpoints:                           17
 // Async Callback (empty):               1
 // Promise callbacks:                    1
-// Total number of exported functions:  20
+// Total number of exported functions:  21
 
 #![no_std]
 
@@ -25,6 +25,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         moveRefundBatchToSafe => move_refund_batch_to_safe
         addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
         blacklistToken => blacklist_token
+        removeBlacklistToken => remove_blacklist_token
         refundTransactionForBlacklistTokens => refund_transaction_for_blacklist_tokens
         getTransactionForBlacklistTokens => get_transaction_for_blacklist_tokens
         setMaxTxBatchSize => set_max_tx_batch_size

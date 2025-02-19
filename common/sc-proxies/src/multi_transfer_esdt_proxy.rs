@@ -132,6 +132,19 @@ where
             .original_result()
     }
 
+    pub fn remove_blacklist_token<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeBlacklistToken")
+            .argument(&token_id)
+            .original_result()
+    }
+
     pub fn refund_transaction_for_blacklist_tokens<
         Arg0: ProxyArg<u64>,
     >(
