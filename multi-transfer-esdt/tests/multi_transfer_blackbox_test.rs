@@ -1630,18 +1630,50 @@ fn batch_transfer_blacklist_token_test() {
 
     assert_eq!(batch_status, BatchStatus::Empty, "Incorrect batch status");
 
-    let eth_tx = state
+    let eth_txs = state
         .world
         .query()
-        .to(ESDT_SAFE_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
         .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
         .get_transaction_for_blacklist_tokens()
         .returns(ReturnsResult)
         .run();
 
-    // assert_eq!(eth_tx.to, USER2_ADDRESS, "Transactions are not the same");
-    // assert_eq!(
-    //     eth_tx.call_data, eth_tx2.call_data,
-    //     "Transactions are not the same"
-    // );
+    let (tx_id, eth_tx) = eth_txs.into_iter().next().unwrap().into_tuple();
+
+    assert_eq!(tx_id, 2u64, "Tx ID not correct");
+
+    assert_eq!(eth_tx.to, USER1_ADDRESS, "Transactions are not the same");
+    assert_eq!(
+        eth_tx.call_data, eth_tx2.call_data,
+        "Transactions are not the same"
+    );
+
+    state
+        .world
+        .tx()
+        .from(MULTISIG_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .refund_transaction_for_blacklist_tokens(tx_id)
+        .run();
+
+    let batch_status = state
+        .world
+        .tx()
+        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+        .to(MULTI_TRANSFER_ADDRESS)
+        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+        .get_batch_status(1u64)
+        .returns(ReturnsResult)
+        .run();
+
+    assert_eq!(
+        batch_status,
+        BatchStatus::PartiallyFull {
+            end_block_nonce: DEFAULT_MAX_TX_BATCH_BLOCK_DURATION,
+            tx_ids: ManagedVec::from(vec![2u64])
+        },
+        "Incorrect batch status"
+    );
 }
