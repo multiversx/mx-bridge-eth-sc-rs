@@ -1635,7 +1635,7 @@ fn batch_transfer_blacklist_token_test() {
         .query()
         .to(ESDT_SAFE_ADDRESS)
         .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-        .get_transaction_for_blacklist_tokens(2u64)
+        .get_transaction_for_blacklist_tokens()
         .returns(ReturnsResult)
         .run();
 

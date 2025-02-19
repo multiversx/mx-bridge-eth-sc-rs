@@ -158,16 +158,12 @@ where
             .original_result()
     }
 
-    pub fn get_transaction_for_blacklist_tokens<
-        Arg0: ProxyArg<u64>,
-    >(
+    pub fn get_transaction_for_blacklist_tokens(
         self,
-        tx_id: Arg0,
-    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, transaction::EthTransaction<Env::Api>> {
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<u64, transaction::EthTransaction<Env::Api>>>> {
         self.wrapped_tx
             .payment(NotPayable)
             .raw_call("getTransactionForBlacklistTokens")
-            .argument(&tx_id)
             .original_result()
     }
 

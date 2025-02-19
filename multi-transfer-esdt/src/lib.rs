@@ -60,10 +60,8 @@ pub trait MultiTransferEsdt:
             let blacklist_tokens_mapper = self.blacklist_tokens();
 
             if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
-                // self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-                // self.blacklist_token_event(eth_tx.token_id);
-                self.transactions_for_blacklist_tokens(eth_tx.tx_nonce)
-                    .set(eth_tx.clone());
+                self.transactions_for_blacklist_tokens()
+                    .insert(eth_tx.tx_nonce, eth_tx.clone());
                 self.transactions_for_blacklist_tokens_event(eth_tx.tx_nonce);
 
                 continue;
@@ -215,17 +213,18 @@ pub trait MultiTransferEsdt:
 
     #[endpoint(refundTransactionForBlacklistTokens)]
     fn refund_transaction_for_blacklist_tokens(&self, tx_id: u64) {
-        let transaction_for_blacklist_tokens_mapper = self.transactions_for_blacklist_tokens(tx_id);
+        let opt_eth_tx = self.transactions_for_blacklist_tokens().get(&tx_id);
         require!(
-            !transaction_for_blacklist_tokens_mapper.is_empty(),
+            opt_eth_tx.is_some(),
             "Transaction with this ID doesn't exist"
         );
 
-        let eth_tx = transaction_for_blacklist_tokens_mapper.get();
+        let eth_tx = opt_eth_tx.unwrap();
+
         let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
         self.add_to_batch(refund_tx);
 
-        transaction_for_blacklist_tokens_mapper.clear();
+        self.transactions_for_blacklist_tokens().remove(&tx_id);
         self.transactions_for_blacklist_tokens_event(tx_id);
     }
 
@@ -403,15 +402,14 @@ pub trait MultiTransferEsdt:
     //views
 
     #[view(getTransactionForBlacklistTokens)]
-    fn get_transaction_for_blacklist_tokens(&self, tx_id: u64) -> EthTransaction<Self::Api> {
-        let transactions_for_blacklist_tokens_mapper =
-            self.transactions_for_blacklist_tokens(tx_id);
-        require!(
-            !transactions_for_blacklist_tokens_mapper.is_empty(),
-            "Transaction with provided ID doesn't exist"
-        );
-
-        self.transactions_for_blacklist_tokens(tx_id).get()
+    fn get_transaction_for_blacklist_tokens(
+        &self,
+    ) -> MultiValueEncoded<MultiValue2<u64, EthTransaction<Self::Api>>> {
+        let mut transactions = MultiValueEncoded::new();
+        for (tx_id, tx) in self.transactions_for_blacklist_tokens().iter() {
+            transactions.push(MultiValue2((tx_id, tx)));
+        }
+        transactions
     }
 
     // storage
@@ -423,10 +421,7 @@ pub trait MultiTransferEsdt:
     fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 
     #[storage_mapper("transactionsForBlacklistTokens")]
-    fn transactions_for_blacklist_tokens(
-        &self,
-        tx_id: u64,
-    ) -> SingleValueMapper<EthTransaction<Self::Api>>;
+    fn transactions_for_blacklist_tokens(&self) -> MapMapper<u64, EthTransaction<Self::Api>>;
 
     // events
 
