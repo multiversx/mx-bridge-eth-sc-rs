@@ -222,7 +222,15 @@ pub trait MultiTransferEsdt:
         let eth_tx = opt_eth_tx.unwrap();
 
         let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
-        self.add_to_batch(refund_tx);
+
+        let esdt_safe_addr = self.get_esdt_safe_address();
+
+        // self.add_to_batch(refund_tx);
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_to_batch_endpoint(refund_tx)
+            .sync_call();
 
         self.transactions_for_blacklist_tokens().remove(&tx_id);
         self.transactions_for_blacklist_tokens_event(tx_id);

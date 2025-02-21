@@ -475,6 +475,15 @@ pub trait EsdtSafe:
         accumulated_transaction_fees_mapper.set(BigUint::zero());
     }
 
+    #[endpoint(addToBatchEndpoint)]
+    fn add_to_batch_endpoint(&self, refund_tx: Transaction<Self::Api>) {
+        let caller = self.blockchain().get_caller();
+        let multi_transfer_address = self.get_multi_transfer_address();
+        require!(caller == multi_transfer_address, "Invalid caller");
+
+        self.add_to_batch(refund_tx);
+    }
+
     #[view(computeTotalAmmountsFromIndex)]
     fn compute_total_amounts_from_index(
         &self,
