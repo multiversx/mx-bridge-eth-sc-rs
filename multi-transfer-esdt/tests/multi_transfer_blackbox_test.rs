@@ -1658,20 +1658,30 @@ fn batch_transfer_blacklist_token_test() {
         .refund_transaction_for_blacklist_tokens(tx_id)
         .run();
 
+    let last_batch_id = state
+        .world
+        .tx()
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .last_batch_id()
+        .returns(ReturnsResult)
+        .run();
+
     let batch_status = state
         .world
         .tx()
-        .from(BRIDGED_TOKENS_WRAPPER_ADDRESS)
-        .to(MULTI_TRANSFER_ADDRESS)
-        .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
-        .get_batch_status(1u64)
+        .from(OWNER_ADDRESS)
+        .to(ESDT_SAFE_ADDRESS)
+        .typed(esdt_safe_proxy::EsdtSafeProxy)
+        .get_batch_status(last_batch_id)
         .returns(ReturnsResult)
         .run();
 
     assert_eq!(
         batch_status,
         BatchStatus::PartiallyFull {
-            end_block_nonce: DEFAULT_MAX_TX_BATCH_BLOCK_DURATION,
+            end_block_nonce: 100,
             tx_ids: ManagedVec::from(vec![2u64])
         },
         "Incorrect batch status"
