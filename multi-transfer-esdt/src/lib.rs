@@ -281,8 +281,8 @@ pub trait MultiTransferEsdt:
         Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: eth_tx.tx_nonce,
-            from: eth_tx.from.as_managed_buffer().clone(),
-            to: eth_tx.to.as_managed_buffer().clone(),
+            from: eth_tx.to.as_managed_buffer().clone(),
+            to: eth_tx.from.as_managed_buffer().clone(),
             token_identifier: eth_tx.token_id,
             amount: eth_tx.amount,
             is_refund_tx: true,
