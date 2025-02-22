@@ -411,7 +411,7 @@ pub trait MultiTransferEsdt:
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.unwrap_tokens(&tx.token_id, refund_payment.clone());
-                let refund_tx = self.convert_to_refund_tx(tx.clone());
+                let refund_tx = self.convert_to_tx(tx.clone());
                 self.add_to_batch(refund_tx);
 
                 self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
