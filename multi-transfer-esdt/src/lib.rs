@@ -243,7 +243,7 @@ pub trait MultiTransferEsdt:
         eth_tx: EthTransaction<Self::Api>,
         refund_tx_list: &mut ManagedVec<Transaction<Self::Api>>,
     ) {
-        let refund_tx = self.convert_to_refund_tx(eth_tx);
+        let refund_tx = self.convert_to_tx(eth_tx);
         refund_tx_list.push(refund_tx);
     }
 
@@ -283,6 +283,18 @@ pub trait MultiTransferEsdt:
             nonce: eth_tx.tx_nonce,
             from: eth_tx.to.as_managed_buffer().clone(),
             to: eth_tx.from.as_managed_buffer().clone(),
+            token_identifier: eth_tx.token_id,
+            amount: eth_tx.amount,
+            is_refund_tx: true,
+        }
+    }
+
+    fn convert_to_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
+        Transaction {
+            block_nonce: self.blockchain().get_block_nonce(),
+            nonce: eth_tx.tx_nonce,
+            from: eth_tx.from.as_managed_buffer().clone(),
+            to: eth_tx.to.as_managed_buffer().clone(),
             token_identifier: eth_tx.token_id,
             amount: eth_tx.amount,
             is_refund_tx: true,
