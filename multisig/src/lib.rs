@@ -428,6 +428,18 @@ pub trait Multisig:
             .sync_call();
     }
 
+    #[only_owner]
+    #[endpoint(removeBlacklistToken)]
+    fn remove_blacklist_token(&self, token_id: TokenIdentifier) {
+        let multi_transfer_esdt_addr = self.multi_transfer_esdt_address().get();
+
+        self.tx()
+            .to(multi_transfer_esdt_addr)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .remove_blacklist_token(token_id)
+            .sync_call();
+    }
+
     /// Proposers and board members use this to launch signed actions.
     #[endpoint(performAction)]
     fn perform_action_endpoint(&self, action_id: usize) {

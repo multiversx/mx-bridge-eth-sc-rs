@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           74
+// Endpoints:                           75
 // Async Callback (empty):               1
-// Total number of exported functions:  77
+// Total number of exported functions:  78
 
 #![no_std]
 
@@ -32,6 +32,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         withdrawTransactionFees => withdraw_transaction_fees
         withdrawSlashedAmount => withdraw_slashed_amount
         blacklistToken => blacklist_token
+        removeBlacklistToken => remove_blacklist_token
         performAction => perform_action_endpoint
         clearActionsForBatchId => clear_actions_for_batch_id
         sign => sign
