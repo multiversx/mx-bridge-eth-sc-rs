@@ -56,9 +56,8 @@ pub trait MultiTransferEsdt:
 
         let safe_address = self.get_esdt_safe_address();
 
+        let blacklist_tokens_mapper = self.blacklist_tokens();
         for eth_tx in transfers {
-            let blacklist_tokens_mapper = self.blacklist_tokens();
-
             if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
                 self.transactions_for_blacklist_tokens()
                     .insert(eth_tx.tx_nonce, eth_tx.clone());
@@ -201,13 +200,11 @@ pub trait MultiTransferEsdt:
     #[only_owner]
     #[endpoint(removeBlacklistToken)]
     fn remove_blacklist_token(&self, token_id: TokenIdentifier) {
-        let blacklist_tokens_mapper = self.blacklist_tokens();
         require!(
-            blacklist_tokens_mapper.contains(&token_id),
+            self.blacklist_tokens().swap_remove(&token_id),
             "Token is not blacklisted"
         );
 
-        self.blacklist_tokens().swap_remove(&token_id);
         self.remove_blacklist_token_event(token_id);
     }
 
@@ -220,12 +217,9 @@ pub trait MultiTransferEsdt:
         );
 
         let eth_tx = opt_eth_tx.unwrap();
-
         let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
-
         let esdt_safe_addr = self.get_esdt_safe_address();
 
-        // self.add_to_batch(refund_tx);
         self.tx()
             .to(esdt_safe_addr)
             .typed(esdt_safe_proxy::EsdtSafeProxy)
