@@ -56,15 +56,15 @@ pub trait MultiTransferEsdt:
 
         let safe_address = self.get_esdt_safe_address();
 
+        let blacklist_tokens_mapper = self.blacklist_tokens();
         for eth_tx in transfers {
-            // let token_roles = self
-            //     .blockchain()
-            //     .get_esdt_local_roles(&eth_tx.token_id.clone());
-            // if token_roles.has_role(&EsdtLocalRole::Transfer) {
-            //     self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
-            //     self.token_with_transfer_role_event(eth_tx.token_id);
-            //     continue;
-            // }
+            if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
+                self.transactions_for_blacklist_tokens()
+                    .insert(eth_tx.tx_nonce, eth_tx.clone());
+                self.transactions_for_blacklist_tokens_event(eth_tx.tx_nonce);
+
+                continue;
+            }
 
             let is_success: bool = self
                 .tx()
@@ -185,6 +185,51 @@ pub trait MultiTransferEsdt:
         self.unprocessed_refund_txs(tx_id).clear();
     }
 
+    #[only_owner]
+    #[endpoint(blacklistToken)]
+    fn blacklist_token(&self, token_id: TokenIdentifier) {
+        require!(
+            token_id.is_valid_esdt_identifier(),
+            "Provided token not valid"
+        );
+
+        self.blacklist_tokens().insert(token_id.clone());
+        self.blacklist_token_event(token_id);
+    }
+
+    #[only_owner]
+    #[endpoint(removeBlacklistToken)]
+    fn remove_blacklist_token(&self, token_id: TokenIdentifier) {
+        require!(
+            self.blacklist_tokens().swap_remove(&token_id),
+            "Token is not blacklisted"
+        );
+
+        self.remove_blacklist_token_event(token_id);
+    }
+
+    #[endpoint(refundTransactionForBlacklistTokens)]
+    fn refund_transaction_for_blacklist_tokens(&self, tx_id: u64) {
+        let opt_eth_tx = self.transactions_for_blacklist_tokens().get(&tx_id);
+        require!(
+            opt_eth_tx.is_some(),
+            "Transaction with this ID doesn't exist"
+        );
+
+        let eth_tx = opt_eth_tx.unwrap();
+        let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
+        let esdt_safe_addr = self.get_esdt_safe_address();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_to_batch_endpoint(refund_tx)
+            .sync_call();
+
+        self.transactions_for_blacklist_tokens().remove(&tx_id);
+        self.transactions_for_blacklist_tokens_event(tx_id);
+    }
+
     // private
 
     fn add_eth_tx_to_refund_tx_list(
@@ -192,7 +237,7 @@ pub trait MultiTransferEsdt:
         eth_tx: EthTransaction<Self::Api>,
         refund_tx_list: &mut ManagedVec<Transaction<Self::Api>>,
     ) {
-        let refund_tx = self.convert_to_refund_tx(eth_tx);
+        let refund_tx = self.convert_to_tx(eth_tx);
         refund_tx_list.push(refund_tx);
     }
 
@@ -227,6 +272,18 @@ pub trait MultiTransferEsdt:
     }
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
+        Transaction {
+            block_nonce: self.blockchain().get_block_nonce(),
+            nonce: eth_tx.tx_nonce,
+            from: eth_tx.to.as_managed_buffer().clone(),
+            to: eth_tx.from.as_managed_buffer().clone(),
+            token_identifier: eth_tx.token_id,
+            amount: eth_tx.amount,
+            is_refund_tx: true,
+        }
+    }
+
+    fn convert_to_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
         Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: eth_tx.tx_nonce,
@@ -348,7 +405,7 @@ pub trait MultiTransferEsdt:
             }
             ManagedAsyncCallResult::Err(_) => {
                 self.unwrap_tokens(&tx.token_id, refund_payment.clone());
-                let refund_tx = self.convert_to_refund_tx(tx.clone());
+                let refund_tx = self.convert_to_tx(tx.clone());
                 self.add_to_batch(refund_tx);
 
                 self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
@@ -356,10 +413,29 @@ pub trait MultiTransferEsdt:
         }
     }
 
+    //views
+
+    #[view(getTransactionForBlacklistTokens)]
+    fn get_transaction_for_blacklist_tokens(
+        &self,
+    ) -> MultiValueEncoded<MultiValue2<u64, EthTransaction<Self::Api>>> {
+        let mut transactions = MultiValueEncoded::new();
+        for (tx_id, tx) in self.transactions_for_blacklist_tokens().iter() {
+            transactions.push(MultiValue2((tx_id, tx)));
+        }
+        transactions
+    }
+
     // storage
 
     #[storage_mapper("unprocessedRefundTxs")]
     fn unprocessed_refund_txs(&self, tx_id: u64) -> SingleValueMapper<Transaction<Self::Api>>;
+
+    #[storage_mapper("blacklistTokens")]
+    fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
+
+    #[storage_mapper("transactionsForBlacklistTokens")]
+    fn transactions_for_blacklist_tokens(&self) -> MapMapper<u64, EthTransaction<Self::Api>>;
 
     // events
 
@@ -392,8 +468,11 @@ pub trait MultiTransferEsdt:
         #[indexed] tx_id: u64,
     );
 
-    #[event("tokenWithTransferRole")]
-    fn token_with_transfer_role_event(&self, #[indexed] token_id: TokenIdentifier);
+    #[event("blacklistToken")]
+    fn blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
+
+    #[event("removeBlacklistToken")]
+    fn remove_blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
     fn transfer_failed_invalid_token_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
@@ -410,4 +489,7 @@ pub trait MultiTransferEsdt:
 
     #[event("unprocessedRefundTxs")]
     fn unprocessed_refund_txs_event(&self, #[indexed] tx_id: u64);
+
+    #[event("transactionsForBlacklistTokens")]
+    fn transactions_for_blacklist_tokens_event(&self, #[indexed] tx_id: u64);
 }
