@@ -209,6 +209,15 @@ multiTransferEsdtSetMaxBridgedAmountForToken() {
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
+multiTransferEsdtSetMaxBridgedAmountForTokenWithRAWValue() {
+    CHECK_VARIABLES ETH_MAX_AMOUNT CHAIN_SPECIFIC_TOKEN MULTISIG
+
+    mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
+    --gas-limit=40000000 --function="multiTransferEsdtSetMaxBridgedAmountForToken" \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${ETH_MAX_AMOUNT} \
+    --send --proxy=${PROXY} --chain=${CHAIN_ID}
+}
+
 
 setMultiTransferOnEsdtSafeThroughMultisig() {
     CHECK_VARIABLES MULTISIG
