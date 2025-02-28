@@ -114,9 +114,9 @@ case "$1" in
   echo " 3.1 upgrade-wrapper"
   echo " 3.2 unpause-wrapper"
   echo -e
-  echo "PART 4 - Fixes:"
+  echo "PART 4 - Limits:"
   echo " 4.1 set-token-limits-on-eth"
-  echo " 4.2 set-token-limits-on-eth"
+  echo " 4.2 set-token-limits-on-bsc"
   echo -e
   ;;
 
