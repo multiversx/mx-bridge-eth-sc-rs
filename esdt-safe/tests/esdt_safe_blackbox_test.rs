@@ -80,6 +80,7 @@ struct EsdtSafeTestState {
 impl EsdtSafeTestState {
     fn new() -> Self {
         let mut world = world();
+        world.start_trace();
         world
             .account(OWNER_ADDRESS)
             .nonce(1)
@@ -492,6 +493,7 @@ fn upgrade_test() {
         paused_state_after,
         "Contract should be paused after upgrade"
     );
+    state.world.write_scenario_trace("upgrade_test_generated");
 }
 
 #[test]
@@ -1052,6 +1054,7 @@ fn add_refund_batch_test() {
     } else {
         panic!("Expected BatchStatus::PartiallyFull, got {:?}", result);
     }
+    state.world.write_scenario_trace("scenarios/add_refund_batch_test_generated.scen.json");
 }
 
 #[test]

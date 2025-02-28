@@ -1,0 +1,449 @@
+{
+    "steps": [
+        {
+            "step": "setState",
+            "accounts": {
+                "address:owner": {
+                    "nonce": "1",
+                    "esdt": {
+                        "str:ESDT-123": "300000000000",
+                        "str:ETH-123456": "1001",
+                        "str:MINT-BURN-123456": "200000",
+                        "str:NON-WHITELISTED-123456": "1001",
+                        "str:TOKEN-123456": "1000000000000",
+                        "str:TOKEN-WITH": "100000000000"
+                    }
+                }
+            }
+        },
+        {
+            "step": "setState",
+            "accounts": {
+                "sc:price-aggregator": {
+                    "code": "mxsc:../common/mock-contracts/mock-price-aggregator/output/mock-price-aggregator.mxsc.json"
+                }
+            }
+        },
+        {
+            "step": "setState",
+            "accounts": {
+                "sc:bridge-proxy": {
+                    "esdt": {
+                        "str:TOKEN-123456": "100000000"
+                    },
+                    "code": "mxsc:../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json"
+                },
+                "sc:bridged-tokens-wrapper": {
+                    "esdt": {
+                        "str:TOKEN-123456": "100000000"
+                    },
+                    "code": "mxsc:../common/mock-contracts/mock-bridged-tokens-wrapper/output/mock-bridged-tokens-wrapper.mxsc.json"
+                },
+                "sc:multi-transfer": {
+                    "esdt": {
+                        "str:ESDT-123": "300000000000",
+                        "str:TOKEN-123456": "300000000",
+                        "str:TOKEN-WITH": "100000000000"
+                    },
+                    "code": "mxsc:../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json"
+                }
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "address:owner",
+                    "creatorNonce": "1",
+                    "newAddress": "sc:multisig"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "address:owner",
+                "contractCode": "mxsc:../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json",
+                "arguments": [
+                    "0x00000000000000000500657364742d736166655f5f5f5f5f5f5f5f5f5f5f5f5f",
+                    "0x000000000000000005006d756c74692d7472616e736665725f5f5f5f5f5f5f5f",
+                    "0x000000000000000005006272696467652d70726f78795f5f5f5f5f5f5f5f5f5f",
+                    "0x00000000000000000500627269646765642d746f6b656e732d77726170706572",
+                    "0x0000000000000000050070726963652d61676772656761746f725f5f5f5f5f5f",
+                    "0x03e8",
+                    "0x01f4",
+                    "0x02",
+                    "0x72656c61796572315f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f",
+                    "0x72656c61796572325f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f5f"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "setState",
+            "newAddresses": [
+                {
+                    "creatorAddress": "sc:multisig",
+                    "creatorNonce": "0",
+                    "newAddress": "sc:esdt-safe"
+                }
+            ]
+        },
+        {
+            "step": "scDeploy",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "contractCode": "mxsc:output/esdt-safe.mxsc.json",
+                "arguments": [
+                    "0x0249f0"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "unpause",
+                "arguments": [],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x544f4b454e2d313233343536",
+                    "0x544f4b454e",
+                    "0x",
+                    "0x01",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x4d494e542d4255524e2d313233343536",
+                    "0x544f4b454e",
+                    "0x01",
+                    "0x",
+                    "0x",
+                    "0x07d0",
+                    "0x",
+                    "0x"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x544f4b454e2d57495448",
+                    "0x544b4e",
+                    "0x01",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "addTokenToWhitelist",
+                "arguments": [
+                    "0x455344542d313233",
+                    "0x4e4154495645",
+                    "0x",
+                    "0x01",
+                    "0x",
+                    "0x",
+                    "0x",
+                    "0x"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multisig",
+                "to": "sc:esdt-safe",
+                "function": "setEthTxGasLimit",
+                "arguments": [
+                    "0x01"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:esdt-safe",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x455344542d313233",
+                        "value": "1000000"
+                    },
+                    {
+                        "tokenIdentifier": "0x455344542d313233",
+                        "value": "1000000"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Invalid caller"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Cannot refund with no payments"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x544f4b454e2d57495448",
+                        "value": "10"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Token identifiers do not match"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x455344542d313233",
+                        "value": "1000"
+                    },
+                    {
+                        "tokenIdentifier": "0x455344542d313233",
+                        "value": "100"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Amounts do not match"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x4d494e542d4255524e2d313233343536",
+                        "value": "10000"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d73616665000000104d494e542d4255524e2d31323334353600000002271001"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Not enough minted tokens!"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x4d494e542d4255524e2d313233343536",
+                        "value": "1000"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d73616665000000104d494e542d4255524e2d3132333435360000000203e801"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "status": "4",
+                "message": "str:Cannot do the burn action!"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x4d494e542d4255524e2d313233343536",
+                        "value": "1000"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d73616665000000104d494e542d4255524e2d3132333435360000000203e801"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scCall",
+            "id": "",
+            "tx": {
+                "from": "sc:multi-transfer",
+                "to": "sc:esdt-safe",
+                "esdtValue": [
+                    {
+                        "tokenIdentifier": "0x455344542d313233",
+                        "value": "1000000"
+                    },
+                    {
+                        "tokenIdentifier": "0x455344542d313233",
+                        "value": "1000000"
+                    }
+                ],
+                "function": "addRefundBatch",
+                "arguments": [
+                    "0x000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001000000000000000000000000000000000000000d616464726573733a6f776e65720000000c73633a657364742d7361666500000008455344542d313233000000030f424001"
+                ],
+                "gasLimit": "5,000,000"
+            },
+            "expect": {
+                "out": [],
+                "status": "0"
+            }
+        },
+        {
+            "step": "scQuery",
+            "id": "",
+            "tx": {
+                "to": "sc:esdt-safe",
+                "function": "getBatchStatus",
+                "arguments": [
+                    "0x01"
+                ]
+            },
+            "expect": {
+                "out": [
+                    "0x02000000000000006400000003000000000000000100000000000000020000000000000003"
+                ],
+                "status": "0"
+            }
+        }
+    ]
+}

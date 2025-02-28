@@ -58,7 +58,7 @@
             "txId": "deploy",
             "tx": {
                 "from": "address:owner",
-                "contractCode": "file:../output/esdt-safe.wasm",
+                "contractCode": "file:../output/esdt-safe.mxsc.json",
                 "value": "0",
                 "arguments": [
                     "150,000"
@@ -118,7 +118,7 @@
                         "str:pause_module:paused": "true",
                         "+": ""
                     },
-                    "code": "file:../output/esdt-safe.wasm"
+                    "code": "file:../output/esdt-safe.mxsc.json"
                 },
                 "+": {}
             }
@@ -156,7 +156,7 @@
                         "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:feeEstimatorAddress": "sc:price_aggregator"
                     },
-                    "code": "file:../../multisig/output/multisig.wasm",
+                    "code": "file:../../multisig/output/multisig.mxsc.json",
                     "owner": "address:owner"
                 },
                 "sc:esdt_safe": {
@@ -183,7 +183,7 @@
                         "str:tokenWhitelist.item|u32:1": "str:BRIDGE-123456",
                         "str:tokenWhitelist.len": "1"
                     },
-                    "code": "file:../output/esdt-safe.wasm",
+                    "code": "file:../output/esdt-safe.mxsc.json",
                     "owner": "sc:multisig"
                 }
             }

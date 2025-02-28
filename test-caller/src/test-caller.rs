@@ -29,7 +29,7 @@ pub trait TestCallerContract {
     fn call_non_payable(&self) {}
 
     #[payable("*")]
-    #[view(callPayableWithParams)]
+    #[endpoint(callPayableWithParams)]
     fn call_payable_with_params(&self, size: u64, address: ManagedAddress) {
         let payment = self.call_value().single_esdt();
         let token_identifier = payment.token_identifier.clone();
@@ -45,7 +45,7 @@ pub trait TestCallerContract {
     }
 
     #[payable("*")]
-    #[view(callPayableWithBuff)]
+    #[endpoint(callPayableWithBuff)]
     fn call_payable_with_buff(&self, buff: ManagedBuffer) {
         let payment = self.call_value().single_esdt();
         let token_identifier = payment.token_identifier.clone();
