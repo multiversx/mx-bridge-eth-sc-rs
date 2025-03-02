@@ -5,8 +5,8 @@ use multiversx_sc::{
     imports::MultiValue2,
     types::{
         Address, BigUint, EsdtLocalRole, ManagedAddress, ManagedBuffer, ManagedByteArray,
-        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsResult, TestAddress, TestSCAddress,
-        TestTokenIdentifier, TokenIdentifier,
+        ManagedOption, ManagedVec, MultiValueEncoded, ReturnsRawResult, ReturnsResult, TestAddress,
+        TestSCAddress, TestTokenIdentifier, TokenIdentifier,
     },
 };
 use multiversx_sc_scenario::{
@@ -89,11 +89,11 @@ fn world() -> ScenarioWorld {
     blockchain
 }
 
-struct MultiTransferTestState {
+struct MultisigTestState {
     world: ScenarioWorld,
 }
 
-impl MultiTransferTestState {
+impl MultisigTestState {
     fn new() -> Self {
         let mut world = world();
 
@@ -152,6 +152,29 @@ impl MultiTransferTestState {
         self
     }
 
+    fn multisig_upgrade(&mut self) -> &mut Self {
+        let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
+            MultiValueEncoded::new();
+        board.push(RELAYER1_ADDRESS.to_managed_address());
+        board.push(RELAYER2_ADDRESS.to_managed_address());
+        self.world
+            .tx()
+            .from(OWNER_ADDRESS)
+            .to(MULTISIG_ADDRESS)
+            .typed(multisig_proxy::MultisigProxy)
+            .upgrade(
+                ESDT_SAFE_ADDRESS,
+                MULTI_TRANSFER_ADDRESS,
+                BRIDGE_PROXY_ADDRESS,
+                BRIDGED_TOKENS_WRAPPER_ADDRESS,
+                PRICE_AGGREGATOR_ADDRESS,
+            )
+            .code(MULTISIG_CODE_PATH)
+            .run();
+
+        self
+    }
+
     fn multi_transfer_deploy(&mut self) -> &mut Self {
         self.world
             .tx()
@@ -160,6 +183,19 @@ impl MultiTransferTestState {
             .init()
             .code(MULTI_TRANSFER_CODE_PATH)
             .new_address(MULTI_TRANSFER_ADDRESS)
+            .run();
+
+        self
+    }
+
+    fn multi_transfer_upgrade(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(MULTI_TRANSFER_ADDRESS)
+            .typed(multi_transfer_esdt_proxy::MultiTransferEsdtProxy)
+            .upgrade()
+            .code(MULTI_TRANSFER_CODE_PATH)
             .run();
 
         self
@@ -191,6 +227,19 @@ impl MultiTransferTestState {
         self
     }
 
+    fn bridged_tokens_wrapper_upgrade(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .upgrade()
+            .code(BRIDGED_TOKENS_WRAPPER_CODE_PATH)
+            .run();
+
+        self
+    }
+
     fn bridge_proxy_deploy(&mut self) -> &mut Self {
         self.world
             .tx()
@@ -204,6 +253,19 @@ impl MultiTransferTestState {
         self
     }
 
+    fn bridge_proxy_upgrade(&mut self) -> &mut Self {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(BRIDGE_PROXY_ADDRESS)
+            .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
+            .upgrade()
+            .code(BRIDGE_PROXY_CODE_PATH)
+            .run();
+
+        self
+    }
+
     fn safe_deploy(&mut self) {
         self.world
             .tx()
@@ -212,6 +274,17 @@ impl MultiTransferTestState {
             .init(ETH_TX_GAS_LIMIT)
             .code(ESDT_SAFE_CODE_PATH)
             .new_address(ESDT_SAFE_ADDRESS)
+            .run();
+    }
+
+    fn safe_upgrade(&mut self) {
+        self.world
+            .tx()
+            .from(MULTISIG_ADDRESS)
+            .to(ESDT_SAFE_ADDRESS)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .upgrade(ETH_TX_GAS_LIMIT)
+            .code(ESDT_SAFE_CODE_PATH)
             .run();
     }
 
@@ -543,7 +616,7 @@ impl MultiTransferTestState {
 
 #[test]
 fn config_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 }
@@ -551,7 +624,7 @@ fn config_test() {
 //TODO: Uncomment after fix RustVM issue
 //#[test]
 fn _ethereum_to_multiversx_call_data_empty_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(76_000_000u64);
 
     state.deploy_contracts_config();
@@ -606,7 +679,7 @@ fn _ethereum_to_multiversx_call_data_empty_test() {
 
 #[test]
 fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(5_000u64);
 
     state.world.start_trace();
@@ -715,7 +788,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
 //TODO: Uncomment after fix RustVM issue
 //#[test]
 fn _ethereum_to_multiversx_relayer_query_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
     state.world.start_trace();
 
@@ -797,7 +870,7 @@ fn _ethereum_to_multiversx_relayer_query_test() {
 
 #[test]
 fn ethereum_to_multiversx_relayer_query2_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(5_000u64);
     state.world.start_trace();
 
@@ -877,7 +950,7 @@ fn ethereum_to_multiversx_relayer_query2_test() {
 //TODO: Uncomment after fix RustVM issue
 // #[test]
 fn _ethereum_to_multiversx_tx_batch_ok_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
     state.world.start_trace();
 
@@ -964,7 +1037,7 @@ fn _ethereum_to_multiversx_tx_batch_ok_test() {
 
 #[test]
 fn ethereum_to_multiversx_tx_batch_rejected_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let over_the_limit_token_amount = BigUint::from(101_000_000_000u64);
 
     state.deploy_contracts_config();
@@ -1058,7 +1131,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
 
 #[test]
 fn ethereum_to_multiversx_universal_token_tx_batch_rejected_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let over_the_limit_token_amount = BigUint::from(101_000_000_000u64);
 
     state.deploy_contracts_config();
@@ -1152,7 +1225,7 @@ fn ethereum_to_multiversx_universal_token_tx_batch_rejected_test() {
 
 #[test]
 fn init_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
@@ -1211,30 +1284,35 @@ fn init_test() {
 
 #[test]
 fn upgrade_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
+    let actual_board_size = 2;
 
-    state
+    let all_staked_relayers = state
         .world
-        .tx()
-        .from(OWNER_ADDRESS)
+        .query()
         .to(MULTISIG_ADDRESS)
         .typed(multisig_proxy::MultisigProxy)
-        .upgrade(
-            ESDT_SAFE_ADDRESS,
-            MULTI_TRANSFER_ADDRESS,
-            BRIDGE_PROXY_ADDRESS,
-            BRIDGED_TOKENS_WRAPPER_ADDRESS,
-            PRICE_AGGREGATOR_ADDRESS,
-        )
-        .code(MULTISIG_CODE_PATH)
+        .get_all_staked_relayers()
+        .returns(ReturnsResult)
         .run();
+
+    assert_eq!(all_staked_relayers.len(), actual_board_size);
+
+    state.safe_upgrade();
+    state.bridge_proxy_upgrade();
+    state.multi_transfer_upgrade();
+    state.bridged_tokens_wrapper_upgrade();
+
+    state.multisig_upgrade();
+
+    assert_eq!(all_staked_relayers.len(), actual_board_size);
 }
 
 #[test]
 fn multisig_non_board_member_interaction_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.deploy_contracts_config();
@@ -1280,7 +1358,7 @@ fn multisig_non_board_member_interaction_test() {
 
 #[test]
 fn multisig_insuficient_signatures_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.deploy_contracts_config();
@@ -1322,7 +1400,7 @@ fn multisig_insuficient_signatures_test() {
 
 #[test]
 fn multisig_non_board_member_sign_test() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
     let token_amount = BigUint::from(76_000_000_000u64);
 
     state.deploy_contracts_config();
@@ -1374,7 +1452,7 @@ fn multisig_non_board_member_sign_test() {
 
 #[test]
 fn test_distribute_fees_from_child_contracts_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1410,7 +1488,7 @@ fn test_distribute_fees_from_child_contracts_success() {
 
 #[test]
 fn test_distribute_fees_from_child_contracts_invalid_percentage_sum() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
     let dest_address1 = USER1_ADDRESS.to_managed_address();
@@ -1446,7 +1524,7 @@ fn test_distribute_fees_from_child_contracts_invalid_percentage_sum() {
 
 #[test]
 fn test_distribute_fees_from_child_contracts_with_sc_address() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1484,7 +1562,7 @@ fn test_distribute_fees_from_child_contracts_with_sc_address() {
 
 #[test]
 fn test_unstake_successful_board_member() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
     let stake_amount = 1_000u64;
@@ -1506,7 +1584,7 @@ fn test_unstake_successful_board_member() {
 
 #[test]
 fn test_unstake_more_than_staked_amount() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1521,7 +1599,7 @@ fn test_unstake_more_than_staked_amount() {
 
 #[test]
 fn test_unstake_below_required_stake_board_member() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1536,7 +1614,7 @@ fn test_unstake_below_required_stake_board_member() {
 
 #[test]
 fn test_unstake_updates_amount_staked_correctly() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
     let stake_amount_relayer1 = 1_000u64;
@@ -1557,7 +1635,7 @@ fn test_unstake_updates_amount_staked_correctly() {
 
 #[test]
 fn test_propose_esdt_safe_set_current_transaction_batch_status_batch_empty() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1577,7 +1655,7 @@ fn test_propose_esdt_safe_set_current_transaction_batch_status_batch_empty() {
 
 #[test]
 fn test_init_supply_from_child_contract_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1611,7 +1689,7 @@ fn test_init_supply_from_child_contract_success() {
 
 #[test]
 fn test_add_unprocessed_refund_tx_to_batch_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
@@ -1653,7 +1731,7 @@ fn test_add_unprocessed_refund_tx_to_batch_success() {
 
 #[test]
 fn test_withdraw_slashed_amount_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1689,7 +1767,7 @@ fn test_withdraw_slashed_amount_success() {
 
 #[test]
 fn test_withdraw_refund_fees_for_ethereum_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
@@ -1728,7 +1806,7 @@ fn test_withdraw_refund_fees_for_ethereum_success() {
 
 #[test]
 fn test_withdraw_transaction_fees_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     let mut board: MultiValueEncoded<StaticApi, ManagedAddress<StaticApi>> =
         MultiValueEncoded::new();
@@ -1767,7 +1845,7 @@ fn test_withdraw_transaction_fees_success() {
 
 #[test]
 fn test_upgrade_child_contract_from_source_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1814,7 +1892,7 @@ fn test_upgrade_child_contract_from_source_success() {
 
 #[test]
 fn test_add_board_member_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1833,7 +1911,7 @@ fn test_add_board_member_success() {
 
 #[test]
 fn test_remove_user_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1862,7 +1940,7 @@ fn test_remove_user_success() {
 
 #[test]
 fn test_remove_user_quorum_exceed_board_size() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1883,7 +1961,7 @@ fn test_remove_user_quorum_exceed_board_size() {
 
 #[test]
 fn test_change_quorum_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1913,7 +1991,7 @@ fn test_change_quorum_success() {
 
 #[test]
 fn test_add_mapping_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1953,7 +2031,7 @@ fn test_add_mapping_success() {
 
 #[test]
 fn test_add_mapping_token_id_already_mapped() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -1985,7 +2063,7 @@ fn test_add_mapping_token_id_already_mapped() {
 
 #[test]
 fn test_add_mapping_erc20_address_already_mapped() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2017,7 +2095,7 @@ fn test_add_mapping_erc20_address_already_mapped() {
 
 #[test]
 fn test_clear_mapping_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2098,7 +2176,7 @@ fn test_clear_mapping_success() {
 
 #[test]
 fn test_clear_mapping_invalid_mapping() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2144,7 +2222,7 @@ fn test_clear_mapping_invalid_mapping() {
 
 #[test]
 fn test_pause_unpause_esdt_safe() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2202,7 +2280,7 @@ fn test_pause_unpause_esdt_safe() {
 
 #[test]
 fn test_init_supply_functions_success() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2234,7 +2312,7 @@ fn test_init_supply_functions_success() {
 
 #[test]
 fn test_pause_unpause_proxy() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2292,7 +2370,7 @@ fn test_pause_unpause_proxy() {
 
 #[test]
 fn test_change_esdt_safe_settings() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2355,7 +2433,7 @@ fn test_change_esdt_safe_settings() {
 
 #[test]
 fn test_esdt_safe_whitelist_management() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2422,7 +2500,7 @@ fn test_esdt_safe_whitelist_management() {
 
 #[test]
 fn test_esdt_safe_settings_management() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
@@ -2474,7 +2552,7 @@ fn test_esdt_safe_settings_management() {
 
 #[test]
 fn test_multi_transfer_esdt_settings_management() {
-    let mut state = MultiTransferTestState::new();
+    let mut state = MultisigTestState::new();
 
     state.deploy_contracts_config();
 
