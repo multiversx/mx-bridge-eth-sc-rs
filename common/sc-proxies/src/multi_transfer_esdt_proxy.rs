@@ -119,6 +119,54 @@ where
             .original_result()
     }
 
+    pub fn blacklist_token<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("blacklistToken")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn remove_blacklist_token<
+        Arg0: ProxyArg<TokenIdentifier<Env::Api>>,
+    >(
+        self,
+        token_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("removeBlacklistToken")
+            .argument(&token_id)
+            .original_result()
+    }
+
+    pub fn refund_transaction_for_blacklist_tokens<
+        Arg0: ProxyArg<u64>,
+    >(
+        self,
+        tx_id: Arg0,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, ()> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("refundTransactionForBlacklistTokens")
+            .argument(&tx_id)
+            .original_result()
+    }
+
+    pub fn get_transaction_for_blacklist_tokens(
+        self,
+    ) -> TxTypedCall<Env, From, To, NotPayable, Gas, MultiValueEncoded<Env::Api, MultiValue2<u64, transaction::EthTransaction<Env::Api>>>> {
+        self.wrapped_tx
+            .payment(NotPayable)
+            .raw_call("getTransactionForBlacklistTokens")
+            .original_result()
+    }
+
     pub fn set_max_tx_batch_size<
         Arg0: ProxyArg<usize>,
     >(
