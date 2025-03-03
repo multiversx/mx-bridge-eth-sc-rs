@@ -18,7 +18,7 @@ pub trait StorageModule {
     #[storage_mapper("user")]
     fn user_mapper(&self) -> UserMapper;
 
-    #[storage_mapper("userRole")]
+    #[storage_mapper("user_role")]
     fn user_id_to_role(&self, user_id: usize) -> SingleValueMapper<UserRole>;
 
     /// Denormalized board member count.
