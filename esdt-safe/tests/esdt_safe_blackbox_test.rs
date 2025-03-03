@@ -493,7 +493,6 @@ fn upgrade_test() {
         paused_state_after,
         "Contract should be paused after upgrade"
     );
-    state.world.write_scenario_trace("upgrade_test_generated");
 }
 
 #[test]
@@ -1054,7 +1053,9 @@ fn add_refund_batch_test() {
     } else {
         panic!("Expected BatchStatus::PartiallyFull, got {:?}", result);
     }
-    state.world.write_scenario_trace("scenarios/add_refund_batch_test_generated.scen.json");
+    state
+        .world
+        .write_scenario_trace("scenarios/add_refund_batch_test_generated.scen.json");
 }
 
 #[test]

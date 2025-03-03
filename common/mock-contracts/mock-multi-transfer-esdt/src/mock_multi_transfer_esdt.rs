@@ -15,4 +15,7 @@ pub trait MockMultiTransferEsdt {
     #[only_owner]
     #[endpoint(addUnprocessedRefundTxToBatch)]
     fn add_unprocessed_refund_tx_to_batch(&self, _tx_id: u64) {}
+
+    #[storage_mapper("blacklistTokens")]
+    fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
 }
