@@ -170,7 +170,7 @@
                         "str:proxyAddress": "sc:bridge_proxy",
                         "str:bridgedTokensWrapperAddress": "sc:bridged_tokens_wrapper",
                         "str:feeEstimatorAddress": "sc:price_aggregator",
-                        "str:numBoardMembers": "2",
+                        "str:num_board_members": "2",
                         "str:quorum": "2",
                         "str:requiredStakeAmount": "1000",
                         "str:slashAmount": "500",
