@@ -48,7 +48,7 @@
             "txId": "deploy",
             "tx": {
                 "from": "address:aggregator-owner",
-                "contractCode": "file:../multiversx-price-aggregator-sc.wasm",
+                "contractCode": "mxsc:../multiversx-price-aggregator-sc.mxsc.json",
                 "value": "0",
                 "arguments": [
                     "str:EGLD",
@@ -181,7 +181,7 @@
                         },
                         "+": ""
                     },
-                    "code": "file:../multiversx-price-aggregator-sc.wasm"
+                    "code": "mxsc:../multiversx-price-aggregator-sc.mxsc.json"
                 },
                 "+": {}
             }
