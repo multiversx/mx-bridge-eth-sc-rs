@@ -77,6 +77,14 @@ case "$1" in
   confirmation unpause-wrapper
   ;;
 
+'set-token-limits-on-eth')
+  confirmation set-token-limits-on-eth
+  ;;
+
+'set-token-limits-on-bsc')
+  confirmation set-token-limits-on-bsc
+  ;;
+
 *)
   echo "Usage: Invalid choice: '"$1"'"
   echo -e
@@ -105,6 +113,10 @@ case "$1" in
   echo "PART 3 - Upgrade wrapper:"
   echo " 3.1 upgrade-wrapper"
   echo " 3.2 unpause-wrapper"
+  echo -e
+  echo "PART 4 - Limits:"
+  echo " 4.1 set-token-limits-on-eth"
+  echo " 4.2 set-token-limits-on-bsc"
   echo -e
   ;;
 
