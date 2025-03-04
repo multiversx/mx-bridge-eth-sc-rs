@@ -13,15 +13,15 @@ fn world() -> ScenarioWorld {
         multiversx_price_aggregator_sc::ContractBuilder,
     );
     blockchain.register_contract(
-        "mxsc:../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+        "mxsc:../../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
         mock_multi_transfer_esdt::ContractBuilder,
     );
     blockchain.register_contract(
-        "mxsc:../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json",
+        "mxsc:../../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json",
         mock_multisig::ContractBuilder,
     );
     blockchain.register_contract(
-        "mxsc:../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json",
+        "mxsc:../../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json",
         mock_multisig::ContractBuilder,
     );
 
