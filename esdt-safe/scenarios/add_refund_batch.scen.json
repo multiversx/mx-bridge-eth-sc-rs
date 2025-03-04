@@ -15,7 +15,7 @@
             "step": "scCall",
             "txId": "add-refund-batch",
             "tx": {
-                "from": "sc:multi_transfer",
+                "from": "address:owner",
                 "to": "sc:esdt_safe",
                 "function": "addRefundBatch",
                 "arguments": [
