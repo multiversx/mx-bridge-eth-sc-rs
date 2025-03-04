@@ -21,6 +21,17 @@ pub trait TestCallerContract {
     #[upgrade]
     fn upgrade(&self) {}
 
+    #[only_owner]
+    #[endpoint(withdrawToken)]
+    fn withdraw_token(&self, token: TokenIdentifier) {
+        let balance = self.blockchain().get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token.clone()), 0);
+        let owner = self.blockchain().get_owner_address();
+        self.tx()
+            .to(owner)
+            .single_esdt(&token, 0, &balance)
+            .transfer();
+    }
+
     #[payable("*")]
     #[endpoint(callPayable)]
     fn call_payable(&self) {}
@@ -29,7 +40,7 @@ pub trait TestCallerContract {
     fn call_non_payable(&self) {}
 
     #[payable("*")]
-    #[view(callPayableWithParams)]
+    #[endpoint(callPayableWithParams)]
     fn call_payable_with_params(&self, size: u64, address: ManagedAddress) {
         let payment = self.call_value().single_esdt();
         let token_identifier = payment.token_identifier.clone();
@@ -45,7 +56,7 @@ pub trait TestCallerContract {
     }
 
     #[payable("*")]
-    #[view(callPayableWithBuff)]
+    #[endpoint(callPayableWithBuff)]
     fn call_payable_with_buff(&self, buff: ManagedBuffer) {
         let payment = self.call_value().single_esdt();
         let token_identifier = payment.token_identifier.clone();
