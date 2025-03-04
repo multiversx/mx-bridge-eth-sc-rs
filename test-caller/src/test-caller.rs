@@ -21,6 +21,17 @@ pub trait TestCallerContract {
     #[upgrade]
     fn upgrade(&self) {}
 
+    #[only_owner]
+    #[endpoint(withdrawToken)]
+    fn withdraw_token(&self, token: TokenIdentifier) {
+        let balance = self.blockchain().get_sc_balance(&EgldOrEsdtTokenIdentifier::esdt(token.clone()), 0);
+        let owner = self.blockchain().get_owner_address();
+        self.tx()
+            .to(owner)
+            .single_esdt(&token, 0, &balance)
+            .transfer();
+    }
+
     #[payable("*")]
     #[endpoint(callPayable)]
     fn call_payable(&self) {}
