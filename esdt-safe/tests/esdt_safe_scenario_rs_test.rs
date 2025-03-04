@@ -24,14 +24,6 @@ fn world() -> ScenarioWorld {
         "mxsc:../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json",
         mock_multisig::ContractBuilder,
     );
-    // blockchain.register_contract(
-    //     "mxsc:../multisig/output/multisig.mxsc.json",
-    //     mock_multisig::ContractBuilder,
-    // );
-    // blockchain.register_contract(
-    //     "mxsc:../multi-transfer-esdt/output/multi-transfer-esdt.mxsc.json",
-    //     mock_multi_transfer_esdt::ContractBuilder,
-    // );
 
     blockchain
 }

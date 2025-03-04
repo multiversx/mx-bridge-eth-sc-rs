@@ -185,6 +185,11 @@
                     },
                     "code": "mxsc:../output/esdt-safe.mxsc.json",
                     "owner": "sc:multisig"
+                },
+                "sc:multi_transfer": {
+                    "nonce": "0",
+                    "balance": "0",
+                    "code": "mxsc:../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json"
                 }
             }
         },
