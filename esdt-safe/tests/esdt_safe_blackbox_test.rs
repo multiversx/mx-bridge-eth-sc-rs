@@ -80,6 +80,7 @@ struct EsdtSafeTestState {
 impl EsdtSafeTestState {
     fn new() -> Self {
         let mut world = world();
+        world.start_trace();
         world
             .account(OWNER_ADDRESS)
             .nonce(1)
@@ -1052,6 +1053,9 @@ fn add_refund_batch_test() {
     } else {
         panic!("Expected BatchStatus::PartiallyFull, got {:?}", result);
     }
+    state
+        .world
+        .write_scenario_trace("scenarios/add_refund_batch_test_generated.scen.json");
 }
 
 #[test]

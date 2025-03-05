@@ -7,6 +7,7 @@ pub const BRIDGED_TOKENS_WRAPPER_ADDRESS_STORAGE_KEY: &[u8] = b"bridgedTokensWra
 pub const ESDT_SAFE_CONTRACT_ADDRESS_STORAGE_KEY: &[u8] = b"esdtSafeAddress";
 pub const MULTI_TRANSFER_CONTRACT_ADDRESS_STORAGE_KEY: &[u8] = b"multiTransferEsdtAddress";
 pub const FEE_ESTIMATOR_CONTRACT_ADDRESS_STORAGE_KEY: &[u8] = b"feeEstimatorAddress";
+pub const BLACKLIST_TOKENS_MULTI_TRANSFER_STORAGE_KEY: &[u8] = b"blacklistTokens";
 
 #[multiversx_sc::module]
 pub trait CommonStorageModule {
@@ -40,5 +41,13 @@ pub trait CommonStorageModule {
     fn get_fee_estimator_address(&self) -> ManagedAddress {
         self.single_value_mapper(FEE_ESTIMATOR_CONTRACT_ADDRESS_STORAGE_KEY)
             .get()
+    }
+
+    fn is_token_blacklisted(&self, requested_token: &TokenIdentifier) -> bool {
+        UnorderedSetMapper::<_, _, ManagedAddress>::new_from_address(
+            self.get_multi_transfer_address(),
+            StorageKey::new(BLACKLIST_TOKENS_MULTI_TRANSFER_STORAGE_KEY),
+        )
+        .contains(requested_token)
     }
 }

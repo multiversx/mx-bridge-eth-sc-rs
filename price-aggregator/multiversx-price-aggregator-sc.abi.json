@@ -9,12 +9,12 @@
         },
         "contractCrate": {
             "name": "multiversx-price-aggregator-sc",
-            "version": "0.56.1",
-            "gitVersion": "v0.56.1-2-gb931cead8"
+            "version": "0.47.1",
+            "gitVersion": "v0.45.2.1-reproducible-378-ge72c201"
         },
         "framework": {
             "name": "multiversx-sc",
-            "version": "0.56.1"
+            "version": "0.53.2"
         }
     },
     "name": "PriceAggregator",
@@ -221,7 +221,6 @@
         },
         {
             "name": "getOracles",
-            "title": "oracles",
             "mutability": "readonly",
             "inputs": [],
             "outputs": [
