@@ -2,10 +2,27 @@ use multiversx_sc_scenario::*;
 
 fn world() -> ScenarioWorld {
     let mut blockchain = ScenarioWorld::new();
-    blockchain.register_contract("file:output/esdt-safe.wasm", esdt_safe::ContractBuilder);
+    blockchain.set_current_dir_from_workspace("esdt-safe");
+
     blockchain.register_contract(
-        "file:../price-aggregator/multiversx-price-aggregator-sc.wasm",
+        "mxsc:output/esdt-safe.mxsc.json",
+        esdt_safe::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "mxsc:../price-aggregator/multiversx-price-aggregator-sc.mxsc.json",
         multiversx_price_aggregator_sc::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "mxsc:../../common/mock-contracts/mock-multi-transfer-esdt/output/mock-multi-transfer-esdt.mxsc.json",
+        mock_multi_transfer_esdt::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "mxsc:../../common/mock-contracts/mock-multisig/output/mock-multisig.mxsc.json",
+        mock_multisig::ContractBuilder,
+    );
+    blockchain.register_contract(
+        "mxsc:../../common/mock-contracts/mock-bridge-proxy/output/mock-bridge-proxy.mxsc.json",
+        mock_multisig::ContractBuilder,
     );
 
     blockchain
@@ -89,4 +106,9 @@ fn setup_accounts_rs() {
 #[test]
 fn zero_fees_rs() {
     world().run("scenarios/zero_fees.scen.json");
+}
+
+#[test]
+fn deploy_aggregator() {
+    world().run("../price-aggregator/scenarios/deploy.scen.json");
 }

@@ -9,6 +9,9 @@ use tx_batch_mapper::TxBatchMapper;
 pub mod batch_status;
 pub mod tx_batch_mapper;
 
+const MAX_TX_BATCH_BLOCK_DURATION: u64 = 1000;
+const MAX_TX_BATCH_SIZE: usize = 100;
+
 #[multiversx_sc::module]
 pub trait TxBatchModule {
     // endpoints - owner-only
@@ -17,8 +20,8 @@ pub trait TxBatchModule {
     #[endpoint(setMaxTxBatchSize)]
     fn set_max_tx_batch_size(&self, new_max_tx_batch_size: usize) {
         require!(
-            new_max_tx_batch_size > 0,
-            "Max tx batch size must be more than 0"
+            new_max_tx_batch_size > 0 && new_max_tx_batch_size < MAX_TX_BATCH_SIZE,
+            "Max tx batch size out of limits"
         );
 
         self.max_tx_batch_size().set(new_max_tx_batch_size);
@@ -28,8 +31,9 @@ pub trait TxBatchModule {
     #[endpoint(setMaxTxBatchBlockDuration)]
     fn set_max_tx_batch_block_duration(&self, new_max_tx_batch_block_duration: u64) {
         require!(
-            new_max_tx_batch_block_duration > 0,
-            "Max tx batch block duration must be more than 0"
+            new_max_tx_batch_block_duration > 0
+                && new_max_tx_batch_block_duration < MAX_TX_BATCH_BLOCK_DURATION,
+            "Max tx batch block duration out of limits"
         );
 
         self.max_tx_batch_block_duration()
@@ -146,9 +150,9 @@ pub trait TxBatchModule {
 
         for tx in transactions {
             if self.is_batch_full(&last_batch, last_batch_id, first_batch_id) {
-                (last_batch_id, last_batch) = self.create_new_batch(tx);
+                (last_batch_id, last_batch) = self.create_new_batch(tx.clone());
             } else {
-                last_batch.push(tx);
+                last_batch.push(tx.clone());
             }
 
             batch_ids.push(last_batch_id);
