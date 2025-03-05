@@ -609,8 +609,8 @@ fn bridge_proxy_wrong_formatting_sc_call_test() {
         .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
         .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
         .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-        .check_storage("str:batchId|u32:1", "1")
-        .check_storage("str:highestTxId", "1")
+        .check_storage("str:batch_id|u32:1", "1")
+        .check_storage("str:highest_tx_id", "1")
         .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }
 
@@ -688,8 +688,8 @@ fn bridge_proxy_wrong_endpoint_sc_call_test() {
     .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
     .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
     .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-    .check_storage("str:batchId|u32:1", "1")
-    .check_storage("str:highestTxId", "1")
+    .check_storage("str:batch_id|u32:1", "1")
+    .check_storage("str:highest_tx_id", "1")
     .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }
 
@@ -770,8 +770,8 @@ fn bridge_proxy_wrong_args_sc_call_test() {
         .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
         .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
         .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-        .check_storage("str:batchId|u32:1", "1")
-        .check_storage("str:highestTxId", "1")
+        .check_storage("str:batch_id|u32:1", "1")
+        .check_storage("str:highest_tx_id", "1")
         .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }
 
@@ -845,8 +845,8 @@ fn bridge_proxy_too_small_gas_sc_call_test() {
         .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
         .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
         .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-        .check_storage("str:batchId|u32:1", "1")
-        .check_storage("str:highestTxId", "1")
+        .check_storage("str:batch_id|u32:1", "1")
+        .check_storage("str:highest_tx_id", "1")
         .check_storage("str:payments|u32:1", "nested:str:BRIDGE-123456|u64:0|biguint:500");
 }
 
@@ -920,8 +920,8 @@ fn bridge_proxy_empty_endpoint_with_args_test() {
         .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
         .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
         .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-        .check_storage("str:batchId|u32:1", "1")
-        .check_storage("str:highestTxId", "1")
+        .check_storage("str:batch_id|u32:1", "1")
+        .check_storage("str:highest_tx_id", "1")
         .check_storage(
             "str:payments|u32:1",
             "nested:str:BRIDGE-123456|u64:0|biguint:500",
@@ -997,8 +997,8 @@ fn bridge_proxy_empty_endpoint_with_gas_test() {
         .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
         .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
         .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-        .check_storage("str:batchId|u32:1", "1")
-        .check_storage("str:highestTxId", "1")
+        .check_storage("str:batch_id|u32:1", "1")
+        .check_storage("str:highest_tx_id", "1")
         .check_storage(
             "str:payments|u32:1",
             "nested:str:BRIDGE-123456|u64:0|biguint:500",
@@ -1075,8 +1075,8 @@ fn bridge_proxy_refund_tx_test() {
         .check_storage("str:refundTransactions.node_id|u32:1", "0x01")
         .check_storage("str:refundTransactions.info", "0x00000001000000010000000100000001")
         .check_storage("str:refundTransactions.node_links|u32:1", "0x0000000000000000")
-        .check_storage("str:batchId|u32:1", "1")
-        .check_storage("str:highestTxId", "1")
+        .check_storage("str:batch_id|u32:1", "1")
+        .check_storage("str:highest_tx_id", "1")
         .check_storage(
             "str:payments|u32:1",
             "nested:str:BRIDGE-123456|u64:0|biguint:500",
@@ -1104,7 +1104,7 @@ fn bridge_proxy_refund_tx_test() {
 
     test.world
         .check_account(BRIDGE_PROXY_ADDRESS)
-        .check_storage("str:highestTxId", "1");
+        .check_storage("str:highest_tx_id", "1");
 }
 
 #[test]

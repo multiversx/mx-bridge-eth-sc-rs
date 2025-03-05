@@ -18,19 +18,19 @@ pub trait StorageModule {
     #[storage_mapper("user")]
     fn user_mapper(&self) -> UserMapper;
 
-    #[storage_mapper("userRole")]
+    #[storage_mapper("user_role")]
     fn user_id_to_role(&self, user_id: usize) -> SingleValueMapper<UserRole>;
 
     /// Denormalized board member count.
     /// It is kept in sync with the user list by the contract.
     #[view(getNumBoardMembers)]
-    #[storage_mapper("numBoardMembers")]
+    #[storage_mapper("num_board_members")]
     fn num_board_members(&self) -> SingleValueMapper<usize>;
 
-    #[storage_mapper("actionData")]
+    #[storage_mapper("action_data")]
     fn action_mapper(&self) -> VecMapper<Action<Self::Api>>;
 
-    #[storage_mapper("actionSignerIds")]
+    #[storage_mapper("action_signer_ids")]
     fn action_signer_ids(&self, action_id: usize) -> UnorderedSetMapper<usize>;
 
     /// The required amount to stake for accepting relayer position

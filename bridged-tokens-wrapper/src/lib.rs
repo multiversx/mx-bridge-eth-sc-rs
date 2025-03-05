@@ -333,6 +333,6 @@ pub trait BridgedTokensWrapper:
         universal_token_id: &TokenIdentifier,
     ) -> UnorderedSetMapper<TokenIdentifier>;
 
-    #[storage_mapper("tokenDecimalsNum")]
+    #[storage_mapper("token_decimals_num")]
     fn token_decimals_num(&self, token: &TokenIdentifier) -> SingleValueMapper<u32>;
 }
