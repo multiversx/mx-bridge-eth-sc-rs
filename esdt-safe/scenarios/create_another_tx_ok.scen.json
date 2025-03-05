@@ -100,7 +100,7 @@
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "3,000,000",
                         "+": ""
                     },
-                    "code": "file:../output/esdt-safe.wasm"
+                    "code": "mxsc:../output/esdt-safe.mxsc.json"
                 },
                 "+": {}
             }

@@ -269,6 +269,10 @@ pub trait EsdtSafe:
 
         let (payment_token, payment_amount) = self.call_value().single_fungible_esdt();
         self.require_token_in_whitelist(&payment_token);
+        require!(
+            !self.is_token_blacklisted(&payment_token),
+            "Requested token is blacklisted"
+        );
 
         let required_fee = self.calculate_required_fee(&payment_token);
         require!(

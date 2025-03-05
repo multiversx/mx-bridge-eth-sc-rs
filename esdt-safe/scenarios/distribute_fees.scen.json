@@ -54,7 +54,7 @@
                         "str:accumulatedTransactionFees|nested:str:BRIDGE-123456": "0",
                         "+": ""
                     },
-                    "code": "file:../output/esdt-safe.wasm"
+                    "code": "mxsc:../output/esdt-safe.mxsc.json"
                 },
                 "+": {}
             }
