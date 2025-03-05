@@ -279,6 +279,7 @@ pub trait EsdtSafe:
             required_fee < payment_amount.clone(),
             "Transaction fees cost more than the entire bridged amount"
         );
+        self.calculate_required_fee_event(&required_fee, &self.get_fee_estimator_address());
 
         match opt_min_bridge_amount {
             OptionalValue::Some(min_bridge_amount) => {
@@ -625,6 +626,13 @@ pub trait EsdtSafe:
     }
 
     // events
+
+    #[event("calculateRequireFee")]
+    fn calculate_required_fee_event(
+        &self,
+        #[indexed] require_fee: &BigUint,
+        #[indexed] fee_estimation_address: &ManagedAddress,
+    );
 
     #[event("createTransactionEvent")]
     fn create_transaction_event(
