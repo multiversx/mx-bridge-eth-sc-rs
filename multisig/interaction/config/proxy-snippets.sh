@@ -45,11 +45,10 @@ setEsdtSafeOnSCProxy() {
 }
 
 deployBridgeProxyForUpgrade() {
-    CHECK_VARIABLES PROXY_WASM MULTI_TRANSFER
+    CHECK_VARIABLES PROXY_WASM
 
     mxpy contract deploy --bytecode=${PROXY_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
         --gas-limit=200000000 \
-        --arguments ${MULTI_TRANSFER} \
         --send --outfile="deploy-proxy-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-proxy-upgrade.interaction.json" --expression="data['emittedTransactionHash']")
@@ -63,7 +62,7 @@ upgradeBridgeProxyContract() {
     local NEW_BRIDGE_PROXY_ADDR=$(mxpy data parse --file="./deploy-proxy-upgrade.interaction.json" --expression="data['contractAddress']")
 
     mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
-    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
-    --arguments ${BRIDGE_PROXY} ${NEW_BRIDGE_PROXY_ADDR} 0x00 \
+    --gas-limit=200000000 --function="upgradeChildContractFromSource" \
+    --arguments ${BRIDGE_PROXY} ${NEW_BRIDGE_PROXY_ADDR} \
     --send --outfile="upgrade-proxy-child-sc.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }

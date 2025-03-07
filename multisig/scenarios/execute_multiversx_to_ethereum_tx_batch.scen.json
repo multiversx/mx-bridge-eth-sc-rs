@@ -51,7 +51,6 @@
                 "+": {}
             }
         },
-        
         {
             "step": "scCall",
             "txId": "second-relayer-sign",

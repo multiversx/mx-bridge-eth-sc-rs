@@ -133,6 +133,6 @@ wrapper-upgrade() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGED_TOKENS_WRAPPER_WASM
 
     mxpy contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
-    --gas-limit=50000000 --send \
+    --gas-limit=200000000 --send \
     --outfile="upgrade-bridged-tokens-wrapper.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return 
 }

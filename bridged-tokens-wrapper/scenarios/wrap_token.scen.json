@@ -65,7 +65,7 @@
                 "function": "wrapTokens",
                 "esdt": {
                     "tokenIdentifier": "str:USDC-cccccc",
-                    "value": "100000000000000"
+                    "value": "100,000,000,000,000"
                 },
                 "arguments": [],
                 "gasLimit": "5,000,000",

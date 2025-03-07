@@ -35,7 +35,7 @@ deployMultiTransferForUpgrade() {
     CHECK_VARIABLES MULTI_TRANSFER_WASM
 
     mxpy contract deploy --bytecode=${MULTI_TRANSFER_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
-        --gas-limit=100000000 --metadata-payable \
+        --gas-limit=200000000 --metadata-payable \
         --send --outfile="deploy-multitransfer-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./deploy-multitransfer-upgrade.interaction.json" --expression="data['emittedTransactionHash']")
@@ -49,7 +49,7 @@ upgradeMultiTransferContract() {
     local NEW_MULTI_TRANSFER_ADDR=$(mxpy data parse --file="./deploy-multitransfer-upgrade.interaction.json" --expression="data['contractAddress']")
 
     mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
-    --gas-limit=400000000 --function="upgradeChildContractFromSource" \
-    --arguments ${MULTI_TRANSFER} ${NEW_MULTI_TRANSFER_ADDR} 0x00 \
+    --gas-limit=200000000 --function="upgradeChildContractFromSource" \
+    --arguments ${MULTI_TRANSFER} ${NEW_MULTI_TRANSFER_ADDR} \
     --send --outfile="upgrade-multitransfer-child-sc.json" --proxy=${PROXY} --chain=${CHAIN_ID}
 }
