@@ -6,9 +6,10 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           19
+// Endpoints:                           17
 // Async Callback (empty):               1
-// Total number of exported functions:  22
+// Promise callbacks:                    1
+// Total number of exported functions:  21
 
 #![no_std]
 
@@ -22,13 +23,11 @@ multiversx_sc_wasm_adapter::endpoints! {
         upgrade => upgrade
         batchTransferEsdtToken => batch_transfer_esdt_token
         moveRefundBatchToSafe => move_refund_batch_to_safe
-        setWrappingContractAddress => set_wrapping_contract_address
-        setBridgeProxyContractAddress => set_bridge_proxy_contract_address
         addUnprocessedRefundTxToBatch => add_unprocessed_refund_tx_to_batch
-        setEsdtSafeContractAddress => set_esdt_safe_contract_address
-        getWrappingContractAddress => wrapping_contract_address
-        getBridgeProxyContractAddress => bridge_proxy_contract_address
-        getEsdtSafeContractAddress => esdt_safe_contract_address
+        blacklistToken => blacklist_token
+        removeBlacklistToken => remove_blacklist_token
+        refundTransactionForBlacklistTokens => refund_transaction_for_blacklist_tokens
+        getTransactionForBlacklistTokens => get_transaction_for_blacklist_tokens
         setMaxTxBatchSize => set_max_tx_batch_size
         setMaxTxBatchBlockDuration => set_max_tx_batch_block_duration
         getCurrentTxBatch => get_current_tx_batch
@@ -39,6 +38,7 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLastBatchId => last_batch_id
         setMaxBridgedAmount => set_max_bridged_amount
         getMaxBridgedAmount => max_bridged_amount
+        transfer_callback => transfer_callback
     )
 }
 

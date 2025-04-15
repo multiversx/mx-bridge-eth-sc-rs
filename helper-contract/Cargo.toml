@@ -1,0 +1,24 @@
+[package]
+name = "helper-contract"
+version = "0.0.0"
+publish = false
+edition = "2021"
+authors = ["you"]
+
+[lib]
+path = "src/helper_contract.rs"
+
+[dependencies.multiversx-sc]
+version = "0.56.1"
+
+[dependencies.transaction]
+path = "../common/transaction"
+
+[dependencies.sc-proxies]
+path = "../common/sc-proxies"
+
+[dev-dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies.multiversx-sc-scenario]
+version = "0.56.1"

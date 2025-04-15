@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           17
+// Endpoints:                           16
 // Async Callback (empty):               1
-// Total number of exported functions:  20
+// Total number of exported functions:  19
 
 #![no_std]
 
@@ -24,7 +24,6 @@ multiversx_sc_wasm_adapter::endpoints! {
         updateWrappedToken => update_wrapped_token
         removeWrappedToken => remove_wrapped_token
         whitelistToken => whitelist_token
-        updateWhitelistedToken => update_whitelisted_token
         blacklistToken => blacklist_token
         depositLiquidity => deposit_liquidity
         wrapTokens => wrap_tokens

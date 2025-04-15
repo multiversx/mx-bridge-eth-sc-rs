@@ -3,20 +3,20 @@
 use multiversx_sc::{imports::*, storage::StorageKey};
 
 use eth_address::EthAddress;
+use sc_proxies::{bridge_proxy_contract_proxy, bridged_tokens_wrapper_proxy, esdt_safe_proxy};
 use transaction::{EthTransaction, PaymentsVec, Transaction, TxNonce};
 
-pub mod bridge_proxy_contract_proxy;
-pub mod bridged_tokens_wrapper_proxy;
-pub mod esdt_safe_proxy;
-pub mod multi_transfer_proxy;
-
 const DEFAULT_MAX_TX_BATCH_SIZE: usize = 10;
-const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = u64::MAX;
+const DEFAULT_MAX_TX_BATCH_BLOCK_DURATION: u64 = 100_000_000u64;
+const GAS_LIMIT_ESDT_TRANSFER: u64 = 200_000;
 const CHAIN_SPECIFIC_TO_UNIVERSAL_TOKEN_MAPPING: &[u8] = b"chainSpecificToUniversalMapping";
+const DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK: u64 = 4_000_000; // 4 million
 
 #[multiversx_sc::contract]
 pub trait MultiTransferEsdt:
-    tx_batch_module::TxBatchModule + max_bridged_amount_module::MaxBridgedAmountModule
+    tx_batch_module::TxBatchModule
+    + max_bridged_amount_module::MaxBridgedAmountModule
+    + storage_module::CommonStorageModule
 {
     #[init]
     fn init(&self) {
@@ -54,9 +54,18 @@ pub trait MultiTransferEsdt:
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
-        let safe_address = self.esdt_safe_contract_address().get();
+        let safe_address = self.get_esdt_safe_address();
 
+        let blacklist_tokens_mapper = self.blacklist_tokens();
         for eth_tx in transfers {
+            if blacklist_tokens_mapper.contains(&eth_tx.token_id) {
+                self.transactions_for_blacklist_tokens()
+                    .insert(eth_tx.tx_nonce, eth_tx.clone());
+                self.transactions_for_blacklist_tokens_event(eth_tx.tx_nonce);
+
+                continue;
+            }
+
             let is_success: bool = self
                 .tx()
                 .to(safe_address.clone())
@@ -65,38 +74,50 @@ pub trait MultiTransferEsdt:
                 .returns(ReturnsResult)
                 .sync_call();
 
-            require!(is_success, "Invalid token or amount");
+            if !is_success {
+                self.add_eth_tx_to_refund_tx_list(eth_tx, &mut refund_tx_list);
+                continue;
+            }
 
             let universal_token = self.get_universal_token(eth_tx.clone());
 
-            let mut must_refund = false;
             if eth_tx.to.is_zero() {
-                self.transfer_failed_invalid_destination(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
-                self.transfer_over_max_amount(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
-            } else if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
-                self.transfer_failed_frozen_destination_account(batch_id, eth_tx.tx_nonce);
-                must_refund = true;
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_failed_invalid_destination_event(batch_id, eth_tx.tx_nonce);
+                continue;
             }
-
-            if must_refund {
-                let refund_tx = self.convert_to_refund_tx(eth_tx);
-                refund_tx_list.push(refund_tx);
-
+            if self.is_above_max_amount(&eth_tx.token_id, &eth_tx.amount) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_over_max_amount_event(batch_id, eth_tx.tx_nonce);
+                continue;
+            }
+            if self.is_account_same_shard_frozen(sc_shard, &eth_tx.to, &universal_token) {
+                self.add_eth_tx_to_refund_tx_list(eth_tx.clone(), &mut refund_tx_list);
+                self.transfer_failed_frozen_destination_account_event(batch_id, eth_tx.tx_nonce);
                 continue;
             }
 
             // emit event before the actual transfer so we don't have to save the tx_nonces as well
-            self.transfer_performed_event(
-                batch_id,
-                eth_tx.from.clone(),
-                eth_tx.to.clone(),
-                eth_tx.token_id.clone(),
-                eth_tx.amount.clone(),
-                eth_tx.tx_nonce,
-            );
+            // emit events only for non-SC destinations
+            if self.blockchain().is_smart_contract(&eth_tx.to) {
+                self.transfer_performed_sc_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            } else {
+                self.transfer_performed_event(
+                    batch_id,
+                    eth_tx.from.clone(),
+                    eth_tx.to.clone(),
+                    eth_tx.token_id.clone(),
+                    eth_tx.amount.clone(),
+                    eth_tx.tx_nonce,
+                );
+            }
 
             valid_tx_list.push(eth_tx.clone());
             valid_payments_list.push(EsdtTokenPayment::new(eth_tx.token_id, 0, eth_tx.amount));
@@ -130,6 +151,10 @@ pub trait MultiTransferEsdt:
                         refund_batch.push(Transaction::from(tx_fields));
                         refund_payments.push(EsdtTokenPayment::new(token_identifier, 0, amount));
                     } else {
+                        require!(
+                            self.unprocessed_refund_txs(tx_nonce).is_empty(),
+                            "This transcation is already marked as unprocessed"
+                        );
                         self.unprocessed_refund_txs(tx_nonce)
                             .set(Transaction::from(tx_fields));
 
@@ -137,7 +162,7 @@ pub trait MultiTransferEsdt:
                     }
                 }
 
-                let esdt_safe_addr = self.esdt_safe_contract_address().get();
+                let esdt_safe_addr = self.get_esdt_safe_address();
                 self.tx()
                     .to(esdt_safe_addr)
                     .typed(esdt_safe_proxy::EsdtSafeProxy)
@@ -146,38 +171,6 @@ pub trait MultiTransferEsdt:
                     .sync_call();
             }
             OptionalValue::None => {}
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setWrappingContractAddress)]
-    fn set_wrapping_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid unwrapping contract address"
-                );
-
-                self.wrapping_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.wrapping_contract_address().clear(),
-        }
-    }
-
-    #[only_owner]
-    #[endpoint(setBridgeProxyContractAddress)]
-    fn set_bridge_proxy_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                require!(
-                    self.blockchain().is_smart_contract(&sc_addr),
-                    "Invalid bridge proxy contract address"
-                );
-
-                self.bridge_proxy_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.bridge_proxy_contract_address().clear(),
         }
     }
 
@@ -193,26 +186,70 @@ pub trait MultiTransferEsdt:
     }
 
     #[only_owner]
-    #[endpoint(setEsdtSafeContractAddress)]
-    fn set_esdt_safe_contract_address(&self, opt_new_address: OptionalValue<ManagedAddress>) {
-        match opt_new_address {
-            OptionalValue::Some(sc_addr) => {
-                self.esdt_safe_contract_address().set(&sc_addr);
-            }
-            OptionalValue::None => self.esdt_safe_contract_address().clear(),
-        }
+    #[endpoint(blacklistToken)]
+    fn blacklist_token(&self, token_id: TokenIdentifier) {
+        require!(
+            token_id.is_valid_esdt_identifier(),
+            "Provided token not valid"
+        );
+
+        self.blacklist_tokens().insert(token_id.clone());
+        self.blacklist_token_event(token_id);
+    }
+
+    #[only_owner]
+    #[endpoint(removeBlacklistToken)]
+    fn remove_blacklist_token(&self, token_id: TokenIdentifier) {
+        require!(
+            self.blacklist_tokens().swap_remove(&token_id),
+            "Token is not blacklisted"
+        );
+
+        self.remove_blacklist_token_event(token_id);
+    }
+
+    #[endpoint(refundTransactionForBlacklistTokens)]
+    fn refund_transaction_for_blacklist_tokens(&self, tx_id: u64) {
+        let opt_eth_tx = self.transactions_for_blacklist_tokens().get(&tx_id);
+        require!(
+            opt_eth_tx.is_some(),
+            "Transaction with this ID doesn't exist"
+        );
+
+        let eth_tx = opt_eth_tx.unwrap();
+        let refund_tx = self.convert_to_refund_tx(eth_tx.clone());
+        let esdt_safe_addr = self.get_esdt_safe_address();
+
+        self.tx()
+            .to(esdt_safe_addr)
+            .typed(esdt_safe_proxy::EsdtSafeProxy)
+            .add_to_batch_endpoint(refund_tx)
+            .sync_call();
+
+        self.transactions_for_blacklist_tokens().remove(&tx_id);
+        self.transactions_for_blacklist_tokens_event(tx_id);
     }
 
     // private
 
+    fn add_eth_tx_to_refund_tx_list(
+        &self,
+        eth_tx: EthTransaction<Self::Api>,
+        refund_tx_list: &mut ManagedVec<Transaction<Self::Api>>,
+    ) {
+        let refund_tx = self.convert_to_tx(eth_tx);
+        refund_tx_list.push(refund_tx);
+    }
+
     fn is_refund_valid(&self, token_id: &TokenIdentifier) -> bool {
-        let esdt_safe_addr = self.esdt_safe_contract_address().get();
+        let esdt_safe_addr = self.get_esdt_safe_address();
         let own_sc_address = self.blockchain().get_sc_address();
         let sc_shard = self.blockchain().get_shard_of_address(&own_sc_address);
 
         if self.is_account_same_shard_frozen(sc_shard, &esdt_safe_addr, token_id) {
             return false;
         }
+
         return true;
     }
 
@@ -224,7 +261,7 @@ pub trait MultiTransferEsdt:
             TokenIdentifier,
             ManagedAddress,
         > = SingleValueMapper::<_, _, ManagedAddress>::new_from_address(
-            self.wrapping_contract_address().get(),
+            self.get_bridged_tokens_wrapper_address(),
             storage_key,
         );
         if chain_specific_to_universal_token_mapper.is_empty() {
@@ -235,6 +272,18 @@ pub trait MultiTransferEsdt:
     }
 
     fn convert_to_refund_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
+        Transaction {
+            block_nonce: self.blockchain().get_block_nonce(),
+            nonce: eth_tx.tx_nonce,
+            from: eth_tx.to.as_managed_buffer().clone(),
+            to: eth_tx.from.as_managed_buffer().clone(),
+            token_identifier: eth_tx.token_id,
+            amount: eth_tx.amount,
+            is_refund_tx: true,
+        }
+    }
+
+    fn convert_to_tx(&self, eth_tx: EthTransaction<Self::Api>) -> Transaction<Self::Api> {
         Transaction {
             block_nonce: self.blockchain().get_block_nonce(),
             nonce: eth_tx.tx_nonce,
@@ -270,11 +319,11 @@ pub trait MultiTransferEsdt:
     }
 
     fn wrap_tokens(&self, payments: PaymentsVec<Self::Api>) -> PaymentsVec<Self::Api> {
-        if self.wrapping_contract_address().is_empty() {
+        if self.get_bridged_tokens_wrapper_address().is_zero() {
             return payments;
         }
 
-        let bridged_tokens_wrapper_addr = self.wrapping_contract_address().get();
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
         self.tx()
             .to(bridged_tokens_wrapper_addr)
             .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
@@ -284,45 +333,109 @@ pub trait MultiTransferEsdt:
             .sync_call()
     }
 
+    fn unwrap_tokens(
+        &self,
+        requested_token: &TokenIdentifier,
+        payment: EsdtTokenPayment<Self::Api>,
+    ) {
+        let bridged_tokens_wrapper_addr = self.get_bridged_tokens_wrapper_address();
+
+        if bridged_tokens_wrapper_addr.is_zero() {
+            return;
+        }
+
+        if requested_token == &payment.token_identifier {
+            return;
+        }
+
+        self.tx()
+            .to(bridged_tokens_wrapper_addr)
+            .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
+            .unwrap_token(requested_token)
+            .payment(payment)
+            .sync_call()
+    }
+
     fn distribute_payments(
         &self,
         transfers: ManagedVec<EthTransaction<Self::Api>>,
         payments: PaymentsVec<Self::Api>,
         batch_id: u64,
     ) {
-        let bridge_proxy_addr = self.bridge_proxy_contract_address().get();
+        let bridge_proxy_addr = self.get_bridge_proxy_address();
         for (eth_tx, p) in transfers.iter().zip(payments.iter()) {
             if self.blockchain().is_smart_contract(&eth_tx.to) {
                 self.tx()
                     .to(bridge_proxy_addr.clone())
                     .typed(bridge_proxy_contract_proxy::BridgeProxyContractProxy)
-                    .deposit(&eth_tx, batch_id)
+                    .deposit(&eth_tx.clone(), batch_id)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
                     .sync_call();
             } else {
                 self.tx()
                     .to(&eth_tx.to)
                     .single_esdt(&p.token_identifier, 0, &p.amount)
-                    .transfer();
+                    .gas(GAS_LIMIT_ESDT_TRANSFER)
+                    .callback(self.callbacks().transfer_callback(eth_tx.clone(), batch_id))
+                    .with_extra_gas_for_callback(DEFAULT_GAS_LIMIT_FOR_REFUND_CALLBACK)
+                    .register_promise();
             }
         }
     }
 
+    #[promises_callback]
+    fn transfer_callback(
+        &self,
+        #[call_result] result: ManagedAsyncCallResult<()>,
+        tx: EthTransaction<Self::Api>,
+        batch_id: u64,
+    ) {
+        let refund_payment = self.call_value().single_esdt();
+
+        match result {
+            ManagedAsyncCallResult::Ok(()) => {
+                self.transfer_performed_event(
+                    batch_id,
+                    tx.from,
+                    tx.to,
+                    tx.token_id,
+                    tx.amount,
+                    tx.tx_nonce,
+                );
+            }
+            ManagedAsyncCallResult::Err(_) => {
+                self.unwrap_tokens(&tx.token_id, refund_payment.clone());
+                let refund_tx = self.convert_to_tx(tx.clone());
+                self.add_to_batch(refund_tx);
+
+                self.transfer_failed_frozen_destination_account_event(batch_id, tx.tx_nonce);
+            }
+        }
+    }
+
+    //views
+
+    #[view(getTransactionForBlacklistTokens)]
+    fn get_transaction_for_blacklist_tokens(
+        &self,
+    ) -> MultiValueEncoded<MultiValue2<u64, EthTransaction<Self::Api>>> {
+        let mut transactions = MultiValueEncoded::new();
+        for (tx_id, tx) in self.transactions_for_blacklist_tokens().iter() {
+            transactions.push(MultiValue2((tx_id, tx)));
+        }
+        transactions
+    }
+
     // storage
-    #[view(getWrappingContractAddress)]
-    #[storage_mapper("wrappingContractAddress")]
-    fn wrapping_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getBridgeProxyContractAddress)]
-    #[storage_mapper("bridgeProxyContractAddress")]
-    fn bridge_proxy_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
-
-    #[view(getEsdtSafeContractAddress)]
-    #[storage_mapper("esdtSafeContractAddress")]
-    fn esdt_safe_contract_address(&self) -> SingleValueMapper<ManagedAddress>;
 
     #[storage_mapper("unprocessedRefundTxs")]
     fn unprocessed_refund_txs(&self, tx_id: u64) -> SingleValueMapper<Transaction<Self::Api>>;
+
+    #[storage_mapper("blacklistTokens")]
+    fn blacklist_tokens(&self) -> UnorderedSetMapper<TokenIdentifier<Self::Api>>;
+
+    #[storage_mapper("transactionsForBlacklistTokens")]
+    fn transactions_for_blacklist_tokens(&self) -> MapMapper<u64, EthTransaction<Self::Api>>;
 
     // events
 
@@ -337,22 +450,46 @@ pub trait MultiTransferEsdt:
         #[indexed] tx_id: TxNonce,
     );
 
+    #[event("transferPerformedSCEvent")]
+    fn transfer_performed_sc_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] from: EthAddress<Self::Api>,
+        #[indexed] to: ManagedAddress,
+        #[indexed] token_id: TokenIdentifier,
+        #[indexed] amount: BigUint,
+        #[indexed] tx_id: TxNonce,
+    );
+
     #[event("transferFailedInvalidDestination")]
-    fn transfer_failed_invalid_destination(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_destination_event(
+        &self,
+        #[indexed] batch_id: u64,
+        #[indexed] tx_id: u64,
+    );
+
+    #[event("blacklistToken")]
+    fn blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
+
+    #[event("removeBlacklistToken")]
+    fn remove_blacklist_token_event(&self, #[indexed] token_id: TokenIdentifier);
 
     #[event("transferFailedInvalidToken")]
-    fn transfer_failed_invalid_token(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_failed_invalid_token_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("transferFailedFrozenDestinationAccount")]
-    fn transfer_failed_frozen_destination_account(
+    fn transfer_failed_frozen_destination_account_event(
         &self,
         #[indexed] batch_id: u64,
         #[indexed] tx_id: u64,
     );
 
     #[event("transferOverMaxAmount")]
-    fn transfer_over_max_amount(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
+    fn transfer_over_max_amount_event(&self, #[indexed] batch_id: u64, #[indexed] tx_id: u64);
 
     #[event("unprocessedRefundTxs")]
     fn unprocessed_refund_txs_event(&self, #[indexed] tx_id: u64);
+
+    #[event("transactionsForBlacklistTokens")]
+    fn transactions_for_blacklist_tokens_event(&self, #[indexed] tx_id: u64);
 }

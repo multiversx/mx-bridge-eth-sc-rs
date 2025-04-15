@@ -70,9 +70,11 @@ addMapping() {
 addTokenToWhitelist() {
     CHECK_VARIABLES CHAIN_SPECIFIC_TOKEN CHAIN_SPECIFIC_TOKEN_TICKER MULTISIG MINTBURN_WHITELIST NATIVE_TOKEN
 
-    BALANCE=$(echo "$TOTAL_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
-    MINT=$(echo "$MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
-    BURN=$(echo "$BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC" | bc)
+    # bc will apply the scale value if a division operation is present in the expression
+    #  we need scaling as to avoid passing to mxpy values as 4624157209902.000000 (which will error) but instead 4624157209902
+    BALANCE=$(echo "scale=0; $TOTAL_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
+    MINT=$(echo "scale=0; $MINT_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
+    BURN=$(echo "scale=0; $BURN_BALANCE*10^$NR_DECIMALS_CHAIN_SPECIFIC/1" | bc)
 
     mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="esdtSafeAddTokenToWhitelist" \
@@ -279,11 +281,11 @@ syncValueWithEthereumDenom() {
 }
 
 upgradeMultisig() {
-    CHECK_VARIABLES SAFE MULTI_TRANSFER BRIDGE_PROXY MULTISIG_WASM
+    CHECK_VARIABLES SAFE MULTI_TRANSFER BRIDGE_PROXY BRIDGED_TOKENS_WRAPPER AGGREGATOR MULTISIG_WASM
 
     mxpy contract upgrade ${MULTISIG} --bytecode=${MULTISIG_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
-      --gas-limit=100000000 --send \
-      --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} \
+      --gas-limit=200000000 --send \
+      --arguments ${SAFE} ${MULTI_TRANSFER} ${BRIDGE_PROXY} ${BRIDGED_TOKENS_WRAPPER} ${AGGREGATOR} \
       --outfile="upgrade-multisig-child-sc.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
     TRANSACTION=$(mxpy data parse --file="./upgrade-multisig-child-sc.json" --expression="data['emitted_tx']['hash']")
