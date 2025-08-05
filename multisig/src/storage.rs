@@ -89,6 +89,22 @@ pub trait StorageModule {
         erc20_address: &EthAddress<Self::Api>,
     ) -> SingleValueMapper<TokenIdentifier>;
 
+    /// Mapping between SUI address (32 bytes) and MultiversX ESDT Token Identifiers
+
+    #[view(getSuiAddressForTokenId)]
+    #[storage_mapper("suiAddressForTokenId")]
+    fn sui_address_for_token_id(
+        &self,
+        token_id: &TokenIdentifier,
+    ) -> SingleValueMapper<ManagedByteArray<Self::Api, 32>>;
+
+    #[view(getTokenIdForSuiAddress)]
+    #[storage_mapper("tokenIdForSuiAddress")]
+    fn token_id_for_sui_address(
+        &self,
+        sui_address: &ManagedByteArray<Self::Api, 32>,
+    ) -> SingleValueMapper<TokenIdentifier>;
+
     // SC addresses
 
     #[view(getEsdtSafeAddress)]

@@ -1,3 +1,4 @@
+use multiversx_sc::imports::*;
 use eth_address::EthAddress;
 
 #[multiversx_sc::module]
@@ -13,6 +14,20 @@ pub trait EventsModule {
     fn clear_mapping_event(
         &self,
         #[indexed] erc20_address: EthAddress<Self::Api>,
+        #[indexed] token_id: TokenIdentifier,
+    );
+
+    #[event("addMappingSui")]
+    fn add_mapping_sui_event(
+        &self,
+        #[indexed] sui_address: ManagedByteArray<Self::Api, 32>,
+        #[indexed] token_id: TokenIdentifier,
+    );
+
+    #[event("clearMappingSui")]
+    fn clear_mapping_sui_event(
+        &self,
+        #[indexed] sui_address: ManagedByteArray<Self::Api, 32>,
         #[indexed] token_id: TokenIdentifier,
     );
 

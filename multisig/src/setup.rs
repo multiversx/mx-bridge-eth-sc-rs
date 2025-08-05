@@ -107,6 +107,23 @@ pub trait SetupModule:
     }
 
     #[only_owner]
+    #[endpoint(addMappingSui)]
+    fn add_mapping_sui(&self, sui_address: ManagedByteArray<Self::Api, 32>, token_id: TokenIdentifier) {
+        require!(
+            self.sui_address_for_token_id(&token_id).is_empty(),
+            "Mapping already exists for token ID"
+        );
+        require!(
+            self.token_id_for_sui_address(&sui_address).is_empty(),
+            "Mapping already exists for SUI address"
+        );
+
+        self.sui_address_for_token_id(&token_id).set(&sui_address);
+        self.token_id_for_sui_address(&sui_address).set(&token_id);
+        self.add_mapping_sui_event(sui_address, token_id);
+    }
+
+    #[only_owner]
     #[endpoint(clearMapping)]
     fn clear_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
@@ -129,6 +146,31 @@ pub trait SetupModule:
         self.erc20_address_for_token_id(&token_id).clear();
         self.token_id_for_erc20_address(&erc20_address).clear();
         self.clear_mapping_event(erc20_address, token_id);
+    }
+
+    #[only_owner]
+    #[endpoint(clearMappingSui)]
+    fn clear_mapping_sui(&self, sui_address: ManagedByteArray<Self::Api, 32>, token_id: TokenIdentifier) {
+        require!(
+            !self.sui_address_for_token_id(&token_id).is_empty(),
+            "Mapping does not exist for SUI address"
+        );
+        require!(
+            !self.token_id_for_sui_address(&sui_address).is_empty(),
+            "Mapping does not exist for token id"
+        );
+
+        let mapped_sui_address = self.sui_address_for_token_id(&token_id).get();
+        let mapped_token_id = self.token_id_for_sui_address(&sui_address).get();
+
+        require!(
+            sui_address == mapped_sui_address && token_id == mapped_token_id,
+            "Invalid mapping"
+        );
+
+        self.sui_address_for_token_id(&token_id).clear();
+        self.token_id_for_sui_address(&sui_address).clear();
+        self.clear_mapping_sui_event(sui_address, token_id);
     }
 
     #[only_owner]

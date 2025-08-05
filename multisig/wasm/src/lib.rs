@@ -6,9 +6,9 @@
 
 // Init:                                 1
 // Upgrade:                              1
-// Endpoints:                           74
+// Endpoints:                           78
 // Async Callback (empty):               1
-// Total number of exported functions:  77
+// Total number of exported functions:  81
 
 #![no_std]
 
@@ -39,7 +39,9 @@ multiversx_sc_wasm_adapter::endpoints! {
         slashBoardMember => slash_board_member
         changeQuorum => change_quorum
         addMapping => add_mapping
+        addMappingSui => add_mapping_sui
         clearMapping => clear_mapping
+        clearMappingSui => clear_mapping_sui
         pauseEsdtSafe => pause_esdt_safe
         unpauseEsdtSafe => unpause_esdt_safe
         initSupplyEsdtSafe => init_supply_esdt_safe
@@ -71,6 +73,8 @@ multiversx_sc_wasm_adapter::endpoints! {
         getLastExecutedEthTxId => last_executed_eth_tx_id
         getErc20AddressForTokenId => erc20_address_for_token_id
         getTokenIdForErc20Address => token_id_for_erc20_address
+        getSuiAddressForTokenId => sui_address_for_token_id
+        getTokenIdForSuiAddress => token_id_for_sui_address
         getEsdtSafeAddress => esdt_safe_address
         getMultiTransferEsdtAddress => multi_transfer_esdt_address
         getProxyAddress => proxy_address
