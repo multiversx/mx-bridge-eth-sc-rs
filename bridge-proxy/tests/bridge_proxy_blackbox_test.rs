@@ -250,7 +250,7 @@ fn bridge_proxy_execute_crowdfunding_test() {
 
     let eth_tx = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
@@ -320,7 +320,7 @@ fn multiple_deposit_test() {
 
     let eth_tx1 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
@@ -331,7 +331,7 @@ fn multiple_deposit_test() {
 
     let eth_tx2 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
         token_id: BRIDGE_TOKEN_ID.into(),
@@ -439,7 +439,7 @@ fn test_highest_tx_id() {
     for i in 1..=1600 {
         let eth_tx = EthTransaction {
             from: EthAddress {
-                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+                raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
             },
             to: ManagedAddress::from(CROWDFUNDING_ADDRESS.eval_to_array()),
             token_id: BRIDGE_TOKEN_ID.into(),

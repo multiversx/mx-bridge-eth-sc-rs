@@ -383,7 +383,7 @@ fn ethereum_to_multiversx_call_data_empty_test() {
 
     let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
@@ -447,7 +447,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
         Address::from_slice(b"erd1dyw7aysn0nwmuahvxnh2e0pm0kgjvs2gmfdxjgz3x0pet2nkvt8s7tkyrj");
     let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
@@ -458,7 +458,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
 
     let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
@@ -476,7 +476,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
 
     let eth_tx3 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
@@ -495,7 +495,7 @@ fn ethereum_to_multiversx_relayer_call_data_several_tx_test() {
 
     let eth_tx4 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(addr.clone()),
         TokenIdentifier::from("ETHUSDC-afa689"),
@@ -558,7 +558,7 @@ fn ethereum_to_multiversx_relayer_query_test() {
 
     let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
@@ -650,7 +650,7 @@ fn ethereum_to_multiversx_relayer_query2_test() {
 
     let eth_tx = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"5d959e98ea73c35778ff"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(ADDR),
         TokenIdentifier::from("ETHUSDC-afa689"),
@@ -747,7 +747,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
 
     let eth_tx1 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
@@ -758,7 +758,7 @@ fn ethereum_to_multiversx_tx_batch_ok_test() {
 
     let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         TokenIdentifier::from(ETH_TOKEN_ID),
@@ -836,7 +836,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
 
     let eth_tx1 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
         TokenIdentifier::from(WEGLD_TOKEN_ID),
@@ -847,7 +847,7 @@ fn ethereum_to_multiversx_tx_batch_rejected_test() {
 
     let eth_tx2 = EthTxAsMultiValue::<StaticApi>::from((
         EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
         TokenIdentifier::from(ETH_TOKEN_ID),

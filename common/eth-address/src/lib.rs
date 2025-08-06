@@ -6,9 +6,9 @@ use multiversx_sc::{
     types::{ManagedBuffer, ManagedByteArray},
 };
 
-pub const ETH_ADDRESS_LEN: usize = 20;
+pub const ETH_ADDRESS_LEN: usize = 32;
 
-/// Wrapper over a 20-byte array
+/// Wrapper over a 32-byte array
 #[type_abi]
 #[derive(TopEncode, TopDecode, NestedEncode, NestedDecode, Clone, ManagedVecItem, PartialEq)]
 pub struct EthAddress<M: ManagedTypeApi> {

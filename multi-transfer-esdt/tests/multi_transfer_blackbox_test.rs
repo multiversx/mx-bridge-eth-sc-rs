@@ -318,7 +318,6 @@ impl MultiTransferTestState {
     }
 
     fn config_bridged_tokens_wrapper(&mut self) {
-
         self.world
             .tx()
             .from(OWNER_ADDRESS)
@@ -586,7 +585,7 @@ fn batch_transfer_both_executed_test() {
 
     let eth_tx1 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
@@ -597,7 +596,7 @@ fn batch_transfer_both_executed_test() {
 
     let eth_tx2 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(WRAPPED_TOKEN_ID),
@@ -653,7 +652,7 @@ fn batch_two_transfers_same_token_test() {
 
     let eth_tx1 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(USER2_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
@@ -664,7 +663,7 @@ fn batch_two_transfers_same_token_test() {
 
     let eth_tx2 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(USER1_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
@@ -720,7 +719,7 @@ fn batch_transfer_both_failed_test() {
 
     let eth_tx1 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
@@ -731,7 +730,7 @@ fn batch_transfer_both_failed_test() {
 
     let eth_tx2 = EthTransaction {
         from: EthAddress {
-            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910"),
+            raw_addr: ManagedByteArray::new_from_bytes(b"01020304050607080910506070809101"),
         },
         to: ManagedAddress::from(BRIDGE_PROXY_ADDRESS.eval_to_array()),
         token_id: TokenIdentifier::from(BRIDGE_TOKEN_ID),
@@ -854,7 +853,11 @@ fn test_unwrap_token_create_transaction_insufficient_liquidity() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -897,7 +900,7 @@ fn test_unwrap_token_create_transaction_should_work() {
         BigUint::from(600000u64),
         BigUint::zero(),
     );
-    
+
     state
         .world
         .query()
@@ -913,7 +916,11 @@ fn test_unwrap_token_create_transaction_should_work() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(UNIVERSAL_TOKEN_IDENTIFIER),
             0u64,
@@ -957,7 +964,11 @@ fn test_unwrap_token_create_transaction_should_fail() {
         .from(USER1_ADDRESS)
         .to(BRIDGED_TOKENS_WRAPPER_ADDRESS)
         .typed(bridged_tokens_wrapper_proxy::BridgedTokensWrapperProxy)
-        .unwrap_token_create_transaction(WRAPPED_TOKEN_ID, ESDT_SAFE_ADDRESS.to_address(), EthAddress::zero())
+        .unwrap_token_create_transaction(
+            WRAPPED_TOKEN_ID,
+            ESDT_SAFE_ADDRESS.to_address(),
+            EthAddress::zero(),
+        )
         .egld_or_single_esdt(
             &EgldOrEsdtTokenIdentifier::esdt(TOKEN_ID),
             0u64,
