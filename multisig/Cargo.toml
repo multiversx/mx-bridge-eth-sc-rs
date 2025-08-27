@@ -14,6 +14,9 @@ path = "../common/transaction"
 [dependencies.eth-address]
 path = "../common/eth-address"
 
+[dependencies.token-address]
+path = "../common/token-address"
+
 [dependencies.fee-estimator-module]
 path = "../common/fee-estimator-module"
 

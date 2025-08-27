@@ -1,6 +1,6 @@
 use multiversx_sc::imports::*;
 
-use eth_address::EthAddress;
+use token_address::TokenAddress;
 use transaction::transaction_status::TransactionStatus;
 
 use crate::action::Action;
@@ -80,13 +80,13 @@ pub trait StorageModule {
     fn erc20_address_for_token_id(
         &self,
         token_id: &TokenIdentifier,
-    ) -> SingleValueMapper<EthAddress<Self::Api>>;
+    ) -> SingleValueMapper<TokenAddress<Self::Api>>;
 
     #[view(getTokenIdForErc20Address)]
     #[storage_mapper("tokenIdForErc20Address")]
     fn token_id_for_erc20_address(
         &self,
-        erc20_address: &EthAddress<Self::Api>,
+        erc20_address: &TokenAddress<Self::Api>,
     ) -> SingleValueMapper<TokenIdentifier>;
 
     // SC addresses
