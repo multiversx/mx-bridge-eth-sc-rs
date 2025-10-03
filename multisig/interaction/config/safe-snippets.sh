@@ -1,7 +1,7 @@
 deploySafe() {
     CHECK_VARIABLES SAFE_WASM MULTI_TRANSFER AGGREGATOR
     
-    mxpy contract deploy --bytecode=${SAFE_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract deploy --bytecode=${SAFE_WASM} "${MXPY_SIGN[@]}" \
     --gas-limit=150000000 \
     --arguments ${AGGREGATOR} ${MULTI_TRANSFER} 1 \
     --send --outfile="deploy-safe-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -20,16 +20,17 @@ deploySafe() {
 setLocalRolesEsdtSafe() {
     CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN SAFE
 
-    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn str:ESDTRoleLocalMint \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTTransferRole \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
+# ESDTTransferRole
 
 unsetLocalRolesEsdtSafe() {
     CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS CHAIN_SPECIFIC_TOKEN SAFE
 
-    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="unSetSpecialRole" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -38,7 +39,7 @@ unsetLocalRolesEsdtSafe() {
 setBridgedTokensWrapperOnEsdtSafe() {
     CHECK_VARIABLES SAFE BRIDGED_TOKENS_WRAPPER
 
-    mxpy contract call ${SAFE} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${SAFE} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="setBridgedTokensWrapperAddress" \
     --arguments ${BRIDGED_TOKENS_WRAPPER} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -47,7 +48,7 @@ setBridgedTokensWrapperOnEsdtSafe() {
 setSCProxyOnEsdtSafe() {
     CHECK_VARIABLES SAFE BRIDGE_PROXY
 
-    mxpy contract call ${SAFE} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${SAFE} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="setBridgeProxyContractAddress" \
     --arguments ${BRIDGE_PROXY} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -56,7 +57,7 @@ setSCProxyOnEsdtSafe() {
 deploySafeForUpgrade() {
     CHECK_VARIABLES SAFE_WASM MULTI_TRANSFER AGGREGATOR BRIDGE_PROXY
 
-    mxpy contract deploy --bytecode=${SAFE_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract deploy --bytecode=${SAFE_WASM} "${MXPY_SIGN[@]}" \
     --gas-limit=150000000 \
     --arguments ${AGGREGATOR} ${MULTI_TRANSFER} 1 \
     --send --outfile="deploy-safe-upgrade.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
@@ -71,7 +72,7 @@ deploySafeForUpgrade() {
 upgradeSafeContract() {
     local NEW_SAFE_ADDR=$(mxpy data parse --file="./deploy-safe-upgrade.interaction.json" --expression="data['contractAddress']")
 
-    mxpy contract call ${MULTISIG} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${MULTISIG} "${MXPY_SIGN[@]}" \
     --gas-limit=400000000 --function="upgradeChildContractFromSource" \
     --arguments ${SAFE} ${NEW_SAFE_ADDR} 0x00 \
     ${AGGREGATOR} ${MULTI_TRANSFER} ${BRIDGE_PROXY} 1 \
