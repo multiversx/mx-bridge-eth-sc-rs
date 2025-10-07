@@ -22,7 +22,7 @@ setLocalRolesEsdtSafe() {
 
     mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="setSpecialRole" \
-    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTTransferRole \
+    --arguments str:${CHAIN_SPECIFIC_TOKEN} ${SAFE} str:ESDTRoleLocalBurn str:ESDTRoleLocalMint \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 # ESDTTransferRole
