@@ -99,9 +99,6 @@ case "$1" in
 'set-tokens-on-sui')
   confirmation set-tokens-on-sui
   ;;
-'stake-oracles-sui')
-  confirmation stake-oracles-sui
-  ;;
 'submit-aggregation-batches-sui')
   confirmation submit-aggregation-batches-sui
   ;;
@@ -150,11 +147,10 @@ case "$1" in
   echo " 5.2 unpause-contracts-sui-v3"
   echo " 5.3 set-tokens-on-sui"
   echo " -----------"
-  echo " 5.4 stake-oracles-sui"
-  echo " 5.5 submit-aggregation-batches-sui"
-  echo " 5.6 stake-relayers-sui"
+  echo " 5.4 submit-aggregation-batches-sui"
+  echo " 5.5 stake-relayers-sui"
   echo " -----------"
-  echo " 5.7 set-roles-on-esdt-safe-sui"
+  echo " 5.6 set-roles-on-esdt-safe-sui"
   echo -e
   ;;
 
