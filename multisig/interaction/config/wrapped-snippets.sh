@@ -6,9 +6,9 @@
 # If we want to add another chain, do only the last step
 
 deployBridgedTokensWrapper() {
-    CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER_WASM
+    CHECK_VARIABLES BRIDGED_TeOKENS_WRAPPER_WASM
     
-    mxpy contract deploy --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract deploy --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 \
     --send --outfile="deploy-bridged-tokens-wrapper-testnet.interaction.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return
 
@@ -26,7 +26,7 @@ deployBridgedTokensWrapper() {
 setLocalRolesBridgedTokensWrapper() {
     CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS UNIVERSAL_TOKEN BRIDGED_TOKENS_WRAPPER
     
-    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="setSpecialRole" \
     --arguments str:${UNIVERSAL_TOKEN} ${BRIDGED_TOKENS_WRAPPER} str:ESDTRoleLocalMint str:ESDTRoleLocalBurn\
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -35,7 +35,7 @@ setLocalRolesBridgedTokensWrapper() {
 unsetLocalRolesBridgedTokensWrapper() {
     CHECK_VARIABLES ESDT_SYSTEM_SC_ADDRESS UNIVERSAL_TOKEN BRIDGED_TOKENS_WRAPPER
     
-    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${ESDT_SYSTEM_SC_ADDRESS} "${MXPY_SIGN[@]}" \
     --gas-limit=60000000 --function="unSetSpecialRole" \
     --arguments str:${UNIVERSAL_TOKEN} ${BRIDGED_TOKENS_WRAPPER} str:ESDTRoleLocalMint str:ESDTRoleLocalBurn\
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -44,7 +44,7 @@ unsetLocalRolesBridgedTokensWrapper() {
 addWrappedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN NR_DECIMALS_UNIVERSAL
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="addWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} ${NR_DECIMALS_UNIVERSAL} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -53,7 +53,7 @@ addWrappedToken() {
 removeWrappedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="removeWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
@@ -62,77 +62,77 @@ removeWrappedToken() {
 removeWrappedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="removeWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-wrapper-whitelistToken() {
+wrapperWhitelistToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN NR_DECIMALS_CHAIN_SPECIFIC UNIVERSAL_TOKEN
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="whitelistToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${NR_DECIMALS_CHAIN_SPECIFIC} str:${UNIVERSAL_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-wrapper-blacklistToken() {
+wrapperBlacklistToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN UNIVERSAL_TOKEN
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="blacklistToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-wrapper-updateWrappedToken() {
+wrapperUpdateWrappedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER UNIVERSAL_TOKEN NR_DECIMALS_UNIVERSAL
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="updateWrappedToken" \
     --arguments str:${UNIVERSAL_TOKEN} ${NR_DECIMALS_UNIVERSAL} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
-wrapper-updateWhitelistedToken() {
+wrapperUpdateWhitelistedToken() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER CHAIN_SPECIFIC_TOKEN NR_DECIMALS_CHAIN_SPECIFIC
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=6000000 --function="updateWhitelistedToken" \
     --arguments str:${CHAIN_SPECIFIC_TOKEN} ${NR_DECIMALS_CHAIN_SPECIFIC} \
     --send --proxy=${PROXY} --chain=${CHAIN_ID}
 }
 
 
-wrapper-unpause() {
+wrapperUnpause() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="unpause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
-wrapper-pause() {
+wrapperPause() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER} "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
-wrapper-pauseV2() {
+wrapperPauseV2() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER_v2
 
-    mxpy contract call ${BRIDGED_TOKENS_WRAPPER_v2} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract call ${BRIDGED_TOKENS_WRAPPER_v2} "${MXPY_SIGN[@]}" \
     --gas-limit=5000000 --function="pause" \
     --send --proxy=${PROXY} --chain=${CHAIN_ID} || return
 }
 
-wrapper-upgrade() {
+wrapperUpgrade() {
     CHECK_VARIABLES BRIDGED_TOKENS_WRAPPER BRIDGED_TOKENS_WRAPPER_WASM
 
-    mxpy contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} --recall-nonce "${MXPY_SIGN[@]}" \
+    mxpy contract upgrade ${BRIDGED_TOKENS_WRAPPER} --bytecode=${BRIDGED_TOKENS_WRAPPER_WASM} "${MXPY_SIGN[@]}" \
     --gas-limit=50000000 --send \
     --outfile="upgrade-bridged-tokens-wrapper.json" --proxy=${PROXY} --chain=${CHAIN_ID} || return 
 }

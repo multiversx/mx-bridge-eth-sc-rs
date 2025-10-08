@@ -85,6 +85,30 @@ case "$1" in
   confirmation set-token-limits-on-bsc
   ;;
 
+'set-token-limits-on-sui')
+  confirmation set-token-limits-on-sui
+  ;;
+
+### PART 5
+'deploy-bridge-contracts-sui-v3')
+  confirmation deploy-bridge-contracts-sui-v3
+  ;;
+'unpause-contracts-sui-v3')
+  confirmation unpause-contracts-sui-v3
+  ;;
+'set-tokens-on-sui')
+  confirmation set-tokens-on-sui
+  ;;
+'submit-aggregation-batches-sui')
+  confirmation submit-aggregation-batches-sui
+  ;;
+'stake-relayers-sui')
+  confirmation stake-relayers-sui
+  ;;
+'set-roles-on-esdt-safe-sui')
+  confirmation set-roles-on-esdt-safe-sui
+  ;;  
+
 *)
   echo "Usage: Invalid choice: '"$1"'"
   echo -e
@@ -117,6 +141,16 @@ case "$1" in
   echo "PART 4 - Limits:"
   echo " 4.1 set-token-limits-on-eth"
   echo " 4.2 set-token-limits-on-bsc"
+  echo -e
+  echo "PART 5 - SUI:"
+  echo " 5.1 deploy-bridge-contracts-sui-v3"
+  echo " 5.2 unpause-contracts-sui-v3"
+  echo " 5.3 set-tokens-on-sui"
+  echo " -----------"
+  echo " 5.4 submit-aggregation-batches-sui"
+  echo " 5.5 stake-relayers-sui"
+  echo " -----------"
+  echo " 5.6 set-roles-on-esdt-safe-sui"
   echo -e
   ;;
 

@@ -1,18 +1,18 @@
-use eth_address::EthAddress;
+use token_address::TokenAddress;
 
 #[multiversx_sc::module]
 pub trait EventsModule {
     #[event("addMapping")]
     fn add_mapping_event(
         &self,
-        #[indexed] erc20_address: EthAddress<Self::Api>,
+        #[indexed] erc20_address: TokenAddress<Self::Api>,
         #[indexed] token_id: TokenIdentifier,
     );
 
     #[event("clearMapping")]
     fn clear_mapping_event(
         &self,
-        #[indexed] erc20_address: EthAddress<Self::Api>,
+        #[indexed] erc20_address: TokenAddress<Self::Api>,
         #[indexed] token_id: TokenIdentifier,
     );
 

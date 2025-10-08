@@ -1,6 +1,5 @@
 use multiversx_sc::imports::*;
-
-use eth_address::EthAddress;
+use token_address::TokenAddress;
 
 use crate::{bridge_proxy_contract_proxy, esdt_safe_proxy, multi_transfer_esdt_proxy};
 
@@ -89,7 +88,7 @@ pub trait SetupModule:
     /// Maps an ESDT token to an ERC20 address. Used by relayers.
     #[only_owner]
     #[endpoint(addMapping)]
-    fn add_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
+    fn add_mapping(&self, erc20_address: TokenAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
             self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping already exists for token ID"
@@ -108,7 +107,7 @@ pub trait SetupModule:
 
     #[only_owner]
     #[endpoint(clearMapping)]
-    fn clear_mapping(&self, erc20_address: EthAddress<Self::Api>, token_id: TokenIdentifier) {
+    fn clear_mapping(&self, erc20_address: TokenAddress<Self::Api>, token_id: TokenIdentifier) {
         require!(
             !self.erc20_address_for_token_id(&token_id).is_empty(),
             "Mapping does not exist for ERC20 token"

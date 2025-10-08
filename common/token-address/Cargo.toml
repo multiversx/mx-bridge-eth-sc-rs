@@ -1,0 +1,11 @@
+[package]
+name = "token-address"
+version = "0.0.0"
+authors = ["dorin-iancu <dorin.iancu@elrond.com>"]
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies.multiversx-sc]
+version = "=0.52.3"
